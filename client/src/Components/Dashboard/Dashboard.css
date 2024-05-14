@@ -1,0 +1,249 @@
+.dashboard{
+    margin: 0;
+    display: flex;
+    width: 100%;
+    height: 100vh;
+}
+
+.menu_dashboard{
+    width: 18rem;
+    height: 100%;
+    border-right: 1px #5b6b79 solid;
+    display: flex;
+    flex-direction: column;
+    align-items: left;
+    padding: 1rem;
+    position: fixed;
+    z-index: 2;
+}
+
+.logo{
+    width: 7rem;
+}
+
+.user_menu{
+
+    background-color: #272a31;
+    display: flex;
+    flex-direction: column;
+    margin-top: 2rem;
+    border: 1px #434853 solid;
+    border-radius: 0.7rem;
+    padding: 1rem;
+    height: 3rem;
+    overflow: hidden;
+}
+
+.user_menu_box{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    height: 3rem;
+}
+
+.user_name{
+    font-size: 1.2rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.profile_photo{
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 2.5rem;
+    margin-right: 0.5rem;
+    object-fit: cover;
+}
+
+.user_id{
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+
+.user_menu_button{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 3rem;
+    height: 3rem;
+    background-color: transparent;
+    border: none;
+    border-radius: 2rem;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.user_menu_button:hover{
+    background-color: #5b6b795b;
+}
+
+.user_menu_button_arrow{
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 1.5rem;
+}
+
+.option_user_box{
+    display: flex;
+    flex-direction: column;
+}
+
+.option_user_text{
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: 1rem;
+}
+
+.option_user_text:hover{
+    color: rgba(255, 255, 255, 0.8); 
+    transition: 0.2s ease;
+}
+
+.option_user_icon{
+    margin-right: 0.7rem;
+}
+
+.menu_title{
+    font-size: 1.2rem;
+    margin-top: 4rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.menu_link{
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    padding: 1rem;
+    transition: 0.2s ease;
+}
+
+.open_link_menu{
+    display: flex;
+    align-items: center;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    border-radius: 0.7rem;
+
+}
+
+.close_link_menu{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-left: 0rem;
+    padding-right: 0rem;
+    border-radius: 2rem;
+}
+
+.menu_text_open{
+    display: block;
+    opacity: 1;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.menu_text_close{
+    display: none;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.menu_link:hover{
+    background-color: #272a31;
+    color: white;
+}
+
+.icon_navigation{
+    font-size: 1.5rem;
+    margin-right: 1.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.dashboard_page{
+    width: 100%;
+    box-sizing: border-box;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+
+
+.dashboard_header{
+    width: 100%;
+    height: 3rem;
+}
+
+.header_box{
+    width: 50%;
+    height: 100%;
+    padding-left: 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.menu_button{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: none;
+    color: rgba(255, 255, 255, 0.8);
+    border-radius: 2.5rem;
+    cursor: pointer;
+    background-color: transparent;
+    transition: 0.2s ease;
+}
+
+.menu_button:hover{
+    background-color: #242426;
+}
+
+.menu_button_icon{
+    width: 2rem;
+    height: 2rem;
+}
+
+.button_save_contain{
+    position: absolute;
+    bottom: 2rem;
+    width: 20rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+
+}
+
+.button_save{
+    margin-top: 0.3rem;
+    margin-bottom: 0.3rem;
+    width: 9.3rem;
+    height: 2.5rem;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 5px 5px 12px 0px rgb(17, 18, 21);
+}
+
+.cancel{
+    background-color: #242426;
+}
+.cancel:hover{
+    background-color: #1f1f21;
+
+}
+
+.save{
+    background-color: red;
+}
+
+.save:hover{
+    background-color: rgb(135, 0, 0);
+}
+
+

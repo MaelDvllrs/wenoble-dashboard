@@ -1,0 +1,124 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+
+
+
+.loginPage{
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100vh;
+    margin: 0 auto;
+}
+
+.loginBox{
+    display: flex;
+    justify-content: space-around;
+    flex-direction: column;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.6);
+    width: 50vw;
+    max-width: 1000px;
+    height: 60vh;
+    max-height: 700px;
+    border-radius: 20px;
+}
+
+.loginTitle{
+    margin: 0 auto;
+    color: white;
+    font-size: 3rem;   
+}
+
+.loginForm{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+    height: 60%;
+    width: 70%;
+}
+
+.loginLabel{
+    color: white;
+    width: 100%;
+    font-size: 2rem;
+}
+
+.loginInput{
+    font-family: "Montserrat", sans-serif;
+
+    background-color: transparent;
+    border: transparent;
+    border-bottom: white solid 2px;
+    width: 100%;
+    color: white;
+    font-size: 1.5rem;
+    
+}
+
+.loginInput:focus{
+    outline: none;
+}
+
+.loginButton{
+    background-color: black;
+    border: none;
+    color: white;
+    font-family: "Montserrat", sans-serif;
+    padding: 1rem;
+    font-size: 1.5rem;
+    border-radius: 10px;
+    padding-left: 2rem;
+    padding-right: 2rem;
+    cursor: pointer;
+}
+
+.loginButton:hover{
+    background-color: rgb(32, 32, 32);
+}
+
+.mdpOublier{
+    color: white;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+html {
+    font-size: 16px;
+}
+
+  
+@media (max-width: 1600px) {
+    html {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 768px) {
+    html {
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    html {
+        font-size: 10px;
+    }
+}
+
+
+

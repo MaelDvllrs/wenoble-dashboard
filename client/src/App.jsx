@@ -1,32 +1,86 @@
 import './App.css'
 import Dashboard from './Components/Dashboard/Dashboard'
+import Home from './Components/Dashboard/Pages/Home'
+import Account from'./Components/Dashboard/Pages/Account'
+import Portfolio from './Components/Dashboard/Pages/modification_site/portfolio'
 import Login from './Components/Login/Login'
-
-import { createBrowserRouter, RouterProvider} from 'react-router-dom'
-
-const router = createBrowserRouter([
-  {
-    path: '/',
-    element: <div><Login/></div>
-  },
-  {
-    path: '/dashboard',
-    element: <div><Dashboard/></div>
-  }
-])
-
-
+import EditPortfolio from './Components/Dashboard/Pages/modification_site/EditPortfolio'
+import Logout from './Components/Login/Logout'
+import Admin from './Components/Admin/Admin'
+import {IsAuthenticated, IsAuthenticatedAdmin} from './Auth/ProtectedRoutes';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 
 
 function App() {
 
+const ProtectedRoutesClient = ({children}) =>{
+  const dataAuth = IsAuthenticated()
+  const currentUser = dataAuth.isAuthenticating
+  const verifyAuth = dataAuth.verifyAuth
+  console.log("dataAuth", dataAuth);
+  if(currentUser && verifyAuth){
 
-  return (
-   <div>
-      <RouterProvider router={router}/>
+    return children;
+  } else if(verifyAuth){
+      return <Navigate to='/login'/>
+  }
+   
+ }
 
-   </div>
-  )
+const ProtectedRouteAdmin = ({children}) =>{
+  const dataAdm = IsAuthenticatedAdmin()
+  const currentAdmin = dataAdm.isAuthenticating
+  const verifyAdm = dataAdm.verifyAdm
+  console.log("dataAdm", dataAdm);
+  if(currentAdmin && verifyAdm){
+    return children;
+  } else if(verifyAdm){
+
+    return <Navigate to='/login'/>
+  }
+  
 }
 
-export default App
+
+const ProtectedRoutePortfolio = ({children}) =>{
+  const dataAdm = IsAuthenticatedAdmin()
+  const currentAdmin = dataAdm.isAuthenticating
+  const verifyAdm = dataAdm.verifyAdm
+  console.log("dataAdm", dataAdm);
+  if(currentAdmin && verifyAdm){
+    return children;
+  } else if(verifyAdm){
+
+    return <Navigate to='/login'/>
+  }
+  
+}
+
+
+  return (
+    <div>
+      <Router>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+
+          <Route path="/dashboard">  
+            <Route element={<ProtectedRoutesClient><Dashboard /></ProtectedRoutesClient>}>
+              <Route path="/dashboard/home" element={<Home/>}/>
+              <Route path="/dashboard/account" element={<Account/>}/>
+
+              <Route path="/dashboard/portfolio" element={<Portfolio/>} >
+                  <Route path="/dashboard/portfolio/:id" element={<EditPortfolio/>}></Route>
+              </Route>
+            </Route>
+          </Route>
+
+          <Route path="/dashboard-admin">  
+            <Route element={<ProtectedRouteAdmin><Admin /></ProtectedRouteAdmin>} />
+          </Route>
+        </Routes>
+      </Router>
+    </div>
+  );
+}
+
+export default App;

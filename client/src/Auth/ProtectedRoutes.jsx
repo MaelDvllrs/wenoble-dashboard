@@ -1,0 +1,78 @@
+import axios from 'axios';
+import React, { useState, useEffect } from 'react';
+import Cookies from 'js-cookie'
+
+
+
+const IsAuthenticated = () => {
+  const [verifyAuth, setVerifyAuth] = useState(false);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const token = Cookies.get('token');
+        if (!token) {
+          setVerifyAuth(true);
+          throw new Error('Token not found');
+        }
+
+        const response = await axios.post('http://localhost:3002/api/auth/verify', { token });
+
+        if (response.data.success && !response.data.user.isAdmin) {
+          setIsAuthenticating(true);
+          console.log("accés client autorisé")
+        }
+        setVerifyAuth(true)
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  return {isAuthenticating, verifyAuth}
+};
+
+const IsAuthenticatedAdmin = () => {
+  const [verifyAdm, setverifyAdm] = useState(false);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const token = Cookies.get('token');
+        if (!token){ 
+          setverifyAdm(true);
+          throw new Error('Token not found');
+        }
+
+        const response = await axios.post('http://localhost:3002/api/auth/verify', { token });
+
+        if (response.data.success && response.data.user.isAdmin) {
+          setIsAuthenticating(true);
+          console.log('acces admin autorisé');
+        }
+        setverifyAdm(true)
+      } catch (error) {
+        console.error(error);
+        
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  return {isAuthenticating, verifyAdm}
+
+};
+
+export { IsAuthenticatedAdmin, IsAuthenticated };
+
+
+
+
+
+
+  

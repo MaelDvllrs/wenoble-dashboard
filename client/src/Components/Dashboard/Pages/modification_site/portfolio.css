@@ -1,0 +1,20 @@
+.portfolio_onglet_box{
+    display: flex;
+    margin-top: 2rem;
+    background-color: #272a31;
+    margin-bottom: 1rem;
+    border-radius: 0.25rem;
+    width: fit-content;
+}
+
+.portfolio_onglet{
+    padding: 1rem;
+    cursor: pointer;
+    border: 2px solid transparent;
+    border-radius: 0.25rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.portfolio_onglet:hover{
+    border: 2px solid #5b6b79;
+}
