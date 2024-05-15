@@ -19,12 +19,10 @@ const ProtectedRoutesClient = ({children}) =>{
   const verifyAuth = dataAuth.verifyAuth
   console.log("dataAuth", dataAuth);
   if(currentUser && verifyAuth){
-
     return children;
   } else if(verifyAuth){
       return <Navigate to='/login'/>
   }
-   
  }
 
 const ProtectedRouteAdmin = ({children}) =>{
@@ -35,10 +33,8 @@ const ProtectedRouteAdmin = ({children}) =>{
   if(currentAdmin && verifyAdm){
     return children;
   } else if(verifyAdm){
-
     return <Navigate to='/login'/>
   }
-  
 }
 
 
@@ -61,6 +57,7 @@ const ProtectedRoutePortfolio = ({children}) =>{
     <div>
       <Router>
         <Routes>
+          <Route path="/" element={<Login />} />
           <Route path="/login" element={<Login />} />
 
           <Route path="/dashboard">  

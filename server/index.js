@@ -144,14 +144,12 @@ app.post('/api/auth/verify', (req, res) => {
   
     const imageDirectory = path.join(__dirname, 'images', 'profile_image');
   
-    // Lire le répertoire contenant les images
     fs.readdir(imageDirectory, (err, files) => {
       if (err) {
         console.error('Erreur lors de la lecture du répertoire d\'images :', err);
         return res.status(500).send('Une erreur s\'est produite lors de la récupération des images.');
       }
   
-      // Filtrer les fichiers dont le nom commence par le préfixe spécifié
       const matchingImages = files.filter(file => file.startsWith(imagePrefix));
   
       // Renvoyer les images au client
@@ -239,45 +237,85 @@ app.post('/api/auth/verify', (req, res) => {
                 console.error('Erreur lors de la lecture de l\'image :', error);
                 return null;
             }
-        }).filter(Boolean); // Filtre pour supprimer les éléments nuls s'il y a eu des erreurs lors de la lecture des images
+        }).filter(Boolean); 
 
         res.status(200).json(imagesData);
     });
 });
 
-app.post('/savePorfolioImages', (req, res) => {
+app.post('/saveImages', (req, res) => {
   if (!req.body) {
     return res.status(400).send('Aucune image n\'a été téléchargée.');
   }
 
-  const id_portfolio = req.body.params.fields.id_portfolio;
+  const directory = req.body.params.directory
+
   const id_photo = req.body.params.fields.id_photo;
+  const id_portfolio = req.body.params.fields.id_portfolio;
   const data = req.body.params.fields.data;
   const name = req.body.params.fields.name;
   const alt = req.body.params.fields.alt;
 
-  const SQL = 'INSERT INTO '
+  const SQL = 'INSERT INTO photo_portfolio (id_photo, id_portfolio, src_photo, alt_photo) VALUES (?, ?, ?, ?)';
 
+  const Values = [id_photo, id_portfolio, name, alt];
 
-
-  const tempFilePath = req.file.path;
-  const originalFileName = req.file.originalname;
-  const fileExtension = path.extname(originalFileName);
-
-  const username = req.headers.username;
-
-  const newFileName = `profile_${username}${fileExtension}`;
-
-  const newFilePath = path.join(__dirname, 'images', 'profile_image', newFileName);
-  
-  fs.rename(tempFilePath, newFilePath, (err) => {
+  db.query(SQL, Values, (err, results) => {
     if (err) {
-      console.error('Erreur lors du déplacement du fichier :', err);
-      return res.status(500).send('Une erreur s\'est produite lors du téléchargement de l\'image.');
+        return res.status(500).send({ error: err });
     }
-
-    res.status(200).send('L\'image a été téléchargée avec succès.');
+    saveImageAsync(data, name, directory, (err) => {
+        if (err) {
+            return res.status(500).send({ error: 'Erreur lors de la sauvegarde de l\'image.' });
+        }
+        console.log('Image sauvegardée avec succès');
+        res.status(200).send('Image sauvegardée avec succès');
+    });
   });
+});
+
+const saveImageAsync = (base64Data, fileName, directory, callback) => {
+
+
+  const imagePath = path.join(__dirname, 'images', directory, fileName);
+  console.log(imagePath);
+
+  const parts = base64Data.split(';base64,');
+  const contentType = parts[0].split(':')[1];
+  const data = parts[1];
+
+  // Convertissez la chaîne base64 en données binaires
+  const buffer = Buffer.from(data, 'base64');
+
+  // Enregistrez les données binaires dans un fichier
+
+  fs.writeFileSync(imagePath, buffer, (err) => {
+      if (err) {
+          callback(err);
+      } else {
+          callback(null);
+      }
+  });
+};
+
+app.post('/orderPortfolio' , (req, res) => {
+  if (!req.body) {
+    return res.status(400).send('Aucune image n\'a été téléchargée.');
+  }
+
+  const id_photo = req.body.id_photo
+  const order_photo = req.body.order
+
+  const SQL = 'UPDATE photo_portfolio SET order_photo = ? WHERE id_photo = ?'
+  const Values = [order_photo, id_photo]
+
+  db.query(SQL, Values, (err, results)=>{
+    if (err) {
+      return res.status(500).send({ error: err });
+    }
+    res.status(200).send('Ordre mis à jour avec succès');
+  })
+
 });
 
   

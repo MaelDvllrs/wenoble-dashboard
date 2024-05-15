@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import "./EditPortfolio.css";
-import { saveImagesPortfolio } from "../../apiImage";
+import { saveImagesPortfolio, orderportfolio } from "../../apiImage";
+
 import { FileUploader } from "react-drag-drop-files";
 import { LiaCloudUploadAltSolid } from "react-icons/lia";
 import { PiControl, PiDotsThreeOutlineVerticalFill } from "react-icons/pi";
 import { fetchImagesPortfolio } from "../../apiImage";
 import { useParams } from "react-router-dom";
 import { Reorder } from "framer-motion";
+
 
 const EditPortfolio = () => {
   let { id } = useParams();
@@ -21,12 +23,15 @@ const EditPortfolio = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      for (let i = fields.length - 1; i >= 0; i--) {
+        remove(i);
+      }
       const imagesData = await fetchImagesPortfolio(id);
       imagesData.forEach((image) => append(image));
     };
 
     fetchData();
-  }, [id, append]);
+  }, [id]);
 
   const [initialDate, setInitialDate] = useState(Date.now()); // Date d'initialisation de la page
   const [active, setActive] = useState(0);
@@ -74,14 +79,30 @@ const EditPortfolio = () => {
     });
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    let order = 1;
+    const imagesToSave = [];
+  
     fields.forEach((image) => {
-      if (image.id_photo > initialDate){
-        saveImagesPortfolio(image)
+      if (image.id_photo > initialDate) {
+        imagesToSave.push(image);
       }
-    })
-
-    setChangesMade(false); 
+      order++;
+    });
+  
+    try {
+      await Promise.all(imagesToSave.map(saveImagesPortfolio));
+      order = 1;
+      imagesToSave.forEach((image) => {
+        console.log(image);
+        orderportfolio(order, image.id_photo);
+        order++;
+      });
+      setChangesMade(false);
+    } catch (error) {
+      console.error("Une erreur s'est produite lors de l'enregistrement des images :", error);
+      // Gérer l'erreur
+    }
   };
 
   const reloadPage = () => {

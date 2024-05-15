@@ -4,9 +4,13 @@ import {useNavigate} from 'react-router-dom';
 import Axios from 'axios';
 import {jwtDecode} from 'jwt-decode';
 import Cookies from 'js-cookie';
+import config from "../../config";
+import { IsAuthenticated, IsAuthenticatedAdmin } from "../../Auth/ProtectedRoutes";
 
 
 const Login = () => {
+
+    const apiUrl = config.apiUrl; 
 
     const [loginUserName, setLoginUserName] = useState('')
     const [loginPassword, setLoginPassword] = useState('')
@@ -17,12 +21,23 @@ const Login = () => {
 
     const navigateTo = useNavigate()
 
+    const isClient =  IsAuthenticated()
+    const isAdmin = IsAuthenticatedAdmin()
+
+    if (isClient.isAuthenticating) {
+        navigateTo('/dashboard/home');
+    }
+
+    if (isAdmin.isAuthenticating) {
+        navigateTo('/dashboard-admin');
+    }
+
     const loginUser = (e)=>{
 
 
         e.preventDefault();
 
-        Axios.post('http://localhost:3002/login',{
+        Axios.post(`${apiUrl}/login`,{
             LoginUserName: loginUserName,
             LoginPassword: loginPassword
 
@@ -40,7 +55,6 @@ const Login = () => {
                 const isAdmin = decodedToken.isAdmin;
 
                 if (isAdmin) {
-                    console.log("redirect admin");
                     navigateTo('/dashboard-admin');
                 } else {
                     navigateTo('/dashboard/home');

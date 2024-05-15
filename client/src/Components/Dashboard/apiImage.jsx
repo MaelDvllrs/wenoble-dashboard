@@ -1,8 +1,13 @@
 import Axios from 'axios';
+import config from '../../config';
+
+
+const apiUrl = config.apiUrl; 
+
 
 export const fetchImages = async (username) => {
   try {
-    const response = await Axios.get('http://localhost:3002/getProfileImages', {
+    const response = await Axios.get(`${apiUrl}/getProfileImages`, {
       params: {
         imagePrefix: 'profile_' + username + '.' 
       }
@@ -16,7 +21,7 @@ export const fetchImages = async (username) => {
 
 export const fetchImagesPortfolio = async (portfolioId) => {
   try {
-    const response = await Axios.get('http://localhost:3002/getPorfolioImages', {
+    const response = await Axios.get(`${apiUrl}/getPorfolioImages`, {
       params: {
          portfolioId: portfolioId  
       }
@@ -31,12 +36,25 @@ export const fetchImagesPortfolio = async (portfolioId) => {
 
 export const saveImagesPortfolio = async (fields) => {
   try {
-    await Axios.post('http://localhost:3002/savePorfolioImages', {
+    await Axios.post(`${apiUrl}/saveImages`, {
       params: {
-        fields : fields
+        fields : fields,
+        directory : "portfolio_image"
       }
     });
   } catch (error) {
     console.error('Erreur lors de l\'enregistrement des images', error );
+  }
+};
+
+
+export const orderportfolio = async (order, id_photo) => {
+  try {
+    await Axios.post(`${apiUrl}/orderPortfolio`, {
+      order : order,
+      id_photo : id_photo
+    });
+  } catch (error) {
+    console.error('Erreur lors de l\'enregistrement des ordres', error );
   }
 };

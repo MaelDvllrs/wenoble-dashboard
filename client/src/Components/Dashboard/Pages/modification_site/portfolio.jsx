@@ -5,11 +5,13 @@ import Cookies from 'js-cookie';
 import {jwtDecode} from 'jwt-decode'; 
 import { Outlet, Link } from 'react-router-dom';
 import './portfolio.css';
+import config from "../../../../config";
 
 const Portfolio = () => {
 
-    let decodedPortfolio = null;
+    const apiUrl = config.apiUrl; 
 
+    let decodedPortfolio = null;
 
     const [Infoportfolio, setInfoportfolio] = useState(null);
     useEffect(() => {
@@ -18,7 +20,7 @@ const Portfolio = () => {
         if (user) { 
             const decodedUser = jwtDecode(user);
 
-            Axios.get('http://localhost:3002/getPortfolio', {
+            Axios.get(`${apiUrl}/getPortfolio`, {
                 params: {
                     IdUser: decodedUser.user[0].id_user,
                 }

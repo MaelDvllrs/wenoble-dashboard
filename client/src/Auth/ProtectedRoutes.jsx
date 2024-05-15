@@ -1,7 +1,10 @@
 import axios from 'axios';
 import React, { useState, useEffect } from 'react';
 import Cookies from 'js-cookie'
+import config from '../config';
 
+
+const apiUrl = config.apiUrl; 
 
 
 const IsAuthenticated = () => {
@@ -17,7 +20,7 @@ const IsAuthenticated = () => {
           throw new Error('Token not found');
         }
 
-        const response = await axios.post('http://localhost:3002/api/auth/verify', { token });
+        const response = await axios.post(`${apiUrl}/api/auth/verify`, { token });
 
         if (response.data.success && !response.data.user.isAdmin) {
           setIsAuthenticating(true);
@@ -48,7 +51,7 @@ const IsAuthenticatedAdmin = () => {
           throw new Error('Token not found');
         }
 
-        const response = await axios.post('http://localhost:3002/api/auth/verify', { token });
+        const response = await axios.post(`${apiUrl}/api/auth/verify`, { token });
 
         if (response.data.success && response.data.user.isAdmin) {
           setIsAuthenticating(true);

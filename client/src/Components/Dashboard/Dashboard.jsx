@@ -9,9 +9,13 @@ import { BsChevronCompactDown } from "react-icons/bs";
 import { PiUserBold, PiGearSixBold, PiPowerBold, PiHouseBold, PiChartBarBold, PiPencilSimpleBold, PiNewspaperBold, PiFunnelSimpleBold} from "react-icons/pi";
 import { fetchImages } from "./apiImage";
 import logo from "../assets/icon/logo.png"
+import config from '../../config';
 
 
 const Dashboard = () => {
+
+    const apiUrl = config.apiUrl; 
+
     const [infoUser, setInfoUser] = useState(null);
     let decodedUser = null;
 
@@ -21,7 +25,7 @@ const Dashboard = () => {
         if (token) { 
             const decodedToken = jwtDecode(token);
 
-            Axios.post('http://localhost:3002/UserInfo', {
+            Axios.post(`${apiUrl}/UserInfo`, {
                 IdUser: decodedToken.idUser,
                 Username: decodedToken.username,
             }).then((response) => {
@@ -77,17 +81,17 @@ const Dashboard = () => {
                             <button id='id_user_menu_button' className='user_menu_button' onClick={toggle_user}><BsChevronCompactDown className='user_menu_button_arrow'/></button>  
                         </div>
                         <div className="option_user_box">
-                            <Link className='link option_user_text' to='/dashboard/account'><PiUserBold className='option_user_icon'/><b>Mon Compte</b></Link>
-                            <Link className='link option_user_text' to="/dashboard/parameter"><PiGearSixBold className='option_user_icon'/><b>Parametre</b></Link>
-                            <Link className='link option_user_text' to="/dashboard/lougout"><PiPowerBold  className='option_user_icon'/><b>Logout</b></Link>
+                            <Link key="account" className='link option_user_text' to='/dashboard/account'><PiUserBold className='option_user_icon'/><b>Mon Compte</b></Link>
+                            <Link key="parameter" className='link option_user_text' to="/dashboard/parameter"><PiGearSixBold className='option_user_icon'/><b>Parametre</b></Link>
+                            <Link key="option" className='link option_user_text' to="/dashboard/lougout"><PiPowerBold  className='option_user_icon'/><b>Logout</b></Link>
                         </div>   
                     </motion.div>
                     <div className='navigation'>
                         <p className='menu_title'><b>Navigation</b></p>
-                        <Link to='/dashboard/home'><motion.div  className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"}><motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><PiHouseBold /></motion.div><motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Accueil</motion.span></motion.div></Link>
-                        <Link to='/dashboard/stats'><motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"}><motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><PiChartBarBold/></motion.div><motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Statistique</motion.span></motion.div></Link>
-                        <Link to='/dashboard/portfolio'><motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"}><motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><PiPencilSimpleBold/></motion.div><motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Modification</motion.span></motion.div></Link>
-                        <Link to='/dashboard/actu'><motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"}><motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><PiNewspaperBold/></motion.div><motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Actualité</motion.span></motion.div></Link>
+                        <Link key="home" to='/dashboard/home'><motion.div  className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"}><motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><PiHouseBold /></motion.div><motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Accueil</motion.span></motion.div></Link>
+                        <Link key="stats" to='/dashboard/stats'><motion.div  className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"}><motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><PiChartBarBold/></motion.div><motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Statistique</motion.span></motion.div></Link>
+                        <Link key="portfolio" to='/dashboard/portfolio'><motion.div  className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"}><motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><PiPencilSimpleBold/></motion.div><motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Modification</motion.span></motion.div></Link>
+                        <Link key="actu" to='/dashboard/actu'><motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"}><motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><PiNewspaperBold/></motion.div><motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Actualité</motion.span></motion.div></Link>
                     </div>
                 </motion.div>
                 <motion.div className='dashboard_page' animate={{paddingLeft : open_menu ? "20rem" : "5rem"}}>

@@ -6,11 +6,14 @@ import {jwtDecode} from 'jwt-decode';
 import { fetchImages } from "../apiImage";
 import './Account.css';
 import {useNavigate} from 'react-router-dom';
-
+import config from "../../../config";
 
 
 
 const Account = () => {
+  const apiUrl = config.apiUrl; 
+
+
   const user = Cookies.get('user');
   const decodedUser = jwtDecode(user);
   const username = decodedUser.user[0].username
@@ -36,7 +39,7 @@ const Account = () => {
       formData.append('image', selectedImage);
 
       try {
-        await Axios.post('http://localhost:3002/uploadProfileImage', formData, {
+        await Axios.post(`${apiUrl}/uploadProfileImage`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
             username : username
@@ -50,7 +53,7 @@ const Account = () => {
 
     }
 
-    await Axios.post('http//localhost:3002/updateInfo',{
+    await Axios.post(`${apiUrl}/updateInfo`,{
     UserUsername: UserUsername,
     UserEmail: UserEmail
   }).then((response)=>{
