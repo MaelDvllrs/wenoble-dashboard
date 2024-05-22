@@ -1,7 +1,7 @@
 html{
     background-color: #131417;
     font-family: "Montserrat", sans-serif;
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.288);
     padding: 0;
     margin: 0;
 }
@@ -46,7 +46,7 @@ a{
 .dashboard_section{
     padding: 1rem;
     box-sizing: border-box;
-    flex-grow: 1;
+
 }
 
 .principal{
@@ -54,7 +54,7 @@ a{
 }
 
 .secondaire{
-    height: 100%;
+    height: calc(100% - 4rem);
 }
 
 
@@ -72,22 +72,41 @@ a{
     height: 100%;
 }
 
-.dashboard_case_empty{
-    border: 1px solid #272a31;
-    padding: 1rem;
-    border-radius: 0.5rem;
-    box-sizing: border-box;
-    height: 82%;
-}
-
-.title_section{
-    height: 15%;
-}
-
 .dashboard_case_title{
     font-size: 1.2rem;
     margin: 0;
+    grid-template-rows: 1fr;
+    grid-template-columns: 1fr;
+
 }
+
+.outlet{
+    
+    position: relative;
+    display: grid;
+    grid-template-columns: 100%;
+    grid-template-rows: 3rem auto;
+    height: 100%;
+    width: 100%;
+
+}
+
+
+.dashboard_case_empty{
+    overflow: auto;
+    width: 100%;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    box-sizing: border-box;
+    -webkit-box-shadow: 0px 0px 16px -8px #000000; 
+    box-shadow: 0px 0px 16px -8px #000000;
+}
+
+.title_section{
+    width: 100%;
+}
+
+
 
 
 .button_submit{
@@ -112,5 +131,12 @@ a{
     margin-bottom: 1rem;
     width: 100%;
     height: 1px;
-    background-color: #272a31;
+}
+
+.icon{
+    font-size: 1.5rem;
+}
+
+.breadCrumbsLink:hover{
+    text-decoration: underline;
 }

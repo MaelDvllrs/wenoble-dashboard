@@ -248,7 +248,7 @@ app.post('/saveImages', (req, res) => {
     return res.status(400).send('Aucune image n\'a été téléchargée.');
   }
 
-  const directory = req.body.params.directory
+  const directory = req.body.params.directory;
 
   const id_photo = req.body.params.fields.id_photo;
   const id_portfolio = req.body.params.fields.id_portfolio;
@@ -257,46 +257,89 @@ app.post('/saveImages', (req, res) => {
   const alt = req.body.params.fields.alt;
 
   const SQL = 'INSERT INTO photo_portfolio (id_photo, id_portfolio, src_photo, alt_photo) VALUES (?, ?, ?, ?)';
-
   const Values = [id_photo, id_portfolio, name, alt];
 
   db.query(SQL, Values, (err, results) => {
     if (err) {
+        console.error('Database query error:', err);
         return res.status(500).send({ error: err });
     }
     saveImageAsync(data, name, directory, (err) => {
         if (err) {
+            console.error('Error saving image:', err);
             return res.status(500).send({ error: 'Erreur lors de la sauvegarde de l\'image.' });
         }
-        console.log('Image sauvegardée avec succès');
         res.status(200).send('Image sauvegardée avec succès');
     });
   });
 });
 
 const saveImageAsync = (base64Data, fileName, directory, callback) => {
-
-
   const imagePath = path.join(__dirname, 'images', directory, fileName);
-  console.log(imagePath);
 
   const parts = base64Data.split(';base64,');
   const contentType = parts[0].split(':')[1];
   const data = parts[1];
 
+
   // Convertissez la chaîne base64 en données binaires
   const buffer = Buffer.from(data, 'base64');
 
   // Enregistrez les données binaires dans un fichier
-
-  fs.writeFileSync(imagePath, buffer, (err) => {
-      if (err) {
-          callback(err);
-      } else {
-          callback(null);
-      }
-  });
+  try {
+    // Enregistrez les données binaires dans un fichier
+    fs.writeFileSync(imagePath, buffer);
+    callback(null);
+  } catch (err) {
+    console.error('Error writing file:', err);
+    callback(err);
+  }
 };
+
+
+app.post('/deleteImage', (req, res) => {
+  console.log('deleteImage called');
+  if (!req.body) {
+    console.log('No body in the request');
+    return res.status(400).send('Aucune image n\'a été téléchargée.');
+  }
+  let ImageFolder = '';
+  const id_photo = req.body.params.id_photo;
+  const type_photo = req.body.params.type_photo;
+  const imageName = req.body.params.imageName;
+
+  console.log(`id_photo: ${id_photo}, type_photo: ${type_photo}, imageName: ${imageName}`);
+
+  if (type_photo === 'portfolio_image') {
+    ImageFolder = 'photo_portfolio';
+  
+  } else if (type_photo === 'page_image') {
+    ImageFolder = 'photo_page';
+  };
+
+  console.log(`ImageFolder: ${ImageFolder}`);
+
+  const SQL = `DELETE FROM ${ImageFolder} WHERE id_photo = ?`;
+  const Values = [id_photo];
+
+  db.query(SQL, Values, (err, results) => {
+    if (err) {
+        console.log('Error in db query', err);
+        return res.status(500).send({ error: err });
+    }
+    console.log('Image deleted from database');
+    const imagePath = path.join(__dirname,'images', type_photo, imageName);
+    console.log(`imagePath: ${imagePath}`);
+    fs.unlink(imagePath, (err) => {
+      if (err) {
+        console.log('Error in fs.unlink', err);
+        return res.status(500).send({ error: err });
+      }
+      console.log('Image file deleted');
+      res.status(200).send('Image supprimée avec succès');
+    });
+  });
+});
 
 app.post('/orderPortfolio' , (req, res) => {
   if (!req.body) {

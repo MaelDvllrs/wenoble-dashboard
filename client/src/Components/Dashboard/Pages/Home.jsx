@@ -5,7 +5,7 @@ const Home = () => {
     console.log('home')
 
     return(
-        <div>Home
+        <div>Dashboard
             
         </div>
 

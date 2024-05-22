@@ -34,6 +34,8 @@ const Login = () => {
 
     const loginUser = (e)=>{
 
+        console.log('connexion...')
+
 
         e.preventDefault();
 
@@ -48,6 +50,11 @@ const Login = () => {
                 setLoginStatus('Utilisateur introuvable')
             }
             else{
+
+                console.log('utilisateur trouvé');
+
+                console.log(response.data.token);
+
                 const token = response.data.token;
                 Cookies.set('token', token);
 

@@ -1,0 +1,71 @@
+.skeleton-profile {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.skeleton-profile-photo{
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 2.5rem;
+    margin-right: 0.5rem;
+    background-color: rgb(95, 96, 109);
+}
+
+.skeleton-profile-name{
+    height: 1.1rem;
+    border-radius: 1.1rem;
+    width: 7rem;
+    background-color: rgb(95, 96, 109);
+    margin-bottom: 0.2rem;
+}
+
+.skeleton-profile-id{
+    height: 0.9rem;
+    border-radius: 0.9rem;
+    width: 3.5rem;
+    background-color: rgb(95, 96, 109);
+}
+
+.skeleton-wrapper-portfolio{
+    width: 100%;
+}
+
+.skeleton-portfolio-element{
+    display: flex;
+    justify-content:space-between;
+    align-items: center;
+    width: 100%;
+    height: 5rem;
+}
+
+.skeleton-portfolio-element-photo{
+    width: 4rem;
+    height: 4rem;
+    margin-left: 1rem;
+    margin-right: 1rem;
+}
+
+.skeleton-portfolio-element-name{
+    width: 25%;
+    margin-left: 1rem;
+    margin-right: 1rem;
+}
+
+.skeleton-portfolio-element-alt{
+    width: 20%;
+    margin-left: 1rem;
+    margin-right: 1rem;
+}
+
+.skeleton-portfolio-element-order{
+    width: 4rem;
+    margin-left: 1rem;
+    margin-right: 1rem;
+}
+
+.skeleton-portfolio-element-option{
+    width: 4rem;
+    margin-left: 1rem;
+    margin-right: 1rem;
+}

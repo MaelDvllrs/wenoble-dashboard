@@ -2,14 +2,14 @@ import './App.css'
 import Dashboard from './Components/Dashboard/Dashboard'
 import Home from './Components/Dashboard/Pages/Home'
 import Account from'./Components/Dashboard/Pages/Account'
-import Portfolio from './Components/Dashboard/Pages/modification_site/portfolio'
+import Portfolio from './Components/Dashboard/Pages/modification_site/Portfolio/portfolio'
 import Login from './Components/Login/Login'
-import EditPortfolio from './Components/Dashboard/Pages/modification_site/EditPortfolio'
-import Logout from './Components/Login/Logout'
-import Admin from './Components/Admin/Admin'
+import EditPortfolio from './Components/Dashboard/Pages/modification_site/Portfolio/EditPortfolio'
+import Logout from './Components/Login/Logout';
+import Admin from './Components/Admin/Admin';
 import {IsAuthenticated, IsAuthenticatedAdmin} from './Auth/ProtectedRoutes';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-
+import ModificationHome from './Components/Dashboard/Pages/modification_site/modificationHome'
 
 function App() {
 
@@ -64,10 +64,14 @@ const ProtectedRoutePortfolio = ({children}) =>{
             <Route element={<ProtectedRoutesClient><Dashboard /></ProtectedRoutesClient>}>
               <Route path="/dashboard/home" element={<Home/>}/>
               <Route path="/dashboard/account" element={<Account/>}/>
-
-              <Route path="/dashboard/portfolio" element={<Portfolio/>} >
-                  <Route path="/dashboard/portfolio/:id" element={<EditPortfolio/>}></Route>
+              <Route path="/dashboard/modification" element={<ModificationHome/>}>
+                
               </Route>
+              <Route path="/dashboard/modification/portfolio" element={<Portfolio/>} >
+                  <Route path="/dashboard/modification/portfolio/:id" element={<EditPortfolio/>}></Route>
+              </Route>
+
+              
             </Route>
           </Route>
 
