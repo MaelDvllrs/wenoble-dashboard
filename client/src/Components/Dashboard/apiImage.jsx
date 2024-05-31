@@ -39,10 +39,24 @@ export const fetchImagesPortfolio = async (portfolioId) => {
 export const saveImagesPortfolio = async (fields) => {
   try {
     console.log('Enregistrement des images...');
-    await Axios.post(`${apiUrl}/saveImages`, {
-      params: {
-        fields : fields,
-        directory : "portfolio_image"
+    console.log(fields);
+
+    // Créer un objet FormData
+    const formData = new FormData();
+
+    // Ajouter le blob en tant que fichier
+    formData.append('image', fields.data, fields.id_photo);
+
+
+    // Ajouter les autres champs
+    formData.append('id_photo', fields.id_photo);
+    formData.append('id_portfolio', fields.id_portfolio);
+    formData.append('alt', fields.alt);
+    formData.append('name', fields.name);
+
+    await Axios.post(`${apiUrl}/saveImagesPortfolio`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
       }
     });
   } catch (error) {
@@ -91,3 +105,94 @@ export const compressImage = async (file) => {
     return file;
   }
 };
+
+
+
+export const fetchImagesPage = async (pageId) => {
+  try {
+    const response = await Axios.get(`${apiUrl}/getPageImages`, {
+      params: {
+         pageId: pageId  
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Erreur lors de la récupération des images :', error);
+    return [];
+  }
+};
+
+export const saveImagePage = async (fields) => {
+  try {
+    console.log('Enregistrement des images...');
+
+    if (fields.data) {
+      
+      const formData = new FormData();
+
+      // Ajouter le blob en tant que fichier
+      formData.append('image', fields.data, fields.src);
+
+
+      // Ajouter les autres champs
+      formData.append('id_photo', fields.id);
+      formData.append('alt', fields.alt);
+      formData.append('name', fields.name);
+      formData.append('src', fields.src);
+
+      await Axios.post(`${apiUrl}/saveImagesPage`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+    } else {
+      console.log(fields);
+
+      await Axios.post(`${apiUrl}/saveAltPage`, {
+
+        params: {
+          fields : fields,
+          directory : "page_image"
+        }
+      });
+    }
+
+  } catch (error) {
+    console.error('Message d\'erreur du serveur:', error.response.data.message);
+    // Propager l'erreur
+    throw error;
+  }
+}
+
+export const fetchTextePage = async (pageId) => {
+  try {
+    const response = await Axios.get(`${apiUrl}/getPageTexte`, {
+      params: {
+         pageId: pageId  
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Erreur lors de la récupération des textes :', error);
+    return [];
+  }
+}
+
+export const saveTextPage = async (fields) => {
+  console.log(fields);
+  try {
+    console.log('Enregistrement des textes...');
+    await Axios.post(`${apiUrl}/saveTextPage`, {
+      params: {
+        fields : fields,
+      }
+    });
+  } catch (error) {
+    console.error('Message d\'erreur du serveur:', error.response.data.message);
+    // Propager l'erreur
+    throw error;
+  }
+}
+
+

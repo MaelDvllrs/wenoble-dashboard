@@ -1,6 +1,7 @@
 import React from "react"
 import Axios from 'axios';
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useLayoutEffect } from "react";
+import { useLocation, useResolvedPath } from 'react-router-dom';
 import Cookies from 'js-cookie';
 import {jwtDecode} from 'jwt-decode'; 
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
@@ -12,14 +13,18 @@ import { useTheme } from '@mui/material/styles';
 const Portfolio = () => {
 
     const theme = useTheme();
-    const navigateTo = useNavigate()
+    const navigate = useNavigate()
 
 
     const apiUrl = config.apiUrl; 
 
+
+    const [initialNavigationDone, setInitialNavigationDone] = useState(false);
+
     let decodedPortfolio = null;
 
     const [Infoportfolio, setInfoportfolio] = useState(null);
+    
     useEffect(() => {
         const user = Cookies.get('user');
 
@@ -39,33 +44,36 @@ const Portfolio = () => {
     }, [Infoportfolio]);
 
 
+
     if(Infoportfolio != null){
         decodedPortfolio = jwtDecode(Infoportfolio);
+        if(decodedPortfolio && decodedPortfolio.portfolio.length > 0 && !initialNavigationDone) {
+            navigate('/dashboard/modification/portfolio/' + decodedPortfolio.portfolio[0].id_portfolio);
+            setInitialNavigationDone(true);
+        }
     }
 
-    console.log(decodedPortfolio)
-
-
-    
 
     return(
-        <div className="outlet">
+        <div className="outlet portfolio_outlet">
+
             <div className="title_section">
-            <div className="breadCrumbs"><NavLink style={{color: theme.palette.text.primary}} className={"breadCrumbsLink"} to={'/dashboard/home'}>Dashboard</NavLink> / <NavLink style={{color: theme.palette.text.primary}} className={"breadCrumbsLink"} to={'/dashboard/modification'}>Modification</NavLink> / Portfolio</div>
+                <div className="breadCrumbs"><NavLink style={{color: theme.palette.text.primary}} className={"breadCrumbsLink"} to={'/dashboard/home'}>Dashboard</NavLink> &gt; <NavLink style={{color: theme.palette.text.primary}} className={"breadCrumbsLink"} to={'/dashboard/modification'}>Modification</NavLink> &gt; Portfolio</div>
             </div>
 
-            <div className="dashboard_case_empty" style={{ backgroundColor: theme.palette.primary.main }}>
+            <div className="dashboard_case_empty">
                 <div className="portfolio_onglet_box">
-                    {decodedPortfolio && decodedPortfolio.portfolio.map((portfolioItem) => (
-                        <NavLink to={'/dashboard/modification/portfolio/' + portfolioItem.id_portfolio} className={({ isActive }) => (isActive ? 'portfolio_ongletActive' : 'portfolio_onglet')} key={portfolioItem.id_portfolio} style={{ backgroundColor: theme.palette.secondary.secondary}}>
-                            <p style={{color: theme.palette.text.primary}}>{portfolioItem.portfolio_name}</p>
+                {decodedPortfolio && decodedPortfolio.portfolio.map((pageItem) => (
+                        <NavLink to={'/dashboard/modification/portfolio/' + pageItem.id_portfolio} className={({ isActive }) => (isActive ? 'portfolio_ongletActive' : 'portfolio_onglet')} key={pageItem.id_portfolio}>
+                            <p style={{color: theme.palette.text.primary}}>{pageItem.portfolio_name}</p>
                         </NavLink>
                     ))}
                 </div>
                 <div className='dashboard_section secondaire'>
                         <Outlet />
                 </div>
-            </div>          
+            </div>    
+            <div className="background_glow background_glow_portfolio"></div>      
         </div>
     )
 }

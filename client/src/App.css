@@ -81,8 +81,7 @@ a{
 }
 
 .outlet{
-    
-    position: relative;
+    position: relative;;
     display: grid;
     grid-template-columns: 100%;
     grid-template-rows: 3rem auto;
@@ -93,20 +92,23 @@ a{
 
 
 .dashboard_case_empty{
-    overflow: auto;
+    position: relative;
+    overflow: hidden;
+    z-index: 2;
     width: 100%;
     padding: 1rem;
     border-radius: 0.5rem;
     box-sizing: border-box;
-    -webkit-box-shadow: 0px 0px 16px -8px #000000; 
-    box-shadow: 0px 0px 16px -8px #000000;
+    box-shadow: inset 0 1px 0 0 hsla(0, 0%, 100%, .05), 0 0 0 1px hsla(0, 0%, 100%, .25), inset 0 -1px 0 0 rgba(0, 0, 0, .2);
+    backdrop-filter: blur(10px);
+
 }
 
 .title_section{
     width: 100%;
+    position: relative;
+    z-index: 2;
 }
-
-
 
 
 .button_submit{
@@ -139,4 +141,23 @@ a{
 
 .breadCrumbsLink:hover{
     text-decoration: underline;
+}
+
+
+
+.background_glow{
+    width: calc(100% + 2rem);
+    height: 100%;
+    position: absolute;
+    bottom: -1rem;
+    left: -1rem;
+    z-index: 0;
+}
+
+.background_glow_portfolio{
+    background: radial-gradient(50% 50% at 50% 125%, #ff6363 0, rgba(39, 61, 180, 0.4) 49.9%, transparent 100%);
+}
+
+.background_glow_page{
+    background: radial-gradient(50% 50% at 50% 125%, #ff6363 0, rgba(82, 48, 145, 0.4) 49.9%, transparent 100%);
 }

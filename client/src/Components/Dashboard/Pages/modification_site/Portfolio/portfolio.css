@@ -1,3 +1,6 @@
+.portfolio_outlet{
+    background: radial-gradient(50% 50% at 50% -15%, #ff6363 0, rgba(204, 57, 255, .5) 49.9%, var(--grey-900) 100%);
+}
 .portfolio_onglet_box{
     display: flex;
     margin-bottom: 1rem;
@@ -6,16 +9,48 @@
 }
 
 .portfolio_onglet{
-    padding: 0.5rem;
+    padding: 0.8rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
     cursor: pointer;
-    border-radius: 0.25rem;
+    border-radius: 0.8rem;
+    margin-right: 1rem;
+   
 }
 
 .portfolio_onglet:hover{
-    border-bottom: 2px solid #5b6b79;
-}
+    box-shadow: rgba(255, 255, 255, 0.1) 0px 1px 0px 0px inset, 
+    rgba(7, 13, 79, 0.05) 0px 0px 20px 3px, 
+    rgba(7, 13, 79, 0.05) 0px 0px 40px 20px, 
+    rgba(255, 255, 255, 0.06) 0px 0px 0px 1px inset;
+    }
 
 .portfolio_ongletActive{
-    padding: 0.5rem;
-    border-bottom: 2px solid #5b6b79;
+    padding: 0.8rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    cursor: pointer;
+    border-radius: 0.8rem;
+    margin-right: 1rem;
+    background:  linear-gradient(180deg, hsla(0, 0%, 100%, .03), hsla(0, 0%, 100%, 0.1));
+    box-shadow: rgba(255, 255, 255, 0.1) 0px 1px 0px 0px inset, 
+                rgba(7, 13, 79, 0.05) 0px 0px 20px 3px, 
+                rgba(7, 13, 79, 0.05) 0px 0px 40px 20px, 
+                rgba(255, 255, 255, 0.06) 0px 0px 0px 1px inset;
 }
+
+.page_ongletActive{
+    padding: 0.8rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    cursor: pointer;
+    border-radius: 0.8rem;
+    margin-right: 1rem;
+    background:  linear-gradient(180deg, hsla(0, 0%, 100%, .03), hsla(0, 0%, 100%, 0.1));
+    box-shadow: rgba(255, 255, 255, 0.1) 0px 1px 0px 0px inset, 
+                rgba(7, 13, 79, 0.05) 0px 0px 20px 3px, 
+                rgba(7, 13, 79, 0.05) 0px 0px 40px 20px, 
+                rgba(255, 255, 255, 0.06) 0px 0px 0px 1px inset;
+}
+
+

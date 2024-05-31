@@ -10,14 +10,16 @@ import Admin from './Components/Admin/Admin';
 import {IsAuthenticated, IsAuthenticatedAdmin} from './Auth/ProtectedRoutes';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import ModificationHome from './Components/Dashboard/Pages/modification_site/modificationHome'
+import Page from './Components/Dashboard/Pages/modification_site/Page/page'
+import EditPage from './Components/Dashboard/Pages/modification_site/Page/EditPage'
 
 function App() {
+
 
 const ProtectedRoutesClient = ({children}) =>{
   const dataAuth = IsAuthenticated()
   const currentUser = dataAuth.isAuthenticating
   const verifyAuth = dataAuth.verifyAuth
-  console.log("dataAuth", dataAuth);
   if(currentUser && verifyAuth){
     return children;
   } else if(verifyAuth){
@@ -29,7 +31,6 @@ const ProtectedRouteAdmin = ({children}) =>{
   const dataAdm = IsAuthenticatedAdmin()
   const currentAdmin = dataAdm.isAuthenticating
   const verifyAdm = dataAdm.verifyAdm
-  console.log("dataAdm", dataAdm);
   if(currentAdmin && verifyAdm){
     return children;
   } else if(verifyAdm){
@@ -42,7 +43,6 @@ const ProtectedRoutePortfolio = ({children}) =>{
   const dataAdm = IsAuthenticatedAdmin()
   const currentAdmin = dataAdm.isAuthenticating
   const verifyAdm = dataAdm.verifyAdm
-  console.log("dataAdm", dataAdm);
   if(currentAdmin && verifyAdm){
     return children;
   } else if(verifyAdm){
@@ -70,8 +70,9 @@ const ProtectedRoutePortfolio = ({children}) =>{
               <Route path="/dashboard/modification/portfolio" element={<Portfolio/>} >
                   <Route path="/dashboard/modification/portfolio/:id" element={<EditPortfolio/>}></Route>
               </Route>
-
-              
+              <Route path="/dashboard/modification/page" element={<Page/>} >
+                  <Route path="/dashboard/modification/page/:id" element={<EditPage/>}></Route>
+              </Route>
             </Route>
           </Route>
 

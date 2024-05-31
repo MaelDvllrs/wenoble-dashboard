@@ -16,15 +16,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import LoadingButton from '@mui/lab/LoadingButton';
 import SaveIcon from '@mui/icons-material/Save';
 import Button from '@mui/material/Button';
-
-
-
-
-
-
-
-
-
+import { v4 as uuidv4 } from 'uuid';
 
 
 
@@ -59,6 +51,7 @@ const EditPortfolio = () => {
     fetchData();
   }, [id]);
 
+
   const [initialDate, setInitialDate] = useState(Date.now()); // Date d'initialisation de la page
   const [active, setActive] = useState(0);
   const [changesMade, setChangesMade] = useState(false);
@@ -68,32 +61,21 @@ const EditPortfolio = () => {
   const handleChange = (files) => {
     if (files instanceof FileList) {
       const fileListArray = Array.from(files);
-
+  
       fileListArray.forEach(async (file) => {
-        
         const fileCompress = await compressImage(file);
-
-        const reader = new FileReader();
-
-        reader.onload = async (e) => {
-          const base64Image = e.target.result;
-          console.log(fileCompress);
-
-          
-
-          const image = {
-            id_portfolio: id,
-            id_photo: Date.now(),
-            data: base64Image,
-            name: id + Date.now() + file.name,
-            alt: file.name,
-          };
-
-          await append(image);
-          setChangesMade(true);
+  
+        const image = {
+          id_portfolio: id,
+          id_photo: uuidv4(),
+          data: fileCompress,
+          name: file.name,
+          alt: file.name,
+          publicationDate: Date.now(),
         };
-
-        reader.readAsDataURL(fileCompress);
+  
+        await append(image);
+        setChangesMade(true);
       });
     } else {
       console.error("Aucun fichier n'a été téléchargé.");
@@ -106,7 +88,7 @@ const EditPortfolio = () => {
       if (item === activeElement) {
         move(active, index);
         setActive(index);
-        setChangesMade(true); // Indicate changes made
+        setChangesMade(true);
       }
     });
   };
@@ -115,9 +97,11 @@ const EditPortfolio = () => {
     setLoadingSave(true);
     let order = 1;
     const imagesToSave = [];
+
+    console.log('fields:', fields);
   
     fields.forEach((image) => {
-      if (image.id_photo > initialDate) {
+      if (image.publicationDate > initialDate) {
         imagesToSave.push(image);
       }
       order++;
@@ -188,7 +172,11 @@ const EditPortfolio = () => {
       <div className="line_horizontal" style={{ backgroundColor: theme.palette.secondary.secondary }}></div>
       <div className="portfolio_edit_place">
         {LoadingPortfolio ? <SkeletonPortfolio /> : <Reorder.Group values={fields} onReorder={handleReorder}>
-          {fields.map((image, index) => (
+        {fields.map((image, index) => {
+          const isBlob = image.data instanceof Blob;
+          const src = isBlob ? URL.createObjectURL(image.data) : image.data;
+
+          return (
             <Reorder.Item
               value={image}
               key={image.id}
@@ -198,17 +186,19 @@ const EditPortfolio = () => {
                 <p className="Item_portfolio_element order_element">{index}</p>
                 <p className="Item_portfolio_element alt_element">{image.alt}</p>
                 <p className="Item_portfolio_element name_element">{image.name}</p>
-                <img className="Item_image Item_portfolio_element" src={image.data} alt={image.alt} />
+
+                <img className="Item_image Item_portfolio_element" src={src} alt={image.alt} />
                 <div className="Item_portfolio_element option_element">
                   <div className="button_option_portfolio">
-                  <IconButton aria-label="delete"  onClick={() => {handleDelete(image.id_photo,image.name, index);}}>
-                    <DeleteIcon color="secondary"/>
-                  </IconButton>
+                    <IconButton aria-label="delete"  onClick={() => {handleDelete(image.id_photo,image.name, index);}}>
+                      <DeleteIcon color="secondary"/>
+                    </IconButton>
                   </div>
                 </div>
               </div>
             </Reorder.Item>
-          ))}
+          );
+        })}
         </Reorder.Group>}
       </div>
       {changesMade && ( // Render save button only if changes are made

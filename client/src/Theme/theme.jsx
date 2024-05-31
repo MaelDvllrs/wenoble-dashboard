@@ -22,7 +22,7 @@ const DARK_THEME = createTheme({
             secondary: '#282A30'
         },
         background: {
-            default: '#131417',
+            default: '#07080a',
         },
         text: {
             primary: 'rgba(255, 255, 255, 0.8)',
