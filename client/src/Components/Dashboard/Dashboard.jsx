@@ -3,7 +3,7 @@ import Axios from 'axios';
 import {jwtDecode} from 'jwt-decode'; 
 import Cookies from 'js-cookie';
 import './Dashboard.css';
-import { Outlet, Link, NavLink } from 'react-router-dom';
+import { Outlet, Link, NavLink, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion'
 import { BsChevronCompactDown } from "react-icons/bs";
 import { PiUserBold, PiGearSixBold, PiPowerBold, PiHouseBold, PiChartBarBold, PiPencilSimpleBold, PiNewspaperBold, PiFunnelSimpleBold} from "react-icons/pi";
@@ -56,6 +56,14 @@ const Dashboard = () => {
     const [images, setImages] = useState([]);
 
 
+    const navigateTo = useNavigate()
+
+    const logoutUser = () => {
+        Cookies.remove('token');
+        navigateTo('/');
+    }
+
+
 
     useEffect(() => {
 
@@ -102,7 +110,7 @@ const Dashboard = () => {
                         <div className="option_user_box">
                             <Link key="account" className='link option_user_text' to='/dashboard/account'><PiUserBold className='option_user_icon'/><b>Mon Compte</b></Link>
                             <Link key="parameter" className='link option_user_text' to="/dashboard/parameter"><PiGearSixBold className='option_user_icon'/><b>Parametre</b></Link>
-                            <Link key="option" className='link option_user_text' to="/dashboard/lougout"><PiPowerBold  className='option_user_icon'/><b>Logout</b></Link>
+                            <button onClick={logoutUser} key="option" className='option_user_text' to="/dashboard/lougout"><PiPowerBold  className='option_user_icon'/><b>Logout</b></button>
                         </div>   
                     </motion.div>
                 </AnimatePresence>

@@ -14,8 +14,8 @@ const router = express.Router();
 router.use(cors())
 router.use(express.json());
 
-const secretKey = 'AUBUKBSAKBDKUDKUADUBYDKUABDAKUDNKAUBDYKAUDNAKUDBAK'//crypto.randomBytes(32).toString('hex');
-
+require('dotenv').config();
+const secretKey = process.env.SECRET_KEY; 
 
 
 

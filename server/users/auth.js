@@ -1,8 +1,19 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const mysql = require('mysql');
-const db = require('../db'); // Assurez-vous que le chemin est correct
+const db = require('../db'); 
 const cors = require('cors')
+const crypto = require('crypto');
+const CryptoJS = require("crypto-js");
+const bcrypt = require('bcrypt');
+
+
+require('dotenv').config();
+const secretKey = process.env.SECRET_KEY; 
+
+
+
+
 
 const router = express.Router();
 
@@ -10,33 +21,62 @@ router.use(cors())
 router.use(express.json());
 
 
-const secretKey = 'AUBUKBSAKBDKUDKUADUBYDKUABDAKUDNKAUBDYKAUDNAKUDBAK'; // Remplacez par votre clé secrète
+
+
 
 router.post('/login', (req, res) => {
 
   console.log(req.body);
   const sentLoginUsername = req.body.LoginUserName;
   const sentLoginPassword = req.body.LoginPassword;
+  const salt = req.body.salt
 
-  const SQL = 'SELECT username, id_user, admin FROM users WHERE username = ? && password = ?';
-  const Values = [sentLoginUsername, sentLoginPassword];
+
+  // Utilisez le buffer comme sel pour crypto.pbkdf2
+  const key = CryptoJS.PBKDF2(sentLoginUsername, salt, { keySize: 256 / 32, iterations: 1000 });
+  
+  const keyString = key.toString(CryptoJS.enc.Base64);
+  console.log('Derived Key:', keyString)
+  const decrypted = CryptoJS.AES.decrypt(sentLoginPassword, keyString, {
+    mode: CryptoJS.mode.ECB,
+    padding: CryptoJS.pad.Pkcs7
+  }).toString(CryptoJS.enc.Utf8);
+  
+  console.log('Decrypted:', decrypted);   
+  
+
+
+  const SQL = 'SELECT username, id_user, admin, password FROM users WHERE username = ?';
+  const Values = [sentLoginUsername];
 
   db.query(SQL, Values, (err, results) => {
     if (err) {
-      res.send({ error: err });
+      return res.send({ error: err });
     }
-    if (results.length > 0) {
+
+    if (results && results.length > 0) {
       const user = results[0];
-      const idUser = user.id_user;
-      const admin = user.admin === 1;
-      console.log("utilisateur trouvé")
 
-      const token = jwt.sign(
-        { idUser: idUser, username: sentLoginUsername, isAdmin: admin },
-        secretKey
-      );
+      console.log('user:', user)
 
-      res.send({ token });
+      bcrypt.compare(decrypted, user.password, function(err, result) {
+        console.log('result:', result);
+        if (result == true) {
+          const idUser = user.id_user;
+          const admin = user.admin === 1;
+
+          const token = jwt.sign(
+            { idUser: idUser, username: sentLoginUsername, isAdmin: admin },
+            secretKey
+          );
+
+          console.log('utilisateur trouvé');
+
+          res.send({ token });
+        } else {
+          res.send({ message: 'Mot de passe incorrect' });
+        }
+      });
     } else {
       res.send({ message: 'Utilisateur introuvable' });
     }

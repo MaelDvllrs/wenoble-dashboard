@@ -6,6 +6,10 @@ import {jwtDecode} from 'jwt-decode';
 import Cookies from 'js-cookie';
 import config from "../../config";
 import { IsAuthenticated, IsAuthenticatedAdmin } from "../../Auth/ProtectedRoutes";
+import CryptoJS from 'crypto-js'; 
+
+
+
 
 
 const Login = () => {
@@ -29,7 +33,7 @@ const Login = () => {
     }
 
     if (isAdmin.isAuthenticating) {
-        navigateTo('/dashboard-admin');
+        navigateTo('/dashboard-admin/home');
     }
 
     const loginUser = (e)=>{
@@ -39,10 +43,30 @@ const Login = () => {
 
         e.preventDefault();
 
-        Axios.post(`${apiUrl}/login`,{
-            LoginUserName: loginUserName,
-            LoginPassword: loginPassword
 
+
+    const presalt = (CryptoJS.lib.WordArray.random(128 / 8));
+    const salt = presalt.toString(CryptoJS.enc.Base64);
+
+    console.log('salt:', salt);
+    
+    const key = CryptoJS.PBKDF2(loginUserName, salt, { keySize: 256 / 32, iterations: 1000 });
+
+    
+
+    const keyString = key.toString(CryptoJS.enc.Base64);
+
+    console.log('key:', keyString);
+
+    const encryptedPassword = CryptoJS.AES.encrypt(loginPassword, keyString, {
+        mode: CryptoJS.mode.ECB,
+        padding: CryptoJS.pad.Pkcs7
+      }).toString();
+
+    Axios.post(`${apiUrl}/login`, {
+        LoginUserName: loginUserName,
+        LoginPassword: encryptedPassword,
+        salt: salt,
         }).then((response)=>{
 
             if(response.data.message){
@@ -62,7 +86,7 @@ const Login = () => {
                 const isAdmin = decodedToken.isAdmin;
 
                 if (isAdmin) {
-                    navigateTo('/dashboard-admin');
+                    navigateTo('/dashboard-admin/home');
                 } else {
                     navigateTo('/dashboard/home');
                 }

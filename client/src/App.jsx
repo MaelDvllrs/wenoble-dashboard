@@ -7,11 +7,14 @@ import Login from './Components/Login/Login'
 import EditPortfolio from './Components/Dashboard/Pages/modification_site/Portfolio/EditPortfolio'
 import Logout from './Components/Login/Logout';
 import Admin from './Components/Admin/Admin';
+import AdminHome from './Components/Admin/AdminHome'
+import AdminClient from './Components/Admin/Clients/AdminClients'
 import {IsAuthenticated, IsAuthenticatedAdmin} from './Auth/ProtectedRoutes';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import ModificationHome from './Components/Dashboard/Pages/modification_site/modificationHome'
 import Page from './Components/Dashboard/Pages/modification_site/Page/page'
 import EditPage from './Components/Dashboard/Pages/modification_site/Page/EditPage'
+import AddClient from './Components/Admin/Clients/AddClient'
 
 function App() {
 
@@ -77,7 +80,11 @@ const ProtectedRoutePortfolio = ({children}) =>{
           </Route>
 
           <Route path="/dashboard-admin">  
-            <Route element={<ProtectedRouteAdmin><Admin /></ProtectedRouteAdmin>} />
+            <Route element={<ProtectedRouteAdmin><Admin /></ProtectedRouteAdmin>}>
+              <Route path="/dashboard-admin/home" element={<AdminHome/>}/>
+              <Route path="/dashboard-admin/clients" element={<AdminClient/>}/>
+              <Route path="/dashboard-admin/clients/add" element={<AddClient/>}/>
+            </Route>
           </Route>
         </Routes>
       </Router>

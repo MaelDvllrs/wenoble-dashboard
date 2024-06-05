@@ -26,25 +26,29 @@ const Page = () => {
 
     useEffect(() => {
         const user = Cookies.get('user');
-
+    
         if (user) { 
             const decodedUser = jwtDecode(user);
-
+    
             Axios.get(`${apiUrl}/getPage`, {
                 params: {
                     IdUser: decodedUser.user[0].id_user,
                 }
-                
-                
             }).then((response) => {
                 setInfopage(response.data);
+            }).catch((error) => {
+                console.error('Erreur lors de la récupération de la page :', error);
             });
         }
     }, [Infopage]);
 
 
+
     if(Infopage != null){
-        decodedPage = jwtDecode(Infopage);
+        if (typeof Infopage === 'string') {
+            decodedPage = jwtDecode(Infopage);
+        }
+
         if(decodedPage && decodedPage.page.length > 0 && !initialNavigationDone) {
             navigate('/dashboard/modification/page/' + decodedPage.page[0].id_page);
             setInitialNavigationDone(true);

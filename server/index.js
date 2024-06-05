@@ -3,12 +3,17 @@ const app = express()
 const cors = require('cors')
 const bodyParser = require('body-parser');
 
-
+// Client router
 const apiRouter = require('./api/portfolio_api');
 const authRoutes = require('./users/auth');
 const infoUserRouter = require('./users/infoUser');
 const portfolioRouter = require('./modification/portfolio');
 const pageRouter = require('./modification/page');
+
+// Admin router
+const clientRouter = require('./admin/client');
+
+
 
 app.use(cors())
 app.use(express.json())
@@ -21,6 +26,8 @@ app.use(authRoutes);
 app.use(infoUserRouter);
 app.use(portfolioRouter);
 app.use(pageRouter);
+
+app.use(clientRouter);
 
 app.use('/api', apiRouter);
 

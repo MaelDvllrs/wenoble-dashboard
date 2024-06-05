@@ -13,31 +13,25 @@ const router = express.Router();
 router.use(cors())
 router.use(express.json());
 
-const secretKey = 'AUBUKBSAKBDKUDKUADUBYDKUABDAKUDNKAUBDYKAUDNAKUDBAK'
+require('dotenv').config();
+const secretKey = process.env.SECRET_KEY; 
 
-
-router.get('/getPage', (req, res)=>{
-    
+router.get('/getPage', (req, res) => {
   const sentIdUser = req.query.IdUser
-
   const SQL = 'SELECT id_page, page_name FROM page WHERE id_user = ?'
-
   const Values = [sentIdUser]
 
-  db.query(SQL, Values, (err, results)=>{
-      if(err){
-          res.send({error: err})
-      }
+  db.query(SQL, Values, (err, results) => {
+    if (err) {
+      res.send({ error: err })
+      return; // Ajoutez cette ligne
+    }
 
-      const page = results
-
-      const pageCrypt = jwt.sign({
-        page : page
-      }, secretKey);
-
-      res.send(pageCrypt)
-  }) 
-});
+    const page = results
+    const pageCrypt = jwt.sign({ page: page }, secretKey)
+    res.send(pageCrypt)
+  })
+})
 
 
 router.get('/getPageImages', (req, res) => {
@@ -88,7 +82,7 @@ router.get('/getPageTexte', (req, res) => {
       return res.status(400).send('L\'id de la page est manquant.');
   }
 
-  const SQL = 'SELECT text, id_text, id_page FROM text_page WHERE id_page = ?';
+  const SQL = 'SELECT text, id_text FROM text_page WHERE id_page = ?';
   const values = [pageId];
 
   db.query(SQL, values, (err, results) => {

@@ -14,8 +14,8 @@ const router = express.Router();
 router.use(cors())
 router.use(express.json());
 
-const secretKey = 'AUBUKBSAKBDKUDKUADUBYDKUABDAKUDNKAUBDYKAUDNAKUDBAK'
-
+require('dotenv').config();
+const secretKey = process.env.SECRET_KEY; 
 
 router.get('/getPortfolio', (req, res)=>{
     
