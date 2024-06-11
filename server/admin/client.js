@@ -2,7 +2,7 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const cors = require('cors')
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const saltRounds = 10;
 const crypto = require('crypto');
 
@@ -32,7 +32,7 @@ router.post('/SaveClient', (req, res) => {
   console.log(req.body.params.fields)
   const fields = req.body.params.fields
 
-  const cle_api = 'API' + Date.now() + req;body.fields.username
+  const cle_api = 'API' + Date.now() + fields.username
 
   const password = crypto.randomBytes(8).toString('hex');
 

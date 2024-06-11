@@ -1,5 +1,5 @@
 const config = {
-    apiUrl: 'http://localhost:3002', 
+    apiUrl: 'http://77.37.51.201/api-wenoble', 
   };
   
   export default config;

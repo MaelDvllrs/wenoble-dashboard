@@ -13,7 +13,8 @@
     display: flex;
     flex-direction: column;
     align-items: left;
-    padding: 1rem;
+    padding-left: 1rem;
+    padding-top: 1rem;
     z-index: 2;
 }
 
@@ -25,6 +26,7 @@
     display: flex;
     flex-direction: column;
     margin-top: 2rem;
+    margin-right: 1rem;
     border: 1px #434853 solid;
     border-radius: 0.7rem;
     padding: 1rem;
@@ -123,6 +125,7 @@
     margin-bottom: 0.5rem;
     padding: 1rem;
     transition: 0.2s ease;
+    position: relative;
 }
 
 .open_link_menu{
@@ -130,7 +133,9 @@
     align-items: center;
     padding-left: 1rem;
     padding-right: 1rem;
-    border-radius: 0.7rem;
+
+    border-top-left-radius: 0.7rem;
+    border-bottom-left-radius: 0.7rem;
 
 }
 
@@ -156,13 +161,29 @@
 }
 
 .menu_link:hover{
-    box-shadow: inset 0 1px 0 0 hsla(0, 0%, 100%, .05), 0 0 0 1px hsla(0, 0%, 100%, .25), inset 0 -1px 0 0 rgba(0, 0, 0, .2);
-    color: white;
+    color: #0541b7;
+    background-color: #15171d;
+
 }
 
 .menuActive > .menu_link{
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: #15171d;
+    color: #0541b7;
 
+}
+
+.menuActive > .menu_link > .menu_link_active_curs{
+    background-color: #0541b7;
+
+}
+
+.menu_link_active_curs{
+    height: 3.5rem;
+    width: 0.5rem;
+    position: absolute;
+    right: 0;
+    border-top-left-radius: 0.5rem;
+    border-bottom-left-radius: 0.5rem;
 }
 
 .icon_navigation{

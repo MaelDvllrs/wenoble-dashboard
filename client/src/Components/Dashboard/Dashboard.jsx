@@ -121,6 +121,7 @@ const Dashboard = () => {
                             <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"}>
                                 <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><PiHouseBold /></motion.div>
                                 <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Accueil</motion.span>
+                                <div className='menu_link_active_curs'></div>
                             </motion.div>
                         </AnimatePresence>
                     </NavLink>
@@ -129,6 +130,7 @@ const Dashboard = () => {
                             <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"}>
                                 <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><PiChartBarBold/></motion.div>
                                 <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Statistique</motion.span>
+                                <div className='menu_link_active_curs'></div>
                             </motion.div>
                         </AnimatePresence>
                     </NavLink>
@@ -137,6 +139,7 @@ const Dashboard = () => {
                             <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"}>
                                 <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><PiPencilSimpleBold/></motion.div>
                                 <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Modification</motion.span>
+                                <div className='menu_link_active_curs'></div>
                             </motion.div>
                         </AnimatePresence>
                     </NavLink>
@@ -145,6 +148,7 @@ const Dashboard = () => {
                             <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"}>
                                 <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><PiNewspaperBold/></motion.div>
                                 <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Actualité</motion.span>
+                                <div className='menu_link_active_curs'></div>
                             </motion.div>
                         </AnimatePresence>
                     </NavLink>

@@ -5,7 +5,7 @@ const db = require('../db');
 const cors = require('cors')
 const crypto = require('crypto');
 const CryptoJS = require("crypto-js");
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 
 require('dotenv').config();
