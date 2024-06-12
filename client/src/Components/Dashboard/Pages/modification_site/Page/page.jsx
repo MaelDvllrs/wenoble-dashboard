@@ -19,7 +19,7 @@ const Page = () => {
 
     const apiUrl = config.apiUrl; 
 
-    let decodedPage = null;
+    const [decodedPage, setDecodedPage] = useState(null);
 
 
     const [Infopage, setInfopage] = useState(null);
@@ -44,16 +44,16 @@ const Page = () => {
 
 
 
-    if(Infopage != null){
-        if (typeof Infopage === 'string') {
-            decodedPage = jwtDecode(Infopage);
+    useEffect(() => {
+        if(Infopage != null){
+            const decoded = jwtDecode(Infopage);
+            setDecodedPage(decoded);
+            if(decoded && decoded.page.length > 0 && !initialNavigationDone) {
+                navigate('/dashboard/modification/page/' + decoded.page[0].id_page);
+                setInitialNavigationDone(true);
+            }
         }
-
-        if(decodedPage && decodedPage.page.length > 0 && !initialNavigationDone) {
-            navigate('/dashboard/modification/page/' + decodedPage.page[0].id_page);
-            setInitialNavigationDone(true);
-        }
-    }
+    }, [Infopage, initialNavigationDone, navigate]);
 
     return(
         <div className="outlet">

@@ -24,7 +24,6 @@ const IsAuthenticated = () => {
 
         if (response.data.success && !response.data.user.isAdmin) {
           setIsAuthenticating(true);
-          console.log("accés client autorisé")
         }
         setVerifyAuth(true)
       } catch (error) {
@@ -55,7 +54,6 @@ const IsAuthenticatedAdmin = () => {
 
         if (response.data.success && response.data.user.isAdmin) {
           setIsAuthenticating(true);
-          console.log('acces admin autorisé');
         }
         setverifyAdm(true)
       } catch (error) {

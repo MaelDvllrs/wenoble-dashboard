@@ -98,7 +98,6 @@ const EditPortfolio = () => {
     let order = 1;
     const imagesToSave = [];
 
-    console.log('fields:', fields);
   
     fields.forEach((image) => {
       if (image.publicationDate > initialDate) {

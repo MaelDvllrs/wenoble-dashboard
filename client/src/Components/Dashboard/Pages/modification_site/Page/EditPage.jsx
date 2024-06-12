@@ -81,7 +81,6 @@ const EditPage = () => {
 
     // --------------MODIFICATION IMAGE----------------
   const handleImageChange = async (event, imageId, imageAlt) => {
-    console.log('imageId:', imageId);
     const file = event.target.files[0];
     const compressedFile = await compressImage(file); 
   
@@ -104,7 +103,6 @@ const EditPage = () => {
     }));
   };
 
-  console.log('modifiedData:', modifiedData);
 
   const handleSaveText = () => {
     setModifiedData(prevData => ({
@@ -121,7 +119,6 @@ const EditPage = () => {
 
   const handleSave = async () => {
 
-    console.log('modifiedData:', modifiedData);
     try {
       // Convertir l'objet modifiedData en tableau
       Object.values(modifiedData).forEach(async (image) => {
@@ -145,7 +142,6 @@ const EditPage = () => {
   };
 
   const handleCloseCard = () => {
-    console.log("fermeture card")
     setisCardImageOpen(false);
   };
 
@@ -165,7 +161,6 @@ const EditPage = () => {
   });
 
   useEffect(() => {
-    console.log('recuperation des images')
     const fetchData = async () => {
       for (let i = fieldsImage.length - 1; i >= 0; i--) {
         removeImage(i);

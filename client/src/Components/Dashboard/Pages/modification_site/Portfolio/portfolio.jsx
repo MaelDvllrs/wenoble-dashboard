@@ -21,7 +21,7 @@ const Portfolio = () => {
 
     const [initialNavigationDone, setInitialNavigationDone] = useState(false);
 
-    let decodedPortfolio = null;
+    const [decodedPortfolio, setDecodedPortfolio] = useState(null);
 
     const [Infoportfolio, setInfoportfolio] = useState(null);
     
@@ -45,13 +45,16 @@ const Portfolio = () => {
 
 
 
-    if(Infoportfolio != null){
-        decodedPortfolio = jwtDecode(Infoportfolio);
-        if(decodedPortfolio && decodedPortfolio.portfolio.length > 0 && !initialNavigationDone) {
-            navigate('/dashboard/modification/portfolio/' + decodedPortfolio.portfolio[0].id_portfolio);
-            setInitialNavigationDone(true);
+    useEffect(() => {
+        if(Infoportfolio != null){
+            const decoded = jwtDecode(Infoportfolio);
+            setDecodedPortfolio(decoded);
+            if(decoded && decoded.portfolio.length > 0 && !initialNavigationDone) {
+                navigate('/dashboard/modification/portfolio/' + decoded.portfolio[0].id_portfolio);
+                setInitialNavigationDone(true);
+            }
         }
-    }
+    }, [Infoportfolio, initialNavigationDone, navigate]); 
 
 
     return(

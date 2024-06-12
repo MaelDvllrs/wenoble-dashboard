@@ -36,13 +36,11 @@ router.post('/login', (req, res) => {
   const key = CryptoJS.PBKDF2(sentLoginUsername, salt, { keySize: 256 / 32, iterations: 1000 });
   
   const keyString = key.toString(CryptoJS.enc.Base64);
-  console.log('Derived Key:', keyString)
   const decrypted = CryptoJS.AES.decrypt(sentLoginPassword, keyString, {
     mode: CryptoJS.mode.ECB,
     padding: CryptoJS.pad.Pkcs7
   }).toString(CryptoJS.enc.Utf8);
   
-  console.log('Decrypted:', decrypted);   
   
 
 
@@ -57,10 +55,8 @@ router.post('/login', (req, res) => {
     if (results && results.length > 0) {
       const user = results[0];
 
-      console.log('user:', user)
 
       bcrypt.compare(decrypted, user.password, function(err, result) {
-        console.log('result:', result);
         if (result == true) {
           const idUser = user.id_user;
           const admin = user.admin === 1;
@@ -70,7 +66,6 @@ router.post('/login', (req, res) => {
             secretKey
           );
 
-          console.log('utilisateur trouvé');
 
           res.send({ token });
         } else {

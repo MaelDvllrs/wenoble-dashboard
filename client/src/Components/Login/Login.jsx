@@ -38,9 +38,6 @@ const Login = () => {
 
     const loginUser = (e)=>{
 
-        console.log('connexion...')
-
-
         e.preventDefault();
 
 
@@ -48,7 +45,6 @@ const Login = () => {
     const presalt = (CryptoJS.lib.WordArray.random(128 / 8));
     const salt = presalt.toString(CryptoJS.enc.Base64);
 
-    console.log('salt:', salt);
     
     const key = CryptoJS.PBKDF2(loginUserName, salt, { keySize: 256 / 32, iterations: 1000 });
 
@@ -56,7 +52,6 @@ const Login = () => {
 
     const keyString = key.toString(CryptoJS.enc.Base64);
 
-    console.log('key:', keyString);
 
     const encryptedPassword = CryptoJS.AES.encrypt(loginPassword, keyString, {
         mode: CryptoJS.mode.ECB,
@@ -75,9 +70,7 @@ const Login = () => {
             }
             else{
 
-                console.log('utilisateur trouvé');
 
-                console.log(response.data.token);
 
                 const token = response.data.token;
                 Cookies.set('token', token);

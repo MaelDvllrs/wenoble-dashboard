@@ -101,7 +101,6 @@ router.post('/saveImagesPortfolio', upload.single('image'), (req, res) => {
       return res.status(400).send('Aucune image n\'a été téléchargée.');
     }
 
-    console.log('saveImagesPortfolio called');
   
     const id_photo = req.body.id_photo;
     const id_portfolio = req.body.id_portfolio;
@@ -148,36 +147,41 @@ router.post('/deleteImage', (req, res) => {
     console.log('No body in the request');
     return res.status(400).send('Aucune image n\'a été téléchargée.');
   }
-  let ImageFolder = '';
   const id_photo = req.body.params.id_photo;
   const type_photo = req.body.params.type_photo;
-  const imageName = req.body.params.imageName;
 
 
-  if (type_photo === 'portfolio_image') {
-    ImageFolder = 'photo_portfolio';
-  
-  } else if (type_photo === 'page_image') {
-    ImageFolder = 'photo_page';
-  };
 
+  const SQLSelect = `SELECT src_photo FROM photo_portfolio WHERE id_photo = ?`;
+  const ValuesSelect = [id_photo];
 
-  const SQL = `DELETE FROM ${ImageFolder} WHERE id_photo = ?`;
-  const Values = [id_photo];
-
-  db.query(SQL, Values, (err, results) => {
+  db.query(SQLSelect, ValuesSelect, (err, results) => {
     if (err) {
+      console.log('Error in db query', err);
+      return res.status(500).send({ error: err });
+    }
+
+    // Assuming imageName is the column name in your table
+    const imageName = results[0].src_photo;
+
+    const SQLDelete = `DELETE FROM photo_portfolio WHERE id_photo = ?`;
+    const ValuesDelete = [id_photo];
+
+    db.query(SQLDelete, ValuesDelete, (err, results) => {
+      if (err) {
         console.log('Error in db query', err);
         return res.status(500).send({ error: err });
-    }
-    const imagePath = path.join(__dirname,'..', 'images', type_photo, imageName);
-    fs.unlink(imagePath, (err) => {
-      if (err) {
-        console.log('Error in fs.unlink', err);
-        return res.status(500).send({ error: err });
       }
-      console.log('Image file deleted');
-      res.status(200).send('Image supprimée avec succès');
+
+      const imagePath = path.join(__dirname, '..', 'images', type_photo, imageName);
+      fs.unlink(imagePath, (err) => {
+        if (err) {
+          console.log('Error in fs.unlink', err);
+          return res.status(500).send({ error: err });
+        }
+        console.log('Image file deleted');
+        res.status(200).send('Image supprimée avec succès');
+      });
     });
   });
 });
