@@ -38,8 +38,6 @@ export const fetchImagesPortfolio = async (portfolioId) => {
 
 export const saveImagesPortfolio = async (fields) => {
   try {
-    console.log('Enregistrement des images...');
-    console.log(fields);
 
     // Créer un objet FormData
     const formData = new FormData();
@@ -124,7 +122,6 @@ export const fetchImagesPage = async (pageId) => {
 
 export const saveImagePage = async (fields) => {
   try {
-    console.log('Enregistrement des images...');
 
     if (fields.data) {
       
@@ -147,7 +144,6 @@ export const saveImagePage = async (fields) => {
       });
 
     } else {
-      console.log(fields);
 
       await Axios.post(`${apiUrl}/saveAltPage`, {
 
@@ -180,9 +176,7 @@ export const fetchTextePage = async (pageId) => {
 }
 
 export const saveTextPage = async (fields) => {
-  console.log(fields);
   try {
-    console.log('Enregistrement des textes...');
     await Axios.post(`${apiUrl}/saveTextPage`, {
       params: {
         fields : fields,

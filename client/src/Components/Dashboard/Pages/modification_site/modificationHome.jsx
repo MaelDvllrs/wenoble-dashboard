@@ -104,7 +104,7 @@ const ModificationHome = () => {
                                 <div className="page_modification_image page_modification_image_last"></div>
                         </div>
                     </NavLink>
-                    <NavLink to={'/dashboard/modification/Blog/'} className="modification_box_3 modification_box">
+                    <NavLink to={'/dashboard/modification/blog'} className="modification_box_3 modification_box">
                         <div className="modification_title_box">
                                 <div className="modification_title"><MdArticle className="icon_modifiaction_title"/><b>Blog</b></div>
                                 <div className="button_modificationHome"><MdArrowForwardIos /></div>

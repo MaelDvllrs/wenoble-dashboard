@@ -17,7 +17,6 @@ const Home = () => {
            ╚═══╝╚╝ ╚╝╚═══╝╚╝ ╚╝╚═══╝╚═══╝╚╝ ╚╝╚╝╚═╝╚═══╝
     `)
 
-    console.log("")
     return(
         <div>Dashboard
             

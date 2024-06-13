@@ -5,7 +5,6 @@ import Account from'./Components/Dashboard/Pages/Account'
 import Portfolio from './Components/Dashboard/Pages/modification_site/Portfolio/portfolio'
 import Login from './Components/Login/Login'
 import EditPortfolio from './Components/Dashboard/Pages/modification_site/Portfolio/EditPortfolio'
-import Logout from './Components/Login/Logout';
 import Admin from './Components/Admin/Admin';
 import AdminHome from './Components/Admin/AdminHome'
 import AdminClient from './Components/Admin/Clients/AdminClients'
@@ -15,6 +14,9 @@ import ModificationHome from './Components/Dashboard/Pages/modification_site/mod
 import Page from './Components/Dashboard/Pages/modification_site/Page/page'
 import EditPage from './Components/Dashboard/Pages/modification_site/Page/EditPage'
 import AddClient from './Components/Admin/Clients/AddClient'
+import Blog from './Components/Dashboard/Pages/modification_site/Blog/blog'
+import Statistique from './Components/Dashboard/Pages/Statistique/Statistique'
+import Actualite from './Components/Dashboard/Pages/Actualite/Actualite'
 
 function App() {
 
@@ -68,13 +70,18 @@ const ProtectedRoutePortfolio = ({children}) =>{
               <Route path="/dashboard/home" element={<Home/>}/>
               <Route path="/dashboard/account" element={<Account/>}/>
               <Route path="/dashboard/modification" element={<ModificationHome/>}>
-                
               </Route>
               <Route path="/dashboard/modification/portfolio" element={<Portfolio/>} >
                   <Route path="/dashboard/modification/portfolio/:id" element={<EditPortfolio/>}></Route>
               </Route>
               <Route path="/dashboard/modification/page" element={<Page/>} >
                   <Route path="/dashboard/modification/page/:id" element={<EditPage/>}></Route>
+              </Route>
+              <Route path="/dashboard/modification/blog" element={<Blog/>} >
+              </Route>
+              <Route path="/dashboard/stats" element={<Statistique/>} >
+              </Route>
+              <Route path="/dashboard/actu" element={<Actualite/>} >
               </Route>
             </Route>
           </Route>

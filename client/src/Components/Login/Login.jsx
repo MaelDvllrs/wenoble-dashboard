@@ -117,7 +117,6 @@ const Login = () => {
                         <span className="loginButtonText">Connexion</span>
                     </button>
                     <span>
-                        <a className="mdpOublier" href="/">mot de passe oublier</a>
                     </span>
                 </form>
             </div>
