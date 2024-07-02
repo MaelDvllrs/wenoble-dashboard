@@ -5,7 +5,6 @@ import { saveImagesPortfolio, orderportfolio, compressImage, deleteImage } from 
 import { SkeletonPortfolio } from "../../../../skeleton/skeleton";
 import { FileUploader } from "react-drag-drop-files";
 import { LiaCloudUploadAltSolid } from "react-icons/lia";
-import { PiControl, PiDotsThreeOutlineVerticalFill } from "react-icons/pi";
 import { fetchImagesPortfolio } from "../../../apiImage";
 import { useParams } from "react-router-dom";
 import { Reorder } from "framer-motion";
@@ -13,20 +12,20 @@ import { SnackbarProvider, enqueueSnackbar } from 'notistack'
 import { useTheme } from '@mui/material/styles';
 import IconButton from '@mui/material/IconButton';
 import DeleteIcon from '@mui/icons-material/Delete';
-import LoadingButton from '@mui/lab/LoadingButton';
 import SaveIcon from '@mui/icons-material/Save';
-import Button from '@mui/material/Button';
 import { v4 as uuidv4 } from 'uuid';
+import Cookies from 'js-cookie';
+import {jwtDecode} from 'jwt-decode'; 
+import {DefaultButton, SecondaryButton} from '../../../../../Theme/element';
 
 
 
 
 const EditPortfolio = () => {
-  let { id } = useParams();
+  const { id } = useParams();
+
 
   const theme = useTheme();
-
-
 
   const [LoadingPortfolio, setLoadingPortfolio] = useState(true);
   const [loadingSave, setLoadingSave] = useState(false);
@@ -39,11 +38,14 @@ const EditPortfolio = () => {
   });
 
   useEffect(() => {
+    
+    const user = Cookies.get('token');
+    const decodedUser = jwtDecode(user);
     const fetchData = async () => {
       for (let i = fields.length - 1; i >= 0; i--) {
         remove(i);
       }
-      const imagesData = await fetchImagesPortfolio(id);
+      const imagesData = await fetchImagesPortfolio(id, decodedUser.idUser);
       imagesData.forEach((image) => append(image));
       setLoadingPortfolio(false);
     };
@@ -151,9 +153,16 @@ const EditPortfolio = () => {
 
   return (
     <div className="editPortfolio_contain">
+      <div className="header_modification">
+          <h3>Ajout de photo</h3>
+          <div className="button_save_contain">
+              <SecondaryButton onClick={reloadPage}  variant="contained" theme={theme}>Annuler</SecondaryButton>
+              <DefaultButton type="submit" variant="contained" onClick={ async () => {await handleSave()}}><SaveIcon/> Enregitrer</DefaultButton>
+          </div>
+      </div>
       <SnackbarProvider maxSnack={3} autoHideDuration={2000}>
       <FileUploader handleChange={handleChange} name="file" types={fileTypes} multiple={true}>
-        <div className="DragAndDrop">
+        <div className="DragAndDrop" >
           <span className="logoUploadImage">
             <LiaCloudUploadAltSolid />
           </span>
@@ -162,13 +171,13 @@ const EditPortfolio = () => {
       </FileUploader>
 
       <div className="Item_menu">
-        <p className="Item_portfolio_element order_element">Ordre</p>
-        <p className="Item_portfolio_element alt_element">Texte alternatif</p>
-        <p className="Item_portfolio_element name_element">Nom</p>
-        <p className="Item_portfolio_element Item_image_menu">Image</p>
-        <p className="Item_portfolio_element option_element_menu">Option</p>
+        <p style={{color: theme.palette.text.secondary}} className="Item_portfolio_element order_element">Ordre</p>
+        <p style={{color: theme.palette.text.secondary}} className="Item_portfolio_element alt_element">Texte alternatif</p>
+        <p style={{color: theme.palette.text.secondary}} className="Item_portfolio_element name_element">Nom</p>
+        <p style={{color: theme.palette.text.secondary}} className="Item_portfolio_element Item_image_menu">Image</p>
+        <p style={{color: theme.palette.text.secondary}} className="Item_portfolio_element option_element_menu">Option</p>
       </div>
-      <div className="line_horizontal" style={{ backgroundColor: theme.palette.secondary.secondary }}></div>
+      <div className="line_horizontal" style={{ backgroundColor: theme.palette.text.secondary }}></div>
       <div className="portfolio_edit_place">
         {LoadingPortfolio ? <SkeletonPortfolio /> : <Reorder.Group values={fields} onReorder={handleReorder}>
         {fields.map((image, index) => {
@@ -190,7 +199,7 @@ const EditPortfolio = () => {
                 <div className="Item_portfolio_element option_element">
                   <div className="button_option_portfolio">
                     <IconButton aria-label="delete"  onClick={() => {handleDelete(image.id_photo,image.name, index);}}>
-                      <DeleteIcon color="secondary"/>
+                      <DeleteIcon style={{color: theme.palette.text.primary}}/>
                     </IconButton>
                   </div>
                 </div>
@@ -200,24 +209,6 @@ const EditPortfolio = () => {
         })}
         </Reorder.Group>}
       </div>
-      {changesMade && ( // Render save button only if changes are made
-
-        <div className="button_save_contain">
-
-          <Button  onClick={reloadPage}  color="secondary" variant="contained">Annuler</Button>
-
-          <LoadingButton
-            loadingPosition="start"
-            startIcon={<SaveIcon />}
-            loading={loadingSave}
-            onClick={ async () => {await handleSave()}}
-            color="success"
-            variant="contained"
-          >
-            <span>Enregistrer</span>
-          </LoadingButton>
-        </div>
-      )}
       </SnackbarProvider>
     </div>
     

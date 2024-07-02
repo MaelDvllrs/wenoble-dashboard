@@ -15,8 +15,12 @@ import Page from './Components/Dashboard/Pages/modification_site/Page/page'
 import EditPage from './Components/Dashboard/Pages/modification_site/Page/EditPage'
 import AddClient from './Components/Admin/Clients/AddClient'
 import Blog from './Components/Dashboard/Pages/modification_site/Blog/blog'
+import ListeBlog from './Components/Dashboard/Pages/modification_site/Blog/listeBlog'
+import CreatePageBlog from './Components/Dashboard/Pages/modification_site/Blog/createPageBlog'
+import EditPageBlog from './Components/Dashboard/Pages/modification_site/Blog/editPageBlog'
 import Statistique from './Components/Dashboard/Pages/Statistique/Statistique'
 import Actualite from './Components/Dashboard/Pages/Actualite/Actualite'
+
 
 function App() {
 
@@ -78,6 +82,9 @@ const ProtectedRoutePortfolio = ({children}) =>{
                   <Route path="/dashboard/modification/page/:id" element={<EditPage/>}></Route>
               </Route>
               <Route path="/dashboard/modification/blog" element={<Blog/>} >
+                <Route path="/dashboard/modification/blog/:id" element={<ListeBlog/>}></Route>
+                <Route path="/dashboard/modification/blog/:id/createPage" element={<CreatePageBlog/>}></Route>
+                <Route path="/dashboard/modification/blog/:id/editPage/:idPage" element={<EditPageBlog/>}></Route>
               </Route>
               <Route path="/dashboard/stats" element={<Statistique/>} >
               </Route>

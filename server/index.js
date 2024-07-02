@@ -9,6 +9,7 @@ const authRoutes = require('./users/auth');
 const infoUserRouter = require('./users/infoUser');
 const portfolioRouter = require('./modification/portfolio');
 const pageRouter = require('./modification/page');
+const blogRouter = require('./modification/blog')
 
 // Admin router
 const clientRouter = require('./admin/client');
@@ -26,6 +27,8 @@ app.use(authRoutes);
 app.use(infoUserRouter);
 app.use(portfolioRouter);
 app.use(pageRouter);
+app.use(blogRouter);
+
 
 app.use(clientRouter);
 

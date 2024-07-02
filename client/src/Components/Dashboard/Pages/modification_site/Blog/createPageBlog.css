@@ -1,0 +1,20 @@
+.blogField_contain{
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin-top: 2rem;
+
+}
+
+.Blog_creation_Page{
+    height: 100%;
+}
+
+.Blog_creation_field_contain{
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+    scrollbar-color: #272a31 transparent; 
+    scrollbar-width: thin;
+    height: calc(100% - 4rem);
+}
+

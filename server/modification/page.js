@@ -24,7 +24,7 @@ router.get('/getPage', (req, res) => {
   db.query(SQL, Values, (err, results) => {
     if (err) {
       res.send({ error: err })
-      return; // Ajoutez cette ligne
+      return;
     }
 
     const page = results

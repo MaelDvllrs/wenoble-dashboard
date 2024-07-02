@@ -10,6 +10,9 @@ import config from "../../../../../config";
 import { useTheme } from '@mui/material/styles';
 
 
+
+
+
 const Portfolio = () => {
 
     const theme = useTheme();
@@ -26,14 +29,16 @@ const Portfolio = () => {
     const [Infoportfolio, setInfoportfolio] = useState(null);
     
     useEffect(() => {
-        const user = Cookies.get('user');
+        const user = Cookies.get('token');
+        
 
         if (user) { 
             const decodedUser = jwtDecode(user);
+            console.log(decodedUser);
 
             Axios.get(`${apiUrl}/getPortfolio`, {
                 params: {
-                    IdUser: decodedUser.user[0].id_user,
+                    IdUser: decodedUser.idUser,
                 }
                 
                 
@@ -43,7 +48,7 @@ const Portfolio = () => {
         }
     }, [Infoportfolio]);
 
-
+  
 
     useEffect(() => {
         if(Infoportfolio != null){
@@ -64,7 +69,7 @@ const Portfolio = () => {
                 <div className="breadCrumbs"><NavLink style={{color: theme.palette.text.primary}} className={"breadCrumbsLink"} to={'/dashboard/home'}>Dashboard</NavLink> &gt; <NavLink style={{color: theme.palette.text.primary}} className={"breadCrumbsLink"} to={'/dashboard/modification'}>Modification</NavLink> &gt; Portfolio</div>
             </div>
 
-            <div className="dashboard_case_empty">
+            <div className="dashboard_case_empty" style={{backgroundColor : theme.palette.primary.secondary, borderColor : theme.palette.primary.third}}>
                 <div className="portfolio_onglet_box">
                 {decodedPortfolio && decodedPortfolio.portfolio.map((pageItem) => (
                         <NavLink to={'/dashboard/modification/portfolio/' + pageItem.id_portfolio} className={({ isActive }) => (isActive ? 'portfolio_ongletActive' : 'portfolio_onglet')} key={pageItem.id_portfolio}>
@@ -76,7 +81,6 @@ const Portfolio = () => {
                         <Outlet />
                 </div>
             </div>    
-            <div className="background_glow background_glow_portfolio"></div>      
         </div>
     )
 }

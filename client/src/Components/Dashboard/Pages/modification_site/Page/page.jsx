@@ -25,14 +25,14 @@ const Page = () => {
     const [Infopage, setInfopage] = useState(null);
 
     useEffect(() => {
-        const user = Cookies.get('user');
+        const user = Cookies.get('token');
     
         if (user) { 
             const decodedUser = jwtDecode(user);
     
             Axios.get(`${apiUrl}/getPage`, {
                 params: {
-                    IdUser: decodedUser.user[0].id_user,
+                    IdUser: decodedUser.idUser,
                 }
             }).then((response) => {
                 setInfopage(response.data);

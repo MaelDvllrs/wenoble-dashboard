@@ -31,6 +31,7 @@ const Dashboard = () => {
     const [LoadingProfile, setLoadingProfile] = useState(true);
 
     const [infoUser, setInfoUser] = useState(null);
+
     let decodedUser = null;
 
     useEffect(() => {
@@ -49,7 +50,6 @@ const Dashboard = () => {
     }, []);
 
     if(infoUser != null){
-        Cookies.set('user', infoUser);
         decodedUser = jwtDecode(infoUser);
     }
 
@@ -66,8 +66,6 @@ const Dashboard = () => {
 
 
     useEffect(() => {
-
-
         if(decodedUser != null){
             const fetchData = async () => {
                 const imagesData = await fetchImages(decodedUser.user[0].username); 
@@ -159,10 +157,8 @@ const Dashboard = () => {
             <motion.div className='dashboard_page' animate={{width : open_menu ? "calc(100% - 18rem)" : "calc(100% - 5rem)"}}>
                 <div className='dashboard_header'>
                     <div className='header_box left'>
-
-                        <Checkbox key='menu' checked={open_menu} onChange={toggle_menu} icon={<PiFunnelSimpleBold className='icon' style={{ color: theme.palette.secondary.main }}/>} checkedIcon={<PiFunnelSimpleBold className='icon' style={{ color: theme.palette.secondary.main }}/>}/>
-                        
-                        <Checkbox key='theme' color='secondary' checked={isDark} onChange={toggleTheme} icon={<LuMoon className='icon'/>} checkedIcon={<LuSun  className='icon'/>}/>
+                        <Checkbox key='menu' style={{ color: theme.palette.text.primary }} checked={open_menu} onChange={toggle_menu} icon={<PiFunnelSimpleBold className='icon'/>} checkedIcon={<PiFunnelSimpleBold className='icon'/>}/>
+                        <Checkbox key='theme' style={{ color: theme.palette.text.primary }} checked={isDark} onChange={toggleTheme} icon={<LuMoon className='icon' />} checkedIcon={<LuSun  className='icon'/>}/>
                     </div>   
                     
                 </div>

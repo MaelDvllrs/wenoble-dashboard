@@ -56,10 +56,10 @@ const AddClient = () => {
 
             <div className="dashboard_case_empty">
                 <div className="form_add_client">
-                    <CssTextField id="username" label="username" variant="outlined" color="warning" inputRef={usernameRef} />
-                    <CssTextField id="email" label="email" variant="outlined" inputRef={emailRef} />
-                    <CssTextField id="website" label="website" variant="outlined" inputRef={websiteRef} />
-                    <div>Admin : <DefaultSwitch inputRef={isAdminRef} /></div>
+                    <CssTextField id="username" label="username" variant="outlined" theme={theme} inputRef={usernameRef} />
+                    <CssTextField id="email" label="email" variant="outlined" theme={theme} inputRef={emailRef} />
+                    <CssTextField id="website" label="website" variant="outlined" theme={theme} inputRef={websiteRef} />
+                    <div>Admin : <DefaultSwitch inputRef={isAdminRef} theme={theme} /></div>
                     <DefaultButton onClick={handleSave} variant="contained"><PiUserPlus className="icon space_icon"/>Ajouter</DefaultButton>
                 </div>
                 

@@ -44,22 +44,34 @@ router.get('/getPortfolio', (req, res)=>{
 
 router.get('/getPorfolioImages', (req, res) => {
     const portfolioId = req.query.portfolioId;
-    if (!portfolioId) {
+    const idUser = req.query.idUser;
+
+    if (!portfolioId || !idUser) {
         return res.status(400).send('L\'id du portfolio est manquant.');
     }
 
-    const SQL = 'SELECT id_photo, src_photo, alt_photo, order_photo FROM photo_portfolio WHERE id_portfolio = ? ORDER BY order_photo';
-    const values = [portfolioId];
+    const SQL_verif = 'SELECT id_user FROM portfolio WHERE id_portfolio = ? ORDER BY order_photo';
+    const Values_verif = [portfolioId];
 
-    db.query(SQL, values, (err, results) => {
+    db.query(SQL_verif, Values_verif, (err, results) => {
+
+      if (err) {
+        return res.status(500).send({error: err});
+      }
+
+      if(results[0].id_user != idUser){
+        return res.status(403).send('Vous n\'avez pas les droits pour accéder à ces images');
+      }
+
+      const SQL = 'SELECT id_photo, src_photo, alt_photo, order_photo FROM photo_portfolio WHERE id_portfolio = ? ORDER BY order_photo';
+      const values = [portfolioId];
+
+      db.query(SQL, values, (err, results) => {
         if (err) {
             return res.status(500).send({error: err});
         }
-
         const image_portfolio = results;
-
         const imageDirectory = path.join(__dirname, '..', 'images', 'portfolio_image');
-
         // Récupérer les noms de fichier, l'ordre et le texte alternatif des images depuis la base de données
         const imagesData = image_portfolio.map(image => {
             const imagePath = path.join(imageDirectory, image.src_photo);
@@ -78,10 +90,11 @@ router.get('/getPorfolioImages', (req, res) => {
               return null;
             }
           }).filter(Boolean); 
-      
+        
           res.status(200).json(imagesData);
         });
       });
+    });
 
 
 const storage = multer.diskStorage({

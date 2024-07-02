@@ -7,6 +7,9 @@ import imageCompression from 'browser-image-compression';
 const apiUrl = config.apiUrl; 
 
 
+// ------------------PROFILE------------------
+
+
 export const fetchImages = async (username) => {
   try {
     const response = await Axios.get(`${apiUrl}/getProfileImages`, {
@@ -21,11 +24,15 @@ export const fetchImages = async (username) => {
   }
 };
 
-export const fetchImagesPortfolio = async (portfolioId) => {
+
+// ------------------PORTFOLIO------------------
+
+export const fetchImagesPortfolio = async (portfolioId, idUser) => {
   try {
     const response = await Axios.get(`${apiUrl}/getPorfolioImages`, {
       params: {
-         portfolioId: portfolioId  
+         portfolioId: portfolioId,
+         idUser: idUser
       }
     });
     return response.data;
@@ -90,6 +97,11 @@ export const orderportfolio = async (order, id_photo) => {
   }
 };
 
+
+
+
+//----------------------COMPRESSE IMAGE--------------------
+
 export const compressImage = async (file) => {
   const options = {
     maxSizeMB: 0.5,
@@ -103,6 +115,12 @@ export const compressImage = async (file) => {
     return file;
   }
 };
+
+
+
+
+
+// ------------------PAGE------------------
 
 
 
@@ -188,5 +206,91 @@ export const saveTextPage = async (fields) => {
     throw error;
   }
 }
+
+
+// ------------------BLOG------------------
+
+export const createImageBlog = async (fields, blogPageId) => {
+  try {
+
+
+    console.log(fields);
+    // Créer un objet FormData
+    const formData = new FormData();
+
+
+
+    // Ajouter le blob en tant que fichier
+    formData.append('image', fields.data, fields.id_photo);
+
+    // Ajouter les autres champs
+    formData.append('id_photo', fields.id_photo);
+    formData.append('id_blog_page', blogPageId);
+    formData.append('id_config', fields.id_config);
+    formData.append('alt', fields.alt);
+    formData.append('name', fields.name);
+
+    await Axios.post(`${apiUrl}/createImagesBlog`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+  } catch (error) {
+    console.error('Message d\'erreur du serveur:', error);
+    // Propager l'erreur
+    throw error;
+  }
+};
+
+
+export const createBlogPage = async (id, mainText, date) => {
+  try {
+    const response = await Axios.post(`${apiUrl}/createBlogPage`, {
+      params: {
+        id : id,
+        mainText: mainText,
+        date: date,
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Message d\'erreur du serveur:', error);
+    // Propager l'erreur
+    throw error;
+  }
+}
+
+export const createTextBlog = async (id, otherText) => {
+  try {
+    await Axios.post(`${apiUrl}/createTextBlog`, {
+      params: {
+        id : id,
+        otherText: otherText,
+      }
+    });
+  } catch (error) {
+    console.error('Message d\'erreur du serveur:', error.response.data.message);
+    // Propager l'erreur
+    throw error;
+  }
+}
+
+export const createRichTextBlog = async (id, infoRichText) => {
+
+
+  try {
+    await Axios.post(`${apiUrl}/createRichTextBlog`, {
+      params: {
+        id : id,
+        infoRichText: infoRichText,
+      }
+    });
+  } catch (error) {
+    console.error('Message d\'erreur du serveur:', error);
+    // Propager l'erreur
+    throw error;
+  }
+}
+
 
 

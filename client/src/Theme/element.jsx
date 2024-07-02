@@ -4,7 +4,12 @@ import { styled } from '@mui/material/styles';
 import Switch from '@mui/material/Switch';
 import Button from '@mui/material/Button';
 
+
+
+
+
 export const CssTextField = styled(TextField)(({ theme }) => ({
+
     '& label.MuiFormLabel-root': {
         color: theme.palette.text.primary,
     },
@@ -43,5 +48,15 @@ export const DefaultButton = styled(Button)(({ theme }) => ({
     },
     '&:hover': {
         backgroundColor: "#05286f", // change this to your desired color on hover
+    },
+}));
+
+export const SecondaryButton = styled(Button)(({ theme }) => ({
+    '&.MuiButton-root': {
+        backgroundColor : theme.palette.secondary.secondary, 
+        color : theme.palette.text.primary
+    },
+    '&:hover': {
+        backgroundColor: theme.palette.secondary.third, // change this to your desired color on hover
     },
 }));

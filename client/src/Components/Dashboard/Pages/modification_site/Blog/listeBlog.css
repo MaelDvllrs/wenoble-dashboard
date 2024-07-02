@@ -1,0 +1,18 @@
+.Item_Blog{
+    height: 3rem;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.Item_Blog:active{
+    cursor: pointer;
+    box-shadow: none;
+}
+
+.blog_name_element{
+    width: 30%;
+}
+
+.blog_date_element{
+    width: 20%;
+}
