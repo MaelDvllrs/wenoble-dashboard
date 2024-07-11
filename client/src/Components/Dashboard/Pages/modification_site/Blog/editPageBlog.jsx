@@ -8,9 +8,10 @@ import BlogField from "./BlogField";
 import './createPageBlog.css'
 import {DefaultButton, SecondaryButton} from '../../../../../Theme/element';
 import SaveIcon from '@mui/icons-material/Save';
-import { createImageBlog, createBlogPage, createTextBlog, createRichTextBlog } from '../../../apiImage';
+import { updateImageBlog, updateBlogPage, updateTextBlog, updateRichTextBlog } from '../../../apiImage';
 import { useTheme } from '@mui/material/styles';
 import { convertToRaw } from 'draft-js';
+import UnpublishedIcon from '@mui/icons-material/Unpublished';
 
 
 
@@ -23,9 +24,23 @@ const EditPageBlog = () => {
 
     const [InfoConfigBlog, setConfigblog] = useState([]);
     const [DecodeConfigblog, setDecodeConfigblog] = useState([]);
+
+    const [InfoBlog, setInfoBlog] = useState([]);
+    const [DecodeBlog, setDecodeBlog] = useState([]);
+
+    const [InfoBlogPage, setInfoBlogPage] = useState([]);
+
     const [slugValue, setSlugValue] = useState('');
+    const [formattedCreateDate, setFormattedCreateDate] = useState('');
+    const [formattedUpdatedDate, setFormattedUpdatedDate] = useState('');
     
     const navigate = useNavigate(); // Création de l'instance useNavigate
+
+    const [blogDataConfig, setBlogDataConfig] = useState({
+        text: [],
+        images: [],
+        richText: []
+    });
 
 
     const [blogData, setBlogData] = useState({
@@ -37,6 +52,7 @@ const EditPageBlog = () => {
     const apiUrl = config.apiUrl;
     const { id } = useParams();
     const { idBlog } = useParams();
+
 
     
 
@@ -62,6 +78,96 @@ const EditPageBlog = () => {
     }, [InfoConfigBlog]);
 
 
+
+    useEffect(() => {
+        DecodeConfigblog.blogConfig && DecodeConfigblog.blogConfig.map((blogItem) => {
+            if (blogItem.tab_field === 'image') {
+                setBlogDataConfig(prevData => ({
+                    ...prevData,
+                    images: [...prevData.images, {id_config: blogItem.id_config}]
+                }));
+            } else if (blogItem.tab_field === 'text') {
+                setBlogDataConfig(prevData => ({
+                    ...prevData,
+                    text: [...prevData.text, {id_config: blogItem.id_config}]
+                }));
+            } else if (blogItem.tab_field === 'richText') {
+                setBlogDataConfig(prevData => ({
+                    ...prevData,
+                    richText: [...prevData.richText, {id_config: blogItem.id_config}]
+                }));
+            }
+        });
+    }, [DecodeConfigblog]);
+
+
+    useEffect(() => {
+        let allData = []; // Étape 1: Variable temporaire pour stocker les résultats
+
+        const fetchData = async () => {
+            // Concaténez les résultats des appels API pour 'text'
+            for (const text of blogDataConfig.text) {
+                try {
+                    const response = await Axios.get(`${apiUrl}/getTextBlog`, {
+                        params: {
+                            IdBlogPage: idBlog,
+                            IdConfig: text.id_config
+                        }
+                    });
+                    if (response.data.length > 0) {
+                        allData.push(response.data[0]); // Étape 2: Concaténation
+                    }
+                } catch (error) {
+                    console.error('Erreur lors de la récupération du texte :', error);
+                }
+            }
+
+            for (const images of blogDataConfig.images) {
+                try{
+                    const response = await Axios.get(`${apiUrl}/getImageBlog`, {
+                        params: {
+                            IdBlogPage: idBlog,
+                            IdConfig: images.id_config
+                        }
+                    });
+
+                    if (response.data.length > 0) {
+                        allData.push(response.data[0]); // Étape 2: Concaténation
+                    }
+                } catch (error) {
+                    console.error('Erreur lors de la récupération du texte :', error);
+                }
+            }
+
+            for (const richText of blogDataConfig.richText) {
+                try{
+                    const response = await Axios.get(`${apiUrl}/getRichTextBlog`, {
+                        params: {
+                            IdBlogPage: idBlog,
+                            IdConfig: richText.id_config
+                        }
+                    });
+
+                    if (response.data.length > 0) {
+                        allData.push(response.data[0]); // Étape 2: Concaténation
+                    }
+                } catch (error) {
+                    console.error('Erreur lors de la récupération du texte :', error);
+                }
+            }
+    
+            setInfoBlogPage({ data: allData }); 
+        };
+        
+        fetchData(); // Exécutez la fonction asynchrone pour récupérer les données
+
+    }, [blogDataConfig, idBlog]);
+
+
+
+
+
+
     useEffect(() => {
 
         Axios.get(`${apiUrl}/getBlogPage`, {
@@ -69,19 +175,58 @@ const EditPageBlog = () => {
                 IdBlogPage: idBlog,
             }
         }).then((response) => {
-            const data = response.data;
+            setInfoBlog(response.data);
         }).catch((error) => {
             console.error('Erreur lors de la récupération de la page du Blog :', error);
         });
     }, [idBlog]);
 
 
+    useEffect(() => {
+        if(InfoBlog !== null && typeof InfoBlog === 'string'){
+            const decodedBloginfo = jwtDecode(InfoBlog);
+            setDecodeBlog(decodedBloginfo);
+        }
+    }, [InfoBlog]);
+
+
+
+
+    useEffect(() => {
+
+        if (DecodeBlog.length !== 0) {
+            const createDate = new Date(DecodeBlog.blogPage[0].page_blog_create_date);
+            const formattedCreateDate = new Intl.DateTimeFormat('fr-FR', {
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit', hour12: false
+            }).format(createDate);
+            setFormattedCreateDate(formattedCreateDate);
+        
+            // Convertir page_blog_update_date
+            const updateDate = new Date(DecodeBlog.blogPage[0].page_blog_update_date);
+            const formattedUpdateDate = new Intl.DateTimeFormat('fr-FR', {
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit', hour12: false
+            }).format(updateDate);
+            setFormattedUpdatedDate(formattedUpdateDate);
+        }
+        
+    }, [DecodeBlog])
+
+
+
+
+
+
 
     const handleBlogDataChange = (data, isDelete = false) => {
+
+
         setBlogData(prevData => {
           const newData = { ...prevData };
 
           const config = data.data.id_config;
+
           if (config === 'title') {
             const normalizeText = (text) => {
                 return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -100,12 +245,12 @@ const EditPageBlog = () => {
           } else {
             let itemModified = false; // Flag pour vérifier si un item a été modifié
       
-            for (const item of newData[type]) {
-              if (item.id_config === data.data.id_config) {
-                item.value = data.data.value;
-                itemModified = true; // Marquer qu'un item a été modifié
-                break; // Sortir de la boucle
-              }
+            for (let i = 0; i < newData[type].length; i++) {
+                if (newData[type][i].id_config === data.data.id_config) {
+                  newData[type][i] = data.data; // Modifier directement l'élément dans le tableau
+                  itemModified = true; // Marquer qu'un item a été modifié
+                  break; // Sortir de la boucle
+                }
             }
       
             // Si aucun item n'a été modifié, ajouter le nouvel item
@@ -117,15 +262,11 @@ const EditPageBlog = () => {
           return newData;
         });
     };
-    
+
+    console.log(blogData);
+
 
     const handleSave = async () => {
-        if (blogData.text.length === 0) {
-            console.error('Valeur manquante');
-            return;
-        };
-
-        
 
         // CREER LA PAGE
 
@@ -145,23 +286,23 @@ const EditPageBlog = () => {
             }
         });
 
+        console.log(otherText);
+
 
         try {        
             // Appeler la fonction saveBlogPage
-            const response = await createBlogPage(id, mainText, localISOTime);
+            const response = await updateBlogPage(idBlog, mainText, localISOTime);
             // Gérer la réponse ici
             console.log(response);  
-            const blogPageId = response.id;
         
-
-
-            console.log("blogPageid :" + blogPageId);
-
 
             // ENREGISTRER LES TEXTES
 
             try {
-                const response = await createTextBlog(blogPageId, otherText);
+                
+                const response = await updateTextBlog(idBlog, otherText);
+
+                console.log(response)
 
             } catch (error) {
                 console.error('Erreur lors de la création des textes :', error);
@@ -175,8 +316,7 @@ const EditPageBlog = () => {
             const infoRichText = [];
 
             blogData.richText.forEach(richText => {
-                console.log(richText.richText);
-                const contentRichText = richText.richText.getCurrentContent();
+                const contentRichText = richText.value;
                 const richTextJS = convertToRaw(contentRichText);
                 const richTextJSON = JSON.stringify(richTextJS);
                 infoRichText.push({richText : richTextJSON, id_config: richText.id_config});
@@ -185,7 +325,9 @@ const EditPageBlog = () => {
 
 
             try {
-                const response = await createRichTextBlog(blogPageId, infoRichText);
+                const response = await updateRichTextBlog(idBlog, infoRichText);
+                console.log(response)
+
             } catch (error) {
                 console.error('Erreur lors de la création des richtextes :', error);
                 return;
@@ -196,7 +338,7 @@ const EditPageBlog = () => {
                 // Utiliser Promise.all pour attendre que toutes les images soient sauvegardées
                 await Promise.all(blogData.images.map(async (image) => {
                     console.log(image)
-                    await createImageBlog(image, blogPageId);
+                    await updateImageBlog(image, idBlog);
                 }));
 
             } catch (error) {
@@ -217,30 +359,67 @@ const EditPageBlog = () => {
 
     return(
         <div className="Blog_creation_Page">
-            <div className="header_modification">
-                <h3 >Modification de : </h3>
-                <div className="button_save_contain">
-                    <SecondaryButton  variant="contained" theme={theme} onClick={() => navigate(`/dashboard/modification/blog/${id}`)}>Annuler</SecondaryButton>
-                    <DefaultButton type="submit" variant="contained" onClick={ async () => {await handleSave()}}><SaveIcon/> Enregitrer</DefaultButton>
-                </div>
-            </div>
-            <div className="Blog_creation_field_contain">
-                <div className="blogField_contain">
-                    <p style={{color: theme.palette.text.secondary}}>Titre principal *</p>
-                    <BlogField type='text' id_config="title" onChange={handleBlogDataChange}/>
-                </div>
-                <div className="blogField_contain">
-                    <p style={{color: theme.palette.text.secondary}}>Slug *</p>
-                    <BlogField type='text' id_config="slug" onChange={handleBlogDataChange} slugValue={slugValue}/>
-                </div>
-                <div className="line_horizontal" style={{backgroundColor: theme.palette.text.secondary}}></div>
-                {DecodeConfigblog.blogConfig && DecodeConfigblog.blogConfig.map((blogItem) => (
-                    <div className="blogField_contain">
-                        <p style={{color: theme.palette.text.secondary}}>{blogItem.name_field}</p>
-                        <BlogField id_blog_page={id} type={blogItem.tab_field} id_config={blogItem.id_config} onChange={handleBlogDataChange}/>
+            {
+            DecodeBlog.blogPage ? (
+                <div className="Blog_creation_Page">
+                  <div className="header_modification">
+                    <h3>Modification de : {DecodeBlog.blogPage[0].page_blog_name}</h3>
+                    <div className="button_save_contain">
+                      <SecondaryButton variant="contained" theme={theme} onClick={() => navigate(`/dashboard/modification/blog/${id}`)}>Annuler</SecondaryButton>
+                      <DefaultButton type="submit" variant="contained" onClick={async () => { await handleSave() }}><SaveIcon/> Enregitrer</DefaultButton>
                     </div>
-                ))}
-            </div>
+                  </div>
+
+                  <div className="Blog_creation_field_contain">
+                    <div className="blogField_contain flex_contain">
+                      <p style={{color: theme.palette.text.secondary}}>Status :</p>
+                      {DecodeBlog.blogPage[0].status === 1 ? (
+                            <p className="Item_portfolio_element blog_status publish_status">Publié</p>
+                        ) : (
+                            <p className="Item_portfolio_element blog_status draft_status">Brouillon</p>
+                        )
+                      }
+                    </div>
+                    <div className="blogField_contain">
+                      <p style={{color: theme.palette.text.secondary}}>Titre principal *</p>
+                      <BlogField fieldValue={DecodeBlog.blogPage[0]} type='text' id_config="title" onChange={handleBlogDataChange}/>
+                    </div>
+                    <div className="blogField_contain">
+                      <p style={{color: theme.palette.text.secondary}}>Slug *</p>
+                      <BlogField fieldValue={DecodeBlog.blogPage[0]} type='text' id_config="slug" onChange={handleBlogDataChange} slugValue={slugValue}/>
+                    </div>
+                    <div className="line_horizontal" style={{backgroundColor: theme.palette.text.secondary}}></div>
+                    {DecodeConfigblog.blogConfig && DecodeConfigblog.blogConfig.map((blogItem) => {
+                        // Trouver les données correspondantes dans InfoBlogPage.data, s'il y en a
+                        const correspondingData = InfoBlogPage.data.find(data => data.id_config === blogItem.id_config);
+
+                        return (
+                            <div className="blogField_contain">
+                                <p style={{color: theme.palette.text.secondary}}>{blogItem.name_field}</p>
+                                {/* Afficher BlogField avec ou sans données spécifiques */}
+                                <BlogField 
+                                    id_blog_page={id} 
+                                    type={blogItem.tab_field} 
+                                    id_config={blogItem.id_config} 
+                                    onChange={handleBlogDataChange} 
+                                    dataValue={correspondingData || {}} // Utiliser les données correspondantes ou un objet vide si non trouvé
+                                />
+                            </div>
+                        );
+                    })}
+                    <div className="line_horizontal" style={{backgroundColor: theme.palette.text.secondary}}></div>
+                    <div className="blogField_contain">
+                      <p style={{color: theme.palette.text.secondary}}>Date de création :</p>
+                      <p>{formattedCreateDate}</p>
+                    </div>
+                    <div className="blogField_contain">
+                      <p style={{color: theme.palette.text.secondary}}>Date de modificaction :</p>
+                      <p>{formattedUpdatedDate}</p>
+                    </div>
+                  </div>
+                </div>
+              ) : null
+            }
             
         </div>
 

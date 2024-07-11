@@ -214,7 +214,6 @@ export const createImageBlog = async (fields, blogPageId) => {
   try {
 
 
-    console.log(fields);
     // Créer un objet FormData
     const formData = new FormData();
 
@@ -291,6 +290,93 @@ export const createRichTextBlog = async (id, infoRichText) => {
     throw error;
   }
 }
+
+
+
+export const updateBlogPage = async (id, mainText, date) => {
+  try {
+    const response = await Axios.post(`${apiUrl}/updateBlogPage`, {
+      params: {
+        id : id,
+        mainText: mainText,
+        date: date,
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Message d\'erreur du serveur:', error);
+    // Propager l'erreur
+    throw error;
+  }
+}
+
+
+export const updateTextBlog = async (id, otherText) => {
+
+  console.log(otherText);
+  
+  try {
+    await Axios.post(`${apiUrl}/updateTextBlog`, {
+      params: {
+        id : id,
+        otherText: otherText,
+      }
+    });
+  } catch (error) {
+    console.error('Message d\'erreur du serveur:', error.response.data.message);
+    // Propager l'erreur
+    throw error;
+  }
+}
+
+export const updateRichTextBlog = async (id, infoRichText) => {
+
+
+  try {
+    await Axios.post(`${apiUrl}/updateRichTextBlog`, {
+      params: {
+        id : id,
+        infoRichText: infoRichText,
+      }
+    });
+  } catch (error) {
+    console.error('Message d\'erreur du serveur:', error);
+    // Propager l'erreur
+    throw error;
+  }
+}
+
+
+export const updateImageBlog = async (fields, blogPageId) => {
+  try {
+
+
+    // Créer un objet FormData
+    const formData = new FormData();
+
+
+
+    // Ajouter le blob en tant que fichier
+    formData.append('image', fields.data, fields.id_photo);
+
+    // Ajouter les autres champs
+    formData.append('id_photo', fields.id_photo);
+    formData.append('id_blog_page', blogPageId);
+    formData.append('id_config', fields.id_config);
+    formData.append('alt', fields.alt);
+    formData.append('name', fields.name);
+
+    await Axios.post(`${apiUrl}/updateImagesBlog`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+  } catch (error) {
+    console.error('Message d\'erreur du serveur:', error);
+    // Propager l'erreur
+    throw error;
+  }
+};
 
 
 

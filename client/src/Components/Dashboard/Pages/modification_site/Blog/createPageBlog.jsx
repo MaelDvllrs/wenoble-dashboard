@@ -61,6 +61,7 @@ const CreatePageBlog = () => {
 
 
     const handleBlogDataChange = (data, isDelete = false) => {
+
         setBlogData(prevData => {
           const newData = { ...prevData };
 
@@ -73,8 +74,6 @@ const CreatePageBlog = () => {
             setSlugValue(normalizeText(data.data.value).toLowerCase().replace(/[^\w\s]|_/g, '').replace(/\s+/g, '-'));            
           }
 
-          
-      
           const type = data.data.type;
       
           if (isDelete) {
@@ -83,23 +82,27 @@ const CreatePageBlog = () => {
           } else {
             let itemModified = false; // Flag pour vérifier si un item a été modifié
       
-            for (const item of newData[type]) {
-              if (item.id_config === data.data.id_config) {
-                item.value = data.data.value;
-                itemModified = true; // Marquer qu'un item a été modifié
-                break; // Sortir de la boucle
-              }
+            for (let i = 0; i < newData[type].length; i++) {
+                if (newData[type][i].id_config === data.data.id_config) {
+                  console.log(newData[type][i]);
+                  newData[type][i] = data.data; // Modifier directement l'élément dans le tableau
+                  itemModified = true; // Marquer qu'un item a été modifié
+                  break; // Sortir de la boucle
+                }
             }
       
             // Si aucun item n'a été modifié, ajouter le nouvel item
             if (!itemModified) {
               newData[type].push(data.data);
+              console.log(newData[type]);
             }
           }
       
           return newData;
         });
     };
+
+    console.log(blogData);
     
 
     const handleSave = async () => {
@@ -107,8 +110,6 @@ const CreatePageBlog = () => {
             console.error('Valeur manquante');
             return;
         };
-
-        
 
         // CREER LA PAGE
 
@@ -158,8 +159,7 @@ const CreatePageBlog = () => {
             const infoRichText = [];
 
             blogData.richText.forEach(richText => {
-                console.log(richText.richText);
-                const contentRichText = richText.richText.getCurrentContent();
+                const contentRichText = richText.value;
                 const richTextJS = convertToRaw(contentRichText);
                 const richTextJSON = JSON.stringify(richTextJS);
                 infoRichText.push({richText : richTextJSON, id_config: richText.id_config});

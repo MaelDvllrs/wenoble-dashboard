@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Editor, EditorState, RichUtils, CompositeDecorator } from 'draft-js';
+import { Editor, EditorState, RichUtils, CompositeDecorator, convertFromRaw } from 'draft-js';
 import 'draft-js/dist/Draft.css';
 import './BlogField.css'
 import { FaBold, FaItalic, FaLink, FaListUl, FaListOl } from "react-icons/fa";
@@ -51,10 +51,7 @@ function findLinkEntities(contentBlock, callback, contentState) {
 
 
 
-const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue }) => {
-
-  
-
+const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldValue, dataValue }) => {
 
   const theme = useTheme();
 
@@ -65,13 +62,17 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue }) => {
     const handleEditorChange = (newState) => {
       setEditorState(newState);
 
-      console.log(newState);
+      console.log(newState.getCurrentContent().getPlainText());
+
       const data = {
         id_config : id_config,
         type : 'richText',
-        richText : newState,
+        value : newState.getCurrentContent(),
       }
+
       onChange({ data });
+
+      
     };
       
     const handleBoldClick = () => {
@@ -129,35 +130,59 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue }) => {
     };
 
 
+    useEffect(() => {
+      if (dataValue && Object.keys(dataValue).length > 0 && type === 'richText') {
+
+        // Assurez-vous que dataValue.text_json est bien un objet et non une chaîne JSON.
+        // Si c'est une chaîne, vous devez d'abord la parser :
+        const contentFromJSON = JSON.parse(dataValue.text_json);
+        // Sinon, si c'est déjà un objet, utilisez-le directement :
+    
+        // Convertir le JSON en ContentState
+        const contentState = convertFromRaw(contentFromJSON);
+    
+        // Créer un nouvel EditorState à partir du ContentState
+        const newEditorState = EditorState.createWithContent(contentState);
+    
+        // Mettre à jour l'état de l'éditeur avec les données converties
+        setEditorState(newEditorState);
+      }
+    }, [dataValue, type, setEditorState]);
+
+
     // IMAGE UPLOAD
 
     const [imagesUploaded, setImagesUploaded] = useState([]);
 
     const fileTypes = ["JPG", "PNG"];
 
-    const handleImageChange = async (file, indexToReplace) => {
+    const handleImageChange = async (file, idToReplace) => {
+    
       if (file instanceof File) {
         const fileCompress = await compressImage(file);
     
         const data = {
-          id_blog_page : id_blog_page,
+          id_blog_page: id_blog_page,
           id_config: id_config,
-          id_photo: uuidv4(),
+          id_photo: uuidv4(), // Assurez-vous que cela génère un ID unique pour chaque nouvelle image
           data: fileCompress,
           name: file.name,
           alt: file.name,
           url: URL.createObjectURL(file),
           type: 'images'
         };
-
+    
         setImagesUploaded(prevImages => {
-          if (indexToReplace !== undefined && indexToReplace < prevImages.length) {
-            onChange( { data } );
-            
-            return prevImages.map((img, index) => index === indexToReplace ? data : img);
+          const foundIndex = prevImages.findIndex(img => img.id_config === idToReplace);
+          if (idToReplace !== undefined && foundIndex !== -1) {
+            onChange({ data });
+    
+            console.log(data);
+    
+            return prevImages.map((img, index) => index === foundIndex ? data : img);
           } else {
             onChange({ ...prevImages, data });
-            
+    
             return [...prevImages, data];
           }
         });
@@ -166,10 +191,32 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue }) => {
       }
     };
 
-    function handleDeleteImage(index) {
-      setImagesUploaded(imagesUploaded.filter((_, i) => i !== index));
+
+    useEffect(() => {
+      // Vérifiez si dataValue existe et si le type est 'image'
+      if (dataValue && Object.keys(dataValue).length > 0 && type === 'image') {
+        // Préparez les données de l'image pour l'état initial de imagesUploaded
+        const initialImages = [{
+          id_blog_page: dataValue.id_blog_page || id_blog_page, // Utilisez id_blog_page de dataValue ou celui passé en prop
+          id_config: dataValue.id_config || id_config, // Utilisez id_config de dataValue ou celui passé en prop
+          id_photo: uuidv4(), // Générez un nouvel UUID pour l'image
+          data: dataValue.data, // Utilisez les données d'image en base64 de dataValue
+          name: dataValue.name, // Utilisez le nom de l'image de dataValue
+          alt: dataValue.alt, // Utilisez le texte alternatif de l'image de dataValue
+          url: dataValue.data, // Utilisez les données d'image en base64 comme URL
+          type: 'images' // Définissez le type comme 'images'
+        }];
+    
+        // Initialisez l'état imagesUploaded avec les données de l'image
+        setImagesUploaded(initialImages);
+      }
+    }, [dataValue, type, id_blog_page, id_config]);
+
+
+    function handleDeleteImage(idToDelete) {
+      setImagesUploaded(imagesUploaded.filter(image => image.id_config !== idToDelete));
       const data = {
-        id_config : id_config,
+        id_config: id_config,
         type: 'images'
       }
       onChange({ data }, true);
@@ -189,6 +236,40 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue }) => {
       }
     }, [slugValue]);
 
+
+    useEffect(() => {
+      // Mise à jour de slugValueChange lorsque fieldValue change
+
+      if(fieldValue && id_config){
+
+        if(id_config === 'title'){
+
+          setSlugValueChange(fieldValue.page_blog_name || "");
+
+          const data = {
+            value: fieldValue.page_blog_name,
+            id_config: id_config,
+            type: 'text'
+          };
+          onChange({ data });
+
+        } else if (id_config === 'slug') {
+
+          setSlugValueChange(fieldValue.page_blog_slug || "");
+
+          const data = {
+            value: fieldValue.page_blog_slug,
+            id_config: id_config,
+            type: 'text'
+          };
+          onChange({ data });
+
+        }
+      }
+    
+
+    }, [fieldValue]); 
+
     const handleTextChange = (event) => {
       const newValue = event.target.value;
       // Mise à jour de l'état avec la nouvelle valeur saisie
@@ -201,6 +282,17 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue }) => {
       };
       onChange({ data });
     };
+
+
+
+    useEffect(() => {
+      // Vérifiez si dataValue existe et si le type est 'text'
+      if (dataValue && Object.keys(dataValue).length > 0 && type === 'text') {
+        // Mettre à jour slugValueChange avec la valeur de dataValue
+        setSlugValueChange(dataValue.text);
+        
+      }
+    }, [dataValue, type]);
 
 
     
@@ -237,8 +329,8 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue }) => {
 
                             <div className='image_blog' style={{backgroundColor : theme.palette.primary.main, color : theme.palette.text.primary, borderColor : theme.palette.primary.main}}>
                               {imagesUploaded.length > 0 ? (
-                                imagesUploaded.map((image, index) => ( // Map over the images array
-                                  <div key={index} className="ImageUploaded_contain">
+                                imagesUploaded.map((image) => ( // Map over the images array
+                                  <div key={image.id_config} className="ImageUploaded_contain">
                                     <img className='Image_uploaded' src={image.url} alt={image.alt} />
                                     <div className='info_image_blog'>
                                       <div>
@@ -247,9 +339,9 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue }) => {
                                       </div>
                                       <a href={image.url} target="_blank"><OpenInNewOutlinedIcon style={{color: theme.palette.text.primary}}/></a>
                                       <div className='button_contain'>
-                                      <input className='input_image_blog' type="file" id={`file-input-${index}`} onChange={(e) => handleImageChange(e.target.files[0], index)} accept=".jpeg,.jpg,.png"/>
-                                      <SecondaryButton theme={theme} className="button_image_blog" type="submit" variant="contained"><label className='label_input_image_blog' htmlFor={`file-input-${index}`}/><AutorenewIcon/> Remplacer</SecondaryButton>
-                                      <SecondaryButton theme={theme} className="button_image_blog" type="submit" variant="contained" onClick={() => handleDeleteImage(index)}><DeleteIcon/> Supprimer</SecondaryButton>
+                                      <input className='input_image_blog' type="file" id={`file-input-${image.id_config}`} onChange={(e) => handleImageChange(e.target.files[0], image.id_config)} accept=".jpeg,.jpg,.png"/>
+                                      <SecondaryButton theme={theme} className="button_image_blog" type="submit" variant="contained"><label className='label_input_image_blog' htmlFor={`file-input-${image.id_config}`}/><AutorenewIcon/> Remplacer</SecondaryButton>
+                                      <SecondaryButton theme={theme} className="button_image_blog" type="submit" variant="contained" onClick={() => handleDeleteImage(image.id_config)}><DeleteIcon/> Supprimer</SecondaryButton>
                                       </div>
                                     </div>
                                   </div>
@@ -268,7 +360,7 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue }) => {
                           );
                     case 'text':
                         return (<div>
-                                  <input className='input_text_blog' type='text' style={{backgroundColor : theme.palette.primary.main, color : theme.palette.text.primary, borderColor : theme.palette.primary.main}} onChange={handleTextChange} value={slugValueChange}/>
+                                  <input className='input_text_blog' type='text' style={{backgroundColor : theme.palette.primary.main, color : theme.palette.text.primary, borderColor : theme.palette.primary.main}} onChange={handleTextChange} value={slugValueChange}/>                               
                                 </div>
                               );
                     default:

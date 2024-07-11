@@ -54,14 +54,13 @@ router.get('/getListeBlog', (req, res) => {
       return res.status(403).send('Vous n\'avez pas les droits pour accéder à ce blog.');
     }
 
-    const SQL = 'SELECT id_page_blog, page_blog_name, page_blog_create_date, page_blog_update_date FROM blog_page WHERE id_blog = ?'
+    const SQL = 'SELECT id_page_blog, page_blog_name, status, page_blog_create_date, page_blog_update_date FROM blog_page WHERE id_blog = ?'
     const Values = [sentIdBlog]
 
     db.query(SQL, Values, (err, results) => {
       if (err) {
         console.log("erreur" + err);
         res.send({ error: err })
-        
         return;
       }
 
@@ -151,8 +150,6 @@ router.post('/createBlogPage', (req, res) => {
 
     const insertedId = results.insertId;
 
-    console.log("insertid :" + insertedId)
-
     res.status(200).send({ message: 'Page créée avec succès', id: insertedId });
   });
 
@@ -227,12 +224,12 @@ router.post('/createRichTextBlog', (req, res) => {
 
 
 
-
-
 router.get('/getBlogPage', (req, res) => {
   const sentIdBlogPage = req.query.IdBlogPage
 
-  const SQL = 'SELECT * FROM blog_page WHERE id_page_blog = ?'
+  console.log(sentIdBlogPage);
+
+  const SQL = 'SELECT page_blog_name, page_blog_slug, status, page_blog_create_date, page_blog_update_date FROM blog_page WHERE id_page_blog = ?'
   const Values = [sentIdBlogPage]
 
   db.query(SQL, Values, (err, results) => {
@@ -241,12 +238,234 @@ router.get('/getBlogPage', (req, res) => {
       return;
     }
 
-    const blogPage = results
+    const blogPage = results;
     const blogPageCrypt = jwt.sign({ blogPage: blogPage }, secretKey)
     res.send(blogPageCrypt)
   })
 });
 
 
- 
+router.get('/getTextBlog', (req, res) => {
+  const sentIdBlogPage = req.query.IdBlogPage;
+  const sentIdConfig = req.query.IdConfig;
+
+  const SQL = 'SELECT id_config, text FROM blog_field_text WHERE id_blog_page = ? AND id_config = ?'
+  const Values = [sentIdBlogPage, sentIdConfig]
+
+  db.query(SQL, Values, (err, results) => {
+    if (err) {
+      res.send({ error: err })
+      return;
+    }
+
+    const text = results
+    res.send(text)
+  })
+});
+
+
+router.get('/getRichTextBlog', (req, res) => {
+  const sentIdBlogPage = req.query.IdBlogPage;
+  const sentIdConfig = req.query.IdConfig;
+
+  const SQL = 'SELECT id_config, text_json FROM blog_field_richText WHERE id_blog_page = ? AND id_config = ?'
+  const Values = [sentIdBlogPage, sentIdConfig]
+
+  db.query(SQL, Values, (err, results) => {
+    if (err) {
+      res.send({ error: err })
+      return;
+    }
+
+    const richText = results
+    res.send(richText)
+  })
+});
+
+
+router.get('/getImageBlog', (req, res) => {
+  const sentIdBlogPage = req.query.IdBlogPage;
+  const sentIdConfig = req.query.IdConfig;
+
+
+  const SQL = 'SELECT id_config, src_image, name_image, alt_image FROM blog_field_image WHERE id_blog_page = ? AND id_config = ?'
+  const Values = [sentIdBlogPage, sentIdConfig]
+
+  db.query(SQL, Values, (err, results) => {
+    if (err) {
+      console.log("erreur" + err);
+      res.send({ error: err })
+      return;
+    }
+
+    const image_blog = results;
+
+    const imageDirectory = path.join(__dirname, '..', 'images', 'blog_image');
+
+    const imagesData = image_blog.map(image => {
+      const imagePath = path.join(imageDirectory, image.src_image);
+      try {
+        const imageData = fs.readFileSync(imagePath);
+        const imageDataBase64 = Buffer.from(imageData).toString('base64');
+        return {
+          id_config: image.id_config,
+          name: image.name_image,
+          data: 'data:image/jpeg;base64,' + imageDataBase64,
+          alt: image.alt_image,
+        };
+      } catch (error) {
+        console.error('Erreur lors de la lecture de l\'image :', error);
+        return null;
+      }
+    }).filter(Boolean); 
+    
+    res.status(200).json(imagesData);
+
+  });
+});
+
+
+
+router.post('/updateBlogPage', (req, res) => {
+  
+  const id = req.body.params.id;
+  
+  const title = req.body.params.mainText[0].value;
+  const slug = req.body.params.mainText[1].value;
+  const date = req.body.params.date;
+
+  const SQL = 'UPDATE blog_page SET page_blog_name = ?, page_blog_slug = ?, page_blog_update_date = ? WHERE id_page_blog = ?';
+  const VALUES = [title, slug, date, id];
+
+  db.query(SQL, VALUES, (err, results) => {
+    if (err) {
+      console.log('Database query error:', err);
+      return res.status(500).send({ error: err });
+    }
+
+    res.status(200).send({ message: 'Page modifiée avec succès'});
+  });
+
+})
+
+
+
+router.post('/updateTextBlog', (req, res) => {
+  const id = req.body.params.id;
+  const text = req.body.params.otherText;
+
+  console.log(text);
+  
+  // Convertir chaque opération de base de données en une promesse
+  const insertPromises = text.map((item) => {
+    return new Promise((resolve, reject) => {
+      console.log(item);
+      const valueText = item.value;
+      const id_config = item.id_config;
+      const SQL = 'UPDATE blog_field_text SET text = ? WHERE id_config = ?';
+      const VALUES = [valueText, id_config];
+
+      db.query(SQL, VALUES, (err, results) => {
+        if (err) {
+          console.log('Database query error:', err);
+          return reject(err);
+        }
+        resolve('Texte créé avec succès');
+      });
+    });
+  });
+
+  // Attendre que toutes les promesses soient résolues
+  Promise.all(insertPromises)
+    .then((results) => {
+      res.status(200).send('Tous les textes ont été créés avec succès');
+    })
+    .catch((error) => {
+      res.status(500).send({ error: error });
+    });
+});
+
+
+router.post('/updateRichTextBlog', (req, res) => {
+  const id = req.body.params.id;
+  const richtext = req.body.params.infoRichText;
+
+  const queries = richtext.map((item) => {
+
+    return new Promise((resolve, reject) => {
+
+      const richTextJSON = item.richText;
+      const id_config = item.id_config;
+      
+      const SQL = 'UPDATE blog_field_richText SET  text_json = ? WHERE 	id_richText = ?';
+      const VALUES = [richTextJSON, id];
+      
+      db.query(SQL, VALUES, (err, results) => {
+        if (err) {
+          console.log('Database query error:', err);
+          reject(err);
+        } else {
+          resolve('RichTexte créé avec succès');
+        }
+      });
+    });
+  });
+
+  Promise.all(queries)
+    .then((results) => {
+      res.status(200).send('Tous les RichTextes ont été créés avec succès');
+    })
+    .catch((error) => {
+      res.status(500).send({ error: error.message });
+    });
+});
+
+
+const uploadUpdate = multer({ storage: storage });
+
+router.post('/updateImagesBlog', uploadUpdate.single('image'), (req, res) => {
+
+  if (!req.file) {
+    console.error('Aucune image n\'a été téléchargée.');
+    return res.status(400).send('Aucune image n\'a été téléchargée.');
+  }
+  const id_photo = req.body.id_photo;
+  const id_blog_page = req.body.id_blog_page;
+  const id_config = req.body.id_config;
+  const name = req.body.name;
+  const alt = req.body.alt;
+
+  const SQL = 'SELECT src_image FROM blog_field_image WHERE id_blog_page = ? AND 	id_config = ?';
+  const Values = [id_blog_page, id_config];
+
+  db.query(SQL, Values, (err, results) => {
+    if (err) {
+      console.error('Database query error:', err);
+      return res.status(500).send({ error: err });
+    }
+
+    const imageDirectory = path.join(__dirname, '..', 'images', 'blog_image');
+    const imagePath = path.join(imageDirectory, results[0].src_image);
+
+    fs.unlink(imagePath, (err) => {
+      if (err) {
+        console.error('Erreur lors de la suppression de l\'image :', err);
+      }
+    });
+
+    const SQL = 'UPDATE blog_field_image SET  src_image = ?, name_image = ?, alt_image = ? WHERE  WHERE id_blog_page = ? AND 	id_config = ?';
+    const Values = [id_photo, name, alt, id_blog_page, id_config];
+  
+    db.query(SQL, Values, (err, results) => {
+      if (err) {
+        console.error('Database query error:', err);
+        return res.status(500).send({ error: err });
+      }
+  
+      res.status(200).send('Image sauvegardée avec succès');
+    });
+  });
+});
+
+
 module.exports = router;

@@ -1,3 +1,21 @@
+.liste_blog_contain{
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+
+}
+
+.liste_blog_box{
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+    scrollbar-color: #272a31 transparent; 
+    scrollbar-width: thin;
+
+}
+
 .Item_Blog{
     height: 3rem;
     cursor: pointer;
@@ -15,4 +33,26 @@
 
 .blog_date_element{
     width: 20%;
+}
+
+
+.blog_status{
+    width: 5rem;
+}
+
+
+.publish_status{
+    color: #46fea5d4;
+    border-radius: 0.3rem;
+    padding: 0.1rem;
+    font-size: 0.8rem;
+    background-color: #22ff991e;
+}
+
+.draft_status{
+    color: #ff9592;
+    border-radius: 0.3rem;
+    font-size: 0.8rem;
+    padding: 0.1rem;
+    background-color: #ff173f2d;
 }

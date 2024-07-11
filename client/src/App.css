@@ -66,6 +66,13 @@ a{
     align-items: center;
 }
 
+.flex_contain{
+    display: flex;
+    flex-direction: row !important;
+    justify-content: left;
+    align-items: center;
+}
+
 .dashboard_case{
     background-color: #272a31;
     padding: 1rem;
