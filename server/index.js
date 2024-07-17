@@ -4,7 +4,7 @@ const cors = require('cors')
 const bodyParser = require('body-parser');
 
 // Client router
-const apiRouter = require('./api/portfolio_api');
+const apiRouter = require('./api/api');
 const authRoutes = require('./users/auth');
 const infoUserRouter = require('./users/infoUser');
 const portfolioRouter = require('./modification/portfolio');

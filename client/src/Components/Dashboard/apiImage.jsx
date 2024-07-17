@@ -1,7 +1,13 @@
 import Axios from 'axios';
 import config from '../../config';
 import imageCompression from 'browser-image-compression';
- 
+
+
+
+
+
+
+
 
 
 const apiUrl = config.apiUrl; 
@@ -122,8 +128,6 @@ export const compressImage = async (file) => {
 
 // ------------------PAGE------------------
 
-
-
 export const fetchImagesPage = async (pageId) => {
   try {
     const response = await Axios.get(`${apiUrl}/getPageImages`, {
@@ -241,6 +245,37 @@ export const createImageBlog = async (fields, blogPageId) => {
   }
 };
 
+export const createVideoBlog = async (fields, blogPageId) => {
+  try {
+
+
+    // Créer un objet FormData
+    const formData = new FormData();
+
+    const src = fields.id_video + ".mp4";
+
+    // Ajouter le blob en tant que fichier
+    formData.append('video', fields.data, src);
+
+    // Ajouter les autres champs
+    formData.append('id_video', fields.id_video);
+    formData.append('id_blog_page', blogPageId);
+    formData.append('id_config', fields.id_config);
+    formData.append('alt', fields.alt);
+    formData.append('name', fields.name);
+
+    await Axios.post(`${apiUrl}/createVideoBlog`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+  } catch (error) {
+    console.error('Message d\'erreur du serveur:', error);
+    // Propager l'erreur
+    throw error;
+  }
+};
+
 
 export const createBlogPage = async (id, mainText, date) => {
   try {
@@ -312,18 +347,25 @@ export const updateBlogPage = async (id, mainText, date) => {
 
 
 export const updateTextBlog = async (id, otherText) => {
-
-  console.log(otherText);
   
   try {
-    await Axios.post(`${apiUrl}/updateTextBlog`, {
-      params: {
-        id : id,
-        otherText: otherText,
-      }
-    });
+    if(otherText.create){
+      await Axios.post(`${apiUrl}/updateTextBlog`, {
+        params: {
+          id : id,
+          otherText: otherText,
+        }
+      });
+    } else {
+      await Axios.post(`${apiUrl}/createTextBlog`, {
+        params: {
+          id : id,
+          otherText: otherText,
+        }
+      });
+    }
   } catch (error) {
-    console.error('Message d\'erreur du serveur:', error.response.data.message);
+    console.error('Message d\'erreur du serveur:', error);
     // Propager l'erreur
     throw error;
   }
@@ -331,14 +373,23 @@ export const updateTextBlog = async (id, otherText) => {
 
 export const updateRichTextBlog = async (id, infoRichText) => {
 
-
+  console.log(infoRichText[0]);
   try {
-    await Axios.post(`${apiUrl}/updateRichTextBlog`, {
-      params: {
-        id : id,
-        infoRichText: infoRichText,
-      }
-    });
+    if(infoRichText[0].create){
+      await Axios.post(`${apiUrl}/updateRichTextBlog`, {
+        params: {
+          id : id,
+          infoRichText: infoRichText,
+        }
+      });
+    } else {
+      await Axios.post(`${apiUrl}/createRichTextBlog`, {
+        params: {
+          id : id,
+          infoRichText: infoRichText,
+        }
+      });
+    }
   } catch (error) {
     console.error('Message d\'erreur du serveur:', error);
     // Propager l'erreur
@@ -366,11 +417,64 @@ export const updateImageBlog = async (fields, blogPageId) => {
     formData.append('alt', fields.alt);
     formData.append('name', fields.name);
 
-    await Axios.post(`${apiUrl}/updateImagesBlog`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    });
+    if(fields.create){
+      await Axios.post(`${apiUrl}/updateImagesBlog`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+    } else {
+
+      await Axios.post(`${apiUrl}/createImagesBlog`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Message d\'erreur du serveur:', error);
+    // Propager l'erreur
+    throw error;
+  }
+};
+
+
+
+export const updateVideoBlog = async (fields, blogPageId) => {
+  try {
+
+
+    console.log(fields);
+
+
+    // Créer un objet FormData
+    const formData = new FormData();
+
+    const src = fields.id_video + ".mp4";
+
+    // Ajouter le blob en tant que fichier
+    formData.append('video', fields.data, src);
+
+    // Ajouter les autres champs
+    formData.append('id_video', fields.id_video);
+    formData.append('id_blog_page', blogPageId);
+    formData.append('id_config', fields.id_config);
+    formData.append('alt', fields.alt);
+    formData.append('name', fields.name);
+
+    if(fields.create){
+      await Axios.post(`${apiUrl}/updateVideoBlog`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+    } else {
+      await Axios.post(`${apiUrl}/createVideoBlog`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+  }
   } catch (error) {
     console.error('Message d\'erreur du serveur:', error);
     // Propager l'erreur

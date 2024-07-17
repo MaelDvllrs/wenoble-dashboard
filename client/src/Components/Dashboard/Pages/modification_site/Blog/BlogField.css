@@ -58,6 +58,11 @@
     border-radius: 0.5rem;
 }
 
+.logoUploadImage > svg{
+    width: 100%;
+    height: 4rem;
+}
+
 .button_contain{
     display: flex;
     align-items: center;

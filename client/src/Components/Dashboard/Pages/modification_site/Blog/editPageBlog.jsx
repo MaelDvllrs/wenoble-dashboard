@@ -6,9 +6,9 @@ import config from "../../../../../config";
 import {jwtDecode} from 'jwt-decode'; 
 import BlogField from "./BlogField";
 import './createPageBlog.css'
-import {DefaultButton, SecondaryButton} from '../../../../../Theme/element';
+import {DefaultButton, RedButton, SecondaryButton, Popup} from '../../../../../Theme/element';
 import SaveIcon from '@mui/icons-material/Save';
-import { updateImageBlog, updateBlogPage, updateTextBlog, updateRichTextBlog } from '../../../apiImage';
+import { updateImageBlog, updateBlogPage, updateTextBlog, updateRichTextBlog, updateVideoBlog } from '../../../apiImage';
 import { useTheme } from '@mui/material/styles';
 import { convertToRaw } from 'draft-js';
 import UnpublishedIcon from '@mui/icons-material/Unpublished';
@@ -33,20 +33,32 @@ const EditPageBlog = () => {
     const [slugValue, setSlugValue] = useState('');
     const [formattedCreateDate, setFormattedCreateDate] = useState('');
     const [formattedUpdatedDate, setFormattedUpdatedDate] = useState('');
+
+    const [deletedItems, setDeletedItems] = useState([]);
+
+
+
+    const [isPopupOpen, setIsPopupOpen] = useState(false);
+    const openPopup = () => setIsPopupOpen(true);
+    const closePopup = () => setIsPopupOpen(false);
+
     
     const navigate = useNavigate(); // Création de l'instance useNavigate
 
     const [blogDataConfig, setBlogDataConfig] = useState({
         text: [],
         images: [],
-        richText: []
+        richText: [],
+        video: []
     });
 
 
     const [blogData, setBlogData] = useState({
         text: [],
         images: [],
-        richText: []
+        richText: [],
+        video: []
+
     });
 
     const apiUrl = config.apiUrl;
@@ -96,15 +108,25 @@ const EditPageBlog = () => {
                     ...prevData,
                     richText: [...prevData.richText, {id_config: blogItem.id_config}]
                 }));
+            } else if (blogItem.tab_field === 'video') {
+                setBlogDataConfig(prevData => ({
+                    ...prevData,
+                    video: [...prevData.video, {id_config: blogItem.id_config}]
+                }));
             }
         });
     }, [DecodeConfigblog]);
 
 
+
+
     useEffect(() => {
         let allData = []; // Étape 1: Variable temporaire pour stocker les résultats
 
+
         const fetchData = async () => {
+
+            
             // Concaténez les résultats des appels API pour 'text'
             for (const text of blogDataConfig.text) {
                 try {
@@ -115,7 +137,7 @@ const EditPageBlog = () => {
                         }
                     });
                     if (response.data.length > 0) {
-                        allData.push(response.data[0]); // Étape 2: Concaténation
+                        allData.push(response.data[0]); 
                     }
                 } catch (error) {
                     console.error('Erreur lors de la récupération du texte :', error);
@@ -132,7 +154,24 @@ const EditPageBlog = () => {
                     });
 
                     if (response.data.length > 0) {
-                        allData.push(response.data[0]); // Étape 2: Concaténation
+                        allData.push(response.data[0]); 
+                    }
+                } catch (error) {
+                    console.error('Erreur lors de la récupération du texte :', error);
+                }
+            }
+            for (const video of blogDataConfig.video) {
+                try{
+                    const response = await Axios.get(`${apiUrl}/getVideoBlog`, {
+                        params: {
+                            IdBlogPage: idBlog,
+                            IdConfig: video.id_config
+                        }
+                    });
+
+                    if (response.data.length > 0) {
+
+                        allData.push(response.data[0]); 
                     }
                 } catch (error) {
                     console.error('Erreur lors de la récupération du texte :', error);
@@ -149,7 +188,7 @@ const EditPageBlog = () => {
                     });
 
                     if (response.data.length > 0) {
-                        allData.push(response.data[0]); // Étape 2: Concaténation
+                        allData.push(response.data[0]); 
                     }
                 } catch (error) {
                     console.error('Erreur lors de la récupération du texte :', error);
@@ -162,9 +201,6 @@ const EditPageBlog = () => {
         fetchData(); // Exécutez la fonction asynchrone pour récupérer les données
 
     }, [blogDataConfig, idBlog]);
-
-
-
 
 
 
@@ -218,7 +254,6 @@ const EditPageBlog = () => {
 
 
 
-
     const handleBlogDataChange = (data, isDelete = false) => {
 
 
@@ -234,14 +269,20 @@ const EditPageBlog = () => {
               
             setSlugValue(normalizeText(data.data.value).toLowerCase().replace(/[^\w\s]|_/g, '').replace(/\s+/g, '-'));            
           }
-
-          
       
           const type = data.data.type;
       
           if (isDelete) {
             // Filtrer pour supprimer l'élément
+            console.log(data.data)
+            const exists = deletedItems.some(item => item.id_config === data.data.id_config);
+            if (!exists) {
+                setDeletedItems(prevItems => [...prevItems, data.data]);
+            }
+
             newData[type] = newData[type].filter(item => item.id_config !== data.data.id_config);
+            
+
           } else {
             let itemModified = false; // Flag pour vérifier si un item a été modifié
       
@@ -263,7 +304,11 @@ const EditPageBlog = () => {
         });
     };
 
-    console.log(blogData);
+
+    console.log(deletedItems);
+
+
+
 
 
     const handleSave = async () => {
@@ -286,64 +331,98 @@ const EditPageBlog = () => {
             }
         });
 
-        console.log(otherText);
-
-
         try {        
-            // Appeler la fonction saveBlogPage
+
             const response = await updateBlogPage(idBlog, mainText, localISOTime);
-            // Gérer la réponse ici
-            console.log(response);  
+            console.log(response)
+            // Appeler la fonction saveBlogPage
         
 
             // ENREGISTRER LES TEXTES
+            if (blogData.text.length > 0) {
 
-            try {
-                
-                const response = await updateTextBlog(idBlog, otherText);
+                try {
+                    const response = await updateTextBlog(idBlog, otherText);
+                    console.log(response)
 
-                console.log(response)
+                } catch (error) {
+                    console.error('Erreur lors de la création des textes :', error);
+                    return;
+                }
 
-            } catch (error) {
-                console.error('Erreur lors de la création des textes :', error);
-                return;
             }
 
 
             // ENREGISTRER LES RICHTEXT
 
+            if (blogData.richText.length > 0) {
+                
+                const infoRichText = [];
+                blogData.richText.forEach(richText => {
+                    const contentRichText = richText.value;
+                    const richTextJS = convertToRaw(contentRichText);
+                    const richTextJSON = JSON.stringify(richTextJS);
+                    infoRichText.push({richText : richTextJSON, id_config: richText.id_config, create: richText.create});
+                });
 
-            const infoRichText = [];
 
-            blogData.richText.forEach(richText => {
-                const contentRichText = richText.value;
-                const richTextJS = convertToRaw(contentRichText);
-                const richTextJSON = JSON.stringify(richTextJS);
-                infoRichText.push({richText : richTextJSON, id_config: richText.id_config});
-            });
+                try {
+                    const response = await updateRichTextBlog(idBlog, infoRichText);
+                    console.log(response)
 
+                } catch (error) {
+                    console.error('Erreur lors de la création des richtextes :', error);
+                    return;
+                }
 
-
-            try {
-                const response = await updateRichTextBlog(idBlog, infoRichText);
-                console.log(response)
-
-            } catch (error) {
-                console.error('Erreur lors de la création des richtextes :', error);
-                return;
             }
 
-            // ENREGISTRER LES IMAGE
-            try {
-                // Utiliser Promise.all pour attendre que toutes les images soient sauvegardées
-                await Promise.all(blogData.images.map(async (image) => {
-                    console.log(image)
-                    await updateImageBlog(image, idBlog);
-                }));
 
-            } catch (error) {
-                console.error(error);
-                return;
+            
+
+            // ENREGISTRER LES IMAGE*
+            if(blogData.images.length > 0){
+                try {
+                    // Utiliser Promise.all pour attendre que toutes les images soient sauvegardées
+                    await Promise.all(blogData.images.map(async (image) => {
+                        console.log(image)
+                        await updateImageBlog(image, idBlog);
+                    }));
+
+                } catch (error) {
+                    console.error(error);
+                    return;
+                }
+            }
+
+            //ENREGISTRER LES VIDEO
+
+            if(blogData.video.length > 0){
+                try {
+                    await Promise.all(blogData.video.map(async (video) => {
+                        console.log(video)
+                        await updateVideoBlog(video, idBlog);
+                    }));
+                } catch (error) {
+                    console.error(error);
+                    return;
+                }
+            }
+
+
+            // Supprimer les éléments supprimés
+            if (deletedItems.length > 0) {
+                try {
+                    await Axios.delete(`${apiUrl}/deleteBlogData`, {
+                        data: {
+                            data: deletedItems,
+                            id_blog_page : idBlog
+                        }
+                    });
+                } catch (error) {
+                    console.error('Erreur lors de la suppression des éléments :', error);
+                    return;
+                }
             }
 
             navigate(`/dashboard/modification/blog/${id}`);
@@ -356,6 +435,20 @@ const EditPageBlog = () => {
 
     };
 
+    const handleDeletePage = async () => {
+        try {
+            await Axios.delete(`${apiUrl}/deleteBlogPage`, {
+                params: {
+                    IdBlogPage: idBlog,
+                    Id: id
+
+                }
+            });
+            navigate(`/dashboard/modification/blog/${id}`);
+        } catch (error) {
+            console.error('Erreur lors de la suppression de la page :', error);
+    }
+};
 
     return(
         <div className="Blog_creation_Page">
@@ -416,7 +509,20 @@ const EditPageBlog = () => {
                       <p style={{color: theme.palette.text.secondary}}>Date de modificaction :</p>
                       <p>{formattedUpdatedDate}</p>
                     </div>
+                    <RedButton variant="contained" theme={theme} onClick={openPopup}>Supprimer</RedButton>
+                    {isPopupOpen && (   
+                        <Popup theme={theme}>
+                            <p className="textCenter popupText">Êtes-vous sur de vouloir supprimer <b>{DecodeBlog.blogPage[0].page_blog_name}</b> définitivement</p>
+                            <div className="button_save_contain">
+                                <SecondaryButton variant="contained" theme={theme} onClick={closePopup}>Annuler</SecondaryButton>
+                                <RedButton variant="contained" theme={theme} onClick={handleDeletePage} >Supprimer</RedButton>
+                            </div>
+                        </Popup>
+                    )}
+                   
+
                   </div>
+
                 </div>
               ) : null
             }

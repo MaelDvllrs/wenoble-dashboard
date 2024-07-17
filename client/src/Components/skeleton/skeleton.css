@@ -6,25 +6,17 @@
 
 .skeleton-profile-photo{
     width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 2.5rem;
+    height: 2.5rem !important;
     margin-right: 0.5rem;
-    background-color: rgb(95, 96, 109);
 }
 
 .skeleton-profile-name{
-    height: 1.1rem;
-    border-radius: 1.1rem;
     width: 7rem;
-    background-color: rgb(95, 96, 109);
     margin-bottom: 0.2rem;
 }
 
 .skeleton-profile-id{
-    height: 0.9rem;
-    border-radius: 0.9rem;
     width: 3.5rem;
-    background-color: rgb(95, 96, 109);
 }
 
 .skeleton-wrapper-portfolio{

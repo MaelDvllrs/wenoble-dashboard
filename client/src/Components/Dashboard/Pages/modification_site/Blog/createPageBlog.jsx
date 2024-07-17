@@ -8,7 +8,7 @@ import BlogField from "./BlogField";
 import './createPageBlog.css'
 import {DefaultButton, SecondaryButton} from '../../../../../Theme/element';
 import SaveIcon from '@mui/icons-material/Save';
-import { createImageBlog, createBlogPage, createTextBlog, createRichTextBlog } from '../../../apiImage';
+import { createImageBlog, createBlogPage, createTextBlog, createRichTextBlog, createVideoBlog } from '../../../apiImage';
 import { useTheme } from '@mui/material/styles';
 import { convertToRaw } from 'draft-js';
 
@@ -25,13 +25,14 @@ const CreatePageBlog = () => {
     const [DecodeConfigblog, setDecodeConfigblog] = useState([]);
     const [slugValue, setSlugValue] = useState('');
     
-    const navigate = useNavigate(); // Création de l'instance useNavigate
+    const navigate = useNavigate();
 
 
     const [blogData, setBlogData] = useState({
         text: [],
         images: [],
-        richText: []
+        richText: [],
+        video: []
     });
 
     const apiUrl = config.apiUrl;
@@ -77,21 +78,20 @@ const CreatePageBlog = () => {
           const type = data.data.type;
       
           if (isDelete) {
-            // Filtrer pour supprimer l'élément
+
             newData[type] = newData[type].filter(item => item.id_config !== data.data.id_config);
           } else {
-            let itemModified = false; // Flag pour vérifier si un item a été modifié
+            let itemModified = false; 
       
             for (let i = 0; i < newData[type].length; i++) {
                 if (newData[type][i].id_config === data.data.id_config) {
                   console.log(newData[type][i]);
-                  newData[type][i] = data.data; // Modifier directement l'élément dans le tableau
-                  itemModified = true; // Marquer qu'un item a été modifié
-                  break; // Sortir de la boucle
+                  newData[type][i] = data.data; 
+                  itemModified = true; 
+                  break; 
                 }
             }
-      
-            // Si aucun item n'a été modifié, ajouter le nouvel item
+
             if (!itemModified) {
               newData[type].push(data.data);
               console.log(newData[type]);
@@ -114,8 +114,8 @@ const CreatePageBlog = () => {
         // CREER LA PAGE
 
         const date = new Date();
-        const offset = date.getTimezoneOffset() * 60000; // Convertir le décalage en millisecondes
-        // Correction ici: remplace 'T' par un espace et enlève les millisecondes et le 'Z'
+        const offset = date.getTimezoneOffset() * 60000; 
+
         const localISOTime = (new Date(date - offset)).toISOString().slice(0, 19).replace('T', ' ');
 
         const mainText = [];
@@ -139,7 +139,6 @@ const CreatePageBlog = () => {
         
 
 
-            console.log("blogPageid :" + blogPageId);
 
 
             // ENREGISTRER LES TEXTES
@@ -182,6 +181,18 @@ const CreatePageBlog = () => {
                     await createImageBlog(image, blogPageId);
                 }));
 
+            } catch (error) {
+                console.error(error);
+                return;
+            }
+
+
+            //ENREGISTRER LES VIDEO
+            try {
+                await Promise.all(blogData.video.map(async (video) => {
+                    console.log(video)
+                    await createVideoBlog(video, blogPageId);
+                }));
             } catch (error) {
                 console.error(error);
                 return;

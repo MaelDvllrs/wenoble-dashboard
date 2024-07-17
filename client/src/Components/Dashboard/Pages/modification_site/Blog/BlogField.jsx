@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import config from '../../../../../config';
+
 import { Editor, EditorState, RichUtils, CompositeDecorator, convertFromRaw } from 'draft-js';
 import 'draft-js/dist/Draft.css';
 import './BlogField.css'
@@ -6,7 +8,6 @@ import { FaBold, FaItalic, FaLink, FaListUl, FaListOl } from "react-icons/fa";
 
 import { useTheme } from '@mui/material/styles';
 import { FileUploader } from "react-drag-drop-files";
-import { LiaCloudUploadAltSolid } from "react-icons/lia";
 import { v4 as uuidv4 } from 'uuid';
 import { compressImage } from "../../../apiImage";
 
@@ -14,8 +15,11 @@ import { CssTextField, DefaultSwitch, DefaultButton, SecondaryButton} from '../.
 import DeleteIcon from '@mui/icons-material/Delete';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
 import OpenInNewOutlinedIcon from '@mui/icons-material/OpenInNewOutlined';
+import ImageIcon from '@mui/icons-material/Image';
+import VideocamIcon from '@mui/icons-material/Videocam';
 
 
+const apiUrl = config.apiUrl; 
 
 
 // Link component
@@ -58,6 +62,8 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
   // TEXTE EDITOR
 
     const [editorState, setEditorState] = useState(EditorState.createEmpty(linkDecorator));
+    const [createBoolRichText, setCreateBoolRichText] = useState('')
+
     
     const handleEditorChange = (newState) => {
       setEditorState(newState);
@@ -68,6 +74,7 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
         id_config : id_config,
         type : 'richText',
         value : newState.getCurrentContent(),
+        create : createBoolRichText
       }
 
       onChange({ data });
@@ -146,6 +153,7 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
     
         // Mettre à jour l'état de l'éditeur avec les données converties
         setEditorState(newEditorState);
+        setCreateBoolRichText(dataValue.create)
       }
     }, [dataValue, type, setEditorState]);
 
@@ -153,6 +161,8 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
     // IMAGE UPLOAD
 
     const [imagesUploaded, setImagesUploaded] = useState([]);
+    const [createBoolImage, setCreateBoolImage] = useState('')
+
 
     const fileTypes = ["JPG", "PNG"];
 
@@ -160,6 +170,7 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
     
       if (file instanceof File) {
         const fileCompress = await compressImage(file);
+
     
         const data = {
           id_blog_page: id_blog_page,
@@ -169,7 +180,9 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
           name: file.name,
           alt: file.name,
           url: URL.createObjectURL(file),
-          type: 'images'
+          type: 'images',
+          create : createBoolImage
+
         };
     
         setImagesUploaded(prevImages => {
@@ -204,11 +217,13 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
           name: dataValue.name, // Utilisez le nom de l'image de dataValue
           alt: dataValue.alt, // Utilisez le texte alternatif de l'image de dataValue
           url: dataValue.data, // Utilisez les données d'image en base64 comme URL
-          type: 'images' // Définissez le type comme 'images'
+          type: 'images', // Définissez le type comme 'images'
+
         }];
     
         // Initialisez l'état imagesUploaded avec les données de l'image
         setImagesUploaded(initialImages);
+        setCreateBoolImage(dataValue.create);
       }
     }, [dataValue, type, id_blog_page, id_config]);
 
@@ -223,9 +238,92 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
     }
 
 
+
+    // VIDEO UPLOAD
+
+    
+    const videoTypes = ["MP4"];
+    
+
+    const [videoUploaded, setVideoUploaded] = useState([]);
+    const [createBoolVideo, setCreateBoolVideo] = useState('')
+
+
+    const handleVideoChange = async (file, idToReplace) => {
+    
+      if (file instanceof File) {
+    
+        const data = {
+          id_blog_page: id_blog_page,
+          id_config: id_config,
+          id_video: uuidv4(), // Assurez-vous que cela génère un ID unique pour chaque nouvelle image
+          data: file,
+          name: file.name,
+          alt: file.name,
+          url: URL.createObjectURL(file),
+          type: 'video',
+          create : createBoolVideo
+        };
+    
+        setVideoUploaded(prevVideoq => {
+          const foundIndex = prevVideoq.findIndex(img => img.id_config === idToReplace);
+          if (idToReplace !== undefined && foundIndex !== -1) {
+            onChange({ data });
+    
+            console.log(data);
+    
+            return prevVideoq.map((img, index) => index === foundIndex ? data : img);
+          } else {
+            onChange({ ...prevVideoq, data });
+    
+            return [...prevVideoq, data];
+          }
+        });
+      } else {
+        console.error("Aucun fichier n'a été téléchargé.");
+      }
+    };
+
+
+    useEffect(() => {
+      // Vérifiez si dataValue existe et si le type est 'image'
+      if (dataValue && Object.keys(dataValue).length > 0 && type === 'video') {
+        
+
+        const initialImages = [{
+          id_blog_page: dataValue.id_blog_page || id_blog_page, // Utilisez id_blog_page de dataValue ou celui passé en prop
+          id_config: dataValue.id_config || id_config, // Utilisez id_config de dataValue ou celui passé en prop
+          id_video: uuidv4(), // Générez un nouvel UUID pour l'image
+          data: dataValue.data, // Utilisez les données d'image en base64 de dataValue
+          name: dataValue.name, // Utilisez le nom de l'image de dataValue
+          alt: dataValue.alt, // Utilisez le texte alternatif de l'image de dataValue
+          src: dataValue.src,
+          type: 'video' ,
+        }];
+
+
+    
+        // Initialisez l'état imagesUploaded avec les données de l'image
+        setVideoUploaded(initialImages);
+        setCreateBoolVideo(dataValue.create);
+      }
+    }, [dataValue, type, id_blog_page, id_config]);
+
+
+    function handleDeleteVideo(idToDelete) {
+      setVideoUploaded(imagesUploaded.filter(video => video.id_config !== idToDelete));
+      const data = {
+        id_config: id_config,
+        type: 'video'
+      }
+      onChange({ data }, true);
+    }
+
+
     //TEXT INPUT
 
     const [slugValueChange, setSlugValueChange] = useState(slugValue || "");
+    const [createBool, setCreateBool] = useState('')
   
     useEffect(() => {
       // Si slugValue est non vide, mettre à jour slugValueChange
@@ -274,11 +372,16 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
       const newValue = event.target.value;
       // Mise à jour de l'état avec la nouvelle valeur saisie
       setSlugValueChange(newValue);
-  
+      console.log(dataValue)
+
+      
+
       const data = {
         value: newValue,
         id_config: id_config,
-        type: 'text'
+        type: 'text',
+        create: createBool
+
       };
       onChange({ data });
     };
@@ -289,6 +392,8 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
       // Vérifiez si dataValue existe et si le type est 'text'
       if (dataValue && Object.keys(dataValue).length > 0 && type === 'text') {
         // Mettre à jour slugValueChange avec la valeur de dataValue
+        
+        setCreateBool(dataValue.create)
         setSlugValueChange(dataValue.text);
         
       }
@@ -325,8 +430,6 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
 
                     case 'image':
                         return (
-
-
                             <div className='image_blog' style={{backgroundColor : theme.palette.primary.main, color : theme.palette.text.primary, borderColor : theme.palette.primary.main}}>
                               {imagesUploaded.length > 0 ? (
                                 imagesUploaded.map((image) => ( // Map over the images array
@@ -350,7 +453,7 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
                                 <FileUploader handleChange={handleImageChange} name="file" types={fileTypes} multiple={false}>
                                   <div className="DragAndDrop">
                                     <span className="logoUploadImage">
-                                      <LiaCloudUploadAltSolid />
+                                      <ImageIcon />
                                     </span>
                                     Télécharger ou glisser une photo ici (jpeg, png)
                                   </div>
@@ -363,6 +466,45 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
                                   <input className='input_text_blog' type='text' style={{backgroundColor : theme.palette.primary.main, color : theme.palette.text.primary, borderColor : theme.palette.primary.main}} onChange={handleTextChange} value={slugValueChange}/>                               
                                 </div>
                               );
+                    case 'video':
+                      return (
+                        <div className='image_blog' style={{backgroundColor : theme.palette.primary.main, color : theme.palette.text.primary, borderColor : theme.palette.primary.main}}>
+                          {videoUploaded.length > 0 ? (
+                            videoUploaded.map((video) => ( // Map over the images array
+                              <div key={video.id_config} className="ImageUploaded_contain">
+                                <video
+                                    className='Image_uploaded'
+                                    src={video.url || `${apiUrl}/streamVideo/${video.src}`}
+                                    controls
+                                    alt={video.alt}
+                                />
+                                <div className='info_image_blog'>
+                                  <div>
+                                    <p><b>{video.name}</b></p>
+                                    <p className='user_id'>{video.alt}</p>
+                                  </div>
+                                  <a href={`${apiUrl}/streamVideo/${video.src}`} target="_blank"><OpenInNewOutlinedIcon style={{color: theme.palette.text.primary}}/></a>
+                                  <div className='button_contain'>
+                                  <input className='input_image_blog' type="file" id={`file-input-${video.id_config}`} onChange={(e) => handleVideoChange(e.target.files[0], video.id_config)} accept="video/*"/>
+                                  <SecondaryButton theme={theme} className="button_image_blog" type="submit" variant="contained"><label className='label_input_image_blog' htmlFor={`file-input-${video.id_config}`}/><AutorenewIcon/> Remplacer</SecondaryButton>
+                                  <SecondaryButton theme={theme} className="button_image_blog" type="submit" variant="contained" onClick={() => handleDeleteVideo(video.id_config)}><DeleteIcon/> Supprimer</SecondaryButton>
+                                  </div>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <FileUploader handleChange={handleVideoChange} name="file" types={videoTypes} multiple={false}>
+                              <div className="DragAndDrop">
+                                <span className="logoUploadImage">
+                                  <VideocamIcon />
+                                </span>
+                                Télécharger ou glisser une video ici (mp4)
+                              </div>
+                            </FileUploader>
+                          )}
+                        </div>
+                      );
+
                     default:
                         return null;
                 }

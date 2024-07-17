@@ -185,3 +185,11 @@ a{
     width: 100%;
 }
 
+
+.textCenter{
+    text-align: center;
+}
+.popupText{
+    margin-bottom: 2rem;
+}
+

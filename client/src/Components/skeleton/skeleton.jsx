@@ -11,11 +11,11 @@ export  const SkeletonProfile = () => {
         <div className="skeleton-wrapper">
             <div className="skeleton-profile">
                 <div>
-                    <div className="skeleton-profile-photo"></div>
+                    <Skeleton sx={{bgcolor: '#525252' }} animation="wave" variant="circular" className="skeleton-profile-photo"/>
                 </div>
                 <div>
-                    <div className="skeleton-profile-name"></div>
-                    <div className="skeleton-profile-id"></div>
+                    <Skeleton sx={{bgcolor: '#525252'}} animation="wave" variant="text" className="skeleton-profile-name"/>
+                    <Skeleton sx={{bgcolor: '#525252'}} animation="wave" variant="text" className="skeleton-profile-id"/>
                 </div>
             </div>
         </div>

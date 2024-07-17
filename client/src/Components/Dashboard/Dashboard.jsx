@@ -15,6 +15,8 @@ import { SkeletonProfile } from '../skeleton/skeleton';
 import ThemeContext from '../../Theme/themeContext';
 import { useTheme } from '@mui/material/styles';
 import Checkbox from '@mui/material/Checkbox';
+import Avatar from '@mui/material/Avatar';
+
 
 
 
@@ -100,7 +102,13 @@ const Dashboard = () => {
                     <motion.div className="user_menu"  animate={{height: open_user ? "5rem" : "auto", paddingRight: open_menu ? "1rem" : "0rem", paddingLeft: open_menu ? "1rem" : "0rem", width: open_menu ? "auto" : "2.5rem", border: open_menu ? "1px #434853 solid" : "none"}}>
                         <div className='user_menu_box'>
                             {LoadingProfile ? <SkeletonProfile /> : <div className='flex_left'>
-                            {images[0] && <img src={`data:image/jpeg;base64,${images[0].data}`} alt={images[0].name} className='profile_photo'/>}
+                                {
+                                  images[0] ? (
+                                    <img src={`data:image/jpeg;base64,${images[0].data}`} alt={images[0].name} className='profile_photo'/>
+                                  ) : (
+                                    <Avatar alt="Avatar par défaut" className='profile_photo'/>
+                                  )
+                                }
                                 {decodedUser && <p className='user_name'><b>{decodedUser.user[0].username}</b><span className='user_id'>#{String(decodedUser.user[0].id_user).padStart(4, '0')}</span></p>}
                             </div>}
                             <button id='id_user_menu_button' className='user_menu_button' onClick={toggle_user}><BsChevronCompactDown className='user_menu_button_arrow'/></button>  
