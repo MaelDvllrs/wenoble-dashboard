@@ -18,3 +18,8 @@
     height: calc(100% - 4rem);
 }
 
+
+.delete_button_blog{
+    margin-top: 2rem;
+}
+

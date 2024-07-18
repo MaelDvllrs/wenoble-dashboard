@@ -46,16 +46,20 @@ router.get('/getPorfolioImages', (req, res) => {
     const portfolioId = req.query.portfolioId;
     const idUser = req.query.idUser;
 
+    console.log('portfolioId', portfolioId);
+    console.log('idUser', idUser);
+
     if (!portfolioId || !idUser) {
         return res.status(400).send('L\'id du portfolio est manquant.');
     }
 
-    const SQL_verif = 'SELECT id_user FROM portfolio WHERE id_portfolio = ? ORDER BY order_photo';
+    const SQL_verif = 'SELECT id_user FROM portfolio WHERE id_portfolio = ?';
     const Values_verif = [portfolioId];
 
     db.query(SQL_verif, Values_verif, (err, results) => {
 
       if (err) {
+        console.log('Error in db query', err);
         return res.status(500).send({error: err});
       }
 
@@ -63,7 +67,7 @@ router.get('/getPorfolioImages', (req, res) => {
         return res.status(403).send('Vous n\'avez pas les droits pour accéder à ces images');
       }
 
-      const SQL = 'SELECT id_photo, src_photo, alt_photo, order_photo FROM photo_portfolio WHERE id_portfolio = ? ORDER BY order_photo';
+      const SQL = 'SELECT id_photo, src_photo, alt_photo, size, order_photo FROM photo_portfolio WHERE id_portfolio = ? ORDER BY order_photo';
       const values = [portfolioId];
 
       db.query(SQL, values, (err, results) => {
@@ -83,7 +87,8 @@ router.get('/getPorfolioImages', (req, res) => {
                 name: image.src_photo,
                 data: 'data:image/jpeg;base64,' + imageDataBase64,
                 alt: image.alt_photo,
-                order: image.order_photo
+                order: image.order_photo,
+                size: image.size
               };
             } catch (error) {
               console.error('Erreur lors de la lecture de l\'image :', error);
@@ -119,9 +124,10 @@ router.post('/saveImagesPortfolio', upload.single('image'), (req, res) => {
     const id_portfolio = req.body.id_portfolio;
     const name = req.body.name;
     const alt = req.body.alt;
+    const size = req.body.size;
   
-    const SQL = 'INSERT INTO photo_portfolio (id_photo, id_portfolio, src_photo, name_photo, alt_photo) VALUES (?, ?, ?, ?, ?)';
-    const Values = [id_photo, id_portfolio, id_photo, name, alt];
+    const SQL = 'INSERT INTO photo_portfolio (id_photo, id_portfolio, src_photo, name_photo, alt_photo, size) VALUES (?, ?, ?, ?, ?, ?)';
+    const Values = [id_photo, id_portfolio, id_photo, name, alt, size];
   
     db.query(SQL, Values, (err, results) => {
       if (err) {

@@ -117,3 +117,8 @@
     outline: none;
 }
 
+.flex_image{
+    align-items: normal;
+    gap: 1rem;
+}
+

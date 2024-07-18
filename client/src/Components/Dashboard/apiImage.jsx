@@ -52,6 +52,8 @@ export const fetchImagesPortfolio = async (portfolioId, idUser) => {
 export const saveImagesPortfolio = async (fields) => {
   try {
 
+    console.log(fields);
+
     // Créer un objet FormData
     const formData = new FormData();
 
@@ -64,6 +66,7 @@ export const saveImagesPortfolio = async (fields) => {
     formData.append('id_portfolio', fields.id_portfolio);
     formData.append('alt', fields.alt);
     formData.append('name', fields.name);
+    formData.append('size', fields.size);
 
     await Axios.post(`${apiUrl}/saveImagesPortfolio`, formData, {
       headers: {
@@ -232,6 +235,7 @@ export const createImageBlog = async (fields, blogPageId) => {
     formData.append('id_config', fields.id_config);
     formData.append('alt', fields.alt);
     formData.append('name', fields.name);
+    formData.append('size', fields.size);
 
     await Axios.post(`${apiUrl}/createImagesBlog`, formData, {
       headers: {
@@ -263,6 +267,7 @@ export const createVideoBlog = async (fields, blogPageId) => {
     formData.append('id_config', fields.id_config);
     formData.append('alt', fields.alt);
     formData.append('name', fields.name);
+    formData.append('size', fields.size);
 
     await Axios.post(`${apiUrl}/createVideoBlog`, formData, {
       headers: {
@@ -416,6 +421,7 @@ export const updateImageBlog = async (fields, blogPageId) => {
     formData.append('id_config', fields.id_config);
     formData.append('alt', fields.alt);
     formData.append('name', fields.name);
+    formData.append('size', fields.size);
 
     if(fields.create){
       await Axios.post(`${apiUrl}/updateImagesBlog`, formData, {
@@ -461,6 +467,7 @@ export const updateVideoBlog = async (fields, blogPageId) => {
     formData.append('id_config', fields.id_config);
     formData.append('alt', fields.alt);
     formData.append('name', fields.name);
+    formData.append('size', fields.size);
 
     if(fields.create){
       await Axios.post(`${apiUrl}/updateVideoBlog`, formData, {

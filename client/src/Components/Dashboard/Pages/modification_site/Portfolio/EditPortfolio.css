@@ -42,7 +42,6 @@
 .portfolio_edit_place{
     width: 100%;
     overflow-y: auto;
-    scrollbar-gutter: stable;
     scrollbar-color: #272a31 transparent; 
     scrollbar-width: thin;
     height: calc(100% - 9rem);

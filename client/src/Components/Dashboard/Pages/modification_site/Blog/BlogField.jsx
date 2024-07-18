@@ -17,6 +17,7 @@ import AutorenewIcon from '@mui/icons-material/Autorenew';
 import OpenInNewOutlinedIcon from '@mui/icons-material/OpenInNewOutlined';
 import ImageIcon from '@mui/icons-material/Image';
 import VideocamIcon from '@mui/icons-material/Videocam';
+import { color } from 'framer-motion';
 
 
 const apiUrl = config.apiUrl; 
@@ -180,6 +181,7 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
           name: file.name,
           alt: file.name,
           url: URL.createObjectURL(file),
+          size: (fileCompress.size / 1024).toFixed(0),
           type: 'images',
           create : createBoolImage
 
@@ -217,6 +219,7 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
           name: dataValue.name, // Utilisez le nom de l'image de dataValue
           alt: dataValue.alt, // Utilisez le texte alternatif de l'image de dataValue
           url: dataValue.data, // Utilisez les données d'image en base64 comme URL
+          size: dataValue.size, // Utilisez la taille de l'image de dataValue
           type: 'images', // Définissez le type comme 'images'
 
         }];
@@ -261,6 +264,7 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
           name: file.name,
           alt: file.name,
           url: URL.createObjectURL(file),
+          size: (file.size / 1024).toFixed(0),
           type: 'video',
           create : createBoolVideo
         };
@@ -298,6 +302,7 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
           name: dataValue.name, // Utilisez le nom de l'image de dataValue
           alt: dataValue.alt, // Utilisez le texte alternatif de l'image de dataValue
           src: dataValue.src,
+          size: dataValue.size,
           type: 'video' ,
         }];
 
@@ -440,7 +445,12 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
                                         <p><b>{image.name}</b></p>
                                         <p className='user_id'>{image.alt}</p>
                                       </div>
-                                      <a href={image.url} target="_blank"><OpenInNewOutlinedIcon style={{color: theme.palette.text.primary}}/></a>
+                                      <div className='flex_contain flex_image'>
+                                        <p style={{color: theme.palette.text.secondary}}>{image.size} Ko</p>
+                                        <a href={image.url} target="_blank">
+                                      <OpenInNewOutlinedIcon style={{color: theme.palette.text.primary}}/>
+                                    </a>                                  
+                                  </div>
                                       <div className='button_contain'>
                                       <input className='input_image_blog' type="file" id={`file-input-${image.id_config}`} onChange={(e) => handleImageChange(e.target.files[0], image.id_config)} accept=".jpeg,.jpg,.png"/>
                                       <SecondaryButton theme={theme} className="button_image_blog" type="submit" variant="contained"><label className='label_input_image_blog' htmlFor={`file-input-${image.id_config}`}/><AutorenewIcon/> Remplacer</SecondaryButton>
@@ -481,9 +491,14 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
                                 <div className='info_image_blog'>
                                   <div>
                                     <p><b>{video.name}</b></p>
-                                    <p className='user_id'>{video.alt}</p>
+                                    <p style={{color: theme.palette.text.secondary}}>{video.alt}</p>
                                   </div>
-                                  <a href={`${apiUrl}/streamVideo/${video.src}`} target="_blank"><OpenInNewOutlinedIcon style={{color: theme.palette.text.primary}}/></a>
+                                  <div className='flex_contain flex_image'>
+                                    <p style={{color: theme.palette.text.secondary}}>{(video.size / 1024).toFixed(2)} Mo</p>
+                                    <a href={video.url ? video.url : `${apiUrl}/streamVideo/${video.src}`} target="_blank">
+                                      <OpenInNewOutlinedIcon style={{color: theme.palette.text.primary}}/>
+                                    </a>                                  
+                                  </div>
                                   <div className='button_contain'>
                                   <input className='input_image_blog' type="file" id={`file-input-${video.id_config}`} onChange={(e) => handleVideoChange(e.target.files[0], video.id_config)} accept="video/*"/>
                                   <SecondaryButton theme={theme} className="button_image_blog" type="submit" variant="contained"><label className='label_input_image_blog' htmlFor={`file-input-${video.id_config}`}/><AutorenewIcon/> Remplacer</SecondaryButton>

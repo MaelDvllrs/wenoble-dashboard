@@ -2,14 +2,21 @@ import React, { useEffect, useRef } from "react"
 import { NavLink } from "react-router-dom"
 import { useTheme } from '@mui/material/styles';
 import "./modificationHome.css"
-
-import { MdImportContacts, MdArrowForwardIos, MdArticle   } from "react-icons/md";
+import Axios from 'axios';
+import { MdImportContacts, MdArrowForwardIos } from "react-icons/md";
 import { FaElementor } from "react-icons/fa";
+import { MdArticle } from "react-icons/md";
+
+import Cookies from 'js-cookie';
+import config from "../../../../config";
 
 
 
 
 const ModificationHome = () => {
+
+    const token = Cookies.get('token');
+    const apiUrl = config.apiUrl;
 
     const theme = useTheme();
 
@@ -48,6 +55,19 @@ const ModificationHome = () => {
         };
       }, []);
 
+
+      const getTotalSize = async () => {
+        const totalSize = Axios.get(`${apiUrl}/getTotalSize`, {
+            params: {
+                token: token,
+            }
+        });
+        console.log(totalSize);
+    };
+
+    useEffect(() => {
+      getTotalSize();
+    },[]);
 
 
     return(

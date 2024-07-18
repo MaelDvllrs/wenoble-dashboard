@@ -118,9 +118,10 @@ router.post('/createImagesBlog', uploadImage.single('image'), (req, res) => {
   const id_config = req.body.id_config;
   const name = req.body.name;
   const alt = req.body.alt;
+  const size = req.body.size;
 
-  const SQL = 'INSERT INTO blog_field_image (id_image, id_blog_page, id_config, src_image, name_image, alt_image) VALUES (?, ?, ?, ?, ?, ?)';
-  const Values = [id_photo, id_blog_page, id_config, id_photo, name, alt];
+  const SQL = 'INSERT INTO blog_field_image (id_image, id_blog_page, id_config, src_image, name_image, alt_image, size) VALUES (?, ?, ?, ?, ?, ?, ?)';
+  const Values = [id_photo, id_blog_page, id_config, id_photo, name, alt, size];
 
   db.query(SQL, Values, (err, results) => {
     if (err) {
@@ -159,11 +160,12 @@ router.post('/createVideoBlog', uploadVideo.single('video'), (req, res) => {
   const id_config = req.body.id_config;
   const name = req.body.name;
   const alt = req.body.alt;
+  const size = req.body.size;
 
   const src_video = id_video + '.mp4';
 
-  const SQL = 'INSERT INTO blog_field_video (id_video, id_blog_page, id_config, src_video, name_video, alt_video) VALUES (?, ?, ?, ?, ?, ?)';
-  const Values = [id_video, id_blog_page, id_config, src_video, name, alt];
+  const SQL = 'INSERT INTO blog_field_video (id_video, id_blog_page, id_config, src_video, name_video, alt_video, size) VALUES (?, ?, ?, ?, ?, ?, ?)';
+  const Values = [id_video, id_blog_page, id_config, src_video, name, alt, size];
 
   db.query(SQL, Values, (err, results) => {
     if (err) {
@@ -351,7 +353,7 @@ router.get('/getImageBlog', (req, res) => {
   const sentIdConfig = req.query.IdConfig;
 
 
-  const SQL = 'SELECT id_config, src_image, name_image, alt_image FROM blog_field_image WHERE id_blog_page = ? AND id_config = ?'
+  const SQL = 'SELECT id_config, src_image, name_image, alt_image, size FROM blog_field_image WHERE id_blog_page = ? AND id_config = ?'
   const Values = [sentIdBlogPage, sentIdConfig]
 
   db.query(SQL, Values, (err, results) => {
@@ -374,6 +376,7 @@ router.get('/getImageBlog', (req, res) => {
           name: image.name_image,
           data: 'data:image/jpeg;base64,' + imageDataBase64,
           alt: image.alt_image,
+          size: image.size,
           create: true
         };
       } catch (error) {
@@ -391,7 +394,7 @@ router.get('/getVideoBlog', (req, res) => {
   const sentIdConfig = req.query.IdConfig;
 
 
-  const SQL = 'SELECT id_config, src_video, name_video, alt_video FROM blog_field_video WHERE id_blog_page = ? AND id_config = ?'
+  const SQL = 'SELECT id_config, src_video, name_video, alt_video, size FROM blog_field_video WHERE id_blog_page = ? AND id_config = ?'
   const Values = [sentIdBlogPage, sentIdConfig]
 
   db.query(SQL, Values, (err, results) => {
@@ -411,6 +414,7 @@ router.get('/getVideoBlog', (req, res) => {
           src: video.src_video,
           name: video.name_video,
           alt: video.alt_video,
+          size: video.size,
           create: true
 
         };
@@ -574,6 +578,7 @@ router.post('/updateImagesBlog', uploadUpdateImage.single('image'), (req, res) =
   const id_config = req.body.id_config;
   const name = req.body.name;
   const alt = req.body.alt;
+  const size = req.body.size;
 
   const SQL = 'SELECT src_image FROM blog_field_image WHERE id_blog_page = ? AND 	id_config = ?';
   const Values = [id_blog_page, id_config];
@@ -593,8 +598,8 @@ router.post('/updateImagesBlog', uploadUpdateImage.single('image'), (req, res) =
       }
     });
 
-    const SQL = 'UPDATE blog_field_image SET  src_image = ?, name_image = ?, alt_image = ?  WHERE id_blog_page = ? AND 	id_config = ?';
-    const Values = [id_photo, name, alt, id_blog_page, id_config];
+    const SQL = 'UPDATE blog_field_image SET  src_image = ?, name_image = ?, alt_image = ?, size = ?  WHERE id_blog_page = ? AND 	id_config = ?';
+    const Values = [id_photo, name, alt, size, id_blog_page, id_config];
   
     db.query(SQL, Values, (err, results) => {
       if (err) {
@@ -625,6 +630,7 @@ router.post('/updateVideoBlog', uploadUpdateVideo.single('video'), (req, res) =>
   const name = req.body.name;
   const alt = req.body.alt;
   const src_video = id_video + '.mp4';
+  const size = req.body.size;
 
 
   const SQL = 'SELECT src_video FROM blog_field_video WHERE id_blog_page = ? AND 	id_config = ?';
@@ -645,8 +651,8 @@ router.post('/updateVideoBlog', uploadUpdateVideo.single('video'), (req, res) =>
       }
     });
 
-    const SQL = 'UPDATE blog_field_video SET  src_video = ?, name_video = ?, alt_video = ?  WHERE id_blog_page = ? AND 	id_config = ?';
-    const Values = [src_video, name, alt, id_blog_page, id_config];
+    const SQL = 'UPDATE blog_field_video SET  src_video = ?, name_video = ?, alt_video = ?, size = ?  WHERE id_blog_page = ? AND 	id_config = ?';
+    const Values = [src_video, name, alt, size, id_blog_page, id_config];
   
     db.query(SQL, Values, (err, results) => {
       if (err) {

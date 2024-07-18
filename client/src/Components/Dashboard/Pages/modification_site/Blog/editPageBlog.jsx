@@ -509,7 +509,7 @@ const EditPageBlog = () => {
                       <p style={{color: theme.palette.text.secondary}}>Date de modificaction :</p>
                       <p>{formattedUpdatedDate}</p>
                     </div>
-                    <RedButton variant="contained" theme={theme} onClick={openPopup}>Supprimer</RedButton>
+                    <RedButton className="delete_button_blog" variant="contained" theme={theme} onClick={openPopup}>Supprimer</RedButton>
                     {isPopupOpen && (   
                         <Popup theme={theme}>
                             <p className="textCenter popupText">Êtes-vous sur de vouloir supprimer <b>{DecodeBlog.blogPage[0].page_blog_name}</b> définitivement</p>

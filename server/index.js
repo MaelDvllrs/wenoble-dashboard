@@ -15,8 +15,22 @@ const blogRouter = require('./modification/blog')
 const clientRouter = require('./admin/client');
 
 
+const whitelist = ['http://localhost:5173', 'https://dashboard.wenoble.fr', 'https://kristina-photogrphy.webflow.io', 'https://explora-production.webflow.io'];
 
-app.use(cors())
+// Configuration de CORS
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (whitelist.indexOf(origin) !== -1 || !origin) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+};
+
+
+
+app.use(cors(corsOptions));
 app.use(express.json())
 
 

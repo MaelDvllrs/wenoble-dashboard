@@ -112,4 +112,42 @@ router.post('/UserInfo', (req, res)=>{
     const Values = [sentUsername, sentIdUser]
   })
 
+
+  router.get('/getTotalSize', (req, res) => {
+
+    const token = req.query.token
+    const decoded = jwt.verify(token, secretKey);
+
+
+    IdUser = decoded.idUser
+
+    const SQL = 'SELECT id_portfolio FROM portfolio WHERE id_user = ?'
+    const Values = [IdUser]
+
+    db.query(SQL, Values, (err, results) => {
+      if(err){
+        res.send({error: err})
+      }
+
+      const portfolios = results
+
+      portfolios.forEach(portfolio => {
+        const SQL = 'SELECT size FROM photo_portfolio WHERE id_portfolio = ?'
+        const Values = [portfolio.id_portfolio]
+
+        db.query(SQL, Values, (err, results) => {
+          if(err){
+            res.send({error: err})
+          }
+
+          const sizes = results
+
+          const totalSize = sizes.reduce((acc, size) => acc + size.size, 0)
+
+          res.send({totalSize: totalSize})
+        })
+      })
+    })
+  });
+
   module.exports = router;

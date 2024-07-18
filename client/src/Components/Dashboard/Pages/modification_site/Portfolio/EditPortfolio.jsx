@@ -73,6 +73,7 @@ const EditPortfolio = () => {
           data: fileCompress,
           name: file.name,
           alt: file.name,
+          size: (fileCompress.size / 1024).toFixed(0),
           publicationDate: Date.now(),
         };
   
@@ -174,6 +175,7 @@ const EditPortfolio = () => {
         <p style={{color: theme.palette.text.secondary}} className="Item_portfolio_element order_element">Ordre</p>
         <p style={{color: theme.palette.text.secondary}} className="Item_portfolio_element alt_element">Texte alternatif</p>
         <p style={{color: theme.palette.text.secondary}} className="Item_portfolio_element name_element">Nom</p>
+        <p style={{color: theme.palette.text.secondary}} className="Item_portfolio_element option_element_menu">Taille</p>
         <p style={{color: theme.palette.text.secondary}} className="Item_portfolio_element Item_image_menu">Image</p>
         <p style={{color: theme.palette.text.secondary}} className="Item_portfolio_element option_element_menu">Option</p>
       </div>
@@ -194,6 +196,7 @@ const EditPortfolio = () => {
                 <p className="Item_portfolio_element order_element">{index}</p>
                 <p className="Item_portfolio_element alt_element">{image.alt}</p>
                 <p className="Item_portfolio_element name_element">{image.name}</p>
+                <p className="Item_portfolio_element option_element_menu">{image.size} Ko</p>
 
                 <img className="Item_image Item_portfolio_element" src={src} alt={image.alt} />
                 <div className="Item_portfolio_element option_element">
