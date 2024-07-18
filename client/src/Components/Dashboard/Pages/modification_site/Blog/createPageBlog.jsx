@@ -6,11 +6,13 @@ import config from "../../../../../config";
 import {jwtDecode} from 'jwt-decode'; 
 import BlogField from "./BlogField";
 import './createPageBlog.css'
-import {DefaultButton, SecondaryButton} from '../../../../../Theme/element';
+import {DefaultButton, SecondaryButton, Popup} from '../../../../../Theme/element';
 import SaveIcon from '@mui/icons-material/Save';
 import { createImageBlog, createBlogPage, createTextBlog, createRichTextBlog, createVideoBlog } from '../../../apiImage';
 import { useTheme } from '@mui/material/styles';
 import { convertToRaw } from 'draft-js';
+import CircularProgress from '@mui/material/CircularProgress';
+
 
 
 
@@ -24,6 +26,9 @@ const CreatePageBlog = () => {
     const [InfoConfigBlog, setConfigblog] = useState([]);
     const [DecodeConfigblog, setDecodeConfigblog] = useState([]);
     const [slugValue, setSlugValue] = useState('');
+
+    const [savingPage, setSavingPage] = useState(false);
+
     
     const navigate = useNavigate();
 
@@ -106,10 +111,14 @@ const CreatePageBlog = () => {
     
 
     const handleSave = async () => {
+        
+
         if (blogData.text.length === 0) {
             console.error('Valeur manquante');
             return;
         };
+
+        setSavingPage(true);
 
         // CREER LA PAGE
 
@@ -235,6 +244,11 @@ const CreatePageBlog = () => {
                     </div>
                 ))}
             </div>
+            {savingPage && (   
+                <Popup theme={theme}>
+                    <CircularProgress sx={{color:"rgb(5, 65, 183)"}}/>
+                </Popup>
+            )}
             
         </div>
 

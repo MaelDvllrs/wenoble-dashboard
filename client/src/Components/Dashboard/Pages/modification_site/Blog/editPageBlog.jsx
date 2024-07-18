@@ -12,6 +12,9 @@ import { updateImageBlog, updateBlogPage, updateTextBlog, updateRichTextBlog, up
 import { useTheme } from '@mui/material/styles';
 import { convertToRaw } from 'draft-js';
 import UnpublishedIcon from '@mui/icons-material/Unpublished';
+import CircularProgress from '@mui/material/CircularProgress';
+import { color } from "framer-motion";
+
 
 
 
@@ -35,6 +38,8 @@ const EditPageBlog = () => {
     const [formattedUpdatedDate, setFormattedUpdatedDate] = useState('');
 
     const [deletedItems, setDeletedItems] = useState([]);
+
+    const [savingPage, setSavingPage] = useState(false);
 
 
 
@@ -305,15 +310,12 @@ const EditPageBlog = () => {
     };
 
 
-    console.log(deletedItems);
-
-
-
-
 
     const handleSave = async () => {
 
         // CREER LA PAGE
+        setSavingPage(true);
+
 
         const date = new Date();
         const offset = date.getTimezoneOffset() * 60000; // Convertir le décalage en millisecondes
@@ -517,6 +519,12 @@ const EditPageBlog = () => {
                                 <SecondaryButton variant="contained" theme={theme} onClick={closePopup}>Annuler</SecondaryButton>
                                 <RedButton variant="contained" theme={theme} onClick={handleDeletePage} >Supprimer</RedButton>
                             </div>
+                        </Popup>
+                    )}
+
+                    {savingPage && (   
+                        <Popup theme={theme}>
+                            <CircularProgress sx={{color:"rgb(5, 65, 183)"}}/>
                         </Popup>
                     )}
                    
