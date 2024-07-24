@@ -8,12 +8,11 @@ import BlogField from "./BlogField";
 import './createPageBlog.css'
 import {DefaultButton, RedButton, SecondaryButton, Popup} from '../../../../../Theme/element';
 import SaveIcon from '@mui/icons-material/Save';
-import { updateImageBlog, updateBlogPage, updateTextBlog, updateRichTextBlog, updateVideoBlog } from '../../../apiImage';
+import { updateImageBlog, updateBlogPage, updateTextBlog, updateRichTextBlog, updateVideoBlog, updateMultiReferenceBlog } from '../../../apiImage';
 import { useTheme } from '@mui/material/styles';
 import { convertToRaw } from 'draft-js';
 import UnpublishedIcon from '@mui/icons-material/Unpublished';
 import CircularProgress from '@mui/material/CircularProgress';
-import { color } from "framer-motion";
 
 
 
@@ -54,7 +53,9 @@ const EditPageBlog = () => {
         text: [],
         images: [],
         richText: [],
-        video: []
+        video: [],
+        multiReference: []
+
     });
 
 
@@ -62,7 +63,8 @@ const EditPageBlog = () => {
         text: [],
         images: [],
         richText: [],
-        video: []
+        video: [],
+        multiReference: []
 
     });
 
@@ -70,8 +72,6 @@ const EditPageBlog = () => {
     const { id } = useParams();
     const { idBlog } = useParams();
 
-
-    
 
     useEffect(() => {    
     
@@ -118,21 +118,23 @@ const EditPageBlog = () => {
                     ...prevData,
                     video: [...prevData.video, {id_config: blogItem.id_config}]
                 }));
+            } else if (blogItem.tab_field === 'multiReference') {
+                setBlogDataConfig(prevData => ({
+                    ...prevData,
+                    multiReference: [...prevData.multiReference, {id_config: blogItem.id_config}]
+                }));
             }
+
         });
     }, [DecodeConfigblog]);
 
 
-
-
     useEffect(() => {
-        let allData = []; // Étape 1: Variable temporaire pour stocker les résultats
-
+        let allData = []; 
 
         const fetchData = async () => {
 
             
-            // Concaténez les résultats des appels API pour 'text'
             for (const text of blogDataConfig.text) {
                 try {
                     const response = await Axios.get(`${apiUrl}/getTextBlog`, {
@@ -199,14 +201,30 @@ const EditPageBlog = () => {
                     console.error('Erreur lors de la récupération du texte :', error);
                 }
             }
-    
+
+            for (const multiReference of blogDataConfig.multiReference) {
+                try{
+                    const response = await Axios.get(`${apiUrl}/getMultiReferenceBlog`, {
+                        params: {
+                            IdBlogPage: idBlog,
+                            IdConfig: multiReference.id_config
+                        }
+                    });
+
+                    if (response.data.length > 0) {
+                        allData.push(response.data[0]); 
+                    }
+                } catch (error) {
+                    console.error('Erreur lors de la récupération du texte :', error);
+                }
+            }
+
             setInfoBlogPage({ data: allData }); 
         };
         
-        fetchData(); // Exécutez la fonction asynchrone pour récupérer les données
+        fetchData(); 
 
     }, [blogDataConfig, idBlog]);
-
 
 
     useEffect(() => {
@@ -309,8 +327,6 @@ const EditPageBlog = () => {
         });
     };
 
-
-
     const handleSave = async () => {
 
         // CREER LA PAGE
@@ -411,6 +427,18 @@ const EditPageBlog = () => {
                 }
             }
 
+            //ENREGISTRER LES MULTIREFERENCE
+            if(blogData.multiReference.length > 0){
+                try {
+                    await Promise.all(blogData.multiReference.map(async (multiReference) => {
+                        await updateMultiReferenceBlog(idBlog, multiReference);
+                    }));
+                } catch (error) {
+                    console.error(error);
+                    return;
+                }
+            }
+
 
             // Supprimer les éléments supprimés
             if (deletedItems.length > 0) {
@@ -489,15 +517,15 @@ const EditPageBlog = () => {
                         const correspondingData = InfoBlogPage.data.find(data => data.id_config === blogItem.id_config);
 
                         return (
-                            <div className="blogField_contain">
+                            <div key={blogItem.id_config} className="blogField_contain">
                                 <p style={{color: theme.palette.text.secondary}}>{blogItem.name_field}</p>
-                                {/* Afficher BlogField avec ou sans données spécifiques */}
                                 <BlogField 
                                     id_blog_page={id} 
                                     type={blogItem.tab_field} 
                                     id_config={blogItem.id_config} 
                                     onChange={handleBlogDataChange} 
-                                    dataValue={correspondingData || {}} // Utiliser les données correspondantes ou un objet vide si non trouvé
+                                    dataValue={correspondingData || {}}
+                                    id_collection_ref={blogItem.id_collection_ref}
                                 />
                             </div>
                         );
@@ -511,6 +539,7 @@ const EditPageBlog = () => {
                       <p style={{color: theme.palette.text.secondary}}>Date de modificaction :</p>
                       <p>{formattedUpdatedDate}</p>
                     </div>
+                    <div className="line_horizontal" style={{backgroundColor: theme.palette.text.secondary}}></div>
                     <RedButton className="delete_button_blog" variant="contained" theme={theme} onClick={openPopup}>Supprimer</RedButton>
                     {isPopupOpen && (   
                         <Popup theme={theme}>

@@ -8,7 +8,7 @@ import BlogField from "./BlogField";
 import './createPageBlog.css'
 import {DefaultButton, SecondaryButton, Popup} from '../../../../../Theme/element';
 import SaveIcon from '@mui/icons-material/Save';
-import { createImageBlog, createBlogPage, createTextBlog, createRichTextBlog, createVideoBlog } from '../../../apiImage';
+import { createImageBlog, createBlogPage, createTextBlog, createRichTextBlog, createVideoBlog, createMultiReferenceBlog } from '../../../apiImage';
 import { useTheme } from '@mui/material/styles';
 import { convertToRaw } from 'draft-js';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -37,7 +37,8 @@ const CreatePageBlog = () => {
         text: [],
         images: [],
         richText: [],
-        video: []
+        video: [],
+        multiReference: []
     });
 
     const apiUrl = config.apiUrl;
@@ -63,6 +64,10 @@ const CreatePageBlog = () => {
             setDecodeConfigblog(decodedConfig);
         }
     }, [InfoConfigBlog]);
+
+
+
+    
 
 
 
@@ -107,7 +112,7 @@ const CreatePageBlog = () => {
         });
     };
 
-    console.log(blogData);
+
     
 
     const handleSave = async () => {
@@ -143,7 +148,6 @@ const CreatePageBlog = () => {
             // Appeler la fonction saveBlogPage
             const response = await createBlogPage(id, mainText, localISOTime);
             // Gérer la réponse ici
-            console.log(response);  
             const blogPageId = response.id;
         
 
@@ -186,7 +190,6 @@ const CreatePageBlog = () => {
             try {
                 // Utiliser Promise.all pour attendre que toutes les images soient sauvegardées
                 await Promise.all(blogData.images.map(async (image) => {
-                    console.log(image)
                     await createImageBlog(image, blogPageId);
                 }));
 
@@ -199,8 +202,17 @@ const CreatePageBlog = () => {
             //ENREGISTRER LES VIDEO
             try {
                 await Promise.all(blogData.video.map(async (video) => {
-                    console.log(video)
                     await createVideoBlog(video, blogPageId);
+                }));
+            } catch (error) {
+                console.error(error);
+                return;
+            }
+
+            //ENREGISTRER LES MULTIREFERENCE
+            try {
+                await Promise.all(blogData.multiReference.map(async (multiReference) => {
+                    await createMultiReferenceBlog(blogPageId, multiReference);
                 }));
             } catch (error) {
                 console.error(error);
@@ -240,7 +252,7 @@ const CreatePageBlog = () => {
                 {DecodeConfigblog.blogConfig && DecodeConfigblog.blogConfig.map((blogItem) => (
                     <div className="blogField_contain">
                         <p style={{color: theme.palette.text.secondary}}>{blogItem.name_field}</p>
-                        <BlogField id_blog_page={id} type={blogItem.tab_field} id_config={blogItem.id_config} onChange={handleBlogDataChange}/>
+                        <BlogField id_blog_page={id} type={blogItem.tab_field} id_config={blogItem.id_config} id_collection_ref={blogItem.id_collection_ref} onChange={handleBlogDataChange}/>
                     </div>
                 ))}
             </div>

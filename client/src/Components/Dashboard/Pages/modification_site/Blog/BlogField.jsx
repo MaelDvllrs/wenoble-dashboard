@@ -17,7 +17,10 @@ import AutorenewIcon from '@mui/icons-material/Autorenew';
 import OpenInNewOutlinedIcon from '@mui/icons-material/OpenInNewOutlined';
 import ImageIcon from '@mui/icons-material/Image';
 import VideocamIcon from '@mui/icons-material/Videocam';
-import { color } from 'framer-motion';
+
+import Select from 'react-select'
+import  Axios  from 'axios';
+
 
 
 const apiUrl = config.apiUrl; 
@@ -56,7 +59,8 @@ function findLinkEntities(contentBlock, callback, contentState) {
 
 
 
-const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldValue, dataValue }) => {
+const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldValue, dataValue, id_collection_ref }) => {
+
 
   const theme = useTheme();
 
@@ -191,9 +195,7 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
           const foundIndex = prevImages.findIndex(img => img.id_config === idToReplace);
           if (idToReplace !== undefined && foundIndex !== -1) {
             onChange({ data });
-    
-            console.log(data);
-    
+        
             return prevImages.map((img, index) => index === foundIndex ? data : img);
           } else {
             onChange({ ...prevImages, data });
@@ -273,9 +275,7 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
           const foundIndex = prevVideoq.findIndex(img => img.id_config === idToReplace);
           if (idToReplace !== undefined && foundIndex !== -1) {
             onChange({ data });
-    
-            console.log(data);
-    
+
             return prevVideoq.map((img, index) => index === foundIndex ? data : img);
           } else {
             onChange({ ...prevVideoq, data });
@@ -377,10 +377,7 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
       const newValue = event.target.value;
       // Mise à jour de l'état avec la nouvelle valeur saisie
       setSlugValueChange(newValue);
-      console.log(dataValue)
-
       
-
       const data = {
         value: newValue,
         id_config: id_config,
@@ -405,7 +402,57 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
     }, [dataValue, type]);
 
 
-    
+    //MULTI REFERENCE
+     const [CollectionRef, setCollectionRef] = useState([]);
+     const [optionDefault, setOptionDefault] = useState([]);
+     const [createBoolMultiRef, setCreateBoolMultiRef] = useState('')
+
+
+    useEffect(() => {
+      if (id_collection_ref) { 
+        Axios.get(`${apiUrl}/getCollectionRef`, {
+          params: {
+            id_collection_ref: id_collection_ref,
+          }
+        }).then((response) => {
+
+          setCollectionRef(response.data);
+        }).catch((error) => {
+          console.error('Erreur lors de la récupération de la collection de référence :', error);
+        });
+      }
+    }, [id_collection_ref]);
+
+    const optionMultiRef = CollectionRef.map(item => ({
+      value: item.id_page_blog,
+      label: item.page_blog_name
+    }));
+
+    const handleChangeMultiRef = (selectedOption) => {
+        const data = {
+          id_config: id_config,
+          type: 'multiReference',
+          value: JSON.stringify(selectedOption.map(option => ({ value: option.value, label: option.label }))),          
+          create: createBoolMultiRef
+        };
+        onChange({ data });
+
+        setOptionDefault(selectedOption);
+    }
+
+    useEffect(() => {
+      if (dataValue && Object.keys(dataValue).length > 0 && type === 'multiReference') {
+        const selectedOptions = JSON.parse(dataValue.info_ref);
+        const selectedOptionsFormatted = selectedOptions.map(option => ({
+          value: option.value,
+          label: option.label
+        }));
+        setCreateBoolMultiRef(dataValue.create)
+        setOptionDefault(selectedOptionsFormatted);
+        
+      }
+    }, [dataValue, type, CollectionRef]);
+
 
     return (
         <div>
@@ -519,6 +566,67 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
                           )}
                         </div>
                       );
+                    case 'multiReference' :
+                      return (
+                        <div>
+                          <Select 
+                              onChange={(selectedOption) => handleChangeMultiRef(selectedOption.map(option => ({ value: option.value, label: option.label })))}                              options={optionMultiRef}
+                              isMulti
+                              value={optionDefault}
+                              styles={{
+                                control: (provided) => ({
+                                  ...provided,
+                                  backgroundColor: theme.palette.primary.main,
+                                  color: "#",
+                                  borderColor: theme.palette.primary.main,
+                                  boxShadow: 'none',
+                                }),
+                                input: (provided) => ({
+                                  ...provided,
+                                  color: theme.palette.text.primary,
+                                }),
+                                option: (provided, state) => ({
+                                  ...provided,
+                                  color: theme.palette.text.primary,
+                                  backgroundColor: state.isSelected ? theme.palette.primary.secondary : theme.palette.background.default,
+                                  '&:hover': {
+                                    backgroundColor: theme.palette.primary.main,
+                                    color: theme.palette.text.primary,
+                                  },
+                                }),
+                                menu: (provided) => ({
+                                  ...provided,
+                                  backgroundColor: theme.palette.background.default, 
+                                }),
+                                placeholder: (provided) => ({
+                                  ...provided,
+                                  color: "#AAAAAA",
+                                  value: "Séléctionner..." 
+                                }),
+
+                                multiValue: (provided) => ({
+                                  ...provided,
+                                  backgroundColor: theme.palette.primary.secondary,
+                                }),
+
+                                multiValueLabel: (provided) => ({
+                                  ...provided,
+                                  color: theme.palette.text.primary,
+                                }),
+
+                                multiValueRemove: (provided) => ({ 
+                                  ...provided,
+                                  color: theme.palette.text.primary,
+                                  ':hover': {
+                                    backgroundColor: theme.palette.primary.main,
+                                    color: theme.palette.text.primary,
+                                  },
+                                }),
+                              }}
+                            />                             
+                          </div>
+                      )
+
 
                     default:
                         return null;

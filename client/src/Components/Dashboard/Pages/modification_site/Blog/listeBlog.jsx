@@ -39,8 +39,6 @@ const ListeBlog = () => {
     }, [id]);
 
 
-    console.log(InfoListeblog.blogList);
-
 
 
     return(

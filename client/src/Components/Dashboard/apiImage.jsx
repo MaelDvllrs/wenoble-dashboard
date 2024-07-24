@@ -332,6 +332,23 @@ export const createRichTextBlog = async (id, infoRichText) => {
 }
 
 
+export const createMultiReferenceBlog = async (id, multiReference) => {
+  try {
+    await Axios.post(`${apiUrl}/createMultiReferenceBlog`, {
+      params: {
+        id : id,
+        multiReference: multiReference,
+      }
+    });
+  } catch (error) {
+    console.error('Message d\'erreur du serveur:', error);
+    // Propager l'erreur
+    throw error;
+  }
+}
+
+
+
 
 export const updateBlogPage = async (id, mainText, date) => {
   try {
@@ -378,7 +395,6 @@ export const updateTextBlog = async (id, otherText) => {
 
 export const updateRichTextBlog = async (id, infoRichText) => {
 
-  console.log(infoRichText[0]);
   try {
     if(infoRichText[0].create){
       await Axios.post(`${apiUrl}/updateRichTextBlog`, {
@@ -450,7 +466,6 @@ export const updateVideoBlog = async (fields, blogPageId) => {
   try {
 
 
-    console.log(fields);
 
 
     // Créer un objet FormData
@@ -488,6 +503,31 @@ export const updateVideoBlog = async (fields, blogPageId) => {
     throw error;
   }
 };
+
+
+export const updateMultiReferenceBlog = async (id, multiReference) => {
+  try {
+    if(multiReference.create){
+      await Axios.post(`${apiUrl}/updateMultiReferenceBlog`, {
+        params: {
+          id : id,
+          multiReference: multiReference,
+        }
+      });
+    } else {
+      await Axios.post(`${apiUrl}/createMultiReferenceBlog`, {
+        params: {
+          id : id,
+          multiReference: multiReference,
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Message d\'erreur du serveur:', error);
+    // Propager l'erreur
+    throw error;
+  }
+}
 
 
 

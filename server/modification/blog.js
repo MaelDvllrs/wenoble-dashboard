@@ -76,7 +76,7 @@ router.get('/getListeBlog', (req, res) => {
 router.get('/getConfigBlog', (req, res) => {
   const sentIdBlog = req.query.IdBlog
   
-  const SQL = 'SELECT tab_field, name_field, id_config FROM blog_config WHERE id_blog = ?'
+  const SQL = 'SELECT tab_field, name_field, id_config, id_collection_ref FROM blog_config WHERE id_blog = ?'
   const Values = [sentIdBlog]
 
   db.query(SQL, Values, (err, results) => {
@@ -91,6 +91,22 @@ router.get('/getConfigBlog', (req, res) => {
   })
 });
 
+router.get('/getCollectionRef', (req, res) => {
+  const sentIdCollectionRef = req.query.id_collection_ref
+
+  const SQL = 'SELECT id_page_blog, page_blog_name FROM blog_page WHERE id_blog = ?'
+  const Values = [sentIdCollectionRef]
+
+  db.query(SQL, Values, (err, results) => {
+    if (err) {
+      res.send({ error: err })
+      console.log("erreur" + err);
+      return;
+    }
+    const collectionRef = results
+    res.send(collectionRef)
+  })
+});
 
 
 const storageImage = multer.diskStorage({
@@ -111,8 +127,6 @@ router.post('/createImagesBlog', uploadImage.single('image'), (req, res) => {
     return res.status(400).send('Aucune image n\'a été téléchargée.');
   }
 
-
-  console.log(req.body);
   const id_photo = req.body.id_photo;
   const id_blog_page = req.body.id_blog_page;
   const id_config = req.body.id_config;
@@ -268,12 +282,28 @@ router.post('/createRichTextBlog', (req, res) => {
     });
 });
 
+router.post('/createMultiReferenceBlog', (req, res) => {
+
+  const id = req.body.params.id;
+  const multiReference = req.body.params.multiReference;
+  
+  const SQL = 'INSERT INTO blog_field_multiReference (id_blog_page, id_config, info_ref) VALUES (?, ?, ?)';
+  const VALUES = [id, multiReference.id_config, multiReference.value];
+
+  db.query(SQL, VALUES, (err, results) => {
+    if (err) {
+      console.log('Database query error:', err);
+      return res.status(500).send({ error: err });
+    }
+
+    res.status(200).send('MultiReference créée avec succès');
+  });
+});
+
 
 
 router.get('/getBlogPage', (req, res) => {
   const sentIdBlogPage = req.query.IdBlogPage
-
-  console.log(sentIdBlogPage);
 
   const SQL = 'SELECT page_blog_name, page_blog_slug, status, page_blog_create_date, page_blog_update_date FROM blog_page WHERE id_page_blog = ?'
   const Values = [sentIdBlogPage]
@@ -304,13 +334,9 @@ router.get('/getTextBlog', (req, res) => {
       return;
     }
 
-
     if (results.length > 0) {
-
       results = results.map(result => ({ ...result, create: true }));
-
   };
-
     const text = results
     res.send(text)
 
@@ -330,17 +356,11 @@ router.get('/getRichTextBlog', (req, res) => {
       res.send({ error: err })
       return;
     }
-
-
       if (results.length > 0) {
 
         results = results.map(result => ({ ...result, create: true }));
       };
-
-
       const richText = results
-
-
 
       res.send(richText)
 
@@ -468,6 +488,32 @@ router.get('/streamVideo/:videoName', (req, res) => {
       fs.createReadStream(videoPath).pipe(res);
     }
   });
+});
+
+
+router.get('/getMultiReferenceBlog', (req, res) => {
+  const sentIdBlogPage = req.query.IdBlogPage;
+  const sentIdConfig = req.query.IdConfig;
+
+  const SQL = 'SELECT id_config, info_ref FROM blog_field_multiReference WHERE id_blog_page = ? AND id_config = ?'
+  const Values = [sentIdBlogPage, sentIdConfig]
+
+  db.query(SQL, Values, (err, results) => {
+    if (err) {
+      console.log("erreur" + err);
+      res.send({ error: err })
+      return;
+    }
+
+    const updatedResults = results.map(result => {
+      return {
+        ...result,
+        create: true
+      };
+    });
+
+    res.send(updatedResults);
+  })
 });
 
 
@@ -716,7 +762,6 @@ router.delete('/deleteBlogData', (req, res) => {
             return;
           }
 
-          console.log(results[0]);
           fs.unlink(path.join(__dirname, '..', 'images', 'blog_video', results[0].src_video), (err) => {
             if (err) {
               console.error('Erreur lors de la suppression de la video :', err);
@@ -741,12 +786,8 @@ router.delete('/deleteBlogData', (req, res) => {
 
 
 router.delete('/deleteBlogPage', (req, res) => {
-  console.log(req.query);
   const idBlogPage = req.query.IdBlogPage;
   const idBlog = req.query.Id;
-
-  console.log(idBlogPage);
-
   const SQL = 'SELECT tab_field, id_config FROM blog_config WHERE id_blog = ?';
   const VALUES = [idBlog];
 
@@ -756,16 +797,11 @@ router.delete('/deleteBlogPage', (req, res) => {
       return res.status(500).send({ error: err });
     }
 
-    console.table(results);
-
-
-
     results.forEach((field) => {
 
       let SQL;
       let VALUES;
 
-      console.log(field);
 
       switch(field.tab_field) {
 
@@ -776,6 +812,11 @@ router.delete('/deleteBlogPage', (req, res) => {
         
         case 'richText':
           SQL = `DELETE FROM blog_field_richText WHERE id_blog_page = ? AND id_config = ?`;
+          VALUES = [idBlogPage, field.id_config];
+          break;
+
+        case 'multiReference':
+          SQL = `DELETE FROM blog_field_multiReference WHERE id_blog_page = ? AND id_config = ?`;
           VALUES = [idBlogPage, field.id_config];
           break;
         
@@ -847,6 +888,24 @@ router.delete('/deleteBlogPage', (req, res) => {
   });
 
 })
+
+
+router.post('/updateMultiReferenceBlog', (req, res) => {
+  const id = req.body.params.id;
+  const multiReference = req.body.params.multiReference;
+
+  const SQL = 'UPDATE blog_field_multiReference SET info_ref = ? WHERE id_blog_page = ? AND id_config = ?';
+  const VALUES = [multiReference.value, id, multiReference.id_config];
+
+  db.query(SQL, VALUES, (err, results) => {
+    if (err) {
+      console.log('Database query error:', err);
+      return res.status(500).send({ error: err });
+    }
+
+    res.status(200).send('MultiReference modifiée avec succès');
+  });
+});
 
 
 module.exports = router;
