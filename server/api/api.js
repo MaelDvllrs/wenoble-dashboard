@@ -88,6 +88,26 @@ router.get('/sendBlog', (req, res) => {
     });
 });
 
+router.get('/sendBlogInfo', (req, res) => {
+    const id_blog_page = req.id_data;
+
+    const SQL = 'SELECT * FROM blog_page WHERE id_blog_page = ? AND status = 1';
+    const Values = [id_blog_page];
+
+    db.query(SQL, Values, (err, results) => {
+        if (err) {
+            res.status(500).send({ error: err });
+        }
+        if (results.length === 0) {
+            return res.status(403).json({ message: 'Aucun blog trouvé' });
+        }
+
+        return res.json({ blog: results });
+            
+    });
+});
+
+
 
 router.get('/sendBlogRichText', (req, res) => {
     const id_blog_page = req.id_data;
@@ -223,6 +243,9 @@ router.get('/streamVideo/:videoName', (req, res) => {
       }
     });
   });
+
+
+    
 
 
 
