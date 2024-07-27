@@ -371,7 +371,8 @@ export const updateBlogPage = async (id, mainText, date) => {
 export const updateTextBlog = async (id, otherText) => {
   
   try {
-    if(otherText.create){
+    if(otherText[0].create){
+      console.log("enregistrer " + otherText);
       await Axios.post(`${apiUrl}/updateTextBlog`, {
         params: {
           id : id,

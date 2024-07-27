@@ -327,6 +327,8 @@ const EditPageBlog = () => {
         });
     };
 
+    console.log(blogData);
+
     const handleSave = async () => {
 
         // CREER LA PAGE
