@@ -242,7 +242,27 @@ router.get('/streamVideo/:videoName', (req, res) => {
         fs.createReadStream(videoPath).pipe(res);
       }
     });
-  });
+});
+
+router.get('/sendMultiReference', (req, res) => {
+    const id_page = req.id_data;
+
+    const SQL = 'SELECT id_config, info_ref FROM blog_field_multiReference WHERE id_page = ?';
+    const Values = [id_page];
+
+    db.query(SQL, Values, (err, results) => {
+        if (err) {
+            res.status(500).send({ error: err });
+        }
+        if (results.length === 0) {
+            return res.status(403).json({ message: 'Aucune référence trouvée' });
+        }
+
+        return res.json({ references: results });
+            
+    });
+});
+
 
 
     
