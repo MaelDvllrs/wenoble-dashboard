@@ -245,10 +245,10 @@ router.get('/streamVideo/:videoName', (req, res) => {
 });
 
 router.get('/sendMultiReference', (req, res) => {
-    const id_page = req.id_data;
+    const id_blog_page = req.id_data;
 
-    const SQL = 'SELECT id_config, info_ref FROM blog_field_multiReference WHERE id_page = ?';
-    const Values = [id_page];
+    const SQL = 'SELECT id_config, info_ref FROM blog_field_multiReference WHERE id_blog_page = ?';
+    const Values = [id_blog_page];
 
     db.query(SQL, Values, (err, results) => {
         if (err) {
