@@ -258,7 +258,8 @@ router.get('/sendMultiReference', (req, res) => {
             return res.status(403).json({ message: 'Aucune référence trouvée' });
         }
 
-        return res.json({ references: results });
+        const infoRefParsed = JSON.parse(results[0].info_ref);
+        return res.json({ references: infoRefParsed });
             
     });
 });
