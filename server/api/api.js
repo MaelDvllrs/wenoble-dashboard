@@ -74,7 +74,7 @@ router.get('/sendBlog', (req, res) => {
     const order = req.query.order || 'ASC'; // Par défaut, l'ordre est croissant
     const limit = req.query.limit ? parseInt(req.query.limit, 10) : null; // Pas de limite par défaut
 
-    let SQL = `SELECT * FROM blog_page WHERE id_blog = ? AND status = 1 ORDER BY id_blog ${order}`;
+    let SQL = `SELECT * FROM blog_page WHERE id_blog = ? AND status = 1 ORDER BY page_blog_create_date ${order}`;
     const Values = [id_blog];
 
     if (limit !== null) {
