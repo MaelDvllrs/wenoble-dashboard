@@ -87,7 +87,7 @@ router.get('/sendBlog', (req, res) => {
             return res.status(500).send({ error: err });
         }
         if (results.length === 0) {
-            return res.status(403).json({ message: 'Aucun blog trouvé' });
+            return res.status(200).json({ message: 'Aucun blog trouvé' });
         }
 
         return res.json({ blog: results });
@@ -128,7 +128,7 @@ router.get('/sendBlogRichText', (req, res) => {
             return res.status(500).send({ error: err });
         }
         if (results.length === 0) {
-            return res.status(403).json({ message: 'Aucun texte riche trouvé' });
+            return res.status(200).json({ message: 'Aucun texte riche trouvé' });
         }
 
         // Convertir chaque text_json de Draft.js en HTML
@@ -154,7 +154,7 @@ router.get('/sendBlogText', (req, res) => {
             res.status(500).send({ error: err });
         }
         if (results.length === 0) {
-            return res.status(403).json({ message: 'Aucun texte trouvé' });
+            return res.status(200).json({ message: 'Aucun texte trouvé' });
         }
 
         return res.json({ text: results });
@@ -262,7 +262,7 @@ router.get('/sendMultiReference', (req, res) => {
             res.status(500).send({ error: err });
         }
         if (results.length === 0) {
-            return res.status(403).json({ message: 'Aucune référence trouvée' });
+            return res.status(200).json({ message: 'Aucune référence trouvée' });
         }
 
         const infoRefParsed = JSON.parse(results[0].info_ref);
