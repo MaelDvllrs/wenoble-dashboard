@@ -170,10 +170,10 @@ router.get('/sendBlogImage', (req, res) => {
 
     db.query(SQL, Values, (err, results) => {
         if (err) {
-            res.status(500).send({ error: err });
+            return res.status(500).send({ error: err });
         }
         if (results.length === 0) {
-            return res.status(403).json({ message: 'Aucune image trouvée' });
+            return res.status(200).json({ message: 'Aucune image trouvée' });
         }
 
         console.log(results);
@@ -185,7 +185,6 @@ router.get('/sendBlogImage', (req, res) => {
         });
 
         return res.json({ images: base64Images });
-            
     });
 });
 
@@ -201,7 +200,7 @@ router.get('/sendBlogVideo', (req, res) => {
             res.status(500).send({ error: err });
         }
         if (results.length === 0) {
-            return res.status(403).json({ message: 'Aucune vidéo trouvée' });
+            return res.status(200).json({ message: 'Aucune vidéo trouvée' });
         }
 
         return res.json({ video: results });
