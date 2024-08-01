@@ -359,7 +359,9 @@ const EditPageBlog = () => {
         
 
             // ENREGISTRER LES TEXTES
-            if (blogData.text.length > 0) {
+            console.log(otherText);
+
+            if (otherText.length > 0) {
 
                 try {
                     const response = await updateTextBlog(idBlog, otherText);
