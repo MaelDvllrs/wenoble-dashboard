@@ -10,6 +10,7 @@ import './listeBlog.css'
 import '../Portfolio/portfolio.css';
 import config from "../../../../../config";
 import AddIcon from '@mui/icons-material/Add';
+import { SkeletonBlog } from "../../../../skeleton/skeleton";
 
 
 const ListeBlog = () => {
@@ -19,6 +20,8 @@ const ListeBlog = () => {
     const [InfoListeblog, setInfoblog] = useState([]);
     const apiUrl = config.apiUrl;
     const { id } = useParams();
+
+    const [LoadingBlog, setLoadingBlog] = useState(true);
 
 
     useEffect(() => {    
@@ -33,9 +36,11 @@ const ListeBlog = () => {
                 }
             }).then((response) => {
                 setInfoblog(jwtDecode(response.data));
+                setLoadingBlog(false);
             }).catch((error) => {
                 console.error('Erreur lors de la récupération de la du Blog :', error);
             });
+            
     }, [id]);
 
 
@@ -60,42 +65,41 @@ const ListeBlog = () => {
             <div className="line_horizontal" style={{ backgroundColor: theme.palette.text.secondary }}></div>
 
             <div className="liste_blog_box">
-                {InfoListeblog && Array.isArray(InfoListeblog.blogList) ? InfoListeblog.blogList.map((blogpage, index) => {
-                    // Convertir page_blog_create_date
-                    const createDate = new Date(blogpage.page_blog_create_date);
-                    const formattedCreateDate = new Intl.DateTimeFormat('fr-FR', {
-                        year: 'numeric', month: '2-digit', day: '2-digit',
-                        hour: '2-digit', minute: '2-digit', hour12: false
-                    }).format(createDate);
-                
-                    // Convertir page_blog_update_date
-                    const updateDate = new Date(blogpage.page_blog_update_date);
-                    const formattedUpdateDate = new Intl.DateTimeFormat('fr-FR', {
-                        year: 'numeric', month: '2-digit', day: '2-digit',
-                        hour: '2-digit', minute: '2-digit', hour12: false
-                    }).format(updateDate);
-                
-                    return (
-                        <NavLink to={'editPage/' + blogpage.id_page_blog} key={index} className="Item_Portfolio Item_Blog" style={{'--hover-background-color': theme.palette.secondary.secondary, color: theme.palette.text.primary}}>
-                            <p className="Item_portfolio_element order_element">{index}</p>
-                            <p className="Item_portfolio_element blog_name_element">{blogpage.page_blog_name}</p>
-                            {blogpage.status === 1 ? (
-                                <p className="Item_portfolio_element blog_status publish_status">Publié</p>
-                            ) : (
-                                <p className="Item_portfolio_element blog_status draft_status">Brouillon</p>
-                            )}
-                            <p className="Item_portfolio_element blog_date_element">{formattedCreateDate}</p>
-                            <p className="Item_portfolio_element blog_date_element">{formattedUpdateDate}</p>
-                        </NavLink>
-                    );
-
-                }): <p></p>}
-            </div>
-
-
-        
-
-            
+                {LoadingBlog ? <SkeletonBlog /> :
+                    <div>
+                            {InfoListeblog && Array.isArray(InfoListeblog.blogList) ? InfoListeblog.blogList.map((blogpage, index) => {
+                                // Convertir page_blog_create_date
+                                const createDate = new Date(blogpage.page_blog_create_date);
+                                const formattedCreateDate = new Intl.DateTimeFormat('fr-FR', {
+                                    year: 'numeric', month: '2-digit', day: '2-digit',
+                                    hour: '2-digit', minute: '2-digit', hour12: false
+                                }).format(createDate);
+                            
+                                // Convertir page_blog_update_date
+                                const updateDate = new Date(blogpage.page_blog_update_date);
+                                const formattedUpdateDate = new Intl.DateTimeFormat('fr-FR', {
+                                    year: 'numeric', month: '2-digit', day: '2-digit',
+                                    hour: '2-digit', minute: '2-digit', hour12: false
+                                }).format(updateDate);
+                            
+                                return (
+                                    <NavLink to={'editPage/' + blogpage.id_page_blog} key={index} className="Item_Portfolio Item_Blog" style={{'--hover-background-color': theme.palette.secondary.secondary, color: theme.palette.text.primary}}>
+                                        <p className="Item_portfolio_element order_element">{index}</p>
+                                        <p className="Item_portfolio_element blog_name_element">{blogpage.page_blog_name}</p>
+                                        {blogpage.status === 1 ? (
+                                            <p className="Item_portfolio_element blog_status publish_status">Publié</p>
+                                        ) : (
+                                            <p className="Item_portfolio_element blog_status draft_status">Brouillon</p>
+                                        )}
+                                        <p className="Item_portfolio_element blog_date_element">{formattedCreateDate}</p>
+                                        <p className="Item_portfolio_element blog_date_element">{formattedUpdateDate}</p>
+                                    </NavLink>
+                                );
+                            
+                            }): <p></p>}
+                    </div>
+                }
+            </div> 
             
         </div>
     )

@@ -193,3 +193,10 @@ a{
     margin-bottom: 2rem;
 }
 
+.SaveButton{
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+    min-width: 0px !important;
+}
+
+

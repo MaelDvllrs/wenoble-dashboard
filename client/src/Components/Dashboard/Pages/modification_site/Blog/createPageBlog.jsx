@@ -8,10 +8,12 @@ import BlogField from "./BlogField";
 import './createPageBlog.css'
 import {DefaultButton, SecondaryButton, Popup} from '../../../../../Theme/element';
 import SaveIcon from '@mui/icons-material/Save';
+import PublishIcon from '@mui/icons-material/Publish';
 import { createImageBlog, createBlogPage, createTextBlog, createRichTextBlog, createVideoBlog, createMultiReferenceBlog } from '../../../apiImage';
 import { useTheme } from '@mui/material/styles';
 import { convertToRaw } from 'draft-js';
 import CircularProgress from '@mui/material/CircularProgress';
+
 
 
 
@@ -223,20 +225,20 @@ const CreatePageBlog = () => {
 
         } catch (error) {
             // Gérer l'erreur ici
-            console.error('Erreur lors de la création de la page :',error);
+            console.error('Erreur lors de la création de la page : ',error);
             return;
         }
 
     };
-
 
     return(
         <div className="Blog_creation_Page">
             <div className="header_modification">
                 <h3 >Création de la page</h3>
                 <div className="button_save_contain">
+                    <SecondaryButton className="SaveButton" variant="contained" theme={theme} onClick={() => navigate(`/dashboard/modification/blog/${id}`)}><SaveIcon/></SecondaryButton>
                     <SecondaryButton  variant="contained" theme={theme} onClick={() => navigate(`/dashboard/modification/blog/${id}`)}>Annuler</SecondaryButton>
-                    <DefaultButton type="submit" variant="contained" onClick={ async () => {await handleSave()}}><SaveIcon/> Enregitrer</DefaultButton>
+                    <DefaultButton type="submit" variant="contained" onClick={ async () => {await handleSave()}}><PublishIcon/> Publier</DefaultButton>
                 </div>
             </div>
             <div className="Blog_creation_field_contain">
