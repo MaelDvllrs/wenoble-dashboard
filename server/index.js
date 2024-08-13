@@ -2,6 +2,8 @@ const express = require('express')
 const app = express()
 const cors = require('cors')
 const bodyParser = require('body-parser');
+const path = require('path');
+
 
 // Client router
 const apiRouter = require('./api/api');
@@ -10,6 +12,8 @@ const infoUserRouter = require('./users/infoUser');
 const portfolioRouter = require('./modification/portfolio');
 const pageRouter = require('./modification/page');
 const blogRouter = require('./modification/blog')
+
+
 
 // Admin router
 const clientRouter = require('./admin/client');
@@ -47,6 +51,10 @@ app.use(blogRouter);
 app.use(clientRouter);
 
 app.use('/api', apiRouter);
+
+//Static files
+app.use('/media/blog', express.static(path.join(__dirname, 'images', 'blog_image')));
+app.use('/media/portfolio', express.static(path.join(__dirname, 'images', 'portfolio_image')));
 
 app.listen(3002, ()=>{
   console.log('Server is running on port 3002')

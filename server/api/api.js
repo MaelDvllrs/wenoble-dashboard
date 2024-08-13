@@ -176,7 +176,6 @@ router.get('/sendBlogImage', (req, res) => {
             return res.status(200).json({ message: 'Aucune image trouvée' });
         }
 
-        console.log(results);
 
         const base64Images = results.map(image => {
             const imagePath = path.join(__dirname, '..', 'images', 'blog_image', image.src_image);
@@ -187,6 +186,27 @@ router.get('/sendBlogImage', (req, res) => {
         return res.json({ images: base64Images });
     });
 });
+
+
+router.get('/sendBlogInfoImage', (req, res) => {
+    const id_blog_page = req.id_data;
+
+    const SQL = 'SELECT id_config, src_image, alt_image FROM blog_field_image WHERE id_blog_page = ?';
+    const Values = [id_blog_page];
+    db.query(SQL, Values, (err, results) => {
+        if (err) {
+            return res.status(500).send({ error: err });
+        }
+        if (results.length === 0) {
+            return res.status(200).json({ message: 'Aucune image trouvée' });
+        }
+
+        return res.json({ images: results });
+    });
+});
+
+
+
 
 
 router.get('/sendBlogVideo', (req, res) => {

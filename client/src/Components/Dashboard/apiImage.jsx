@@ -226,11 +226,12 @@ export const createImageBlog = async (fields, blogPageId) => {
 
 
 
+
+
     // Ajouter le blob en tant que fichier
-    formData.append('image', fields.data, fields.id_photo);
+    formData.append('image', fields.data, fields.name);
 
     // Ajouter les autres champs
-    formData.append('id_photo', fields.id_photo);
     formData.append('id_blog_page', blogPageId);
     formData.append('id_config', fields.id_config);
     formData.append('alt', fields.alt);
@@ -430,10 +431,9 @@ export const updateImageBlog = async (fields, blogPageId) => {
 
 
     // Ajouter le blob en tant que fichier
-    formData.append('image', fields.data, fields.id_photo);
+    formData.append('image', fields.data, fields.name);
 
     // Ajouter les autres champs
-    formData.append('id_photo', fields.id_photo);
     formData.append('id_blog_page', blogPageId);
     formData.append('id_config', fields.id_config);
     formData.append('alt', fields.alt);

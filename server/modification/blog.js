@@ -5,6 +5,8 @@ const fs = require('fs');
 const cors = require('cors')
 const db = require('../db')
 const multer = require('multer');
+const { v4: uuidv4 } = require('uuid');
+
 const { log } = require('console');
 const { type } = require('os');
 
@@ -110,12 +112,14 @@ router.get('/getCollectionRef', (req, res) => {
 
 
 const storageImage = multer.diskStorage({
-    destination: function (req, file, cb) {
-      cb(null, path.join(__dirname,  '..', 'images', 'blog_image'));
-    },
-    filename: function (req, file, cb) {
-      cb(null, file.originalname);
-    }
+  destination: function (req, file, cb) {
+      cb(null, path.join(__dirname, '..', 'images', 'blog_image'));
+  },
+  filename: function (req, file, cb) {
+      const fileExtension = path.extname(file.originalname);
+      const uniqueName = uuidv4() + fileExtension;
+      cb(null, uniqueName);
+  }
 });
 
 const uploadImage = multer({ storage: storageImage });
@@ -127,15 +131,18 @@ router.post('/createImagesBlog', uploadImage.single('image'), (req, res) => {
     return res.status(400).send('Aucune image n\'a été téléchargée.');
   }
 
-  const id_photo = req.body.id_photo;
+  const id_photo = path.basename(req.file.filename, path.extname(req.file.filename));
   const id_blog_page = req.body.id_blog_page;
   const id_config = req.body.id_config;
   const name = req.body.name;
   const alt = req.body.alt;
   const size = req.body.size;
+  const extension = path.extname(req.file.filename);
+  
+  const src_image = id_photo + extension;
 
   const SQL = 'INSERT INTO blog_field_image (id_image, id_blog_page, id_config, src_image, name_image, alt_image, size) VALUES (?, ?, ?, ?, ?, ?, ?)';
-  const Values = [id_photo, id_blog_page, id_config, id_photo, name, alt, size];
+  const Values = [id_photo, id_blog_page, id_config, src_image, name, alt, size];
 
   db.query(SQL, Values, (err, results) => {
     if (err) {
@@ -619,12 +626,15 @@ router.post('/updateImagesBlog', uploadUpdateImage.single('image'), (req, res) =
     console.error('Aucune image n\'a été téléchargée.');
     return res.status(400).send('Aucune image n\'a été téléchargée.');
   }
-  const id_photo = req.body.id_photo;
+  const id_photo =  path.basename(req.file.filename, path.extname(req.file.filename));
   const id_blog_page = req.body.id_blog_page;
   const id_config = req.body.id_config;
   const name = req.body.name;
   const alt = req.body.alt;
   const size = req.body.size;
+  const extension = path.extname(req.file.filename);
+  
+  const src_image = id_photo + extension;
 
   const SQL = 'SELECT src_image FROM blog_field_image WHERE id_blog_page = ? AND 	id_config = ?';
   const Values = [id_blog_page, id_config];
@@ -645,7 +655,7 @@ router.post('/updateImagesBlog', uploadUpdateImage.single('image'), (req, res) =
     });
 
     const SQL = 'UPDATE blog_field_image SET  src_image = ?, name_image = ?, alt_image = ?, size = ?  WHERE id_blog_page = ? AND 	id_config = ?';
-    const Values = [id_photo, name, alt, size, id_blog_page, id_config];
+    const Values = [src_image, name, alt, size, id_blog_page, id_config];
   
     db.query(SQL, Values, (err, results) => {
       if (err) {

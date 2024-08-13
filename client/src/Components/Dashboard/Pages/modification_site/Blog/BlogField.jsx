@@ -176,11 +176,12 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
       if (file instanceof File) {
         const fileCompress = await compressImage(file);
 
+        const fileExtension = file.name.split('.').pop();
+
     
         const data = {
           id_blog_page: id_blog_page,
           id_config: id_config,
-          id_photo: uuidv4(), // Assurez-vous que cela génère un ID unique pour chaque nouvelle image
           data: fileCompress,
           name: file.name,
           alt: file.name,
@@ -188,7 +189,6 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
           size: (fileCompress.size / 1024).toFixed(0),
           type: 'images',
           create : createBoolImage
-
         };
     
         setImagesUploaded(prevImages => {
@@ -216,7 +216,6 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
         const initialImages = [{
           id_blog_page: dataValue.id_blog_page || id_blog_page, // Utilisez id_blog_page de dataValue ou celui passé en prop
           id_config: dataValue.id_config || id_config, // Utilisez id_config de dataValue ou celui passé en prop
-          id_photo: uuidv4(), // Générez un nouvel UUID pour l'image
           data: dataValue.data, // Utilisez les données d'image en base64 de dataValue
           name: dataValue.name, // Utilisez le nom de l'image de dataValue
           alt: dataValue.alt, // Utilisez le texte alternatif de l'image de dataValue
