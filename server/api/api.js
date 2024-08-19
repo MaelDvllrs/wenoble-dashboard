@@ -12,10 +12,11 @@ const db = require('../db');
 const apiKeyMiddleware = (req, res, next) => {
     const apiKey = req.headers['api_key'];
     const id_data = req.headers['id_data']
+    const ids = req.headers['ids']
 
     console.log('authentification api');
     
-    if (!apiKey || !id_data) {
+    if (!apiKey) {
         return res.status(401).json({ message: 'Clé API ou ID de data manquant.' });
     }
 
@@ -29,6 +30,7 @@ const apiKeyMiddleware = (req, res, next) => {
         }
         if(results.length  > 0){
             req.id_data = id_data;
+            req.ids = ids;
             next();
         }else{
             return res.status(403).json({ message: 'Clé API invalide.' });
@@ -76,6 +78,7 @@ router.get('/sendBlog', (req, res) => {
 
     let SQL;
     let Values;
+
 
     if (ids) {
         const idArray = ids.split(',').map(id => parseInt(id, 10)); // Convertir les IDs en tableau de nombres
