@@ -99,7 +99,7 @@ const Dashboard = () => {
                     <motion.img src={logo} className="logo" alt="logo" animate={{width: open_menu ? "7rem" : "3rem"}}></motion.img>
                 </AnimatePresence>
                 <AnimatePresence initial={false}>
-                    <motion.div className="user_menu"  animate={{height: open_user ? "5rem" : "auto", paddingRight: open_menu ? "1rem" : "0rem", paddingLeft: open_menu ? "1rem" : "0rem", width: open_menu ? "auto" : "2.5rem", border: open_menu ? "1px #434853 solid" : "none"}}>
+                    <motion.div className="user_menu"  animate={{height: open_user ? "5rem" : "auto", paddingRight: open_menu ? "1rem" : "0rem", paddingLeft: open_menu ? "1rem" : "0rem", width: open_menu ? "auto" : "3rem", border: open_menu ? "1px #434853 solid" : "none"}}>
                         <div className='user_menu_box'>
                             {LoadingProfile ? <SkeletonProfile /> : <div className='flex_left'>
                                 {

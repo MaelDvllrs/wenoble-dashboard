@@ -70,12 +70,23 @@ router.get('/sendPhoto', (req, res) => {
 
 
 router.get('/sendBlog', (req, res) => {
-    const id_blog = req.id_data;
+    const ids = req.query.ids; // IDs des blogs passés en paramètre de requête
     const order = req.query.order || 'ASC'; // Par défaut, l'ordre est croissant
     const limit = req.query.limit ? parseInt(req.query.limit, 10) : null; // Pas de limite par défaut
 
-    let SQL = `SELECT * FROM blog_page WHERE id_blog = ? AND status = 1 ORDER BY page_blog_create_date ${order}`;
-    const Values = [id_blog];
+    let SQL;
+    let Values;
+
+    if (ids) {
+        const idArray = ids.split(',').map(id => parseInt(id, 10)); // Convertir les IDs en tableau de nombres
+        const placeholders = idArray.map(() => '?').join(','); // Créer des placeholders pour la requête SQL
+        SQL = `SELECT * FROM blog_page WHERE id_blog IN (${placeholders}) AND status = 1 ORDER BY page_blog_create_date ${order}`;
+        Values = [...idArray];
+    } else {
+        const id_blog = req.id_data;
+        SQL = `SELECT * FROM blog_page WHERE id_blog = ? AND status = 1 ORDER BY page_blog_create_date ${order}`;
+        Values = [id_blog];
+    }
 
     if (limit !== null) {
         SQL += ' LIMIT ?';
@@ -90,7 +101,7 @@ router.get('/sendBlog', (req, res) => {
             return res.status(200).json({ message: 'Aucun blog trouvé' });
         }
 
-        return res.json({ blog: results });
+        return res.json({ blogs: results });
     });
 });
 
