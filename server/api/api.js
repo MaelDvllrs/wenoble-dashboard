@@ -70,7 +70,7 @@ router.get('/sendPhoto', (req, res) => {
 
 
 router.get('/sendBlog', (req, res) => {
-    const ids = req.query.ids; // IDs des blogs passés en paramètre de requête
+    const ids = req.ids; // IDs des blogs passés en paramètre de requête
     const order = req.query.order || 'ASC'; // Par défaut, l'ordre est croissant
     const limit = req.query.limit ? parseInt(req.query.limit, 10) : null; // Pas de limite par défaut
 
