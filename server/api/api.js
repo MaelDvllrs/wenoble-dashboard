@@ -101,7 +101,7 @@ router.get('/sendBlog', (req, res) => {
             return res.status(200).json({ message: 'Aucun blog trouvé' });
         }
 
-        return res.json({ blogs: results });
+        return res.json({ blog: results });
     });
 });
 
