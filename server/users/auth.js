@@ -6,6 +6,10 @@ const cors = require('cors')
 const crypto = require('crypto');
 const CryptoJS = require("crypto-js");
 const bcrypt = require('bcryptjs');
+const axios = require('axios');
+const { format } = require('date-fns');
+
+
 
 
 require('dotenv').config();
@@ -22,11 +26,43 @@ router.use(express.json());
 
 
 
+const getIpAddress = (req) => {
+  return req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress || req.connection.socket.remoteAddress;
+};
 
 
-router.post('/login', (req, res) => {
+const getGeoLocation = async (ip) => {
+  try {
+      const response = await axios.get(`http://ipinfo.io/${ip}/json`);
+      return response.data;
+  } catch (error) {
+      console.error("Error fetching geolocation:", error);
+      return null;
+  }
+};
 
-  console.log(req.body);
+const logConnectionAttempt = async (req) => {
+  const ip = getIpAddress(req);
+  const geoLocation = await getGeoLocation(ip);
+
+  console.log(getFormattedDate(Date.now()) + " | Connection attempt from " + ip + " with username " + req.body.LoginUserName);
+
+  if (geoLocation) {
+      console.log("Location: " + geoLocation.city + ", " + geoLocation.region + ", " + geoLocation.country);
+  }
+};
+
+const getFormattedDate = () => {
+  return format(new Date(), 'dd/MM/yyyy HH:mm:ss');
+};
+
+
+
+
+
+router.post('/login', async (req, res) => {
+
+  await logConnectionAttempt(req);
   const sentLoginUsername = req.body.LoginUserName;
   const sentLoginPassword = req.body.LoginPassword;
   const salt = req.body.salt
