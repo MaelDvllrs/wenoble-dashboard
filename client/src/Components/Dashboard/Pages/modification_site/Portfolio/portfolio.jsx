@@ -34,7 +34,6 @@ const Portfolio = () => {
 
         if (user) { 
             const decodedUser = jwtDecode(user);
-            console.log(decodedUser);
 
             Axios.get(`${apiUrl}/getPortfolio`, {
                 params: {

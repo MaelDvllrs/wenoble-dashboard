@@ -283,13 +283,14 @@ export const createVideoBlog = async (fields, blogPageId) => {
 };
 
 
-export const createBlogPage = async (id, mainText, date) => {
+export const createBlogPage = async (id, mainText, date, status) => {
   try {
     const response = await Axios.post(`${apiUrl}/createBlogPage`, {
       params: {
         id : id,
         mainText: mainText,
         date: date,
+        status: status
       }
     });
     return response.data;
@@ -351,13 +352,15 @@ export const createMultiReferenceBlog = async (id, multiReference) => {
 
 
 
-export const updateBlogPage = async (id, mainText, date) => {
+export const updateBlogPage = async (id, mainText, date, status, setpublishDate) => {
   try {
     const response = await Axios.post(`${apiUrl}/updateBlogPage`, {
       params: {
         id : id,
         mainText: mainText,
         date: date,
+        status: status,
+        setpublishDate: setpublishDate
       }
     });
     return response.data;

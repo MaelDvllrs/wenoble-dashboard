@@ -57,7 +57,7 @@ router.get('/getListeBlog', (req, res) => {
       return res.status(403).send('Vous n\'avez pas les droits pour accéder à ce blog.');
     }
 
-    const SQL = 'SELECT id_page_blog, page_blog_name, status, page_blog_create_date, page_blog_update_date FROM blog_page WHERE id_blog = ?'
+    const SQL = 'SELECT id_page_blog, page_blog_name, status, page_blog_create_date, page_blog_update_date, page_blog_publish_date FROM blog_page WHERE id_blog = ?'
     const Values = [sentIdBlog]
 
     db.query(SQL, Values, (err, results) => {
@@ -205,9 +205,14 @@ router.post('/createBlogPage', (req, res) => {
   const title = req.body.params.mainText[0].value;
   const slug = req.body.params.mainText[1].value;
   const date = req.body.params.date;
+  const status = req.body.params.status;
+  let publishDate;
+  if (status === 1) {
+    publishDate = date;
+  }
 
-  const SQL = 'INSERT INTO blog_page (id_blog, page_blog_name, page_blog_slug, page_blog_create_date, page_blog_update_date) VALUES (?, ?, ?, ?, ?)';
-  const VALUES = [id, title, slug, date, date];
+  const SQL = 'INSERT INTO blog_page (id_blog, page_blog_name, page_blog_slug, status, page_blog_create_date, page_blog_update_date, page_blog_publish_date) VALUES (?, ?, ?, ?, ?, ?, ?)';
+  const VALUES = [id, title, slug, status, date, date, publishDate];
 
   db.query(SQL, VALUES, (err, results) => {
     if (err) {
@@ -312,7 +317,7 @@ router.post('/createMultiReferenceBlog', (req, res) => {
 router.get('/getBlogPage', (req, res) => {
   const sentIdBlogPage = req.query.IdBlogPage
 
-  const SQL = 'SELECT page_blog_name, page_blog_slug, status, page_blog_create_date, page_blog_update_date FROM blog_page WHERE id_page_blog = ?'
+  const SQL = 'SELECT page_blog_name, page_blog_slug, status, page_blog_create_date, page_blog_update_date, page_blog_publish_date FROM blog_page WHERE id_page_blog = ?'
   const Values = [sentIdBlogPage]
 
   db.query(SQL, Values, (err, results) => {
@@ -532,9 +537,23 @@ router.post('/updateBlogPage', (req, res) => {
   const title = req.body.params.mainText[0].value;
   const slug = req.body.params.mainText[1].value;
   const date = req.body.params.date;
+  const status = req.body.params.status;
+  const setPublishDate = req.body.params.setpublishDate;
 
-  const SQL = 'UPDATE blog_page SET page_blog_name = ?, page_blog_slug = ?, page_blog_update_date = ? WHERE id_page_blog = ?';
-  const VALUES = [title, slug, date, id];
+  let SQL;
+  let VALUES;
+
+  if (setPublishDate === 1) {
+      SQL = 'UPDATE blog_page SET page_blog_name = ?, page_blog_slug = ?, status = ?, page_blog_update_date = ?, page_blog_publish_date = ? WHERE id_page_blog = ?';
+    if (status === 1) {
+      VALUES = [title, slug, status, date, date, id];
+    } else {
+      VALUES = [title, slug, status, date, null, id];
+    }
+  } else { 
+    SQL = 'UPDATE blog_page SET page_blog_name = ?, page_blog_slug = ?, status = ?, page_blog_update_date = ? WHERE id_page_blog = ?';
+    VALUES = [title, slug, status, date, id];
+  }
 
   db.query(SQL, VALUES, (err, results) => {
     if (err) {

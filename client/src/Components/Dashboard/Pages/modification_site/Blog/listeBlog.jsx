@@ -61,6 +61,7 @@ const ListeBlog = () => {
               <p style={{color: theme.palette.text.secondary}} className="Item_portfolio_element blog_status">Satus</p>
               <p style={{color: theme.palette.text.secondary}} className="Item_portfolio_element blog_date_element">Date de création</p>
               <p style={{color: theme.palette.text.secondary}} className="Item_portfolio_element blog_date_element">Date de modification</p>
+              <p style={{color: theme.palette.text.secondary}} className="Item_portfolio_element blog_date_element">Date de Publication</p>
             </div>
             <div className="line_horizontal" style={{ backgroundColor: theme.palette.text.secondary }}></div>
 
@@ -81,6 +82,16 @@ const ListeBlog = () => {
                                     year: 'numeric', month: '2-digit', day: '2-digit',
                                     hour: '2-digit', minute: '2-digit', hour12: false
                                 }).format(updateDate);
+
+                                
+                                let formattedPublishDate = 'N/A';
+                                if (blogpage.page_blog_publish_date) {
+                                    const publishDate = new Date(blogpage.page_blog_publish_date);
+                                    formattedPublishDate = new Intl.DateTimeFormat('fr-FR', {
+                                        year: 'numeric', month: '2-digit', day: '2-digit',
+                                        hour: '2-digit', minute: '2-digit', hour12: false
+                                    }).format(publishDate);
+                                }
                             
                                 return (
                                     <NavLink to={'editPage/' + blogpage.id_page_blog} key={index} className="Item_Portfolio Item_Blog" style={{'--hover-background-color': theme.palette.secondary.secondary, color: theme.palette.text.primary}}>
@@ -93,6 +104,7 @@ const ListeBlog = () => {
                                         )}
                                         <p className="Item_portfolio_element blog_date_element">{formattedCreateDate}</p>
                                         <p className="Item_portfolio_element blog_date_element">{formattedUpdateDate}</p>
+                                        <p className="Item_portfolio_element blog_date_element">{formattedPublishDate}</p>
                                     </NavLink>
                                 );
                             

@@ -62,7 +62,6 @@ const ModificationHome = () => {
                 token: token,
             }
         });
-        console.log(totalSize);
     };
 
     useEffect(() => {

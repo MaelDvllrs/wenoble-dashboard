@@ -9,7 +9,7 @@ import { BsChevronCompactDown } from "react-icons/bs";
 import { PiUserBold, PiGearSixBold, PiPowerBold, PiHouseBold, PiChartBarBold, PiUsersBold , PiNewspaperBold, PiFunnelSimpleBold} from "react-icons/pi";
 import { LuMoon, LuSun } from "react-icons/lu";
 import { fetchImages } from "../Dashboard/apiImage"
-import logo from "../assets/icon/logo.png"
+import logo from "../../assets/icon/logo.png"
 import config from '../../config';
 import { SkeletonProfile } from '../skeleton/skeleton';
 import ThemeContext from '../../Theme/themeContext';

@@ -13,6 +13,8 @@ import { createImageBlog, createBlogPage, createTextBlog, createRichTextBlog, cr
 import { useTheme } from '@mui/material/styles';
 import { convertToRaw } from 'draft-js';
 import CircularProgress from '@mui/material/CircularProgress';
+import Tooltip from '@mui/material/Tooltip';
+
 
 
 
@@ -97,7 +99,6 @@ const CreatePageBlog = () => {
       
             for (let i = 0; i < newData[type].length; i++) {
                 if (newData[type][i].id_config === data.data.id_config) {
-                  console.log(newData[type][i]);
                   newData[type][i] = data.data; 
                   itemModified = true; 
                   break; 
@@ -106,7 +107,6 @@ const CreatePageBlog = () => {
 
             if (!itemModified) {
               newData[type].push(data.data);
-              console.log(newData[type]);
             }
           }
       
@@ -117,7 +117,7 @@ const CreatePageBlog = () => {
 
     
 
-    const handleSave = async () => {
+    const handleSave = async (status) => {
         
 
         if (blogData.text.length === 0) {
@@ -148,7 +148,7 @@ const CreatePageBlog = () => {
 
         try {        
             // Appeler la fonction saveBlogPage
-            const response = await createBlogPage(id, mainText, localISOTime);
+            const response = await createBlogPage(id, mainText, localISOTime, status);
             // Gérer la réponse ici
             const blogPageId = response.id;
         
@@ -236,9 +236,11 @@ const CreatePageBlog = () => {
             <div className="header_modification">
                 <h3 >Création de la page</h3>
                 <div className="button_save_contain">
-                    <SecondaryButton className="SaveButton" variant="contained" theme={theme} onClick={() => navigate(`/dashboard/modification/blog/${id}`)}><SaveIcon/></SecondaryButton>
+                    <Tooltip title="Enregistrer comme brouillon" arrow placement="top">
+                        <SecondaryButton className="SaveButton" variant="contained" theme={theme} onClick={ async () => {await handleSave(0)}}><SaveIcon/></SecondaryButton>
+                    </Tooltip>
                     <SecondaryButton  variant="contained" theme={theme} onClick={() => navigate(`/dashboard/modification/blog/${id}`)}>Annuler</SecondaryButton>
-                    <DefaultButton type="submit" variant="contained" onClick={ async () => {await handleSave()}}><PublishIcon/> Publier</DefaultButton>
+                    <DefaultButton type="submit" variant="contained" onClick={ async () => {await handleSave(1)}}><PublishIcon/> Publier</DefaultButton>
                 </div>
             </div>
             <div className="Blog_creation_field_contain">
@@ -252,10 +254,16 @@ const CreatePageBlog = () => {
                 </div>
                 <div className="line_horizontal" style={{backgroundColor: theme.palette.text.secondary}}></div>
                 {DecodeConfigblog.blogConfig && DecodeConfigblog.blogConfig.map((blogItem) => (
-                    <div className="blogField_contain">
-                        <p style={{color: theme.palette.text.secondary}}>{blogItem.name_field}</p>
-                        <BlogField id_blog_page={id} type={blogItem.tab_field} id_config={blogItem.id_config} id_collection_ref={blogItem.id_collection_ref} onChange={handleBlogDataChange}/>
-                    </div>
+                  <div key={blogItem.id_config} className="blogField_contain">
+                    <p style={{ color: theme.palette.text.secondary }}>{blogItem.name_field}</p>
+                    <BlogField
+                      id_blog_page={id}
+                      type={blogItem.tab_field}
+                      id_config={blogItem.id_config}
+                      id_collection_ref={blogItem.id_collection_ref}
+                      onChange={handleBlogDataChange}
+                    />
+                  </div>
                 ))}
             </div>
             {savingPage && (   

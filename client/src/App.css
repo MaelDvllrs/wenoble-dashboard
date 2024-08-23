@@ -1,3 +1,27 @@
+html {
+    font-size: 16px;
+}
+
+  
+@media (max-width: 1600px) {
+    html {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 768px) {
+    html {
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    html {
+        font-size: 10px;
+    }
+}
+
+
 html{
     background-color: #131417;
     font-family: "Montserrat", sans-serif;
@@ -26,10 +50,7 @@ a{
 
 .showMessage{
     display:block;
-    color: white;
-    background-color: red;
-    border-radius: 3px;
-    text-align: center;
+    color: red;
 }
 
 .message{
@@ -198,5 +219,18 @@ a{
     padding-right: 6px !important;
     min-width: 0px !important;
 }
+
+
+.blueText{
+    color: #0541b7;
+}
+
+
+.titlePage{
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;  
+}
+
 
 

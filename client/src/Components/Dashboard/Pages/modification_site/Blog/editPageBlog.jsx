@@ -8,11 +8,15 @@ import BlogField from "./BlogField";
 import './createPageBlog.css'
 import {DefaultButton, RedButton, SecondaryButton, Popup} from '../../../../../Theme/element';
 import SaveIcon from '@mui/icons-material/Save';
+import PublishIcon from '@mui/icons-material/Publish';
+
 import { updateImageBlog, updateBlogPage, updateTextBlog, updateRichTextBlog, updateVideoBlog, updateMultiReferenceBlog } from '../../../apiImage';
 import { useTheme } from '@mui/material/styles';
 import { convertToRaw } from 'draft-js';
 import UnpublishedIcon from '@mui/icons-material/Unpublished';
 import CircularProgress from '@mui/material/CircularProgress';
+import Tooltip from '@mui/material/Tooltip';
+
 
 
 
@@ -35,6 +39,8 @@ const EditPageBlog = () => {
     const [slugValue, setSlugValue] = useState('');
     const [formattedCreateDate, setFormattedCreateDate] = useState('');
     const [formattedUpdatedDate, setFormattedUpdatedDate] = useState('');
+    const [formattedPublishedDate, setFormattedPublishedDate] = useState('');
+
 
     const [deletedItems, setDeletedItems] = useState([]);
 
@@ -268,6 +274,18 @@ const EditPageBlog = () => {
                 hour: '2-digit', minute: '2-digit', hour12: false
             }).format(updateDate);
             setFormattedUpdatedDate(formattedUpdateDate);
+
+            if (DecodeBlog.blogPage[0].page_blog_publish_date) {
+                const publishDate = new Date(DecodeBlog.blogPage[0].page_blog_publish_date);
+
+                const formattedpublishDate = new Intl.DateTimeFormat('fr-FR', {
+                    year: 'numeric', month: '2-digit', day: '2-digit',
+                    hour: '2-digit', minute: '2-digit', hour12: false
+                }).format(publishDate);
+                setFormattedPublishedDate(formattedpublishDate);
+            } else {
+                setFormattedPublishedDate('Non publié');
+            }
         }
         
     }, [DecodeBlog])
@@ -297,7 +315,6 @@ const EditPageBlog = () => {
       
           if (isDelete) {
             // Filtrer pour supprimer l'élément
-            console.log(data.data)
             const exists = deletedItems.some(item => item.id_config === data.data.id_config);
             if (!exists) {
                 setDeletedItems(prevItems => [...prevItems, data.data]);
@@ -327,9 +344,8 @@ const EditPageBlog = () => {
         });
     };
 
-    console.log(blogData);
 
-    const handleSave = async () => {
+    const handleSave = async (status, setpublishDate) => {
 
         // CREER LA PAGE
         setSavingPage(true);
@@ -353,13 +369,11 @@ const EditPageBlog = () => {
 
         try {        
 
-            const response = await updateBlogPage(idBlog, mainText, localISOTime);
-            console.log(response)
+            const response = await updateBlogPage(idBlog, mainText, localISOTime, status, setpublishDate);
             // Appeler la fonction saveBlogPage
         
 
             // ENREGISTRER LES TEXTES
-            console.log(otherText);
 
             if (otherText.length > 0) {
 
@@ -490,23 +504,41 @@ const EditPageBlog = () => {
             DecodeBlog.blogPage ? (
                 <div className="Blog_creation_Page">
                   <div className="header_modification">
-                    <h3>Modification de : {DecodeBlog.blogPage[0].page_blog_name}</h3>
+                    <h3 className="titlePage">Modification de : {DecodeBlog.blogPage[0].page_blog_name}</h3>
                     <div className="button_save_contain">
-                      <SecondaryButton variant="contained" theme={theme} onClick={() => navigate(`/dashboard/modification/blog/${id}`)}>Annuler</SecondaryButton>
-                      <DefaultButton type="submit" variant="contained" onClick={async () => { await handleSave() }}><SaveIcon/> Enregitrer</DefaultButton>
-                    </div>
+                        <p style={{color: theme.palette.text.secondary, whiteSpace:"nowrap"}}>Status :</p>
+                        {
+                            DecodeBlog.blogPage[0].status === 1 ? (
+                                <p className="Item_portfolio_element blog_status publish_status">Publié</p>    
+                            ) : (
+                                <p className="Item_portfolio_element blog_status draft_status">Brouillon</p>
+                            )
+                        }
+                        {
+                            DecodeBlog.blogPage[0].status === 1 ? (
+                                <Tooltip title="Dépublier" arrow placement="top">
+                                    <SecondaryButton className="SaveButton" type="submit" variant="contained" theme={theme} onClick={ async () => {await handleSave(0,1)}}><UnpublishedIcon/></SecondaryButton>
+                                </Tooltip>   
+                            ) : (
+                                <Tooltip title="Enregistrer comme brouillon" arrow placement="top">
+                                    <SecondaryButton className="SaveButton" variant="contained" theme={theme} onClick={ async () => {await handleSave(0,0)}}><SaveIcon/></SecondaryButton>
+                                </Tooltip>
+                            )
+                        }
+                        <SecondaryButton variant="contained" theme={theme} onClick={() => navigate(`/dashboard/modification/blog/${id}`)}>Annuler</SecondaryButton>
+                        {
+                            DecodeBlog.blogPage[0].status === 1 ? (
+                                <DefaultButton type="submit" variant="contained" onClick={async () => { await handleSave(1,0) }}><SaveIcon/> Enregistrer</DefaultButton>  
+                            ) : (
+                                <DefaultButton type="submit" variant="contained" onClick={async () => { await handleSave(1,1) }}><PublishIcon/> Publier</DefaultButton>
+                            )
+                        }
+                        
+                      </div>
                   </div>
 
                   <div className="Blog_creation_field_contain">
-                    <div className="blogField_contain flex_contain">
-                      <p style={{color: theme.palette.text.secondary}}>Status :</p>
-                      {DecodeBlog.blogPage[0].status === 1 ? (
-                            <p className="Item_portfolio_element blog_status publish_status">Publié</p>
-                        ) : (
-                            <p className="Item_portfolio_element blog_status draft_status">Brouillon</p>
-                        )
-                      }
-                    </div>
+                    
                     <div className="blogField_contain">
                       <p style={{color: theme.palette.text.secondary}}>Titre principal *</p>
                       <BlogField fieldValue={DecodeBlog.blogPage[0]} type='text' id_config="title" onChange={handleBlogDataChange}/>
@@ -542,6 +574,10 @@ const EditPageBlog = () => {
                     <div className="blogField_contain">
                       <p style={{color: theme.palette.text.secondary}}>Date de modificaction :</p>
                       <p>{formattedUpdatedDate}</p>
+                    </div>
+                    <div className="blogField_contain">
+                      <p style={{color: theme.palette.text.secondary}}>Date de Publication :</p>
+                      <p>{formattedPublishedDate}</p>
                     </div>
                     <div className="line_horizontal" style={{backgroundColor: theme.palette.text.secondary}}></div>
                     <RedButton className="delete_button_blog" variant="contained" theme={theme} onClick={openPopup}>Supprimer</RedButton>

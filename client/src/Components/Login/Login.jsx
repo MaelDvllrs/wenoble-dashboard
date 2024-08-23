@@ -7,6 +7,10 @@ import Cookies from 'js-cookie';
 import config from "../../config";
 import { IsAuthenticated, IsAuthenticatedAdmin } from "../../Auth/ProtectedRoutes";
 import CryptoJS from 'crypto-js'; 
+import { LoginTextField, DefaultButton, SecondaryButton } from '../../Theme/element';
+import { useTheme } from '@mui/material/styles';
+import backgroundLogin from '../../assets/background/backgroundLogin.svg';
+
 
 
 
@@ -14,13 +18,14 @@ import CryptoJS from 'crypto-js';
 
 const Login = () => {
 
+    const theme = useTheme();
+
     const apiUrl = config.apiUrl; 
 
     const [loginUserName, setLoginUserName] = useState('')
     const [loginPassword, setLoginPassword] = useState('')
     
 
-    const [loginStatus, setLoginStatus] = useState()
     const [statusHolder, setStatusHolder] = useState('message')
 
     const navigateTo = useNavigate()
@@ -36,42 +41,30 @@ const Login = () => {
         navigateTo('/dashboard-admin/home');
     }
 
-    const loginUser = (e)=>{
-
+    const loginUser = async (e) => {
         e.preventDefault();
 
+        const presalt = CryptoJS.lib.WordArray.random(128 / 8);
+        const salt = presalt.toString(CryptoJS.enc.Base64);
+        const key = CryptoJS.PBKDF2(loginUserName, salt, { keySize: 256 / 32, iterations: 1000 });
+        const keyString = key.toString(CryptoJS.enc.Base64);
 
+        const encryptedPassword = CryptoJS.AES.encrypt(loginPassword, keyString, {
+            mode: CryptoJS.mode.ECB,
+            padding: CryptoJS.pad.Pkcs7
+        }).toString();
 
-    const presalt = (CryptoJS.lib.WordArray.random(128 / 8));
-    const salt = presalt.toString(CryptoJS.enc.Base64);
+        try {
+            const response = await Axios.post(`${apiUrl}/login`, {
+                LoginUserName: loginUserName,
+                LoginPassword: encryptedPassword,
+                salt: salt,
+            });
 
-    
-    const key = CryptoJS.PBKDF2(loginUserName, salt, { keySize: 256 / 32, iterations: 1000 });
-
-    
-
-    const keyString = key.toString(CryptoJS.enc.Base64);
-
-
-    const encryptedPassword = CryptoJS.AES.encrypt(loginPassword, keyString, {
-        mode: CryptoJS.mode.ECB,
-        padding: CryptoJS.pad.Pkcs7
-      }).toString();
-
-    Axios.post(`${apiUrl}/login`, {
-        LoginUserName: loginUserName,
-        LoginPassword: encryptedPassword,
-        salt: salt,
-        }).then((response)=>{
-
-            if(response.data.message){
-                navigateTo('/')
-                setLoginStatus('Utilisateur introuvable')
-            }
-            else{
-
-
-
+            if (response.data.message) {
+                navigateTo('/');
+                setStatusHolder('showMessage');
+            } else {
                 const token = response.data.token;
                 Cookies.set('token', token);
 
@@ -83,42 +76,71 @@ const Login = () => {
                 } else {
                     navigateTo('/dashboard/home');
                 }
-
             }
-        })
-
-    }
-
-    useEffect(()=>{
-        if(loginStatus !==''){
-            setStatusHolder('showMessage')
-            setTimeout(()=>{
-                setStatusHolder('message')
-            },6000)
+        } catch (error) {
+            return error;
+            
         }
-    }, [loginStatus])
-
+    };
 
     return(
         <div className="loginPage">
-            <div className="loginBox">
-                <h1 className="loginTitle">Se Connecter</h1>
-                <form className="loginForm">
-                    <span className={statusHolder}>{loginStatus}</span>
-                    <input className="loginInput" type="text" id="username" placeholder="Entrez Utilisateur" 
-                    onChange={(event)=>{
-                        setLoginUserName(event.target.value)
-                    }}/>
-                    <input className="loginInput" type="password" id="password" placeholder="Entrez Mot de passe"
-                    onChange={(event)=>{
-                        setLoginPassword(event.target.value)
-                    }}/>
-                    <button className="loginButton" onClick={loginUser}>
-                        <span className="loginButtonText">Connexion</span>
-                    </button>
-                    <span>
-                    </span>
-                </form>
+            <div className="loginContain" style={{backgroundColor:theme.palette.background.secondary}}>
+                <div className="loginImageContain">
+                    <img className="loginImage" src={backgroundLogin}/>
+                    <div className="fonduLoginImage" style={{background:`linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, ${theme.palette.background.secondary} 100%)`}}/>
+                </div>
+                <div className="loginBox">
+                    <div className="SignUpContain">
+                        <span className="SignUpText" style={{color:theme.palette.text.secondary}}>Vous n'avez pas de compte ?</span>
+                        <SecondaryButton theme={theme} className="SignUpButton" href="https://www.wenoble.fr/contact">Contact</SecondaryButton>
+                    </div>
+                    <div className="loginTextContain">
+                        <p className="loginTitle">Se Connecter à <span className="blueText">Wenoble Dashboard</span></p>
+                        <p className="loginPresentation" style={{color:theme.palette.text.secondary}}>Bienvenue sur le dashboard de Wenoble, entrez vos identifiants pour accéder à l'application</p>
+                    </div>
+                    <form className="loginForm">
+                        <div className="inputContain">
+                            <LoginTextField 
+                                autoComplete="username"
+                                className="loginInput" 
+                                theme={theme} 
+                                label="Utilisateur"
+                                type="text"
+                                InputProps={{
+                                    style: {
+                                        color: theme.palette.text.primary, 
+                                    },
+                                }}
+                                onChange={(event)=>{
+                                    setLoginUserName(event.target.value)
+                                }}
+                            />
+                            <LoginTextField 
+                                autoComplete="current-password"
+                                className="loginInput" 
+                                theme={theme} 
+                                label="Mot de passe"
+                                type="password"
+                                InputProps={{
+                                    style: {
+                                        color: theme.palette.text.primary,
+                                    },
+                                }}
+                                onChange={(event)=>{
+                                    setLoginPassword(event.target.value)
+                                }}
+                            />
+                            <div className="loginError">
+                                <span className={statusHolder}>Identifiants incorrects</span>
+                            </div>
+                        </div>
+                        
+                        <DefaultButton className="loginButton" theme={theme} onClick={loginUser}>Connexion</DefaultButton>
+                        <a className="forgotPassword" href="https://www.wenoble.fr/contact">Mot de passe oublié ?</a>
+                    </form>
+                    <div className="LoginPowered" href="https://www.wenoble.fr/contact" style={{color:theme.palette.text.secondary}}>Powered by <a href="https://www.wenoble.fr" className="blueText">Wenoble</a></div>
+                </div>
             </div>
         </div>
 

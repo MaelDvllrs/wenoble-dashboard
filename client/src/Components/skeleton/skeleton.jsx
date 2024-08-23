@@ -95,12 +95,6 @@ export  const SkeletonBlog = () => {
                     <Skeleton animation="wave" variant="text" className="blog_status Item_portfolio_element"/>
                     <Skeleton animation="wave" variant="text" className="blog_date_element Item_portfolio_element"/>
                     <Skeleton animation="wave" variant="text" className="blog_date_element Item_portfolio_element"/>
-            </div>
-            <div className="skeleton-portfolio-element skeleton_blog">
-                    <Skeleton sx={{ bgcolor: 'primary' }} animation="wave" variant="text" className="order_element Item_portfolio_element"/>
-                    <Skeleton  animation="wave" variant="text" className="blog_name_element Item_portfolio_element"/>
-                    <Skeleton animation="wave" variant="text" className="blog_status Item_portfolio_element"/>
-                    <Skeleton animation="wave" variant="text" className="blog_date_element Item_portfolio_element"/>
                     <Skeleton animation="wave" variant="text" className="blog_date_element Item_portfolio_element"/>
             </div>
             <div className="skeleton-portfolio-element skeleton_blog">
@@ -108,12 +102,6 @@ export  const SkeletonBlog = () => {
                     <Skeleton  animation="wave" variant="text" className="blog_name_element Item_portfolio_element"/>
                     <Skeleton animation="wave" variant="text" className="blog_status Item_portfolio_element"/>
                     <Skeleton animation="wave" variant="text" className="blog_date_element Item_portfolio_element"/>
-                    <Skeleton animation="wave" variant="text" className="blog_date_element Item_portfolio_element"/>
-            </div>
-            <div className="skeleton-portfolio-element skeleton_blog">
-                    <Skeleton sx={{ bgcolor: 'primary' }} animation="wave" variant="text" className="order_element Item_portfolio_element"/>
-                    <Skeleton  animation="wave" variant="text" className="blog_name_element Item_portfolio_element"/>
-                    <Skeleton animation="wave" variant="text" className="blog_status Item_portfolio_element"/>
                     <Skeleton animation="wave" variant="text" className="blog_date_element Item_portfolio_element"/>
                     <Skeleton animation="wave" variant="text" className="blog_date_element Item_portfolio_element"/>
             </div>
@@ -123,12 +111,6 @@ export  const SkeletonBlog = () => {
                     <Skeleton animation="wave" variant="text" className="blog_status Item_portfolio_element"/>
                     <Skeleton animation="wave" variant="text" className="blog_date_element Item_portfolio_element"/>
                     <Skeleton animation="wave" variant="text" className="blog_date_element Item_portfolio_element"/>
-            </div>
-            <div className="skeleton-portfolio-element skeleton_blog">
-                    <Skeleton sx={{ bgcolor: 'primary' }} animation="wave" variant="text" className="order_element Item_portfolio_element"/>
-                    <Skeleton  animation="wave" variant="text" className="blog_name_element Item_portfolio_element"/>
-                    <Skeleton animation="wave" variant="text" className="blog_status Item_portfolio_element"/>
-                    <Skeleton animation="wave" variant="text" className="blog_date_element Item_portfolio_element"/>
                     <Skeleton animation="wave" variant="text" className="blog_date_element Item_portfolio_element"/>
             </div>
             <div className="skeleton-portfolio-element skeleton_blog">
@@ -136,12 +118,6 @@ export  const SkeletonBlog = () => {
                     <Skeleton  animation="wave" variant="text" className="blog_name_element Item_portfolio_element"/>
                     <Skeleton animation="wave" variant="text" className="blog_status Item_portfolio_element"/>
                     <Skeleton animation="wave" variant="text" className="blog_date_element Item_portfolio_element"/>
-                    <Skeleton animation="wave" variant="text" className="blog_date_element Item_portfolio_element"/>
-            </div>
-            <div className="skeleton-portfolio-element skeleton_blog">
-                    <Skeleton sx={{ bgcolor: 'primary' }} animation="wave" variant="text" className="order_element Item_portfolio_element"/>
-                    <Skeleton  animation="wave" variant="text" className="blog_name_element Item_portfolio_element"/>
-                    <Skeleton animation="wave" variant="text" className="blog_status Item_portfolio_element"/>
                     <Skeleton animation="wave" variant="text" className="blog_date_element Item_portfolio_element"/>
                     <Skeleton animation="wave" variant="text" className="blog_date_element Item_portfolio_element"/>
             </div>
@@ -151,11 +127,45 @@ export  const SkeletonBlog = () => {
                     <Skeleton animation="wave" variant="text" className="blog_status Item_portfolio_element"/>
                     <Skeleton animation="wave" variant="text" className="blog_date_element Item_portfolio_element"/>
                     <Skeleton animation="wave" variant="text" className="blog_date_element Item_portfolio_element"/>
+                    <Skeleton animation="wave" variant="text" className="blog_date_element Item_portfolio_element"/>
             </div>
             <div className="skeleton-portfolio-element skeleton_blog">
                     <Skeleton sx={{ bgcolor: 'primary' }} animation="wave" variant="text" className="order_element Item_portfolio_element"/>
                     <Skeleton  animation="wave" variant="text" className="blog_name_element Item_portfolio_element"/>
                     <Skeleton animation="wave" variant="text" className="blog_status Item_portfolio_element"/>
+                    <Skeleton animation="wave" variant="text" className="blog_date_element Item_portfolio_element"/>
+                    <Skeleton animation="wave" variant="text" className="blog_date_element Item_portfolio_element"/>
+                    <Skeleton animation="wave" variant="text" className="blog_date_element Item_portfolio_element"/>
+            </div>
+            <div className="skeleton-portfolio-element skeleton_blog">
+                    <Skeleton sx={{ bgcolor: 'primary' }} animation="wave" variant="text" className="order_element Item_portfolio_element"/>
+                    <Skeleton  animation="wave" variant="text" className="blog_name_element Item_portfolio_element"/>
+                    <Skeleton animation="wave" variant="text" className="blog_status Item_portfolio_element"/>
+                    <Skeleton animation="wave" variant="text" className="blog_date_element Item_portfolio_element"/>
+                    <Skeleton animation="wave" variant="text" className="blog_date_element Item_portfolio_element"/>
+                    <Skeleton animation="wave" variant="text" className="blog_date_element Item_portfolio_element"/>
+            </div>
+            <div className="skeleton-portfolio-element skeleton_blog">
+                    <Skeleton sx={{ bgcolor: 'primary' }} animation="wave" variant="text" className="order_element Item_portfolio_element"/>
+                    <Skeleton  animation="wave" variant="text" className="blog_name_element Item_portfolio_element"/>
+                    <Skeleton animation="wave" variant="text" className="blog_status Item_portfolio_element"/>
+                    <Skeleton animation="wave" variant="text" className="blog_date_element Item_portfolio_element"/>
+                    <Skeleton animation="wave" variant="text" className="blog_date_element Item_portfolio_element"/>
+                    <Skeleton animation="wave" variant="text" className="blog_date_element Item_portfolio_element"/>
+            </div>
+            <div className="skeleton-portfolio-element skeleton_blog">
+                    <Skeleton sx={{ bgcolor: 'primary' }} animation="wave" variant="text" className="order_element Item_portfolio_element"/>
+                    <Skeleton  animation="wave" variant="text" className="blog_name_element Item_portfolio_element"/>
+                    <Skeleton animation="wave" variant="text" className="blog_status Item_portfolio_element"/>
+                    <Skeleton animation="wave" variant="text" className="blog_date_element Item_portfolio_element"/>
+                    <Skeleton animation="wave" variant="text" className="blog_date_element Item_portfolio_element"/>
+                    <Skeleton animation="wave" variant="text" className="blog_date_element Item_portfolio_element"/>
+            </div>
+            <div className="skeleton-portfolio-element skeleton_blog">
+                    <Skeleton sx={{ bgcolor: 'primary' }} animation="wave" variant="text" className="order_element Item_portfolio_element"/>
+                    <Skeleton  animation="wave" variant="text" className="blog_name_element Item_portfolio_element"/>
+                    <Skeleton animation="wave" variant="text" className="blog_status Item_portfolio_element"/>
+                    <Skeleton animation="wave" variant="text" className="blog_date_element Item_portfolio_element"/>
                     <Skeleton animation="wave" variant="text" className="blog_date_element Item_portfolio_element"/>
                     <Skeleton animation="wave" variant="text" className="blog_date_element Item_portfolio_element"/>
             </div>

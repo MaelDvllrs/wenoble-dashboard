@@ -73,8 +73,6 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
     const handleEditorChange = (newState) => {
       setEditorState(newState);
 
-      console.log(newState.getCurrentContent().getPlainText());
-
       const data = {
         id_config : id_config,
         type : 'richText',
@@ -488,8 +486,8 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
                                     <img className='Image_uploaded' src={image.url} alt={image.alt} />
                                     <div className='info_image_blog'>
                                       <div>
-                                        <p><b>{image.name}</b></p>
-                                        <p className='user_id'>{image.alt}</p>
+                                        <p className='titlePage'><b>{image.name}</b></p>
+                                        <p className='user_id titlePage' style={{color: theme.palette.text.secondary}}>{image.alt}</p>
                                       </div>
                                       <div className='flex_contain flex_image'>
                                         <p style={{color: theme.palette.text.secondary}}>{image.size} Ko</p>
@@ -569,7 +567,8 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
                       return (
                         <div>
                           <Select 
-                              onChange={(selectedOption) => handleChangeMultiRef(selectedOption.map(option => ({ value: option.value, label: option.label })))}                              options={optionMultiRef}
+                              onChange={(selectedOption) => handleChangeMultiRef(selectedOption.map(option => ({ value: option.value, label: option.label })))}                              
+                              options={optionMultiRef}
                               isMulti
                               value={optionDefault}
                               styles={{

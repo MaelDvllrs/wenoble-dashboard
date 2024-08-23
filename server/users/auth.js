@@ -105,11 +105,11 @@ router.post('/login', async (req, res) => {
 
           res.send({ token });
         } else {
-          res.send({ message: 'Mot de passe incorrect' });
+          res.send({ message: 'Utilisateur ou mot de passe incorrect' });
         }
       });
     } else {
-      res.send({ message: 'Utilisateur introuvable' });
+      res.send({ message: 'Utilisateur ou mot de passe incorrect' });
     }
   });
 });

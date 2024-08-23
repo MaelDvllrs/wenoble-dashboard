@@ -1,8 +1,8 @@
-import { useTheme } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
 import { styled } from '@mui/material/styles';
 import Switch from '@mui/material/Switch';
 import Button from '@mui/material/Button';
+import { MdVerticalAlignTop } from 'react-icons/md';
 
 
 
@@ -30,6 +30,32 @@ export const CssTextField = styled(TextField)(({ theme }) => ({
         },
     },
 }));
+
+export const LoginTextField = styled(TextField)(({ theme }) => ({
+
+    '& .MuiOutlinedInput-root': {
+        '& fieldset': {
+            borderColor: theme.palette.text.secondary, 
+            borderRadius: '1rem',
+        },
+        '&:hover fieldset': {
+            borderColor: theme.palette.text.secondary, 
+        },
+        '&.Mui-focused fieldset': {
+            borderColor: theme.palette.text.secondary, 
+        },
+    },
+    '& .MuiInputLabel-root': {
+        color: theme.palette.text.secondary, 
+    },
+    '& .MuiInputLabel-root.Mui-focused': {
+        color: theme.palette.text.secondary, 
+    },
+}));
+
+
+
+
 
 export const DefaultSwitch = styled(Switch)(({ theme }) => ({
     '& .MuiSwitch-switchBase.Mui-checked': {
@@ -66,7 +92,7 @@ export const SecondaryButton = styled(Button)(({ theme }) => ({
 export const RedButton = styled(Button)(({ theme }) => ({
     '&.MuiButton-root': {
         backgroundColor : theme.palette.error.main, 
-        color : theme.palette.text.primary
+        color : '#ffffff'
     },
     '&:hover': {
         backgroundColor: theme.palette.error.dark, 

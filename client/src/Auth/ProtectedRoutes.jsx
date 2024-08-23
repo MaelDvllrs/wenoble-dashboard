@@ -27,7 +27,7 @@ const IsAuthenticated = () => {
         }
         setVerifyAuth(true)
       } catch (error) {
-        console.error(error);
+        return error;
       }
     };
 
@@ -57,7 +57,7 @@ const IsAuthenticatedAdmin = () => {
         }
         setverifyAdm(true)
       } catch (error) {
-        console.error(error);
+        return error;
         
       }
     };
