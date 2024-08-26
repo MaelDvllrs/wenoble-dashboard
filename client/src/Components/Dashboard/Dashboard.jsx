@@ -109,7 +109,7 @@ const Dashboard = () => {
                                     <Avatar alt="Avatar par défaut" className='profile_photo'/>
                                   )
                                 }
-                                {decodedUser && <p className='user_name'><b>{decodedUser.user[0].username}</b><span className='user_id'>#{String(decodedUser.user[0].id_user).padStart(4, '0')}</span></p>}
+                                {decodedUser && <p className='user_name'><b className='user_name_contain'>{decodedUser.user[0].username}</b><span className='user_id'>#{String(decodedUser.user[0].id_user).padStart(4, '0')}</span></p>}
                             </div>}
                             <button id='id_user_menu_button' className='user_menu_button' onClick={toggle_user}><BsChevronCompactDown className='user_menu_button_arrow'/></button>  
                         </div>

@@ -71,7 +71,7 @@ const Portfolio = () => {
             <div className="dashboard_case_empty" style={{backgroundColor : theme.palette.primary.secondary, borderColor : theme.palette.primary.third}}>
                 <div className="portfolio_onglet_box">
                 {decodedPortfolio && decodedPortfolio.portfolio.map((pageItem) => (
-                        <NavLink to={'/dashboard/modification/portfolio/' + pageItem.id_portfolio} className={({ isActive }) => (isActive ? 'portfolio_ongletActive' : 'portfolio_onglet')} key={pageItem.id_portfolio}>
+                        <NavLink to={'/dashboard/modification/portfolio/' + pageItem.id_portfolio} className={({ isActive }) => (isActive ? 'page_ongletActive' : 'portfolio_onglet')} key={pageItem.id_portfolio}>
                             <p style={{color: theme.palette.text.primary}}>{pageItem.portfolio_name}</p>
                         </NavLink>
                     ))}

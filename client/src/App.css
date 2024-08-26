@@ -112,8 +112,8 @@ a{
 .outlet{
     position: relative;;
     display: grid;
-    grid-template-columns: 100%;
-    grid-template-rows: 3rem auto;
+    grid-template-columns: auto;
+    grid-template-rows: 3rem  auto;
     height: 100%;
     width: 100%;
 
@@ -230,6 +230,13 @@ a{
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;  
+}
+
+.title_contain{
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    margin-right: 0;
+    margin-left: 0;
 }
 
 

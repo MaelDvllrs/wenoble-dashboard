@@ -29,6 +29,8 @@ export  const SkeletonPortfolio = () => {
                     <Skeleton sx={{ bgcolor: 'primary' }} animation="wave" variant="text" className="skeleton-portfolio-element-order"/>
                     <Skeleton  animation="wave" variant="text" className="skeleton-portfolio-element-alt"/>
                     <Skeleton animation="wave" variant="text" className="skeleton-portfolio-element-name"/>
+                    <Skeleton animation="wave" variant="text" className="skeleton-portfolio-element-order"/>
+
                     <Skeleton animation="wave" variant="rounded" className="skeleton-portfolio-element-photo"/>
                     <Skeleton animation="wave" variant="text" className="skeleton-portfolio-element-option"/>
             </div>
@@ -36,6 +38,8 @@ export  const SkeletonPortfolio = () => {
                     <Skeleton sx={{ bgcolor: 'primary' }} animation="wave" variant="text" className="skeleton-portfolio-element-order"/>
                     <Skeleton  animation="wave" variant="text" className="skeleton-portfolio-element-alt"/>
                     <Skeleton animation="wave" variant="text" className="skeleton-portfolio-element-name"/>
+                    <Skeleton animation="wave" variant="text" className="skeleton-portfolio-element-order"/>
+
                     <Skeleton animation="wave" variant="rounded" className="skeleton-portfolio-element-photo"/>
                     <Skeleton animation="wave" variant="text" className="skeleton-portfolio-element-option"/>
             </div>
@@ -43,6 +47,8 @@ export  const SkeletonPortfolio = () => {
                     <Skeleton sx={{ bgcolor: 'primary' }} animation="wave" variant="text" className="skeleton-portfolio-element-order"/>
                     <Skeleton  animation="wave" variant="text" className="skeleton-portfolio-element-alt"/>
                     <Skeleton animation="wave" variant="text" className="skeleton-portfolio-element-name"/>
+                    <Skeleton animation="wave" variant="text" className="skeleton-portfolio-element-order"/>
+
                     <Skeleton animation="wave" variant="rounded" className="skeleton-portfolio-element-photo"/>
                     <Skeleton animation="wave" variant="text" className="skeleton-portfolio-element-option"/>
             </div>
@@ -50,6 +56,8 @@ export  const SkeletonPortfolio = () => {
                     <Skeleton sx={{ bgcolor: 'primary' }} animation="wave" variant="text" className="skeleton-portfolio-element-order"/>
                     <Skeleton  animation="wave" variant="text" className="skeleton-portfolio-element-alt"/>
                     <Skeleton animation="wave" variant="text" className="skeleton-portfolio-element-name"/>
+                    <Skeleton animation="wave" variant="text" className="skeleton-portfolio-element-order"/>
+
                     <Skeleton animation="wave" variant="rounded" className="skeleton-portfolio-element-photo"/>
                     <Skeleton animation="wave" variant="text" className="skeleton-portfolio-element-option"/>
             </div>
@@ -57,6 +65,8 @@ export  const SkeletonPortfolio = () => {
                     <Skeleton sx={{ bgcolor: 'primary' }} animation="wave" variant="text" className="skeleton-portfolio-element-order"/>
                     <Skeleton  animation="wave" variant="text" className="skeleton-portfolio-element-alt"/>
                     <Skeleton animation="wave" variant="text" className="skeleton-portfolio-element-name"/>
+                    <Skeleton animation="wave" variant="text" className="skeleton-portfolio-element-order"/>
+
                     <Skeleton animation="wave" variant="rounded" className="skeleton-portfolio-element-photo"/>
                     <Skeleton animation="wave" variant="text" className="skeleton-portfolio-element-option"/>
             </div>
@@ -64,6 +74,8 @@ export  const SkeletonPortfolio = () => {
                     <Skeleton sx={{ bgcolor: 'primary' }} animation="wave" variant="text" className="skeleton-portfolio-element-order"/>
                     <Skeleton  animation="wave" variant="text" className="skeleton-portfolio-element-alt"/>
                     <Skeleton animation="wave" variant="text" className="skeleton-portfolio-element-name"/>
+                    <Skeleton animation="wave" variant="text" className="skeleton-portfolio-element-order"/>
+
                     <Skeleton animation="wave" variant="rounded" className="skeleton-portfolio-element-photo"/>
                     <Skeleton animation="wave" variant="text" className="skeleton-portfolio-element-option"/>
             </div>
@@ -71,6 +83,8 @@ export  const SkeletonPortfolio = () => {
                     <Skeleton sx={{ bgcolor: 'primary' }} animation="wave" variant="text" className="skeleton-portfolio-element-order"/>
                     <Skeleton  animation="wave" variant="text" className="skeleton-portfolio-element-alt"/>
                     <Skeleton animation="wave" variant="text" className="skeleton-portfolio-element-name"/>
+                    <Skeleton animation="wave" variant="text" className="skeleton-portfolio-element-order"/>
+
                     <Skeleton animation="wave" variant="rounded" className="skeleton-portfolio-element-photo"/>
                     <Skeleton animation="wave" variant="text" className="skeleton-portfolio-element-option"/>
             </div>
@@ -78,6 +92,8 @@ export  const SkeletonPortfolio = () => {
                     <Skeleton sx={{ bgcolor: 'primary' }} animation="wave" variant="text" className="skeleton-portfolio-element-order"/>
                     <Skeleton  animation="wave" variant="text" className="skeleton-portfolio-element-alt"/>
                     <Skeleton animation="wave" variant="text" className="skeleton-portfolio-element-name"/>
+                    <Skeleton animation="wave" variant="text" className="skeleton-portfolio-element-order"/>
+
                     <Skeleton animation="wave" variant="rounded" className="skeleton-portfolio-element-photo"/>
                     <Skeleton animation="wave" variant="text" className="skeleton-portfolio-element-option"/>
             </div>

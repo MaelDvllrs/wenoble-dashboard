@@ -23,6 +23,7 @@
     border-radius: 1.5rem;
     gap: 1.5rem;
     overflow: hidden;
+    box-shadow: rgba(0, 0, 0, 0.5) 5px 5px 30px 9px;
 }
 
 .loginImageContain{
@@ -132,15 +133,24 @@
     outline: none;
 }
 
+.stayConnectedContain{
+    display: flex;
+    justify-content: left;
+    gap: 0.5rem;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 0.5rem;
+}
+
+
+
 .loginButton{
     font-size: 1rem !important;
+    height: 2.5rem !important;
     width: 100%;
     border-radius: 0.8rem !important;
 }
 
-.loginButton:hover{
-    background-color: rgb(32, 32, 32);
-}
 
 .forgotPassword{
     color: #0541b7;

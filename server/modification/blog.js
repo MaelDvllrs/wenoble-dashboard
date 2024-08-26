@@ -7,10 +7,6 @@ const db = require('../db')
 const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
 
-const { log } = require('console');
-const { type } = require('os');
-
-
 
 const router = express.Router();
 

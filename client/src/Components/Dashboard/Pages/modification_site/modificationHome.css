@@ -1,4 +1,34 @@
+.modification_contain{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.limit_size_contain{
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    overflow: visible !important;
+}
+
+.limit_size_bar{
+    width: 100%;
+    height: 0.7rem;
+    border-radius: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.limit_size_bar_fill{
+    height: 100%;
+    background: linear-gradient(90deg, rgba(12,0,218,1) 0%, rgba(5,65,183,1) 35%, rgba(66,0,124,1) 100%);
+    border-radius: 0.5rem;
+}
+
 .modification_page_contain{
+    padding-top: 2rem;
     width: 100%;
     height: 100%;
     display: flex;

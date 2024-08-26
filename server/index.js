@@ -11,7 +11,8 @@ const authRoutes = require('./users/auth');
 const infoUserRouter = require('./users/infoUser');
 const portfolioRouter = require('./modification/portfolio');
 const pageRouter = require('./modification/page');
-const blogRouter = require('./modification/blog')
+const blogRouter = require('./modification/blog');
+const limitSizeRouter = require('./modification/limitSize');
 
 
 
@@ -46,6 +47,7 @@ app.use(infoUserRouter);
 app.use(portfolioRouter);
 app.use(pageRouter);
 app.use(blogRouter);
+app.use(limitSizeRouter);
 
 
 app.use(clientRouter);

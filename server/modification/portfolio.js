@@ -46,8 +46,6 @@ router.get('/getPorfolioImages', (req, res) => {
     const portfolioId = req.query.portfolioId;
     const idUser = req.query.idUser;
 
-    console.log('portfolioId', portfolioId);
-    console.log('idUser', idUser);
 
     if (!portfolioId || !idUser) {
         return res.status(400).send('L\'id du portfolio est manquant.');
@@ -161,7 +159,6 @@ router.post('/orderPortfolio' , (req, res) => {
 });
 
 router.post('/deleteImage', (req, res) => {
-  console.log('deleteImage called');
   if (!req.body) {
     console.log('No body in the request');
     return res.status(400).send('Aucune image n\'a été téléchargée.');
@@ -198,7 +195,6 @@ router.post('/deleteImage', (req, res) => {
           console.log('Error in fs.unlink', err);
           return res.status(500).send({ error: err });
         }
-        console.log('Image file deleted');
         res.status(200).send('Image supprimée avec succès');
       });
     });

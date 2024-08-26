@@ -2,6 +2,9 @@ import TextField from '@mui/material/TextField';
 import { styled } from '@mui/material/styles';
 import Switch from '@mui/material/Switch';
 import Button from '@mui/material/Button';
+import LoadingButton from '@mui/lab/LoadingButton';
+import CircularProgress from '@mui/material/CircularProgress';
+
 import { MdVerticalAlignTop } from 'react-icons/md';
 
 
@@ -78,6 +81,32 @@ export const DefaultButton = styled(Button)(({ theme }) => ({
         backgroundColor: "#05286f", 
     },
 }));
+
+const WhiteCircularProgress = styled(CircularProgress)({
+    color: 'white',
+  });
+  
+  // Personnaliser le LoadingButton
+  export const LoadingButtonBase = styled(LoadingButton)(({ theme }) => ({
+    '&.MuiButton-root': {
+      backgroundColor: "#0541b7", 
+      color: 'rgba(255, 255, 255, 0.8)',
+    },
+    '&:hover': {
+      backgroundColor: "#05286f", 
+    },
+  }));
+  
+  export const LoadingDefaultButton = ({ loading, ...props }) => (
+    <LoadingButtonBase
+      loading={loading}
+      loadingIndicator={<WhiteCircularProgress size={24} />}
+      {...props}
+    />
+  );
+  
+
+
 
 export const SecondaryButton = styled(Button)(({ theme }) => ({
     '&.MuiButton-root': {

@@ -7,13 +7,9 @@ import Cookies from 'js-cookie';
 import config from "../../config";
 import { IsAuthenticated, IsAuthenticatedAdmin } from "../../Auth/ProtectedRoutes";
 import CryptoJS from 'crypto-js'; 
-import { LoginTextField, DefaultButton, SecondaryButton } from '../../Theme/element';
+import { LoginTextField, LoadingDefaultButton, SecondaryButton, DefaultSwitch } from '../../Theme/element';
 import { useTheme } from '@mui/material/styles';
 import backgroundLogin from '../../assets/background/backgroundLogin.svg';
-
-
-
-
 
 
 const Login = () => {
@@ -27,6 +23,10 @@ const Login = () => {
     
 
     const [statusHolder, setStatusHolder] = useState('message')
+
+    const [stayConnected, setStayConnected] = useState(false)
+    const [loading, setLoading] = useState(false);
+
 
     const navigateTo = useNavigate()
 
@@ -42,7 +42,9 @@ const Login = () => {
     }
 
     const loginUser = async (e) => {
+
         e.preventDefault();
+        setLoading(true);
 
         const presalt = CryptoJS.lib.WordArray.random(128 / 8);
         const salt = presalt.toString(CryptoJS.enc.Base64);
@@ -64,9 +66,14 @@ const Login = () => {
             if (response.data.message) {
                 navigateTo('/');
                 setStatusHolder('showMessage');
+                setLoading(false);
             } else {
                 const token = response.data.token;
-                Cookies.set('token', token);
+                if (stayConnected) {
+                    Cookies.set('token', token, { expires: 365 });
+                } else {
+                    Cookies.set('token', token);
+                }
 
                 const decodedToken = jwtDecode(token);
                 const isAdmin = decodedToken.isAdmin;
@@ -78,6 +85,8 @@ const Login = () => {
                 }
             }
         } catch (error) {
+            setLoading(false);
+
             return error;
             
         }
@@ -116,27 +125,41 @@ const Login = () => {
                                     setLoginUserName(event.target.value)
                                 }}
                             />
-                            <LoginTextField 
-                                autoComplete="current-password"
-                                className="loginInput" 
-                                theme={theme} 
-                                label="Mot de passe"
-                                type="password"
-                                InputProps={{
-                                    style: {
-                                        color: theme.palette.text.primary,
-                                    },
-                                }}
-                                onChange={(event)=>{
-                                    setLoginPassword(event.target.value)
-                                }}
-                            />
-                            <div className="loginError">
-                                <span className={statusHolder}>Identifiants incorrects</span>
+                            <div>
+                                <LoginTextField 
+                                    autoComplete="current-password"
+                                    className="loginInput" 
+                                    theme={theme} 
+                                    label="Mot de passe"
+                                    type="password"
+                                    InputProps={{
+                                        style: {
+                                            color: theme.palette.text.primary,
+                                        },
+                                    }}
+                                    onChange={(event)=>{
+                                        setLoginPassword(event.target.value)
+                                    }}
+                                />
+                                <div className="loginError">
+                                    <span className={statusHolder}>Identifiants incorrects</span>
+                                </div>
                             </div>
                         </div>
+                        <div className="stayConnectedContain">
+                            <p className="loginPresentation" style={{color:theme.palette.text.secondary}}>Rester connecté ?</p>
+                            <DefaultSwitch 
+                                theme={theme}
+                                checked={stayConnected} 
+                                onChange={(event)=>{
+                                    setStayConnected(event.target.checked)
+                                }}
+                            />
+                        </div>
                         
-                        <DefaultButton className="loginButton" theme={theme} onClick={loginUser}>Connexion</DefaultButton>
+                        <LoadingDefaultButton loading={loading} className="loginButton" type="submit" theme={theme} onClick={loginUser}>
+                            {!loading && 'Connexion'}
+                        </LoadingDefaultButton>
                         <a className="forgotPassword" href="https://www.wenoble.fr/contact">Mot de passe oublié ?</a>
                     </form>
                     <div className="LoginPowered" href="https://www.wenoble.fr/contact" style={{color:theme.palette.text.secondary}}>Powered by <a href="https://www.wenoble.fr" className="blueText">Wenoble</a></div>
