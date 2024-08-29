@@ -5,13 +5,6 @@ import Button from '@mui/material/Button';
 import LoadingButton from '@mui/lab/LoadingButton';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MdVerticalAlignTop } from 'react-icons/md';
-
-
-
-
-
-
 
 export const CssTextField = styled(TextField)(({ theme }) => ({
 
@@ -145,3 +138,15 @@ export const Popup = styled('div')(({ theme }) => ({
     flexDirection: 'column',
     borderRadius: '0.5rem',
 }));
+
+
+export const notificationTitle = (type) => {
+    const titles = {
+        actu: 'Actualités Wenoble',
+        message: 'Nouveau message',
+        order: 'Nouvelle commande',
+        info: 'Information',
+    };
+
+    return titles[type] || 'Notification';
+};

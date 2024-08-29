@@ -29,6 +29,10 @@
     margin-right: 1rem;
     border: 1px #434853 solid;
     border-radius: 0.7rem;
+}
+
+.user_menu_hide{
+    height: 100%;
     overflow: hidden;
 }
 
@@ -54,6 +58,8 @@
     white-space: nowrap;
     overflow: hidden;
 }
+
+
 
 .profile_photo{
     width: 3rem !important;
@@ -118,13 +124,20 @@
 }
 
 .menu_title{
+    position: relative;
     font-size: 1.2rem;
     margin-top: 2rem;
     margin-bottom: 1rem;
+    white-space: nowrap;
+    color: rgba(255, 255, 255, 0.8);
+    width: 100%;
+}
+
+.menu_title_text{
+    overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    overflow: hidden;
-    color: rgba(255, 255, 255, 0.8);
+    max-width: 100%;
 }
 
 .menu_link{
@@ -194,6 +207,23 @@
     border-bottom-left-radius: 0.5rem;
 }
 
+
+.navigation{
+    margin-top: 2rem;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    height: 100%;
+    width: 100%;
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+
+}
+
+.navigation::-webkit-scrollbar { 
+    display: none; /* Safari and Chrome */
+    }
+
 .icon_navigation{
     font-size: 1.5rem;
     margin-right: 1.5rem;
@@ -214,14 +244,23 @@
 .dashboard_header{
     width: 100%;
     height: 3rem;
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    z-index: 9999;
 }
 
+
+
 .header_box{
-    width: 50%;
     height: 100%;
     padding-left: 1rem;
     display: flex;
     align-items: center;
+}
+
+.right{
+    margin-right: 2rem;
 }
 
 .menu_button{
@@ -285,6 +324,45 @@
 
 .save:hover{
     background-color: rgb(135, 0, 0);
+}
+
+
+.notification_case{
+    width: 25rem;
+    height: 30rem;
+    position: relative;
+    z-index: 100;
+    padding: 0;
+}
+
+.notification_title_contain{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: center;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+
+.notification_box{
+    cursor: pointer;
+    background-color: transparent;
+    padding: 1rem;    
+}
+
+.notification_contain{
+    width: 100%;
+}
+
+
+.notification_line{
+    margin: 0;
+}
+
+.notification_time{
+    font-size: 0.8rem;
+    text-align: right;
 }
 
 

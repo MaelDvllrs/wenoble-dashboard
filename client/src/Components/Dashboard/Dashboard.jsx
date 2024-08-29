@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext  } from 'react';
+import React, { useState, useEffect, useContext, useRef  } from 'react';
 import Axios from 'axios';
 import {jwtDecode} from 'jwt-decode'; 
 import Cookies from 'js-cookie';
@@ -6,7 +6,7 @@ import './Dashboard.css';
 import { Outlet, Link, NavLink, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion'
 import { BsChevronCompactDown } from "react-icons/bs";
-import { PiUserBold, PiGearSixBold, PiPowerBold, PiHouseBold, PiChartBarBold, PiPencilSimpleBold, PiNewspaperBold, PiFunnelSimpleBold} from "react-icons/pi";
+import { PiUserBold, PiGearSixBold, PiPowerBold, PiHouseBold, PiChartBarBold, PiPencilSimpleBold, PiNewspaperBold, PiFunnelSimpleBold, PiShoppingCartSimpleBold, PiQuestionBold, PiChatCircleDotsBold,PiBellBold} from "react-icons/pi";
 import { LuMoon, LuSun } from "react-icons/lu";
 import { fetchImages } from "./apiImage";
 import logo from "../../assets/icon/logo.png"
@@ -16,6 +16,13 @@ import ThemeContext from '../../Theme/themeContext';
 import { useTheme } from '@mui/material/styles';
 import Checkbox from '@mui/material/Checkbox';
 import Avatar from '@mui/material/Avatar';
+import Badge from '@mui/material/Badge';
+import Popper  from '@mui/material/Popper';
+import ClickAwayListener from '@mui/material/ClickAwayListener';
+import Grow from '@mui/material/Grow';
+import IconButton from '@mui/material/IconButton';
+import io from 'socket.io-client';
+import { notificationTitle } from '../../Theme/element';
 
 
 
@@ -27,12 +34,51 @@ const Dashboard = () => {
 
     const apiUrl = config.apiUrl; 
 
+    const apiUrlNotif = config.apiNotifServer;
+
+    const socket = io(apiUrlNotif);
+
     const { isDark, toggleTheme } = useContext(ThemeContext);
 
 
     const [LoadingProfile, setLoadingProfile] = useState(true);
 
     const [infoUser, setInfoUser] = useState(null);
+
+    const [openNotif, setOpenNotif] = useState(false);
+    const [notifications, setNotifications] = useState([]);
+    const [notifExist, setNotifExist] = useState(false);
+
+    const anchorRef = useRef(null);
+
+    socket.emit('join', { idUser: jwtDecode(Cookies.get('token')).idUser });
+    socket.on('notification', (data) => {
+        console.log('Notification received:', data);
+    });
+
+
+    useEffect(() => {
+        Axios.get(`${apiUrl}/getNotifications`, {
+            params: {
+                userId: jwtDecode(Cookies.get('token')).idUser,
+            }
+        }).then((response) => {
+            setNotifications(response.data);
+        });
+    }, []);
+
+
+    const handleOpenNotif = (event) => {
+        event.stopPropagation();
+        setOpenNotif((prevOpen) => !prevOpen);
+    };
+
+    const handleClickAway = () => {
+        setOpenNotif(false);
+    };
+
+    
+
 
     let decodedUser = null;
 
@@ -100,28 +146,30 @@ const Dashboard = () => {
                 </AnimatePresence>
                 <AnimatePresence initial={false}>
                     <motion.div className="user_menu"  animate={{height: open_user ? "5rem" : "auto", paddingRight: open_menu ? "1rem" : "0rem", paddingLeft: open_menu ? "1rem" : "0rem", width: open_menu ? "auto" : "3rem", border: open_menu ? "1px #434853 solid" : "none"}}>
-                        <div className='user_menu_box'>
-                            {LoadingProfile ? <SkeletonProfile /> : <div className='flex_left'>
-                                {
-                                  images[0] ? (
-                                    <img src={`data:image/jpeg;base64,${images[0].data}`} alt={images[0].name} className='profile_photo'/>
-                                  ) : (
-                                    <Avatar alt="Avatar par défaut" className='profile_photo'/>
-                                  )
-                                }
-                                {decodedUser && <p className='user_name'><b className='user_name_contain'>{decodedUser.user[0].username}</b><span className='user_id'>#{String(decodedUser.user[0].id_user).padStart(4, '0')}</span></p>}
-                            </div>}
-                            <button id='id_user_menu_button' className='user_menu_button' onClick={toggle_user}><BsChevronCompactDown className='user_menu_button_arrow'/></button>  
-                        </div>
-                        <div className="option_user_box">
-                            <Link key="account" className='link option_user_text' to='/dashboard/account'><PiUserBold className='option_user_icon'/><b>Mon Compte</b></Link>
-                            <Link key="parameter" className='link option_user_text' to="/dashboard/parameter"><PiGearSixBold className='option_user_icon'/><b>Parametre</b></Link>
-                            <button onClick={logoutUser} key="option" className='option_user_text' to="/dashboard/lougout"><PiPowerBold  className='option_user_icon'/><b>Logout</b></button>
+                        <div className='user_menu_hide'>
+                            <div className='user_menu_box'>
+                                {LoadingProfile ? <SkeletonProfile /> : <div className='flex_left'>
+                                    {
+                                      images[0] ? (
+                                        <img src={`data:image/jpeg;base64,${images[0].data}`} alt={images[0].name} className='profile_photo'/>
+                                      ) : (
+                                        <Avatar alt="Avatar par défaut" className='profile_photo'/>
+                                      )
+                                    }
+                                    {decodedUser && <p className='user_name'><b className='user_name_contain'>{decodedUser.user[0].username}</b><span className='user_id'>#{String(decodedUser.user[0].id_user).padStart(4, '0')}</span></p>}
+                                </div>}
+                                <button id='id_user_menu_button' className='user_menu_button' onClick={toggle_user}><BsChevronCompactDown className='user_menu_button_arrow'/></button>  
+                            </div>
+                            <div className="option_user_box">
+                                <Link key="account" className='link option_user_text' to='/dashboard/account'><PiUserBold className='option_user_icon'/><b>Mon Compte</b></Link>
+                                <Link key="parameter" className='link option_user_text' to="/dashboard/parameter"><PiGearSixBold className='option_user_icon'/><b>Parametre</b></Link>
+                                <button onClick={logoutUser} key="option" className='option_user_text' to="/dashboard/lougout"><PiPowerBold  className='option_user_icon'/><b>Logout</b></button>
+                            </div>
                         </div>   
                     </motion.div>
                 </AnimatePresence>
                 <div className='navigation'>
-                    <p className='menu_title'><b>Navigation</b></p>
+                    
                     <NavLink key="home" to='/dashboard/home' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
                         <AnimatePresence initial={false}>
                             <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"}>
@@ -131,29 +179,59 @@ const Dashboard = () => {
                             </motion.div>
                         </AnimatePresence>
                     </NavLink>
+                    <div className='menu_title'><p className='menu_title_text'><b>Gérer mon site</b></p></div>
+                    <NavLink key="modification" to='/dashboard/modification' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
+                        <AnimatePresence initial={false}>
+                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"}>
+                                <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><PiPencilSimpleBold/></motion.div>
+                                <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Modifications</motion.span>
+                                <div className='menu_link_active_curs'></div>
+                            </motion.div>
+                        </AnimatePresence>
+                    </NavLink>
+                    <NavLink key="ecommerce" to='/dashboard/ecommerce' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
+                        <AnimatePresence initial={false}>
+                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"}>
+                                <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><PiShoppingCartSimpleBold/></motion.div>
+                                <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>E-commerce</motion.span>
+                                <div className='menu_link_active_curs'></div>
+                            </motion.div>
+                        </AnimatePresence>
+                    </NavLink>
+                    
                     <NavLink key="stats" to='/dashboard/stats' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
                         <AnimatePresence initial={false}>
                             <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"}>
                                 <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><PiChartBarBold/></motion.div>
-                                <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Statistique</motion.span>
+                                <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Statistiques</motion.span>
                                 <div className='menu_link_active_curs'></div>
                             </motion.div>
                         </AnimatePresence>
                     </NavLink>
-                    <NavLink key="portfolio" to='/dashboard/modification' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
+                    <NavLink key="contact" to='/dashboard/contact' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
                         <AnimatePresence initial={false}>
                             <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"}>
-                                <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><PiPencilSimpleBold/></motion.div>
-                                <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Modification</motion.span>
+                                <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><PiChatCircleDotsBold  /></motion.div>
+                                <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Contacts</motion.span>
                                 <div className='menu_link_active_curs'></div>
                             </motion.div>
                         </AnimatePresence>
                     </NavLink>
+                    <div className='menu_title'><p className='menu_title_text'><b>Wenoble</b></p></div>
                     <NavLink key="actu" to='/dashboard/actu' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
                         <AnimatePresence initial={false}>
                             <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"}>
                                 <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><PiNewspaperBold/></motion.div>
-                                <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Actualité</motion.span>
+                                <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Actualités</motion.span>
+                                <div className='menu_link_active_curs'></div>
+                            </motion.div>
+                        </AnimatePresence>
+                    </NavLink>
+                    <NavLink key="probleme" to='/dashboard/problem' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
+                        <AnimatePresence initial={false}>
+                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"}>
+                                <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><PiQuestionBold /></motion.div>
+                                <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Un problème ?</motion.span>
                                 <div className='menu_link_active_curs'></div>
                             </motion.div>
                         </AnimatePresence>
@@ -167,8 +245,38 @@ const Dashboard = () => {
                     <div className='header_box left'>
                         <Checkbox key='menu' style={{ color: theme.palette.text.primary }} checked={open_menu} onChange={toggle_menu} icon={<PiFunnelSimpleBold className='icon'/>} checkedIcon={<PiFunnelSimpleBold className='icon'/>}/>
                         <Checkbox key='theme' style={{ color: theme.palette.text.primary }} checked={isDark} onChange={toggleTheme} icon={<LuMoon className='icon' />} checkedIcon={<LuSun  className='icon'/>}/>
-                    </div>   
-                    
+                    </div>
+                    <div className='header_box right'>
+                        
+                            <IconButton key='menu' style={{ color: theme.palette.text.primary }}  onClick={handleOpenNotif} ref={anchorRef}>
+                                {/* <Badge color="error" variant="dot"> */}<PiBellBold  className='icon'/>{/*</Badge>*/}
+                            </IconButton>
+                        
+                        <ClickAwayListener onClickAway={handleClickAway}>
+                        <Popper open={openNotif} anchorEl={anchorRef.current} transition placement="bottom-end">
+                        {({ TransitionProps }) => (
+                          <Grow {...TransitionProps} timeout={350}>
+                                <div className='dashboard_case_empty notification_case' style={{backgroundColor : theme.palette.primary.secondary, borderColor : theme.palette.primary.third}}>
+                                    <div className='notification_title_contain'>
+                                        <h3>Notifications</h3>
+                                    </div>
+                                    <div className="line_horizontal notification_line" style={{ backgroundColor: theme.palette.text.secondary }}></div>
+                                    <div className='notification_contain'>
+                                        {notifications.length === 0 && <div className='notification_box'><div className='notification_text'>Aucune notification</div></div>}
+                                        {notifications.map((notification, index) => (
+                                            <div key={index} className='notification_box' style={{backgroundColor: notification.is_read ? 'transparent' : theme.palette.primary.third}}>
+                                                <div className='notification_text'><b>{notificationTitle(notification.type)}</b></div>
+                                                <div className='notification_text'>{notification.message}</div>
+                                                <div className='notification_time' style={{color:theme.palette.text.secondary}}>{new Date(notification.date).toLocaleTimeString()}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                          </Grow>
+                        )}
+                        </Popper>
+                        </ClickAwayListener>
+                    </div>
                 </div>
                 <div className='dashboard_section principal'>
                     <Outlet />

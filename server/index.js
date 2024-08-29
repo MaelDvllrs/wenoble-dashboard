@@ -13,6 +13,7 @@ const portfolioRouter = require('./modification/portfolio');
 const pageRouter = require('./modification/page');
 const blogRouter = require('./modification/blog');
 const limitSizeRouter = require('./modification/limitSize');
+const { notificationRouter, notificationServer } = require('./users/notification');
 
 
 
@@ -33,11 +34,8 @@ const corsOptions = {
   },
 };
 
-
-
 app.use(cors(corsOptions));
 app.use(express.json())
-
 
 app.use(bodyParser.json({ limit: '500mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
@@ -48,6 +46,7 @@ app.use(portfolioRouter);
 app.use(pageRouter);
 app.use(blogRouter);
 app.use(limitSizeRouter);
+app.use(notificationRouter);
 
 
 app.use(clientRouter);
@@ -61,3 +60,8 @@ app.use('/media/portfolio', express.static(path.join(__dirname, 'images', 'portf
 app.listen(3002, ()=>{
   console.log('Server is running on port 3002')
 })
+
+notificationServer.listen(3004, () => {
+  console.log('Server is running on port 3004');
+});
+

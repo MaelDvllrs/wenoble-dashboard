@@ -38,6 +38,7 @@
 }
 
 .modification_box{
+    z-index: 0;
     position: relative;
     border-radius: 1rem;
     display: flex;
