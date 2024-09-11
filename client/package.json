@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "start",
-    "build": "build",
+    "build": "vite build",
     "test": "test",
     "eject": "react-scripts eject",
     "dev": "vite",

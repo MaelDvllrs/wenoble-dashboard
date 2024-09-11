@@ -603,7 +603,6 @@ const EditPageBlog = () => {
                 </div>
               ) : null
             }
-            
         </div>
 
     )
