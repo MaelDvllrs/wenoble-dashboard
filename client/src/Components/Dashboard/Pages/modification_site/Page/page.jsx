@@ -61,7 +61,7 @@ const Page = () => {
             <div className="breadCrumbs"><NavLink style={{color: theme.palette.text.primary}} className={"breadCrumbsLink"} to={'/dashboard/home'}>Dashboard</NavLink> &gt; <NavLink style={{color: theme.palette.text.primary}} className={"breadCrumbsLink"} to={'/dashboard/modification'}>Modification</NavLink> &gt; Page</div>
             </div>
 
-            <div className="dashboard_case_empty">
+            <div className="dashboard_case_empty" style={{backgroundColor : theme.palette.primary.secondary, borderColor : theme.palette.primary.third}}>
                 <div className="portfolio_onglet_box">
                     {decodedPage && decodedPage.page.map((pageItem) => (
                         <NavLink to={'/dashboard/modification/page/' + pageItem.id_page} className={({ isActive }) => (isActive ? 'page_ongletActive' : 'portfolio_onglet')} key={pageItem.id_page}>
@@ -73,7 +73,6 @@ const Page = () => {
                         <Outlet />
                 </div>
             </div>       
-            <div className="background_glow background_glow_page"></div>   
         </div>
     )
 }

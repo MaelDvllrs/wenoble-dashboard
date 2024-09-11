@@ -18,6 +18,11 @@ import OpenInNewOutlinedIcon from '@mui/icons-material/OpenInNewOutlined';
 import ImageIcon from '@mui/icons-material/Image';
 import VideocamIcon from '@mui/icons-material/Videocam';
 
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { PickersDay } from '@mui/x-date-pickers/PickersDay';
+import { styled } from '@mui/material/styles';
+
+
 import Select from 'react-select'
 import  Axios  from 'axios';
 
@@ -56,6 +61,10 @@ function findLinkEntities(contentBlock, callback, contentState) {
     callback
   );
 }
+
+
+
+
 
 
 
@@ -451,6 +460,28 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
     }, [dataValue, type, CollectionRef]);
 
 
+
+    const StyledDay = styled(PickersDay)(({ theme }) => ({
+      borderRadius: theme.shape.borderRadius,
+      color: theme.palette.text.primary,
+      backgroundColor: theme.palette.primary.main,
+      '&.Mui-selected': {
+        backgroundColor: theme.palette.primary.main,
+        color: theme.palette.text.primary,
+      },
+      '&.MuiPickersDay-today': {
+        borderColor: theme.palette.primary.main,
+      },
+      '&.MuiPickersDay-root': {
+        '&:hover': {
+          backgroundColor: theme.palette.primary.light,
+        },
+      },
+    }));
+
+
+    
+
     return (
         <div>
             {(() => {
@@ -520,6 +551,56 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
                                   <input className='input_text_blog' type='text' style={{backgroundColor : theme.palette.primary.main, color : theme.palette.text.primary, borderColor : theme.palette.primary.main}} onChange={handleTextChange} value={slugValueChange}/>                               
                                 </div>
                               );
+                    case 'date':
+                      return (<div className='blogfield_contain_auto'>
+                                <div style={{backgroundColor:  theme.palette.primary.main , borderRadius:"0.5rem"}}>
+                                <DatePicker
+                                  format='DD/MM/YYYY'
+                                  slots={{
+ 
+
+                                    day: (props) => <StyledDay {...props} theme={theme} />,
+                                    }}
+                                  slotProps={{
+                                    openPickerIcon: { fontSize: 'medium' },
+                                    openPickerButton: { 
+                                      sx: {
+                                        color: theme.palette.text.primary, 
+
+                                      }, 
+                                    },
+                                    textField: {
+                                      focused: true,
+                                      sx: {
+                                        '& .MuiInputBase-input': {
+                                          color: theme.palette.text.primary,
+                                          backgroundColor: theme.palette.primary.main, 
+                                          border: 'none', 
+                                          borderRadius: '0.5rem', 
+                                          padding: '8px', 
+                                          width: '5rem',
+                                        },
+                                        '& .MuiInputLabel-root': {
+                                          color: theme.palette.text.primary,
+                                        },
+                                        '& .MuiOutlinedInput-root': {
+                                          '& fieldset': {
+                                            borderColor: 'transparent', 
+                                          },
+                                          '&:hover fieldset': {
+                                            borderColor: '#888', 
+                                          },
+                                          '&.Mui-focused fieldset': {
+                                            borderColor: theme.palette.primary.main, 
+                                          },
+                                        },
+                                      },
+                                    },
+                                  }}
+                                />
+                                </div>
+                              </div>
+                            );
                     case 'video':
                       return (
                         <div className='image_blog' style={{backgroundColor : theme.palette.primary.main, color : theme.palette.text.primary, borderColor : theme.palette.primary.main}}>

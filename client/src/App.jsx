@@ -20,6 +20,10 @@ import CreatePageBlog from './Components/Dashboard/Pages/modification_site/Blog/
 import EditPageBlog from './Components/Dashboard/Pages/modification_site/Blog/editPageBlog'
 import Statistique from './Components/Dashboard/Pages/Statistique/Statistique'
 import Actualite from './Components/Dashboard/Pages/Actualite/Actualite'
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
+import dayjs from 'dayjs';
+import 'dayjs/locale/fr';
 
 
 function App() {
@@ -63,46 +67,49 @@ const ProtectedRoutePortfolio = ({children}) =>{
 
 
   return (
-    <div>
-      <Router>
-        <Routes>
-          <Route path="/" element={<Login />} />
-          <Route path="/login" element={<Login />} />
+    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="fr">
+      <div>
+        <Router>
+          <Routes>
+            <Route path="/" element={<Login />} />
+            <Route path="/login" element={<Login />} />
 
-          <Route path="/dashboard">  
-            <Route element={<ProtectedRoutesClient><Dashboard /></ProtectedRoutesClient>}>
-              <Route path="/dashboard/home" element={<Home/>}/>
-              <Route path="/dashboard/account" element={<Account/>}/>
-              <Route path="/dashboard/modification" element={<ModificationHome/>}>
-              </Route>
-              <Route path="/dashboard/modification/portfolio" element={<Portfolio/>} >
-                  <Route path="/dashboard/modification/portfolio/:id" element={<EditPortfolio/>}></Route>
-              </Route>
-              <Route path="/dashboard/modification/page" element={<Page/>} >
-                  <Route path="/dashboard/modification/page/:id" element={<EditPage/>}></Route>
-              </Route>
-              <Route path="/dashboard/modification/blog" element={<Blog/>} >
-                <Route path="/dashboard/modification/blog/:id" element={<ListeBlog/>}></Route>
-                <Route path="/dashboard/modification/blog/:id/createPage" element={<CreatePageBlog/>}></Route>
-                <Route path="/dashboard/modification/blog/:id/editPage/:idBlog" element={<EditPageBlog/>}></Route>
-              </Route>
-              <Route path="/dashboard/stats" element={<Statistique/>} >
-              </Route>
-              <Route path="/dashboard/actu" element={<Actualite/>} >
+            <Route path="/dashboard">  
+              <Route element={<ProtectedRoutesClient><Dashboard /></ProtectedRoutesClient>}>
+                <Route path="/dashboard/home" element={<Home/>}/>
+                <Route path="/dashboard/account" element={<Account/>}/>
+                <Route path="/dashboard/modification" element={<ModificationHome/>}>
+                </Route>
+                <Route path="/dashboard/modification/portfolio" element={<Portfolio/>} >
+                    <Route path="/dashboard/modification/portfolio/:id" element={<EditPortfolio/>}></Route>
+                </Route>
+                <Route path="/dashboard/modification/page" element={<Page/>} >
+                    <Route path="/dashboard/modification/page/:id" element={<EditPage/>}></Route>
+                </Route>
+                <Route path="/dashboard/modification/blog" element={<Blog/>} >
+                  <Route path="/dashboard/modification/blog/:id" element={<ListeBlog/>}></Route>
+                  <Route path="/dashboard/modification/blog/:id/createPage" element={<CreatePageBlog/>}></Route>
+                  <Route path="/dashboard/modification/blog/:id/editPage/:idBlog" element={<EditPageBlog/>}></Route>
+                </Route>
+                <Route path="/dashboard/stats" element={<Statistique/>} >
+                </Route>
+                <Route path="/dashboard/actu" element={<Actualite/>} >
+                </Route>
               </Route>
             </Route>
-          </Route>
 
-          <Route path="/dashboard-admin">  
-            <Route element={<ProtectedRouteAdmin><Admin /></ProtectedRouteAdmin>}>
-              <Route path="/dashboard-admin/home" element={<AdminHome/>}/>
-              <Route path="/dashboard-admin/clients" element={<AdminClient/>}/>
-              <Route path="/dashboard-admin/clients/add" element={<AddClient/>}/>
+            <Route path="/dashboard-admin">  
+              <Route element={<ProtectedRouteAdmin><Admin /></ProtectedRouteAdmin>}>
+                <Route path="/dashboard-admin/home" element={<AdminHome/>}/>
+                <Route path="/dashboard-admin/clients" element={<AdminClient/>}/>
+                <Route path="/dashboard-admin/clients/add" element={<AddClient/>}/>
+              </Route>
             </Route>
-          </Route>
-        </Routes>
-      </Router>
-    </div>
+          </Routes>
+        </Router>
+      </div>
+    </LocalizationProvider>
+
   );
 }
 

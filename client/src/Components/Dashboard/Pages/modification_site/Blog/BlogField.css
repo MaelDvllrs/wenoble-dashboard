@@ -126,3 +126,10 @@
 .mutliReference_input{
     height: 2.5rem;
 }
+
+.blogfield_contain_auto{
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    width: 100%;
+}
