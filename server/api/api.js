@@ -90,10 +90,11 @@ router.get('/sendBlog', (req, res) => {
 
         if (joinTable === 'blog_page') {
             SQL = `SELECT * FROM blog_page WHERE id_blog IN (${placeholders}) AND status = 1 ORDER BY ${colone} ${order}`;
+            Values = [...idArray];
         } else {
             SQL = `SELECT blog_page.* FROM blog_page INNER JOIN ${joinTable} ON blog_page.id_page_blog = ${joinTable}.id_blog_page WHERE blog_page.id_blog IN (${placeholders}) AND ${joinTable}.id_config IN (${placeholders}) AND blog_page.status = 1 ORDER BY ${joinTable}.${colone} ${order} `;
+            Values = [...idArray, ...configArray];
         }
-        Values = [...idArray, ...configArray];
     } else {
         const id_blog = req.id_data;
         SQL = `SELECT * FROM blog_page WHERE id_blog = ? AND status = 1 ORDER BY ${colone} ${order}`;
