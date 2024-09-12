@@ -75,6 +75,9 @@ router.get('/sendBlog', (req, res) => {
     const ids = req.ids; // IDs des blogs passés en paramètre de requête
     const order = req.query.order || 'ASC'; // Par défaut, l'ordre est croissant
     const limit = req.query.limit ? parseInt(req.query.limit, 10) : null; // Pas de limite par défaut
+    const colone = req.query.colone || 'page_blog_publish_date'; // Par défaut, on trie par date de publication
+    const joinTable = req.query.joinTable || 'blog_page'; // Par défaut, on joint la table blog_page
+    const configs = req.query.configs || null; // Configs des blogs passés en paramètre de requête 
 
     let SQL;
     let Values;
@@ -82,12 +85,18 @@ router.get('/sendBlog', (req, res) => {
 
     if (ids) {
         const idArray = ids.split(',').map(id => parseInt(id, 10)); // Convertir les IDs en tableau de nombres
+        const configArray = configs.split(',').map(config => parseInt(config, 10)); // Convertir les configs en tableau de nombres
         const placeholders = idArray.map(() => '?').join(','); // Créer des placeholders pour la requête SQL
-        SQL = `SELECT * FROM blog_page WHERE id_blog IN (${placeholders}) AND status = 1 ORDER BY page_blog_publish_date ${order}`;
-        Values = [...idArray];
+
+        if (joinTable === 'blog_page') {
+            SQL = `SELECT * FROM blog_page WHERE id_blog IN (${placeholders}) AND status = 1 ORDER BY ${colone} ${order}`;
+        } else {
+            SQL = `SELECT blog_page.* FROM blog_page INNER JOIN ${joinTable} ON blog_page.id_page_blog = ${joinTable}.id_blog_page WHERE blog_page.id_blog IN (${placeholders}) AND ${joinTable}.id_config IN (${placeholders}) AND blog_page.status = 1 ORDER BY ${joinTable}.${colone} ${order} `;
+        }
+        Values = [...idArray, ...configArray];
     } else {
         const id_blog = req.id_data;
-        SQL = `SELECT * FROM blog_page WHERE id_blog = ? AND status = 1 ORDER BY page_blog_publish_date ${order}`;
+        SQL = `SELECT * FROM blog_page WHERE id_blog = ? AND status = 1 ORDER BY ${colone} ${order}`;
         Values = [id_blog];
     }
 

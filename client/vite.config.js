@@ -45,7 +45,38 @@ const manifestForPlugin = {
 // https://vitejs.dev/config/
 export default defineConfig({
   	base: "/",
-  	plugins: [react(), VitePWA(manifestForPlugin)],
+  	plugins: [
+		react(),
+		VitePWA({
+			registerType: 'autoUpdate',
+			includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
+			manifest: {
+			  name: 'My PWA App',
+			  short_name: 'PWA App',
+			  description: 'My awesome Progressive Web App!',
+			  theme_color: '#ffffff',
+			  icons: [
+				{
+				  src: 'pwa-192x192.png',
+				  sizes: '192x192',
+				  type: 'image/png',
+				},
+				{
+				  src: 'pwa-512x512.png',
+				  sizes: '512x512',
+				  type: 'image/png',
+				},
+				{
+				  src: 'pwa-512x512.png',
+				  sizes: '512x512',
+				  type: 'image/png',
+				  purpose: 'any maskable',
+				},
+			  ],
+			},
+		}),
+	
+	],
 	optimizeDeps: {
 		exclude: ['@ffmpeg/ffmpeg'],
 	},
@@ -61,5 +92,5 @@ export default defineConfig({
   	server: {
 		host: true,
 		//port: 5173, When not running with docker compose, this is the port which will be used in docker
-	},
+	},	
 })
