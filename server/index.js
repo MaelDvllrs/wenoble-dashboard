@@ -21,7 +21,7 @@ const { notificationRouter, notificationServer } = require('./users/notification
 const clientRouter = require('./admin/client');
 
 
-const whitelist = ['http://localhost:5173', 'https://dashboard.wenoble.fr', 'https://kristina-photogrphy.webflow.io', 'https://explora-production.webflow.io', 'https://perfoseos.webflow.io', 'https://perfoseos.com', 'https://perfoseos.fr'];
+const whitelist = ['http://localhost:5173', 'https://dashboard.wenoble.fr', 'https://kristina-photogrphy.webflow.io', 'https://explora-production.webflow.io', 'https://perfoseos.webflow.io', 'https://perfoseos.com', 'https://www.perfoseos.com'];
 
 // Configuration de CORS
 const corsOptions = {
