@@ -141,8 +141,8 @@ router.get('/sendBlogInfo', (req, res) => {
 
 
 router.get('/sendBlogInfoSlug', (req, res) => {
-    const slug = req.slug;
-    let id_blog = req.id_blog;
+    const slug = req.headers.slug;
+    let id_blog = req.headers.id_blog;
 
     // Vérifiez si id_blog contient plusieurs identifiants séparés par des virgules
     if (typeof id_blog === 'string' && id_blog.includes(',')) {
@@ -151,7 +151,7 @@ router.get('/sendBlogInfoSlug', (req, res) => {
         id_blog = [id_blog];
     }
 
-    const SQL = `SELECT * FROM blog_page WHERE slug = ? AND id_blog IN (?) AND status = 1`;
+    const SQL = `SELECT * FROM blog_page WHERE page_blog_slug = ? AND id_blog IN (?) AND status = 1`;
     const Values = [slug, id_blog];
 
     db.query(SQL, Values, (err, results) => {
