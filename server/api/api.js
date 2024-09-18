@@ -140,7 +140,7 @@ router.get('/sendBlogInfo', (req, res) => {
 });
 
 
-router.get('/sendBlogInfoSLug', (req, res) => {
+router.get('/sendBlogInfoSlug', (req, res) => {
     const slug = req.slug;
     let id_blog = req.id_blog;
 
