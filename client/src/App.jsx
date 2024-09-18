@@ -20,9 +20,16 @@ import CreatePageBlog from './Components/Dashboard/Pages/modification_site/Blog/
 import EditPageBlog from './Components/Dashboard/Pages/modification_site/Blog/editPageBlog'
 import Statistique from './Components/Dashboard/Pages/Statistique/Statistique'
 import Actualite from './Components/Dashboard/Pages/Actualite/Actualite'
+import Ecommerce from './Components/Dashboard/Pages/Ecommerce/EcommerceHome'
+import EcommerceStatistique from './Components/Dashboard/Pages/Ecommerce/EcommerceStatistique'
+import EcommerceProduct from './Components/Dashboard/Pages/Ecommerce/EcommerceProduct'
+import EcommerceOrder from './Components/Dashboard/Pages/Ecommerce/EcommerceOrder/EcommerceOrder'
+import EcommerceOrderPending from './Components/Dashboard/Pages/Ecommerce/EcommerceOrder/EcommerceOrderPending'
+import EcommerceOrderShipping from './Components/Dashboard/Pages/Ecommerce/EcommerceOrder/EcommerceOrderShipping'
+import EcommerceOrderDelivered from './Components/Dashboard/Pages/Ecommerce/EcommerceOrder/EcommerceOrderDelivered'
+import EcommerceOrderAll from './Components/Dashboard/Pages/Ecommerce/EcommerceOrder/EcommerceOrderAll'
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
-import dayjs from 'dayjs';
 import 'dayjs/locale/fr';
 
 
@@ -92,6 +99,16 @@ const ProtectedRoutePortfolio = ({children}) =>{
                   <Route path="/dashboard/modification/blog/:id/editPage/:idBlog" element={<EditPageBlog/>}></Route>
                 </Route>
                 <Route path="/dashboard/stats" element={<Statistique/>} >
+                </Route>
+                <Route path="/dashboard/ecommerce" element={<Ecommerce/>} >
+                  <Route path="/dashboard/ecommerce/stats" element={<EcommerceStatistique/>}></Route>
+                  <Route path="/dashboard/ecommerce/product" element={<EcommerceProduct/>}></Route>
+                  <Route path="/dashboard/ecommerce/order" element={<EcommerceOrder/>}>
+                    <Route path="/dashboard/ecommerce/order/pending" element={<EcommerceOrderPending/>}></Route>
+                    <Route path="/dashboard/ecommerce/order/shipping" element={<EcommerceOrderShipping/>}></Route>
+                    <Route path="/dashboard/ecommerce/order/delivered" element={<EcommerceOrderDelivered/>}></Route>
+                    <Route path="/dashboard/ecommerce/order/orderAll" element={<EcommerceOrderAll/>}></Route>
+                  </Route>
                 </Route>
                 <Route path="/dashboard/actu" element={<Actualite/>} >
                 </Route>

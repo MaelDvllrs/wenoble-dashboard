@@ -17,6 +17,7 @@
     "date-fns": "^3.6.0",
     "dotenv": "^16.4.5",
     "draft-js-export-html": "^1.4.1",
+    "eventsource": "^2.0.2",
     "express": "^4.19.1",
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",

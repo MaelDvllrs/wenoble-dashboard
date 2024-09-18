@@ -11,6 +11,7 @@ import '../Portfolio/portfolio.css';
 import config from "../../../../../config";
 import AddIcon from '@mui/icons-material/Add';
 import { SkeletonBlog } from "../../../../skeleton/skeleton";
+import { formatDate } from "../../../dateUtils";
 
 
 const ListeBlog = () => {
@@ -69,29 +70,9 @@ const ListeBlog = () => {
                 {LoadingBlog ? <SkeletonBlog /> :
                     <div>
                             {InfoListeblog && Array.isArray(InfoListeblog.blogList) ? InfoListeblog.blogList.map((blogpage, index) => {
-                                // Convertir page_blog_create_date
-                                const createDate = new Date(blogpage.page_blog_create_date);
-                                const formattedCreateDate = new Intl.DateTimeFormat('fr-FR', {
-                                    year: 'numeric', month: '2-digit', day: '2-digit',
-                                    hour: '2-digit', minute: '2-digit', hour12: false
-                                }).format(createDate);
-                            
-                                // Convertir page_blog_update_date
-                                const updateDate = new Date(blogpage.page_blog_update_date);
-                                const formattedUpdateDate = new Intl.DateTimeFormat('fr-FR', {
-                                    year: 'numeric', month: '2-digit', day: '2-digit',
-                                    hour: '2-digit', minute: '2-digit', hour12: false
-                                }).format(updateDate);
-
-                                
-                                let formattedPublishDate = 'N/A';
-                                if (blogpage.page_blog_publish_date) {
-                                    const publishDate = new Date(blogpage.page_blog_publish_date);
-                                    formattedPublishDate = new Intl.DateTimeFormat('fr-FR', {
-                                        year: 'numeric', month: '2-digit', day: '2-digit',
-                                        hour: '2-digit', minute: '2-digit', hour12: false
-                                    }).format(publishDate);
-                                }
+                                const formattedCreateDate = formatDate(blogpage.page_blog_create_date);
+                                const formattedUpdateDate = formatDate(blogpage.page_blog_update_date);
+                                const formattedPublishDate = formatDate(blogpage.page_blog_publish_date);
                             
                                 return (
                                     <NavLink to={'editPage/' + blogpage.id_page_blog} key={index} className="Item_Portfolio Item_Blog" style={{'--hover-background-color': theme.palette.secondary.secondary, color: theme.palette.text.primary}}>

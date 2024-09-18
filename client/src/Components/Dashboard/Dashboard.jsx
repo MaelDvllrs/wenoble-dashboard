@@ -9,7 +9,7 @@ import { BsChevronCompactDown } from "react-icons/bs";
 import { PiUserBold, PiGearSixBold, PiPowerBold, PiHouseBold, PiChartBarBold, PiPencilSimpleBold, PiNewspaperBold, PiFunnelSimpleBold, PiShoppingCartSimpleBold, PiQuestionBold, PiChatCircleDotsBold,PiBellBold} from "react-icons/pi";
 import { LuMoon, LuSun } from "react-icons/lu";
 import { fetchImages } from "./apiImage";
-import logo from "../../assets/icon/logo.png"
+import Logo from "../../assets/icon/logo.svg?react"; 
 import config from '../../config';
 import { SkeletonProfile } from '../skeleton/skeleton';
 import ThemeContext from '../../Theme/themeContext';
@@ -140,9 +140,11 @@ const Dashboard = () => {
     return (
         <div className='dashboard'>
         <AnimatePresence initial={false}>
-            <motion.div className="menu_dashboard" animate={{width: open_menu ? "18rem" : "5rem"}}>
+            <motion.div className="menu_dashboard" animate={{width: open_menu ? "18rem" : "5rem"}} style={{backgroundColor: theme.palette.primary.secondary, borderColor : theme.palette.primary.third}}>
                 <AnimatePresence initial={false}>
-                    <motion.img src={logo} className="logo" alt="logo" animate={{width: open_menu ? "7rem" : "3rem"}}></motion.img>
+                    <motion.div className="logo_contain" animate={{width: open_menu ? "10rem" : "3rem"}} style={{backgroundColor: theme.palette.primary.secondary}}>
+                        <Logo className="logo" alt="logo" style={{color: theme.palette.text.primary}}/>
+                    </motion.div>
                 </AnimatePresence>
                 <AnimatePresence initial={false}>
                     <motion.div className="user_menu"  animate={{height: open_user ? "5rem" : "auto", paddingRight: open_menu ? "1rem" : "0rem", paddingLeft: open_menu ? "1rem" : "0rem", width: open_menu ? "auto" : "3rem", border: open_menu ? "1px #434853 solid" : "none"}}>
@@ -156,14 +158,14 @@ const Dashboard = () => {
                                         <Avatar alt="Avatar par défaut" className='profile_photo'/>
                                       )
                                     }
-                                    {decodedUser && <p className='user_name'><b className='user_name_contain'>{decodedUser.user[0].username}</b><span className='user_id'>#{String(decodedUser.user[0].id_user).padStart(4, '0')}</span></p>}
+                                    {decodedUser && <p className='user_name' ><b className='user_name_contain' style={{color: theme.palette.text.primary}}>{decodedUser.user[0].username}</b><span className='user_id' style={{color: theme.palette.text.secondary}}>#{String(decodedUser.user[0].id_user).padStart(4, '0')}</span></p>}
                                 </div>}
-                                <button id='id_user_menu_button' className='user_menu_button' onClick={toggle_user}><BsChevronCompactDown className='user_menu_button_arrow'/></button>  
+                                <button id='id_user_menu_button' className='user_menu_button' onClick={toggle_user} style={{color: theme.palette.text.primary}}><BsChevronCompactDown className='user_menu_button_arrow'/></button>  
                             </div>
                             <div className="option_user_box">
-                                <Link key="account" className='link option_user_text' to='/dashboard/account'><PiUserBold className='option_user_icon'/><b>Mon Compte</b></Link>
-                                <Link key="parameter" className='link option_user_text' to="/dashboard/parameter"><PiGearSixBold className='option_user_icon'/><b>Parametre</b></Link>
-                                <button onClick={logoutUser} key="option" className='option_user_text' to="/dashboard/lougout"><PiPowerBold  className='option_user_icon'/><b>Logout</b></button>
+                                <Link key="account" className='link option_user_text' to='/dashboard/account' style={{color: theme.palette.text.primary}}><PiUserBold className='option_user_icon'/><b>Mon Compte</b></Link>
+                                <Link key="parameter" className='link option_user_text' to="/dashboard/parameter" style={{color: theme.palette.text.primary}}><PiGearSixBold className='option_user_icon'/><b>Parametre</b></Link>
+                                <button onClick={logoutUser} key="option" className='option_user_text' to="/dashboard/lougout" style={{color: theme.palette.text.primary}}><PiPowerBold  className='option_user_icon'/><b>Logout</b></button>
                             </div>
                         </div>   
                     </motion.div>
@@ -172,17 +174,17 @@ const Dashboard = () => {
                     
                     <NavLink key="home" to='/dashboard/home' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
                         <AnimatePresence initial={false}>
-                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"}>
+                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.primary}}>
                                 <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><PiHouseBold /></motion.div>
                                 <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Accueil</motion.span>
                                 <div className='menu_link_active_curs'></div>
                             </motion.div>
                         </AnimatePresence>
                     </NavLink>
-                    <div className='menu_title'><p className='menu_title_text'><b>Gérer mon site</b></p></div>
+                    <div className='menu_title'><p className='menu_title_text' style={{color: theme.palette.text.primary}}><b>Gérer mon site</b></p></div>
                     <NavLink key="modification" to='/dashboard/modification' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
                         <AnimatePresence initial={false}>
-                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"}>
+                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.primary}}>
                                 <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><PiPencilSimpleBold/></motion.div>
                                 <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Modifications</motion.span>
                                 <div className='menu_link_active_curs'></div>
@@ -191,7 +193,7 @@ const Dashboard = () => {
                     </NavLink>
                     <NavLink key="ecommerce" to='/dashboard/ecommerce' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
                         <AnimatePresence initial={false}>
-                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"}>
+                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.primary}}>
                                 <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><PiShoppingCartSimpleBold/></motion.div>
                                 <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>E-commerce</motion.span>
                                 <div className='menu_link_active_curs'></div>
@@ -201,7 +203,7 @@ const Dashboard = () => {
                     
                     <NavLink key="stats" to='/dashboard/stats' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
                         <AnimatePresence initial={false}>
-                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"}>
+                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.primary}}>
                                 <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><PiChartBarBold/></motion.div>
                                 <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Statistiques</motion.span>
                                 <div className='menu_link_active_curs'></div>
@@ -210,17 +212,17 @@ const Dashboard = () => {
                     </NavLink>
                     <NavLink key="contact" to='/dashboard/contact' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
                         <AnimatePresence initial={false}>
-                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"}>
+                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.primary}}>
                                 <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><PiChatCircleDotsBold  /></motion.div>
                                 <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Contacts</motion.span>
                                 <div className='menu_link_active_curs'></div>
                             </motion.div>
                         </AnimatePresence>
                     </NavLink>
-                    <div className='menu_title'><p className='menu_title_text'><b>Wenoble</b></p></div>
+                    <div className='menu_title'><p className='menu_title_text' style={{color: theme.palette.text.primary}}><b>Wenoble</b></p></div>
                     <NavLink key="actu" to='/dashboard/actu' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
                         <AnimatePresence initial={false}>
-                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"}>
+                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.primary}}>
                                 <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><PiNewspaperBold/></motion.div>
                                 <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Actualités</motion.span>
                                 <div className='menu_link_active_curs'></div>
@@ -229,7 +231,7 @@ const Dashboard = () => {
                     </NavLink>
                     <NavLink key="probleme" to='/dashboard/problem' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
                         <AnimatePresence initial={false}>
-                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"}>
+                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.primary}}>
                                 <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><PiQuestionBold /></motion.div>
                                 <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Un problème ?</motion.span>
                                 <div className='menu_link_active_curs'></div>

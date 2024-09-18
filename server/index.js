@@ -13,7 +13,11 @@ const portfolioRouter = require('./modification/portfolio');
 const pageRouter = require('./modification/page');
 const blogRouter = require('./modification/blog');
 const limitSizeRouter = require('./modification/limitSize');
+
+const orderRouter = require('./ecommerce/order');
+
 const { notificationRouter, notificationServer } = require('./users/notification');
+
 
 
 
@@ -46,6 +50,9 @@ app.use(portfolioRouter);
 app.use(pageRouter);
 app.use(blogRouter);
 app.use(limitSizeRouter);
+
+app.use(orderRouter);
+
 app.use(notificationRouter);
 
 
