@@ -3,6 +3,7 @@ const app = express()
 const cors = require('cors')
 const bodyParser = require('body-parser');
 const path = require('path');
+const prerender = require('prerender-node');
 
 
 // Client router
@@ -60,7 +61,7 @@ app.use(clientRouter);
 
 app.use('/api', apiRouter);
 
-app.use(require('prerender-node').set('prerenderToken', '27zGNE0iCXeVeY1c4wHa'));
+app.use(prerender.set('prerenderToken', 'TON_TOKEN_PRERENDER'));
 
 //Static files
 app.use('/media/blog', express.static(path.join(__dirname, 'images', 'blog_image')));
