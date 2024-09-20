@@ -60,6 +60,8 @@ app.use(clientRouter);
 
 app.use('/api', apiRouter);
 
+app.use(require('prerender-node').set('prerenderToken', '27zGNE0iCXeVeY1c4wHa'));
+
 //Static files
 app.use('/media/blog', express.static(path.join(__dirname, 'images', 'blog_image')));
 app.use('/media/portfolio', express.static(path.join(__dirname, 'images', 'portfolio_image')));
