@@ -16,6 +16,8 @@ const limitSizeRouter = require('./modification/limitSize');
 
 const orderRouter = require('./ecommerce/order');
 
+const contactRouter = require('./contact/sendEmail');
+
 const { notificationRouter, notificationServer } = require('./users/notification');
 
 
@@ -52,6 +54,8 @@ app.use(blogRouter);
 app.use(limitSizeRouter);
 
 app.use(orderRouter);
+
+app.use(contactRouter);
 
 app.use(notificationRouter);
 

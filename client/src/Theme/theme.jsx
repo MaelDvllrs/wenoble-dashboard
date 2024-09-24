@@ -16,7 +16,7 @@ const DARK_THEME = createTheme({
         type: "dark",
         primary: {
             main: 'rgb(14 15 17)',
-            secondary: '#1F2225',
+            secondary: '#ddeaf814',
             third: 'hsl(210, 14%, 20%)'
         },
         secondary: {
@@ -26,7 +26,7 @@ const DARK_THEME = createTheme({
 
         },
         background: {
-            default: '#17181C',
+            default: '#05050a',
             secondary: '#000000'
         },
         text: {
