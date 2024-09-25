@@ -56,7 +56,7 @@ router.get('/sendEmail', apiKeyMiddleware, async (req, res) => {
         const dateSend = new Date();
         console.log('dateSendEmail', dateSend);
 
-        const serverUrl = `${req.protocol}://${req.get('host')}`;
+        const serverUrl = process.env.SERVER_URL;
         console.log('serverUrl', serverUrl);
 
         const SQL = 'SELECT email, id_user FROM users WHERE cle_api = ?'
