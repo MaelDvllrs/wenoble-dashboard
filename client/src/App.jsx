@@ -20,6 +20,8 @@ import CreatePageBlog from './Components/Dashboard/Pages/modification_site/Blog/
 import EditPageBlog from './Components/Dashboard/Pages/modification_site/Blog/editPageBlog'
 import Statistique from './Components/Dashboard/Pages/Statistique/Statistique'
 import Actualite from './Components/Dashboard/Pages/Actualite/Actualite'
+import ContactList from './Components/Dashboard/Pages/Contact/ContactListe'
+import ContactMessage from './Components/Dashboard/Pages/Contact/ContactMessage'
 import Ecommerce from './Components/Dashboard/Pages/Ecommerce/EcommerceHome'
 import EcommerceStatistique from './Components/Dashboard/Pages/Ecommerce/EcommerceStatistique'
 import EcommerceProduct from './Components/Dashboard/Pages/Ecommerce/EcommerceProduct'
@@ -100,6 +102,10 @@ const ProtectedRoutePortfolio = ({children}) =>{
                 </Route>
                 <Route path="/dashboard/stats" element={<Statistique/>} >
                 </Route>
+
+                <Route path="/dashboard/contact" element={<ContactList/>}/>
+                <Route path="/dashboard/contact/message/:id" element={<ContactMessage/>}/>
+
                 <Route path="/dashboard/ecommerce" element={<Ecommerce/>} >
                   <Route path="/dashboard/ecommerce/stats" element={<EcommerceStatistique/>}></Route>
                   <Route path="/dashboard/ecommerce/product" element={<EcommerceProduct/>}></Route>

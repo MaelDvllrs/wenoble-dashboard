@@ -41,7 +41,6 @@ const apiKeyMiddleware = (req, res, next) => {
 router.use(apiKeyMiddleware);
 
 
-// Endpoint pour envoyer une photo
 router.get('/sendPhoto', (req, res) => {
 
     const id_portfolio = req.id_data;

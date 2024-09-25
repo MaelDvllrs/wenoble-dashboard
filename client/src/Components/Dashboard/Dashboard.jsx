@@ -47,14 +47,24 @@ const Dashboard = () => {
 
     const [openNotif, setOpenNotif] = useState(false);
     const [notifications, setNotifications] = useState([]);
-    const [notifExist, setNotifExist] = useState(false);
+    const [notifRead, setNotifRead] = useState(false);
 
     const anchorRef = useRef(null);
 
-    socket.emit('join', { idUser: jwtDecode(Cookies.get('token')).idUser });
-    socket.on('notification', (data) => {
-        console.log('Notification received:', data);
-    });
+    useEffect(() => {
+        // Écouter les notifications en temps réel
+        const userId = jwtDecode(Cookies.get('token')).idUser;
+        socket.emit('join', { idUser: userId });
+
+        socket.on('notification', (data) => {
+            console.log(data);
+            setNotifRead(true);
+        });
+
+        return () => {
+            socket.off('notification');
+        };
+    }, []);
 
 
     useEffect(() => {
@@ -63,9 +73,41 @@ const Dashboard = () => {
                 userId: jwtDecode(Cookies.get('token')).idUser,
             }
         }).then((response) => {
-            setNotifications(response.data);
+            const notificationsWithLinks = response.data.map(notification => {
+                let link = '';
+                switch (notification.type) {
+                    case 'message':
+                        link = `/dashboard/contact/message/${notification.id_element}`;
+                        break;
+                    case 'alert':
+                        link = `/alerts/${notification.id_notif}`;
+                        break;
+                    case 'reminder':
+                        link = `/reminders/${notification.id_notif}`;
+                        break;
+                    default:
+                        link = `/notifications/${notification.id_notif}`;
+                        break;
+                }
+                return { ...notification, link };
+            });
+            setNotifications(notificationsWithLinks);
         });
-    }, []);
+    }, [openNotif, notifRead]);
+
+
+    const handleReadNotif = (event) => {
+        const notificationId = event.currentTarget.id;
+        Axios.post(`${apiUrl}/readNotification`, {
+            IdNotif: notificationId,
+        }).then((response) => {
+            setNotifRead(true);
+        });
+    };
+
+    useEffect(() => {
+        setNotifRead(notifications.some(notification => !notification.is_read));
+    }, [notifications]);
 
 
     const handleOpenNotif = (event) => {
@@ -77,7 +119,10 @@ const Dashboard = () => {
         setOpenNotif(false);
     };
 
-    
+    const handleCombinedClick = (event) => {
+        handleReadNotif(event);
+        handleClickAway(event);
+    };
 
 
     let decodedUser = null;
@@ -136,7 +181,7 @@ const Dashboard = () => {
         setopen_menu(!open_menu);
         setopen_user(true);
     }
-
+    
     return (
         <div className='dashboard'>
         <AnimatePresence initial={false}>
@@ -251,14 +296,16 @@ const Dashboard = () => {
                     <div className='header_box right'>
                         
                             <IconButton key='menu' style={{ color: theme.palette.text.primary }}  onClick={handleOpenNotif} ref={anchorRef}>
-                                {/* <Badge color="error" variant="dot"> */}<PiBellBold  className='icon'/>{/*</Badge>*/}
+                                <Badge color="error" variant="dot" invisible={!notifRead}>
+                                    <PiBellBold className='icon' />
+                                </Badge>
                             </IconButton>
                         
                         <ClickAwayListener onClickAway={handleClickAway}>
                         <Popper open={openNotif} anchorEl={anchorRef.current} transition placement="bottom-end">
                         {({ TransitionProps }) => (
                           <Grow {...TransitionProps} timeout={350}>
-                                <div className='dashboard_case_empty notification_case' style={{backgroundColor : theme.palette.primary.secondary, borderColor : theme.palette.primary.third}}>
+                                <div className='dashboard_case_empty notification_case' style={{backgroundColor : theme.palette.primary.main, borderColor : theme.palette.primary.third}}>
                                     <div className='notification_title_contain'>
                                         <h3>Notifications</h3>
                                     </div>
@@ -266,11 +313,14 @@ const Dashboard = () => {
                                     <div className='notification_contain'>
                                         {notifications.length === 0 && <div className='notification_box'><div className='notification_text'>Aucune notification</div></div>}
                                         {notifications.map((notification, index) => (
-                                            <div key={index} className='notification_box' style={{backgroundColor: notification.is_read ? 'transparent' : theme.palette.primary.third}}>
-                                                <div className='notification_text'><b>{notificationTitle(notification.type)}</b></div>
-                                                <div className='notification_text'>{notification.message}</div>
-                                                <div className='notification_time' style={{color:theme.palette.text.secondary}}>{new Date(notification.date).toLocaleTimeString()}</div>
-                                            </div>
+                                            <NavLink key={index} to={notification.link} onClick={handleCombinedClick} id={notification.id_notif}>
+                                                <div className='notification_box' style={{backgroundColor: notification.is_read ? 'transparent' : 'rgb(5, 65, 183, 0.2)', color : theme.palette.text.primary}}>
+                                                    <div><b>{notificationTitle(notification.type)}</b></div>
+                                                    <div className='notification_text'>{notification.message}</div>
+                                                    <div className='notification_time' style={{color:theme.palette.text.secondary}}>{new Date(notification.date).toLocaleTimeString()}</div>
+                                                </div>
+                                                <div className="line_horizontal notification_line" style={{ backgroundColor: theme.palette.text.secondary }}></div>
+                                            </NavLink>
                                         ))}
                                     </div>
                                 </div>

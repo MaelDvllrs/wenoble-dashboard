@@ -352,16 +352,41 @@
 .notification_box{
     cursor: pointer;
     background-color: transparent;
-    padding: 1rem;    
+    padding: 0.5rem; 
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;   
 }
 
 .notification_contain{
     width: 100%;
+    overflow: auto;
+    height: calc(100% - 4rem);
 }
+
+.notification_contain::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .notification_contain {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
 
 
 .notification_line{
     margin: 0;
+}
+
+.notification_text{
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    height: 3rem;
+
 }
 
 .notification_time{

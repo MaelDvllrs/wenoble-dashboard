@@ -4,36 +4,42 @@ const cors = require('cors');
 const socketIo = require('socket.io');
 const http = require('http');
 
+
 const notificationRouter = express.Router();
 const app = express();
 const notificationServer = http.createServer(app);
 
+require('dotenv').config();
+
 const io = socketIo(notificationServer, {
     cors: {
-      origin: "http://localhost:5173",
+      origin: process.env.SOCKET_URL,
       methods: ["GET", "POST"]
     }
   });
 
 
-app.use(cors()); // Appliquez le middleware CORS avant toutes les autres routes
+app.use(cors());
 app.use(express.json());
 
 
 notificationRouter.post('/createNotification', async (req, res) => {
     const sentIdUser = req.body.IdUser;
     const sentType = req.body.Type;
-    const sentDate = req.body.Date;
     const sentMessage = req.body.Message;
+    const sentIdElement = req.body.IdElement;
 
-    const SQL = 'INSERT INTO notifications (id_user, type, message, date) VALUES (?, ?, ?, ?)';
-    const Values = [sentIdUser, sentType, sentMessage, sentDate];
+    const date = new Date();
+
+    const SQL = 'INSERT INTO notifications (id_user, type, message, id_element, date) VALUES (?, ?, ?, ?, ?)';
+    const Values = [sentIdUser, sentType, sentMessage, sentIdElement, date];
 
     db.query(SQL, Values, (err, results) => {
         if (err) {
             res.send({ error: err });
         } else {
-            io.to(sentIdUser).emit('notification', results);
+            io.to(sentIdUser).emit('notification', { message: sentMessage, type : sentType, date: date });
+
             res.send({ message: 'Notification created' });
         }
     });
@@ -41,7 +47,7 @@ notificationRouter.post('/createNotification', async (req, res) => {
 
 notificationRouter.get('/getNotifications', (req, res) => {
     const sentIdUser = req.query.userId;
-    const SQL = 'SELECT id_notif, type, message, date, is_read FROM notifications WHERE id_user = ?';
+    const SQL = 'SELECT id_notif, type, message, id_element, date, is_read FROM notifications WHERE id_user = ? ORDER BY date DESC';
     const Values = [sentIdUser];
 
     db.query(SQL, Values, (err, results) => {
@@ -53,7 +59,27 @@ notificationRouter.get('/getNotifications', (req, res) => {
     });
 });
 
+
+notificationRouter.post('/readNotification', (req, res) => {
+    const sentIdNotif = req.body.IdNotif;
+    const SQL = 'UPDATE notifications SET is_read = 1 WHERE id_notif = ?';
+    const Values = [sentIdNotif];
+    db.query(SQL, Values, (err, results) => {
+        if (err) {
+            res.send({ error: err });
+        } else {
+            res.send({ message: 'Notification read' });
+        }
+    });
+});
+
 io.on('connection', (socket) => {
+
+    // Écouter l'événement personnalisé pour rejoindre une salle
+    socket.on('join', ({ idUser }) => {
+        socket.join(idUser);
+    });
+
     socket.on('disconnect', () => {
     });
 });
