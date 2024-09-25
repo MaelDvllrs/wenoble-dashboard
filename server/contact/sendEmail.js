@@ -46,11 +46,9 @@ const apiKeyMiddleware = (req, res, next) => {
     })
 };
 
-router.use(apiKeyMiddleware);
 
 
-
-router.get('/sendEmail', async (req, res) => {
+router.get('/sendEmail', apiKeyMiddleware, async (req, res) => {
         const apiKey = req.apiKey;
         const subject = req.subject;
         const html = req.html;
