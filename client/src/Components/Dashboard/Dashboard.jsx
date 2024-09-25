@@ -93,7 +93,7 @@ const Dashboard = () => {
             });
             setNotifications(notificationsWithLinks);
         });
-    }, [openNotif, notifRead]);
+    }, [openNotif, notifRead, notifications]);
 
 
     const handleReadNotif = (event) => {
@@ -101,7 +101,8 @@ const Dashboard = () => {
         Axios.post(`${apiUrl}/readNotification`, {
             IdNotif: notificationId,
         }).then((response) => {
-            setNotifRead(true);
+            setNotifRead(false);
+            console.log(response.data);
         });
     };
 
