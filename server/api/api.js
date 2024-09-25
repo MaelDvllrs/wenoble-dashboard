@@ -38,10 +38,9 @@ const apiKeyMiddleware = (req, res, next) => {
     })
 };
 
-router.use(apiKeyMiddleware);
 
 
-router.get('/sendPhoto', (req, res) => {
+router.get('/sendPhoto',apiKeyMiddleware, (req, res) => {
 
     const id_portfolio = req.id_data;
 
@@ -70,7 +69,7 @@ router.get('/sendPhoto', (req, res) => {
 
 
 
-router.get('/sendBlog', (req, res) => {
+router.get('/sendBlog',apiKeyMiddleware, (req, res) => {
     const ids = req.ids; // IDs des blogs passés en paramètre de requête
     const order = req.query.order || 'ASC'; // Par défaut, l'ordre est croissant
     const limit = req.query.limit ? parseInt(req.query.limit, 10) : null; // Pas de limite par défaut
@@ -119,7 +118,7 @@ router.get('/sendBlog', (req, res) => {
 
 
 
-router.get('/sendBlogInfo', (req, res) => {
+router.get('/sendBlogInfo',apiKeyMiddleware, (req, res) => {
     const id_blog_page = req.id_data;
 
     const SQL = 'SELECT * FROM blog_page WHERE id_page_blog = ? AND status = 1';
@@ -139,7 +138,7 @@ router.get('/sendBlogInfo', (req, res) => {
 });
 
 
-router.get('/sendBlogInfoSlug', (req, res) => {
+router.get('/sendBlogInfoSlug',apiKeyMiddleware, (req, res) => {
     const slug = req.headers.slug;
     let id_blog = req.headers.id_blog;
 
@@ -167,7 +166,7 @@ router.get('/sendBlogInfoSlug', (req, res) => {
 
 
 
-router.get('/sendBlogRichText', (req, res) => {
+router.get('/sendBlogRichText',apiKeyMiddleware, (req, res) => {
     const id_blog_page = req.id_data;
 
     const SQL = 'SELECT id_config, text_json FROM blog_field_richText WHERE id_blog_page = ?';
@@ -193,7 +192,7 @@ router.get('/sendBlogRichText', (req, res) => {
 });
 
 
-router.get('/sendBlogText', (req, res) => {
+router.get('/sendBlogText',apiKeyMiddleware, (req, res) => {
     const id_blog_page = req.id_data;
 
     const SQL = 'SELECT id_config, text FROM blog_field_text WHERE id_blog_page = ?';
@@ -212,7 +211,7 @@ router.get('/sendBlogText', (req, res) => {
     });
 });
 
-router.get('/sendBlogImage', (req, res) => {
+router.get('/sendBlogImage',apiKeyMiddleware, (req, res) => {
     const id_blog_page = req.id_data;
 
     const SQL = 'SELECT id_config, src_image, alt_image FROM blog_field_image WHERE id_blog_page = ?';
@@ -238,7 +237,7 @@ router.get('/sendBlogImage', (req, res) => {
 });
 
 
-router.get('/sendBlogInfoImage', (req, res) => {
+router.get('/sendBlogInfoImage',apiKeyMiddleware, (req, res) => {
     const id_blog_page = req.id_data;
 
     const SQL = 'SELECT id_config, src_image, alt_image FROM blog_field_image WHERE id_blog_page = ?';
@@ -259,7 +258,7 @@ router.get('/sendBlogInfoImage', (req, res) => {
 
 
 
-router.get('/sendBlogVideo', (req, res) => {
+router.get('/sendBlogVideo',apiKeyMiddleware, (req, res) => {
     const id_blog_page = req.id_data;
 
     const SQL = 'SELECT id_config, src_video FROM blog_field_video WHERE id_blog_page = ?';
@@ -279,7 +278,7 @@ router.get('/sendBlogVideo', (req, res) => {
 });
 
 
-router.get('/streamVideo/:videoName', (req, res) => {
+router.get('/streamVideo/:videoName',apiKeyMiddleware, (req, res) => {
     const videoName = req.id_data;
     const videoDirectory = path.join(__dirname, '..', 'images', 'blog_video');
     const videoPath = path.join(videoDirectory, videoName);
@@ -321,7 +320,7 @@ router.get('/streamVideo/:videoName', (req, res) => {
     });
 });
 
-router.get('/sendMultiReference', (req, res) => {
+router.get('/sendMultiReference',apiKeyMiddleware, (req, res) => {
     const id_blog_page = req.id_data;
 
     const SQL = 'SELECT id_config, info_ref FROM blog_field_multiReference WHERE id_blog_page = ?';
