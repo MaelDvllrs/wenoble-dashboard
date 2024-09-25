@@ -41,7 +41,7 @@ const apiKeyMiddleware = (req, res, next) => {
             req.emailSender = emailSender;
             next();
         }else{
-            return res.status(403).json({ message: 'Clé API invalide.' });
+            return res.status(403).json({ message: 'Clé API invalide pour emails.' });
         }
     })
 };

@@ -33,7 +33,7 @@ const apiKeyMiddleware = (req, res, next) => {
             req.ids = ids;
             next();
         }else{
-            return res.status(403).json({ message: 'Clé API invalide.' });
+            return res.status(403).json({ message: 'Clé API invalide pour api.' });
         }
     })
 };
