@@ -28,8 +28,9 @@ const { notificationRouter, notificationServer } = require('./users/notification
 const clientRouter = require('./admin/client');
 
 
-const whitelist = [ 'http://77.37.51.201',
-  
+const whitelist = 
+[ 
+  'http://77.37.51.201',
   'https://test.wenoble.fr',
   'http://localhost:5173', 
   'https://dashboard.wenoble.fr', 
@@ -42,7 +43,24 @@ const whitelist = [ 'http://77.37.51.201',
   
   'https://perfoseos.webflow.io', 
   'https://perfoseos.com', 
-  'https://www.perfoseos.com'];
+  'https://www.perfoseos.com',
+
+  'https://savoirfairetatouagepreview.webflow.io',
+  'https://savoirfairetatouage.com',
+  'https://www.savoirfairetatouage.com',
+
+  'https://elodie-loots.webflow.io',
+  'https://elodieloots.com',
+  'https://www.elodieloots.com',
+
+  'https://kayart-photograhy.webflow.io',
+  'https://kayartphotography.fr/',
+  'https://www.kayartphotography.fr/',
+
+  'https://gil-tirlet-photography.webflow.io',
+  'https://giltirletphotography.fr',
+  'https://www.giltirletphotography.fr',
+];
 
 // Configuration de CORS
 const corsOptions = {
