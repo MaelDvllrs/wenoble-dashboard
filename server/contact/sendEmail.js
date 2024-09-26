@@ -2,13 +2,17 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db'); 
 const axios = require('axios');
-const resend = require('resend'); 
+const {Resend} = require('resend'); 
+
+require('dotenv').config();
+const resend = new Resend(process.env.RESEND_EMAIL_KEY);
 
 const apiKeyMiddleware = (req, res, next) => {
     const apiKey = req.body.apiKey;
     const emailSender = req.body.emailSender;
     const subject = req.body.subject;
     const html = req.body.html;
+
     
     if (!apiKey) {
         return res.status(401).json({ message: 'Clé API ou ID de data manquant.' });
@@ -21,6 +25,7 @@ const apiKeyMiddleware = (req, res, next) => {
         if (err) {
             res.send({ error: err });
         }
+
         if (results.length > 0) {
             req.apiKey = apiKey;
             req.subject = subject;
@@ -85,6 +90,7 @@ router.post('/sendEmail', apiKeyMiddleware, async (req, res) => {
             });
 
             if (error) {
+
                 return res.status(400).json({ error });
             }
 
