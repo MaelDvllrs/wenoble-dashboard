@@ -90,9 +90,9 @@ const ContactList = () => {
                     </div>
                     <div className="line_horizontal" style={{ backgroundColor: theme.palette.text.secondary }}></div>
 
-                    <div className="liste_blog_box">
+                    <div className="liste_contact_box">
                         {LoadingMessage ? <SkeletonBlog /> :
-                            <div>
+                            <div className="liste_blog_box">
                                     {InfoListeMessage && Array.isArray(InfoListeMessage.message) ? InfoListeMessage.message.map((message, index) => {
                                         const formattedMessageDate = formatDate(message.date);
                                         anchorRefMessageOption.current[index] = anchorRefMessageOption.current[index] || React.createRef();

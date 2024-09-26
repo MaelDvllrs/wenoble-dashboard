@@ -14,7 +14,7 @@ router.use(express.json());
 router.get('/getMessage', async (req, res) => {
     const iduser = req.query.idUser
 
-    const SQL = 'SELECT id_message, mail_sender, subject, date FROM contact_website WHERE id_user = ?'
+    const SQL = 'SELECT id_message, mail_sender, subject, date FROM contact_website WHERE id_user = ? ORDER BY date DESC'
     const Values = [iduser]
 
     db.query(SQL, Values, (err, results)=>{

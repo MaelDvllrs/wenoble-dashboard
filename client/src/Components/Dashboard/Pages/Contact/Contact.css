@@ -4,6 +4,10 @@
     align-items: center;
 }
 
+.liste_contact_contain{
+    height: 100%;
+}
+
 .message_name_element{
     width: 20%;
     display: flex;
@@ -65,4 +69,9 @@
     display: flex;
     margin-top: 1rem;
     justify-content: right;
+}
+
+
+.liste_contact_box{
+    height: calc(100% - 11.5rem);
 }

@@ -21,8 +21,10 @@ import Popper  from '@mui/material/Popper';
 import ClickAwayListener from '@mui/material/ClickAwayListener';
 import Grow from '@mui/material/Grow';
 import IconButton from '@mui/material/IconButton';
-import io from 'socket.io-client';
+//import io from 'socket.io-client';
 import { notificationTitle } from '../../Theme/element';
+import { formatDistance, format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 
 
@@ -36,7 +38,7 @@ const Dashboard = () => {
 
     const apiUrlNotif = config.apiNotifServer;
 
-    const socket = io(apiUrlNotif);
+    //const socket = io(apiUrlNotif);
 
     const { isDark, toggleTheme } = useContext(ThemeContext);
 
@@ -51,20 +53,20 @@ const Dashboard = () => {
 
     const anchorRef = useRef(null);
 
-    useEffect(() => {
-        // Écouter les notifications en temps réel
-        const userId = jwtDecode(Cookies.get('token')).idUser;
-        socket.emit('join', { idUser: userId });
-
-        socket.on('notification', (data) => {
-            console.log(data);
-            setNotifRead(true);
-        });
-
-        return () => {
-            socket.off('notification');
-        };
-    }, []);
+   //useEffect(() => {
+   //    // Écouter les notifications en temps réel
+   //    const userId = jwtDecode(Cookies.get('token')).idUser;
+   //    socket.emit('join', { idUser: userId });
+//
+   //    socket.on('notification', (data) => {
+   //        console.log(data);
+   //        setNotifRead(true);
+   //    });
+//
+   //    return () => {
+   //        socket.off('notification');
+   //    };
+   //}, []);
 
 
     useEffect(() => {
@@ -182,6 +184,20 @@ const Dashboard = () => {
         setopen_menu(!open_menu);
         setopen_user(true);
     }
+
+
+    const formatDistanceWithoutApprox = (date) => {
+        return formatDistance(date, new Date(), {
+            addSuffix: true,
+            locale: {
+                ...fr,
+                formatDistance: (token, count, options) => {
+                    const result = fr.formatDistance(token, count, options);
+                    return result.replace('environ ', '');
+                }
+            }
+        });
+    };
     
     return (
         <div className='dashboard'>
@@ -318,7 +334,7 @@ const Dashboard = () => {
                                                 <div className='notification_box' style={{backgroundColor: notification.is_read ? 'transparent' : 'rgb(5, 65, 183, 0.2)', color : theme.palette.text.primary}}>
                                                     <div><b>{notificationTitle(notification.type)}</b></div>
                                                     <div className='notification_text'>{notification.message}</div>
-                                                    <div className='notification_time' style={{color:theme.palette.text.secondary}}>{new Date(notification.date).toLocaleTimeString()}</div>
+                                                    <div className='notification_time' style={{color:theme.palette.text.secondary}}>{formatDistanceWithoutApprox(new Date(notification.date))}</div>
                                                 </div>
                                                 <div className="line_horizontal notification_line" style={{ backgroundColor: theme.palette.text.secondary }}></div>
                                             </NavLink>

@@ -96,7 +96,7 @@ router.get('/sendEmail', apiKeyMiddleware, async (req, res) => {
             })
 
             const { data, error }  = await resend.emails.send({
-                from: "mael.devillers@wenoble.fr",
+                from: process.env.EMAIL_WEBSITE,
                 to: [to],
                 subject: subject,
                 html: html,
