@@ -22,8 +22,8 @@ import ClickAwayListener from '@mui/material/ClickAwayListener';
 import Grow from '@mui/material/Grow';
 import IconButton from '@mui/material/IconButton';
 //import io from 'socket.io-client';
-import { notificationTitle } from '../../Theme/element';
-import { formatDistance, format } from 'date-fns';
+import { notificationTitle, notificationLink } from '../../Theme/element';
+import { formatDistance} from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 
@@ -70,31 +70,19 @@ const Dashboard = () => {
 
 
     useEffect(() => {
-        Axios.get(`${apiUrl}/getNotifications`, {
-            params: {
-                userId: jwtDecode(Cookies.get('token')).idUser,
+        const fetchNotifications = async () => {
+            try {
+                const response = await Axios.get(`${apiUrl}/getNotifications`, {
+                    params: {
+                        userId: jwtDecode(Cookies.get('token')).idUser,
+                    }
+                });
+                setNotifications(response.data);
+            } catch (error) {
+                console.error('Erreur lors de la récupération des notifications:', error);
             }
-        }).then((response) => {
-            const notificationsWithLinks = response.data.map(notification => {
-                let link = '';
-                switch (notification.type) {
-                    case 'message':
-                        link = `/dashboard/contact/message/${notification.id_element}`;
-                        break;
-                    case 'alert':
-                        link = `/alerts/${notification.id_notif}`;
-                        break;
-                    case 'reminder':
-                        link = `/reminders/${notification.id_notif}`;
-                        break;
-                    default:
-                        link = `/notifications/${notification.id_notif}`;
-                        break;
-                }
-                return { ...notification, link };
-            });
-            setNotifications(notificationsWithLinks);
-        });
+        };
+        fetchNotifications();
     }, [openNotif, notifRead, notifications]);
 
 
@@ -325,19 +313,38 @@ const Dashboard = () => {
                                 <div className='dashboard_case_empty notification_case' style={{backgroundColor : theme.palette.primary.main, borderColor : theme.palette.primary.third}}>
                                     <div className='notification_title_contain'>
                                         <h3>Notifications</h3>
+                                        <p className='notification_time' style={{color:theme.palette.text.secondary}}>Supprimer</p>
                                     </div>
                                     <div className="line_horizontal notification_line" style={{ backgroundColor: theme.palette.text.secondary }}></div>
                                     <div className='notification_contain'>
                                         {notifications.length === 0 && <div className='notification_box'><div className='notification_text'>Aucune notification</div></div>}
                                         {notifications.map((notification, index) => (
-                                            <NavLink key={index} to={notification.link} onClick={handleCombinedClick} id={notification.id_notif}>
-                                                <div className='notification_box' style={{backgroundColor: notification.is_read ? 'transparent' : 'rgb(5, 65, 183, 0.2)', color : theme.palette.text.primary}}>
-                                                    <div><b>{notificationTitle(notification.type)}</b></div>
-                                                    <div className='notification_text'>{notification.message}</div>
-                                                    <div className='notification_time' style={{color:theme.palette.text.secondary}}>{formatDistanceWithoutApprox(new Date(notification.date))}</div>
-                                                </div>
-                                                <div className="line_horizontal notification_line" style={{ backgroundColor: theme.palette.text.secondary }}></div>
-                                            </NavLink>
+                                            <motion.div
+                                                style={{display: 'relative'}}
+                                                key={notification.id_notif}
+                                                initial={{ opacity: 0, height: 0 }}
+                                                animate={{ 
+                                                    opacity: 1, 
+                                                    height: '6.9rem',
+                                                    transition: { 
+                                                        type:"spring",
+                                                        bounce: 0.25, 
+                                                        opacity: { delay: 0.25 }, 
+                                                    } 
+                                                }}
+                                            >
+                                                <NavLink key={index} to={`${notificationLink(notification.type)}${notification.id_element}`} onClick={handleCombinedClick} id={notification.id_notif} className={`${notification.isNew ? 'new-notification' : 'old-notification'}`}>
+                                                    <div className={`notification_box`} style={{backgroundColor: notification.is_read ? 'transparent' : 'rgb(5, 65, 183, 0.2)', color : theme.palette.text.primary}}>                                                    
+                                                        <div className='notification_headers'>
+                                                            <div><b>{notificationTitle(notification.type)}</b></div>
+                                                            <div className='notification_time' style={{color:theme.palette.text.secondary}}>{formatDistanceWithoutApprox(new Date(notification.date))}</div>
+                                                        </div>
+                                                        <div className='notification_text'>{notification.message}</div>
+                                                        <div className='notification_read_marge' style={{display: notification.is_read ? 'none' : 'block'}}/>                                                    
+                                                    </div>
+                                                    <div className="line_horizontal notification_line" style={{ backgroundColor: theme.palette.primary.third }}/>
+                                                </NavLink>
+                                            </motion.div>
                                         ))}
                                     </div>
                                 </div>

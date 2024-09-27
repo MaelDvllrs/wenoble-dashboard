@@ -150,3 +150,14 @@ export const notificationTitle = (type) => {
 
     return titles[type] || 'Notification';
 };
+
+export const notificationLink = (type) => {
+    const links = {
+        actu: '/actualites',
+        message: '/dashboard/contact/message/',
+        order: '/order',
+        info: '/info',
+    };
+
+    return links[type] || '/home';
+}

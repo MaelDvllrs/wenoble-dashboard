@@ -35,7 +35,10 @@ const whitelist =
   'http://localhost:5173', 
   'https://dashboard.wenoble.fr', 
   
-  'https://kristina-photogrphy.webflow.io', 
+  'https://kristina-photogrphy.webflow.io',
+  'https://kristinaphotography.fr/',
+  'https://www.kristinaphotography.fr/',
+  
   
   'https://explora-production.webflow.io',
   'https://exploraprod.com',

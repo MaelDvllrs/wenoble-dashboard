@@ -352,10 +352,11 @@
 .notification_box{
     cursor: pointer;
     background-color: transparent;
-    padding: 0.5rem; 
+    padding: 1rem; 
     display: flex;
     flex-direction: column;
-    gap: 0.3rem;   
+    gap: 0.3rem;
+    position: relative;   
 }
 
 .notification_contain{
@@ -379,6 +380,12 @@
     margin: 0;
 }
 
+.notification_headers{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
 .notification_text{
     display: -webkit-box;
     -webkit-box-orient: vertical;
@@ -393,6 +400,17 @@
     font-size: 0.8rem;
     text-align: right;
 }
+
+.notification_read_marge{
+    position: absolute;
+    height: 100%;
+    left: 0;
+    top: 0;
+    width: 0.5rem;
+    background-color: #0541b7;
+}
+
+
 
 
 
