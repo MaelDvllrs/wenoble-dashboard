@@ -36,8 +36,8 @@ const whitelist =
   'https://dashboard.wenoble.fr', 
   
   'https://kristina-photogrphy.webflow.io',
-  'https://kristinaphotography.fr/',
-  'https://www.kristinaphotography.fr/',
+  'https://kristinaphotography.fr',
+  'https://www.kristinaphotography.fr',
   
   
   'https://explora-production.webflow.io',
@@ -57,8 +57,8 @@ const whitelist =
   'https://www.elodieloots.com',
 
   'https://kayart-photograhy.webflow.io',
-  'https://kayartphotography.fr/',
-  'https://www.kayartphotography.fr/',
+  'https://kayartphotography.fr',
+  'https://www.kayartphotography.fr',
 
   'https://gil-tirlet-photography.webflow.io',
   'https://giltirletphotography.fr',
