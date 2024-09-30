@@ -1,3 +1,4 @@
 /client/src/config.js
 /server/images/*
 /server/.env
+server/.env
