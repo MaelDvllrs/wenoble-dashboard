@@ -93,7 +93,7 @@ const ProtectedRoutePortfolio = ({children}) =>{
                     <Route path="/dashboard/modification/portfolio/:id" element={<EditPortfolio/>}></Route>
                 </Route>
                 <Route path="/dashboard/modification/page" element={<Page/>} >
-                    <Route path="/dashboard/modification/page/:id" element={<EditPage/>}></Route>
+                    <Route path="/dashboard/modification/page/:idPage" element={<EditPage/>}></Route>
                 </Route>
                 <Route path="/dashboard/modification/blog" element={<Blog/>} >
                   <Route path="/dashboard/modification/blog/:id" element={<ListeBlog/>}></Route>

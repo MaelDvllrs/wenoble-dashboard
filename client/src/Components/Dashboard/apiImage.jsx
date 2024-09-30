@@ -200,11 +200,12 @@ export const fetchTextePage = async (pageId) => {
   }
 }
 
-export const saveTextPage = async (fields) => {
+export const updateTextPage = async (idPage, text) => {
   try {
-    await Axios.post(`${apiUrl}/saveTextPage`, {
+    await Axios.post(`${apiUrl}/updateTextPage`, {
       params: {
-        fields : fields,
+        idPage : idPage,
+        text : text
       }
     });
   } catch (error) {
@@ -213,6 +214,54 @@ export const saveTextPage = async (fields) => {
     throw error;
   }
 }
+
+export const updateRichTextPage = async (idPage, richtext) => {
+
+  try {
+    await Axios.post(`${apiUrl}/updateRichTextPage`, {
+      params: {
+        idPage : idPage,
+        richtext : richtext,
+      }
+    });
+  } catch (error) {
+    console.error('Message d\'erreur du serveur:', error.response.data.message);
+    // Propager l'erreur
+    throw error;
+  }
+}
+
+
+export const updateImagePage = async (fields, pageId) => {
+  try {
+
+
+    // Créer un objet FormData
+    const formData = new FormData();
+
+
+
+    // Ajouter le blob en tant que fichier
+    formData.append('image', fields.data, fields.name);
+
+    // Ajouter les autres champs
+    formData.append('id_page', pageId);
+    formData.append('id_config', fields.id_config);
+    formData.append('alt', fields.alt);
+    formData.append('name', fields.name);
+    formData.append('size', fields.size);
+
+      await Axios.post(`${apiUrl}/updateImagesPage`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+  } catch (error) {
+    console.error('Message d\'erreur du serveur:', error);
+    // Propager l'erreur
+    throw error;
+  }
+};
 
 
 // ------------------BLOG------------------

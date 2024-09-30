@@ -1,442 +1,297 @@
-import React, { useState, useEffect, useRef  } from "react"
-import { useForm, useFieldArray } from "react-hook-form";
-import { useParams } from "react-router-dom";
-import { fetchImagesPage, fetchTextePage, compressImage, saveImagePage } from "../../../apiImage";
-import "./EditPage.css";
-import TextField from '@mui/material/TextField';
-import { useTheme } from '@mui/material/styles';
-import { styled } from '@mui/material/styles';
-import { LiaCloudUploadAltSolid } from "react-icons/lia";
-import { PiPencilSimpleBold } from "react-icons/pi";    
-import { motion, AnimatePresence } from 'framer-motion';
-import LoadingButton from '@mui/lab/LoadingButton';
+import React, { useState, useEffect } from "react";
+import Axios from 'axios';
+import { useParams, useNavigate } from "react-router-dom";
+import config from "../../../../../config";
+import { jwtDecode } from 'jwt-decode'; 
+import BlogField from "../Blog/BlogField";
+import '../Blog/createPageBlog.css';
+import './EditPage.css';
+import { DefaultButton, RedButton, SecondaryButton, Popup } from '../../../../../Theme/element';
 import SaveIcon from '@mui/icons-material/Save';
-import Button from '@mui/material/Button';
-import { saveTextPage } from "../../../apiImage";
-import { v4 as uuidv4 } from 'uuid';
-
-
+import { updateImagePage, updateTextPage, updateRichTextPage } from '../../../apiImage';
+import { useTheme } from '@mui/material/styles';
+import { convertToRaw } from 'draft-js';
 
 
 const EditPage = () => {
-
-    let { id } = useParams();
     const theme = useTheme();
-
-    const [LoadingPage, setLoadingPage] = useState(true);
-    const { control} = useForm();
-
-    const { fields: fieldsImage, remove: removeImage, append: appendImage } = useFieldArray({
-      control: control,
-        name: "images",
+    const [InfoConfigPage, setConfigPage] = useState([]);
+    const [DecodeConfigPage, setDecodeConfigPage] = useState([]);
+    const [InfoPage, setInfoPage] = useState([]);
+    const [DecodePage, setDecodePage] = useState([]);
+    const [InfoItemspage, setInfoItemspage] = useState([]);
+    const [deletedItems, setDeletedItems] = useState([]);
+    const navigate = useNavigate();
+    const [pageDataConfig, setPageDataConfig] = useState({
+        text: [],
+        images: [],
+        richText: []
     });
+    const [pageData, setPageData] = useState({
+        text: [],
+        images: [],
+        richText: []
+    });
+    const apiUrl = config.apiUrl;
+    const { idPage } = useParams();
 
-    const { fields: fieldsText, remove: removeText, append: appendText } = useFieldArray({
-      control: control,
-      name: "textes",
-  });
-
-
-    
-    const [showTooltip, setShowTooltip] = useState(false);
-
-    const [selectedImages, setSelectedImages] = useState({});
-    const [modifiedData, setModifiedData] = useState({});
-
-
-    const [modifiedText, setModifiedText] = useState({});
-
-
-    const [inputValues, setInputValues] = useState({});
-
-    const [isHovering, setIsHovering] = useState({});
-    const tooltipTimeout = useRef();
-
-    const [saveCountImage, setSaveCountImage] = useState(0);
-
-
-
-
-    const [isCardImageOpen, setisCardImageOpen] = useState(false);
-    const [isCardTextOpen, setisCardTextOpen] = useState(false);
-
-
-    const [currentImageId, setCurrentImageId] = useState(null);
-    const [currentTextId, setCurrentTextId] = useState(null);
-
-    const [loadingSave, setLoadingSave] = useState(false);
-    const inputRef = useRef();
-
-    const [activeMenu, setActiveMenu] = useState('Image');
-
-    const handleMenuClick = (menuName) => {
-      setActiveMenu(menuName);
-    };
-
-
-    const reloadPage = () => {
-      window.location.reload();
-    }
-
-
-    // --------------MODIFICATION IMAGE----------------
-  const handleImageChange = async (event, imageId, imageAlt) => {
-    const file = event.target.files[0];
-    const compressedFile = await compressImage(file); 
-  
-    const imageData = URL.createObjectURL(compressedFile);
-    setSelectedImages(prevState => ({
-      ...prevState,
-      [imageId]: imageData
-    }));
-  
-    setModifiedData(prevState => ({
-      ...prevState,
-      [imageId]: {
-        ...prevState[imageId],
-        id: imageId,
-        data: compressedFile, 
-        name: file.name,
-        alt: imageAlt.alt,
-        src: uuidv4(),
-      }
-    }));
-  };
-
-
-  const handleSaveText = () => {
-    setModifiedData(prevData => ({
-      ...prevData,
-      [currentImageId]: {
-        ...prevData[currentImageId],
-        id: currentImageId,
-        alt: inputRef.current.value
-      }
-    }));
-    setisCardImageOpen(false);
-  };
-
-
-  const handleSave = async () => {
-
-    try {
-      // Convertir l'objet modifiedData en tableau
-      Object.values(modifiedData).forEach(async (image) => {
-
-        await saveImagePage(image);
-      });
-      setLoadingSave(false);
-      setModifiedData({});
-      setSaveCountImage(saveCount => saveCount + 1);
-    } catch (error) {
-      // Gérer l'erreur ici
-      console.error(error);
-    }
-  };
-
-
-
-  const handleOpenCard = (imageId) => {
-    setCurrentImageId(imageId);
-    setisCardImageOpen(true);
-  };
-
-  const handleCloseCard = () => {
-    setisCardImageOpen(false);
-  };
-
-  const cardVariants = {
-    hidden: { opacity: 0, scale: 0.9 },
-    visible: { opacity: 1, scale: 1 },
-    exit: { opacity: 0, scale: 0.9 }
-  };
-
-
-  const CssTextField = styled(TextField)({
-      '& .MuiOutlinedInput-root': {
-        '& fieldset': {
-          borderColor: theme.palette.secondary.main,
-      },
-    },
-  });
-
-  useEffect(() => {
-    const fetchData = async () => {
-      for (let i = fieldsImage.length - 1; i >= 0; i--) {
-        removeImage(i);
-      }
-      const imagesData = await fetchImagesPage(id);
-      imagesData.forEach((image) => {
-        appendImage({
-          ...image,
-          id: image.id_photo, 
+    useEffect(() => {    
+        Axios.get(`${apiUrl}/getConfigPage`, {
+            params: {
+                IdPage: idPage,
+            }
+        }).then((response) => {
+            setConfigPage(response.data);
+        }).catch((error) => {
+            console.error('Erreur lors de la récupération de la configuration de la page :', error);
         });
-      });
-      setLoadingPage(false);
-    };
-  
-    fetchData();
-  }, [id, saveCountImage]);
+    }, [idPage]); 
 
 
-  //-----------MODIFICATION TEXTE----------------
-  useEffect(() => {
+    useEffect(() => {
+        if(InfoConfigPage !== null && typeof InfoConfigPage === 'string'){
+            const decodedConfig = jwtDecode(InfoConfigPage);
+            setDecodeConfigPage(decodedConfig);
+        }
+    }, [InfoConfigPage]);
 
-    const fetchData = async () => {
-      for (let i = fieldsText.length - 1; i >= 0; i--) {
-        removeText(i);
-      }
-      const textData = await fetchTextePage(id);
-      textData.forEach((text) => {
-        appendText({
-          ...text,
-          id: text.id_text, 
+
+    useEffect(() => {
+        DecodeConfigPage.page && DecodeConfigPage.page.map((pageItem) => {
+            if (pageItem.type === 'image') {
+                setPageDataConfig(prevData => ({
+                    ...prevData,
+                    images: [...prevData.images, {id_config: pageItem.id_config}]
+                }));
+            } else if (pageItem.type === 'text') {
+                setPageDataConfig(prevData => ({
+                    ...prevData,
+                    text: [...prevData.text, {id_config: pageItem.id_config}]
+                }));
+            } else if (pageItem.type === 'richText') {
+                setPageDataConfig(prevData => ({
+                    ...prevData,
+                    richText: [...prevData.richText, {id_config: pageItem.id_config}]
+                }));
+            }
         });
-      });
-      setLoadingPage(false);
+    }, [DecodeConfigPage]);
+
+
+
+    useEffect(() => {
+        let allData = []; 
+        const fetchData = async () => {
+
+            for (const images of pageDataConfig.images) {
+                try{
+                    const response = await Axios.get(`${apiUrl}/getImagePage`, {
+                        params: {
+                            IdPage: idPage,
+                            IdConfig: images.id_config
+                        }
+                    });
+
+                    if (response.data.length > 0) {
+                        allData.push(response.data[0]); 
+                    }
+                } catch (error) {
+                    console.error('Erreur lors de la récupération de l\'image :', error);
+                }
+            }
+
+            for (const text of pageDataConfig.text) {
+                try{
+                    const response = await Axios.get(`${apiUrl}/getPageTexte`, {
+                        params: {
+                            IdPage: idPage,
+                            IdConfig: text.id_config
+                        }
+                    });
+                    if (response.data.length > 0) {
+                        allData.push(response.data[0]); 
+                    }
+                } catch (error) {
+                    console.error('Erreur lors de la récupération du text :', error);
+                }
+            }
+
+            for (const richText of pageDataConfig.richText) {
+                try{
+                    const response = await Axios.get(`${apiUrl}/getPageRichText`, {
+                        params: {
+                            IdPage: idPage,
+                            IdConfig: richText.id_config
+                        }
+                    });
+                    if (response.data.length > 0) {
+                        allData.push(response.data[0]); 
+                    }
+                } catch (error) {
+                    console.error('Erreur lors de la récupération du rich text :', error);
+                }
+            }
+            setInfoItemspage({ data: allData });
+        };
+        
+        fetchData(); 
+    }, [pageDataConfig, idPage]);
+
+
+
+    useEffect(() => {
+        Axios.get(`${apiUrl}/getPageDetail`, {
+            params: {
+                IdPage: idPage,
+            }
+        }).then((response) => {
+            setInfoPage(response.data);
+        }).catch((error) => {
+            console.error('Erreur lors de la récupération de la page :', error);
+        });
+    }, [idPage]);
+
+    useEffect(() => {
+        if(InfoPage !== null && typeof InfoPage === 'string'){
+            const decodedPageInfo = jwtDecode(InfoPage);
+            setDecodePage(decodedPageInfo);
+        }
+    }, [InfoPage]);
+
+
+
+    const handlePageDataChange = (data, isDelete = false) => {
+        setPageData(prevData => {
+            const newData = { ...prevData };
+            const type = data.data.type;
+
+            if (isDelete) {
+                const exists = deletedItems.some(item => item.id_config === data.data.id_config);
+                if (!exists) {
+                    setDeletedItems(prevItems => [...prevItems, data.data]);
+                }
+                newData[type] = newData[type].filter(item => item.id_config !== data.data.id_config);
+            } else {
+                let itemModified = false;
+                for (let i = 0; i < newData[type].length; i++) {
+                    if (newData[type][i].id_config === data.data.id_config) {
+                        newData[type][i] = data.data;
+                        itemModified = true;
+                        break;
+                    }
+                }
+                if (!itemModified) {
+                    newData[type].push(data.data);
+                }
+            }
+            return newData;
+        });
     };
-  
-    fetchData();
-  }, [id]);
 
 
 
 
 
-  const handleOpenCardText = (textId) => {
-    setCurrentTextId(textId);
-    setisCardTextOpen(true);
-  };
-
-  const handleCloseCardText = () => {
-    setisCardTextOpen(false);
-  };
+    const handleSave = async () => {
 
 
-  const handleSaveTextText = () => {
-    setModifiedText(prevData => ({
-      ...prevData,
-      [currentTextId]: {
-        ...prevData[currentTextId],
-        id: currentTextId,
-        text: inputRef.current.value
-      }
-    }));
-    setisCardTextOpen(false);
-  };
+        try {        
+
+            if (pageData.text.length > 0) {
+                try {
+                    const response = await updateTextPage(idPage, pageData.text);
+                    console.log(response);
+                } catch (error) {
+                    console.error('Erreur lors de la création des textes :', error);
+                    return;
+                }
+            }
+
+            if (pageData.richText.length > 0) {
+                const infoRichText = [];
+                pageData.richText.forEach(richText => {
+                    const contentRichText = richText.value;
+                    const richTextJS = convertToRaw(contentRichText);
+                    const richTextJSON = JSON.stringify(richTextJS);
+                    infoRichText.push({richText : richTextJSON, id_config: richText.id_config});
+                });
+
+                try {
+                    const response = await updateRichTextPage(idPage, infoRichText);
+                } catch (error) {
+                    console.error('Erreur lors de la création des rich texts :', error);
+                    return;
+                }
+            }
+
+
+            if(pageData.images.length > 0){
+                try {
+                    await Promise.all(pageData.images.map(async (image) => {
+                        await updateImagePage(image, idPage);
+                    }));
+                } catch (error) {
+                    console.error(error);
+                    return;
+                }
+            }
+
+            if (deletedItems.length > 0) {
+                try {
+                    await Axios.delete(`${apiUrl}/deletePageData`, {
+                        data: {
+                            data: deletedItems,
+                            id_page : idPage
+                        }
+                    });
+                } catch (error) {
+                    console.error('Erreur lors de la suppression des éléments :', error);
+                    return;
+                }
+            }
+
+        } catch (error) {
+            console.error('Erreur lors de la création de la page :', error);
+            return;
+        }
+    };
 
 
 
-  const handleSaveTextAll = async () => {
-    try {
-      // Convertir l'objet modifiedData en tableau
-      const dataToSave = Object.values(modifiedText);
-  
-      // Appeler la fonction saveImagePage avec dataToSave
-      const response = await saveTextPage(dataToSave);
-  
-      // Gérer la réponse ici
-      console.log(response);
+    return (
+        <div className="Page_creation_Page">
+            {DecodePage.page ? (
+                <div className="Page_creation_Page">
+                    <div className="header_modification">
+                        <h3 className="titlePage">Modification de : {DecodePage.page[0].page_name}</h3>
+                        <div className="button_save_contain">
+                            <SecondaryButton variant="contained" theme={theme} onClick={() => navigate(`/dashboard/modification/page/${id}`)}>Annuler</SecondaryButton>
 
-    } catch (error) {
-      // Gérer l'erreur ici
-      console.error(error);
-    }
-  };
-  
-
-
-    return(
-        <div className="editPage_contain">
-          <div className="editPage_menu">
-          <div 
-            className={`editPage_menu_element ${activeMenu === 'Image' ? 'editPage_menu_active' : ''}`} 
-            onClick={() => handleMenuClick('Image')}
-          >
-            Image
-          </div> 
-          <div 
-            className={`editPage_menu_element ${activeMenu === 'Texte' ? 'editPage_menu_active' : ''}`} 
-            onClick={() => handleMenuClick('Texte')}
-          >
-            Texte
-          </div>
-          </div>
-          <div 
-            className="editPage_contain_page" 
-            style={{ transform: `translateX(${activeMenu === 'Texte' ? '-50%' : '0'})` }}
-          >
-          <div className="editPage_contain_element">
-            {fieldsImage.map((image) => (
-                <div key={image.id_photo} className="editPage_image_contain">
-                    <div className="input_page_image_box">
-                      <label htmlFor={`page_image_${image.id_photo}`} className="label_page_image"><LiaCloudUploadAltSolid /></label> 
-                      <input 
-                        id={`page_image_${image.id_photo}`} 
-                        className="input_profile_image" 
-                        type="file" 
-                        onChange={(e) => handleImageChange(e, image.id_photo, {alt: modifiedData[image.id_photo]?.alt || image.alt})}                      
-                        accept="image/*"
-                      />
-                      <img className="editPage_image" src={selectedImages[image.id_photo] || image.data} alt={image.name} />
-                    </div>
-                    <div className="editPage_image_infos">
-                        <div className="tooltip-container"
-                          onMouseEnter={() => {
-                            const isHoveringCurrent = true;
-                            setIsHovering(prevState => ({ ...prevState, [image.id_photo]: isHoveringCurrent }));
-                            tooltipTimeout.current = setTimeout(() => {
-                              if (isHoveringCurrent) {
-                                setShowTooltip(prevState => ({ ...prevState, [image.id_photo]: true }));
-                              }
-                            }, 1000);
-                          }}
-                          onMouseLeave={() => {
-                            setIsHovering(prevState => ({ ...prevState, [image.id_photo]: false }));
-                            clearTimeout(tooltipTimeout.current);
-                            setShowTooltip(prevState => ({ ...prevState, [image.id_photo]: false }));
-                          }}
-                        >
-                          <p className="editPage_image_name">{modifiedData[image.id_photo]?.name || image.name}</p>
-                          {showTooltip[image.id_photo] && (
-                            <div className="tooltip">
-                              {modifiedData[image.id_photo]?.name || image.name}
-                            </div>
-                          )}
+                            <DefaultButton type="submit" variant="contained" onClick={async () => { await handleSave(1,0) }}><SaveIcon/> Enregistrer</DefaultButton>  
                         </div>
-                        <div className="editPage_image_alt" onClick={() => handleOpenCard(image.id_photo)}><p className="editPage_alt_name">{modifiedData[image.id_photo]?.alt || image.alt}</p><PiPencilSimpleBold className="pencil-icon"/></div>
                     </div>
-                    <div className="editPage_image_actions">
-                    </div>
-                </div> 
-            ))}
-            {Object.keys(modifiedData).length > 0 && (
-              <div className="button_save_contain">
-                <Button onClick={reloadPage} color="secondary" variant="contained">Annuler</Button>
-                <LoadingButton
-                  loadingPosition="start"
-                  startIcon={<SaveIcon />}
-                  loading={loadingSave}
-                  onClick={handleSave}
-                  color="success"
-                  variant="contained"
-                >
-                  <span>Enregistrer</span>
-                </LoadingButton>
-              </div>
-            )}
-          </div>
-          <div className="editPage_contain_element">
-            {fieldsText.map((text) => (
-              <div key={text.id_text} className="editPage_text_contain">
-              <div className="editPage_text_button" onClick={() => handleOpenCardText(text.id_text)}><p className="editPage_text"></p><PiPencilSimpleBold className="pencil-icon"/></div>
 
-                <div className="editPage_text_infos">
-                  <div className="editPage_text">{text.id_text} {modifiedText[text.id_text]?.text || text.text}</div>
+                    <div className="Page_creation_field_contain">
+                        {DecodeConfigPage.page && DecodeConfigPage.page.map((pageItem) => {
+                            const correspondingData = InfoItemspage.data.find(data => data.id_config === pageItem.id_config);
+                            return (
+                                <div key={pageItem.id_config} className="pageField_contain">
+                                    <p style={{color: theme.palette.text.secondary}}>{pageItem.name}</p>
+                                    <BlogField 
+                                        id_page={idPage}
+                                        type={pageItem.type} 
+                                        id_config={pageItem.id_config} 
+                                        onChange={handlePageDataChange} 
+                                        dataValue={correspondingData || {}}
+                                    />
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
-              </div>
-            ))}
-            {Object.keys(modifiedText).length > 0 && (
-              <div className="button_save_contain">
-                <Button onClick={reloadPage} color="secondary" variant="contained">Annuler</Button>
-                <LoadingButton
-                  loadingPosition="start"
-                  startIcon={<SaveIcon />}
-                  loading={loadingSave}
-                  onClick={handleSaveTextAll}
-                  color="success"
-                  variant="contained"
-                >
-                  <span>Enregistrer</span>
-                </LoadingButton>
-              </div>
-            )}
-          </div>
-          </div>
-
-          <AnimatePresence>
-            {isCardImageOpen && (
-
-              <div className="cardText_contain">
-                <motion.div
-                  className="cardText" 
-                  initial="hidden"
-                  animate="visible"
-                  exit="exit"
-                  variants={cardVariants}>
-                  <CssTextField 
-                    className="input_alt_text"
-                    id="outlined-basic" 
-                    variant="outlined"
-                    sx={{ label: { color: theme.palette.secondary.main }}}
-                    color="secondary"
-                    defaultValue={modifiedData[currentImageId]?.alt || fieldsImage.find((image) => image.id_photo === currentImageId).alt}                  
-                    multiline
-                    inputRef={inputRef}
-                  />
-
-                  <div className="button_save_contain">
-
-                    <Button  onClick={handleCloseCard}  color="secondary" variant="contained">Annuler</Button>
-
-                    <LoadingButton
-                      loadingPosition="start"
-                      startIcon={<SaveIcon />}
-                      loading={loadingSave}
-                      onClick={handleSaveText}
-                      color="success"
-                      variant="contained"
-                    >
-                      <span>Enregistrer</span>
-                    </LoadingButton>
-                  </div>  
-                </motion.div>
-              </div>
-          )}
-          </AnimatePresence>
-
-          <AnimatePresence>
-            {isCardTextOpen && (
-
-              <div className="cardText_contain">
-                <motion.div
-                  className="cardText" 
-                  initial="hidden"
-                  animate="visible"
-                  exit="exit"
-                  variants={cardVariants}>
-                  <CssTextField 
-                    className="input_alt_text"
-                    id="outlined-basic" 
-                    variant="outlined"
-                    sx={{ label: { color: theme.palette.secondary.main }}}
-                    color="secondary"
-                    defaultValue={modifiedText[currentTextId]?.text || fieldsText.find((text) => text.id_text === currentTextId).text}                  
-                    multiline
-                    inputRef={inputRef}
-                  />
-
-                  <div className="button_save_contain">
-
-                    <Button  onClick={handleCloseCardText}  color="secondary" variant="contained">Annuler</Button>
-
-                    <LoadingButton
-                      loadingPosition="start"
-                      startIcon={<SaveIcon />}
-                      loading={loadingSave}
-                      onClick={handleSaveTextText}
-                      color="success"
-                      variant="contained"
-                    >
-                      <span>Enregistrer</span>
-                    </LoadingButton>
-                  </div>  
-                </motion.div>
-              </div>
-          )}
-          </AnimatePresence>
+            ) : null}
         </div>
-    ) 
-}
+    );
+};
 
-export default EditPage
+export default EditPage;
