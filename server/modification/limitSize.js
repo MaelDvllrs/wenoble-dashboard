@@ -23,8 +23,8 @@ router.get('/getSizeItem', (req, res) => {
                     JOIN portfolio ON photo_portfolio.id_portfolio = portfolio.id_portfolio
                     WHERE portfolio.id_user = ?
                     UNION ALL
-                    SELECT size FROM photo_page 
-                    JOIN page ON photo_page.id_page = page.id_page
+                    SELECT size FROM page_photo 
+                    JOIN page ON page_photo.id_page = page.id_page
                     WHERE page.id_user = ?
                     UNION ALL
                     SELECT size FROM blog_field_image 
