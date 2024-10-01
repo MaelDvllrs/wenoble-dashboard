@@ -63,6 +63,8 @@ const whitelist =
   'https://gil-tirlet-photography.webflow.io',
   'https://giltirletphotography.fr',
   'https://www.giltirletphotography.fr',
+
+  'https://shine-photographie.webflow.io',
 ];
 
 // Configuration de CORS

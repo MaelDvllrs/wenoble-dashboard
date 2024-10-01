@@ -1,0 +1,93 @@
+"filename", "language", "JavaScript", "JSON", "HTML", "Markdown", "JavaScript JSX", "CSS", "XML", "comment", "blank", "total"
+"d:\Mael\wenbole\wenoble-dashboard\client\.eslintrc.cjs", "JavaScript", 21, 0, 0, 0, 0, 0, 0, 0, 1, 22
+"d:\Mael\wenbole\wenoble-dashboard\client\README.md", "Markdown", 0, 0, 0, 5, 0, 0, 0, 0, 4, 9
+"d:\Mael\wenbole\wenoble-dashboard\client\index.html", "HTML", 0, 0, 19, 0, 0, 0, 0, 0, 1, 20
+"d:\Mael\wenbole\wenoble-dashboard\client\manifest.json", "JSON", 0, 27, 0, 0, 0, 0, 0, 0, 0, 27
+"d:\Mael\wenbole\wenoble-dashboard\client\package-lock.json", "JSON", 0, 8633, 0, 0, 0, 0, 0, 0, 1, 8634
+"d:\Mael\wenbole\wenoble-dashboard\client\package.json", "JSON", 0, 61, 0, 0, 0, 0, 0, 0, 1, 62
+"d:\Mael\wenbole\wenoble-dashboard\client\src\App.css", "CSS", 0, 0, 0, 0, 0, 189, 0, 0, 55, 244
+"d:\Mael\wenbole\wenoble-dashboard\client\src\App.jsx", "JavaScript JSX", 0, 0, 0, 0, 122, 0, 0, 0, 18, 140
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Auth\ProtectedRoutes.jsx", "JavaScript JSX", 0, 0, 0, 0, 54, 0, 0, 0, 25, 79
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Admin\Admin.jsx", "JavaScript JSX", 0, 0, 0, 0, 142, 0, 0, 0, 32, 174
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Admin\AdminHome.jsx", "JavaScript JSX", 0, 0, 0, 0, 9, 0, 0, 0, 6, 15
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Admin\Clients\AddClient.css", "CSS", 0, 0, 0, 0, 0, 5, 0, 0, 0, 5
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Admin\Clients\AddClient.jsx", "JavaScript JSX", 0, 0, 0, 0, 51, 0, 0, 0, 19, 70
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Admin\Clients\AdminClients.css", "CSS", 0, 0, 0, 0, 0, 25, 0, 0, 3, 28
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Admin\Clients\AdminClients.jsx", "JavaScript JSX", 0, 0, 0, 0, 64, 0, 0, 0, 16, 80
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Admin\Clients\apiClient.jsx", "JavaScript JSX", 0, 0, 0, 0, 16, 0, 0, 0, 5, 21
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\Dashboard.css", "CSS", 0, 0, 0, 0, 0, 336, 0, 1, 83, 420
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\Dashboard.jsx", "JavaScript JSX", 0, 0, 0, 0, 300, 0, 0, 16, 50, 366
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\Pages\Account.css", "CSS", 0, 0, 0, 0, 0, 58, 0, 0, 11, 69
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\Pages\Account.jsx", "JavaScript JSX", 0, 0, 0, 0, 79, 0, 0, 1, 24, 104
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\Pages\Actualite\Actualite.jsx", "JavaScript JSX", 0, 0, 0, 0, 16, 0, 0, 0, 7, 23
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\Pages\Contact\Contact.css", "CSS", 0, 0, 0, 0, 0, 63, 0, 0, 14, 77
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\Pages\Contact\ContactListe.jsx", "JavaScript JSX", 0, 0, 0, 0, 116, 0, 0, 0, 32, 148
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\Pages\Contact\ContactMessage.jsx", "JavaScript JSX", 0, 0, 0, 0, 63, 0, 0, 0, 21, 84
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\Pages\Ecommerce\Ecommerce.css", "CSS", 0, 0, 0, 0, 0, 118, 0, 0, 23, 141
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\Pages\Ecommerce\EcommerceCategorie.jsx", "JavaScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 1, 1
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\Pages\Ecommerce\EcommerceHome.jsx", "JavaScript JSX", 0, 0, 0, 0, 39, 0, 0, 1, 11, 51
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\Pages\Ecommerce\EcommerceOrder\EcommerceOrder.jsx", "JavaScript JSX", 0, 0, 0, 0, 24, 0, 0, 0, 8, 32
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\Pages\Ecommerce\EcommerceOrder\EcommerceOrderAll.jsx", "JavaScript JSX", 0, 0, 0, 0, 11, 0, 0, 0, 6, 17
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\Pages\Ecommerce\EcommerceOrder\EcommerceOrderDelivered.jsx", "JavaScript JSX", 0, 0, 0, 0, 70, 0, 0, 0, 17, 87
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\Pages\Ecommerce\EcommerceOrder\EcommerceOrderPending.jsx", "JavaScript JSX", 0, 0, 0, 0, 70, 0, 0, 0, 19, 89
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\Pages\Ecommerce\EcommerceOrder\EcommerceOrderShipping.jsx", "JavaScript JSX", 0, 0, 0, 0, 70, 0, 0, 0, 17, 87
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\Pages\Ecommerce\EcommerceProduct.jsx", "JavaScript JSX", 0, 0, 0, 0, 12, 0, 0, 0, 7, 19
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\Pages\Ecommerce\EcommercePromotion.jsx", "JavaScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 1, 1
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\Pages\Ecommerce\EcommerceStatistique.jsx", "JavaScript JSX", 0, 0, 0, 0, 24, 0, 0, 0, 12, 36
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\Pages\Ecommerce\EcommerceSubscription.jsx", "JavaScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 1, 1
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\Pages\Home.jsx", "JavaScript JSX", 0, 0, 0, 0, 22, 0, 0, 0, 6, 28
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\Pages\Statistique\Statistique.jsx", "JavaScript JSX", 0, 0, 0, 0, 16, 0, 0, 0, 8, 24
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\Pages\modification_site\Blog\BlogField.css", "CSS", 0, 0, 0, 0, 0, 111, 0, 0, 25, 136
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\Pages\modification_site\Blog\BlogField.jsx", "JavaScript JSX", 0, 0, 0, 0, 554, 0, 0, 23, 140, 717
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\Pages\modification_site\Blog\blog.jsx", "JavaScript JSX", 0, 0, 0, 0, 62, 0, 0, 0, 17, 79
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\Pages\modification_site\Blog\createPageBlog.css", "CSS", 0, 0, 0, 0, 0, 19, 0, 0, 10, 29
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\Pages\modification_site\Blog\createPageBlog.jsx", "JavaScript JSX", 0, 0, 0, 0, 192, 0, 0, 10, 78, 280
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\Pages\modification_site\Blog\editPageBlog.jsx", "JavaScript JSX", 0, 0, 0, 0, 461, 0, 0, 15, 135, 611
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\Pages\modification_site\Blog\listeBlog.css", "CSS", 0, 0, 0, 0, 0, 45, 0, 0, 12, 57
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\Pages\modification_site\Blog\listeBlog.jsx", "JavaScript JSX", 0, 0, 0, 0, 81, 0, 0, 0, 20, 101
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\Pages\modification_site\Page\EditPage.css", "CSS", 0, 0, 0, 0, 0, 192, 0, 0, 31, 223
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\Pages\modification_site\Page\EditPage.jsx", "JavaScript JSX", 0, 0, 0, 0, 254, 0, 0, 0, 43, 297
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\Pages\modification_site\Page\page.jsx", "JavaScript JSX", 0, 0, 0, 0, 62, 0, 0, 0, 17, 79
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\Pages\modification_site\Portfolio\EditPortfolio.css", "CSS", 0, 0, 0, 0, 0, 107, 0, 0, 27, 134
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\Pages\modification_site\Portfolio\EditPortfolio.jsx", "JavaScript JSX", 0, 0, 0, 0, 196, 0, 0, 0, 25, 221
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\Pages\modification_site\Portfolio\portfolio.css", "CSS", 0, 0, 0, 0, 0, 30, 0, 0, 9, 39
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\Pages\modification_site\Portfolio\portfolio.jsx", "JavaScript JSX", 0, 0, 0, 0, 61, 0, 0, 0, 25, 86
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\Pages\modification_site\modificationHome.css", "CSS", 0, 0, 0, 0, 0, 236, 0, 0, 61, 297
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\Pages\modification_site\modificationHome.jsx", "JavaScript JSX", 0, 0, 0, 0, 153, 0, 0, 0, 32, 185
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\apiImage.jsx", "JavaScript JSX", 0, 0, 0, 0, 420, 0, 0, 42, 125, 587
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Dashboard\dateUtils.js", "JavaScript", 12, 0, 0, 0, 0, 0, 0, 0, 1, 13
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Login\Login.css", "CSS", 0, 0, 0, 0, 0, 138, 0, 0, 50, 188
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Login\Login.jsx", "JavaScript JSX", 0, 0, 0, 0, 146, 0, 0, 0, 27, 173
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\Login\Logout.jsx", "JavaScript JSX", 0, 0, 0, 0, 7, 0, 0, 0, 5, 12
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\skeleton\skeleton.css", "CSS", 0, 0, 0, 0, 0, 56, 0, 0, 12, 68
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Components\skeleton\skeleton.jsx", "JavaScript JSX", 0, 0, 0, 0, 175, 0, 0, 0, 16, 191
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Theme\element.jsx", "JavaScript JSX", 0, 0, 0, 0, 137, 0, 0, 1, 26, 164
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Theme\theme.jsx", "JavaScript JSX", 0, 0, 0, 0, 58, 0, 0, 0, 8, 66
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Theme\themeContext.jsx", "JavaScript JSX", 0, 0, 0, 0, 3, 0, 0, 0, 2, 5
+"d:\Mael\wenbole\wenoble-dashboard\client\src\Theme\themeProvider.jsx", "JavaScript JSX", 0, 0, 0, 0, 30, 0, 0, 0, 7, 37
+"d:\Mael\wenbole\wenoble-dashboard\client\src\assets\background\backgroundLogin.svg", "XML", 0, 0, 0, 0, 0, 0, 1, 0, 0, 1
+"d:\Mael\wenbole\wenoble-dashboard\client\src\assets\icon\logo.svg", "XML", 0, 0, 0, 0, 0, 0, 1306, 0, 0, 1306
+"d:\Mael\wenbole\wenoble-dashboard\client\src\main.jsx", "JavaScript JSX", 0, 0, 0, 0, 11, 0, 0, 10, 4, 25
+"d:\Mael\wenbole\wenoble-dashboard\client\src\service-worker.js", "JavaScript", 0, 0, 0, 0, 0, 0, 0, 43, 1, 44
+"d:\Mael\wenbole\wenoble-dashboard\client\vite.config.js", "JavaScript", 93, 0, 0, 0, 0, 0, 0, 2, 5, 100
+"d:\Mael\wenbole\wenoble-dashboard\client\webpack.config.js", "JavaScript", 32, 0, 0, 0, 0, 0, 0, 0, 1, 33
+"d:\Mael\wenbole\wenoble-dashboard\package-lock.json", "JSON", 0, 6, 0, 0, 0, 0, 0, 0, 1, 7
+"d:\Mael\wenbole\wenoble-dashboard\package.json", "JSON", 0, 1, 0, 0, 0, 0, 0, 0, 1, 2
+"d:\Mael\wenbole\wenoble-dashboard\server\admin\client.js", "JavaScript", 45, 0, 0, 0, 0, 0, 0, 0, 23, 68
+"d:\Mael\wenbole\wenoble-dashboard\server\api\api.js", "JavaScript", 254, 0, 0, 0, 0, 0, 0, 2, 95, 351
+"d:\Mael\wenbole\wenoble-dashboard\server\contact\contact.js", "JavaScript", 39, 0, 0, 0, 0, 0, 0, 0, 11, 50
+"d:\Mael\wenbole\wenoble-dashboard\server\contact\sendEmail.js", "JavaScript", 84, 0, 0, 0, 0, 0, 0, 0, 18, 102
+"d:\Mael\wenbole\wenoble-dashboard\server\db.js", "JavaScript", 18, 0, 0, 0, 0, 0, 0, 0, 6, 24
+"d:\Mael\wenbole\wenoble-dashboard\server\ecommerce\order.js", "JavaScript", 41, 0, 0, 0, 0, 0, 0, 21, 11, 73
+"d:\Mael\wenbole\wenoble-dashboard\server\function.js", "JavaScript", 15, 0, 0, 0, 0, 0, 0, 3, 5, 23
+"d:\Mael\wenbole\wenoble-dashboard\server\index.js", "JavaScript", 78, 0, 0, 0, 0, 0, 0, 4, 37, 119
+"d:\Mael\wenbole\wenoble-dashboard\server\modification\blog.js", "JavaScript", 662, 0, 0, 0, 0, 0, 0, 74, 202, 938
+"d:\Mael\wenbole\wenoble-dashboard\server\modification\limitSize.js", "JavaScript", 46, 0, 0, 0, 0, 0, 0, 0, 10, 56
+"d:\Mael\wenbole\wenoble-dashboard\server\modification\page.js", "JavaScript", 281, 0, 0, 0, 0, 0, 0, 0, 89, 370
+"d:\Mael\wenbole\wenoble-dashboard\server\modification\portfolio.js", "JavaScript", 151, 0, 0, 0, 0, 0, 0, 2, 51, 204
+"d:\Mael\wenbole\wenoble-dashboard\server\package-lock.json", "JSON", 0, 2341, 0, 0, 0, 0, 0, 0, 1, 2342
+"d:\Mael\wenbole\wenoble-dashboard\server\package.json", "JSON", 0, 29, 0, 0, 0, 0, 0, 0, 1, 30
+"d:\Mael\wenbole\wenoble-dashboard\server\users\auth.js", "JavaScript", 88, 0, 0, 0, 0, 0, 0, 1, 43, 132
+"d:\Mael\wenbole\wenoble-dashboard\server\users\infoUser.js", "JavaScript", 103, 0, 0, 0, 0, 0, 0, 1, 49, 153
+"d:\Mael\wenbole\wenoble-dashboard\server\users\notification.js", "JavaScript", 66, 0, 0, 0, 0, 0, 0, 1, 21, 88
+"Total", "-", 2129, 11098, 19, 5, 4453, 1728, 1307, 274, 2238, 23251
