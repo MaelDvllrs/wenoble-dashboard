@@ -83,15 +83,22 @@ router.get('/sendBlog',apiKeyMiddleware, (req, res) => {
 
     if (ids) {
         const idArray = ids.split(',').map(id => parseInt(id, 10)); // Convertir les IDs en tableau de nombres
-        const configArray = configs.split(',').map(config => parseInt(config, 10)); // Convertir les configs en tableau de nombres
         const placeholders = idArray.map(() => '?').join(','); // Créer des placeholders pour la requête SQL
 
-        if (joinTable === 'blog_page') {
+        if (configs === null) {
             SQL = `SELECT * FROM blog_page WHERE id_blog IN (${placeholders}) AND status = 1 ORDER BY ${colone} ${order}`;
             Values = [...idArray];
         } else {
-            SQL = `SELECT blog_page.* FROM blog_page INNER JOIN ${joinTable} ON blog_page.id_page_blog = ${joinTable}.id_blog_page WHERE blog_page.id_blog IN (${placeholders}) AND ${joinTable}.id_config IN (${placeholders}) AND blog_page.status = 1 ORDER BY ${joinTable}.${colone} ${order} `;
-            Values = [...idArray, ...configArray];
+            const configArray = configs.split(',').map(config => parseInt(config, 10)); // Convertir les configs en tableau de nombres
+            
+            
+            if (joinTable === 'blog_page') {
+                SQL = `SELECT * FROM blog_page WHERE id_blog IN (${placeholders}) AND status = 1 ORDER BY ${colone} ${order}`;
+                Values = [...idArray];
+            } else {
+                SQL = `SELECT blog_page.* FROM blog_page INNER JOIN ${joinTable} ON blog_page.id_page_blog = ${joinTable}.id_blog_page WHERE blog_page.id_blog IN (${placeholders}) AND ${joinTable}.id_config IN (${placeholders}) AND blog_page.status = 1 ORDER BY ${joinTable}.${colone} ${order} `;
+                Values = [...idArray, ...configArray];
+            }
         }
     } else {
         const id_blog = req.id_data;
