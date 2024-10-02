@@ -412,7 +412,8 @@ router.get('/sendPageImage',apiKeyMiddleware, (req, res) => {
 
 router.get('/sendPageRichText',apiKeyMiddleware, (req, res) => {
     const id = req.id_data;
-    const SQL = 'SELECT id_config, text_json FROM page_field_richText WHERE id_page = ?';
+
+    const SQL = 'SELECT id_config, text_json FROM page_richText WHERE id_page = ?';
     const Values = [id];
     db.query(SQL, Values, (err, results) => {
         if (err) {
@@ -435,7 +436,7 @@ router.get('/sendPageRichText',apiKeyMiddleware, (req, res) => {
 
 router.get('/sendPageText',apiKeyMiddleware, (req, res) => {
     const id = req.id_data;
-    const SQL = 'SELECT id_config, text FROM page_field_text WHERE id_page = ?';
+    const SQL = 'SELECT id_config, text FROM page_text WHERE id_page = ?';
     const Values = [id];
     db.query(SQL, Values, (err, results) => {
         if (err) {
