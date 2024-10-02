@@ -424,6 +424,9 @@ router.get('/sendPageRichText',apiKeyMiddleware, (req, res) => {
         }
 
         const convertedResults = results.map(result => {
+            if (result.text_json === null) {
+                return { id_config: result.id_config, text_html: '' };
+            }
             const contentState = convertFromRaw(JSON.parse(result.text_json));
             const html = stateToHTML(contentState);
             return { id_config: result.id_config, text_html: html };        
