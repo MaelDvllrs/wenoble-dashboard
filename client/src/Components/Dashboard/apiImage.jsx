@@ -52,13 +52,19 @@ export const fetchImagesPortfolio = async (portfolioId, idUser) => {
 export const saveImagesPortfolio = async (fields) => {
   try {
 
-    console.log(fields);
+
+    // Extraire l'extension du nom de fichier original
+    const extension = fields.name.split('.').pop();
+
+    // Créer un nouveau fichier blob avec le nom modifié
+    const newFileName = `${fields.id_photo}.${extension}`;
+    const newFile = new File([fields.data], newFileName, { type: fields.data.type });
 
     // Créer un objet FormData
     const formData = new FormData();
 
     // Ajouter le blob en tant que fichier
-    formData.append('image', fields.data, fields.id_photo);
+    formData.append('image', newFile, newFileName);
 
 
     // Ajouter les autres champs

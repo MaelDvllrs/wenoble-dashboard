@@ -46,6 +46,8 @@ router.get('/getPorfolioImages', (req, res) => {
     const portfolioId = req.query.portfolioId;
     const idUser = req.query.idUser;
 
+    console.log(portfolioId, idUser);
+
 
     if (!portfolioId || !idUser) {
         return res.status(400).send('L\'id du portfolio est manquant.');
@@ -60,6 +62,8 @@ router.get('/getPorfolioImages', (req, res) => {
         console.log('Error in db query', err);
         return res.status(500).send({error: err});
       }
+
+      console.log(results);
 
       if(results[0].id_user != idUser){
         return res.status(403).send('Vous n\'avez pas les droits pour accéder à ces images');
@@ -123,9 +127,11 @@ router.post('/saveImagesPortfolio', upload.single('image'), (req, res) => {
     const name = req.body.name;
     const alt = req.body.alt;
     const size = req.body.size;
+    const src_photo = req.file.originalname;
+
   
     const SQL = 'INSERT INTO photo_portfolio (id_photo, id_portfolio, src_photo, name_photo, alt_photo, size) VALUES (?, ?, ?, ?, ?, ?)';
-    const Values = [id_photo, id_portfolio, id_photo, name, alt, size];
+    const Values = [id_photo, id_portfolio, src_photo, name, alt, size];
   
     db.query(SQL, Values, (err, results) => {
       if (err) {
