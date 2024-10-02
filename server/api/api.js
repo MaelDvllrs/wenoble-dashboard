@@ -68,6 +68,28 @@ router.get('/sendPhoto',apiKeyMiddleware, (req, res) => {
 });
 
 
+router.get('/sendPhotoPortfolio',apiKeyMiddleware, (req, res) => {
+
+    const id_portfolio = req.id_data;
+
+    const SQL = 'SELECT src_photo, alt_photo FROM photo_portfolio WHERE id_portfolio = ? ORDER BY order_photo'
+    const Values = [id_portfolio]
+
+    db.query(SQL, Values, (err, results)=>{
+        if (err) {
+            res.status(500).send({ error: err });
+        }
+        if (results.length === 0) {
+            return res.status(403).json({ message: 'Aucune photo trouvée' });
+        }
+
+        res.json({ images: results });
+
+    })
+
+});
+
+
 
 router.get('/sendBlog',apiKeyMiddleware, (req, res) => {
     const ids = req.ids; // IDs des blogs passés en paramètre de requête
