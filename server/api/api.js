@@ -371,6 +371,89 @@ router.get('/sendMultiReference',apiKeyMiddleware, (req, res) => {
 
 
 
+//------------------- API pour les pages -------------------//
+
+
+router.get('/sendPage',apiKeyMiddleware, (req, res) => {
+    const id = req.id_data;
+    const SQL = 'SELECT * FROM page WHERE id_page = ?';
+    const Values = [id];
+
+    db.query(SQL, Values, (err, results) => {
+        if (err) {
+            res.status(500).send({ error: err });
+        }
+        if (results.length === 0) {
+            return res.status(403).json({ message: 'Aucune page trouvée' });
+        }
+
+        return res.json({ page: results });
+    });
+});
+
+
+router.get('/sendPageImage',apiKeyMiddleware, (req, res) => {
+    const id = req.id_data;
+
+    const SQL = 'SELECT id_config, src_image, alt_image FROM page_photo WHERE id_page = ?';
+    const Values = [id];
+    db.query(SQL, Values, (err, results) => {
+        if (err) {
+            return res.status(500).send({ error: err });
+        }
+        if (results.length === 0) {
+            return res.status(200).json({ message: 'Aucune image trouvée' });
+        }
+
+        return res.json({ images: results });
+    });
+});
+
+
+router.get('/sendPageRichText',apiKeyMiddleware, (req, res) => {
+    const id = req.id_data;
+    const SQL = 'SELECT id_config, text_json FROM page_field_richText WHERE id_page = ?';
+    const Values = [id];
+    db.query(SQL, Values, (err, results) => {
+        if (err) {
+            return res.status(500).send({ error: err });
+        }
+        if (results.length === 0) {
+            return res.status(200).json({ message: 'Aucun texte riche trouvé' });
+        }
+
+        const convertedResults = results.map(result => {
+            const contentState = convertFromRaw(JSON.parse(result.text_json));
+            const html = stateToHTML(contentState);
+            return { id_config: result.id_config, text_html: html };        
+        });
+
+        return res.json({ richText: convertedResults });
+    });
+});
+
+
+router.get('/sendPageText',apiKeyMiddleware, (req, res) => {
+    const id = req.id_data;
+    const SQL = 'SELECT id_config, text FROM page_field_text WHERE id_page = ?';
+    const Values = [id];
+    db.query(SQL, Values, (err, results) => {
+        if (err) {
+            res.status(500).send({ error: err });
+        }
+        if (results.length === 0) {
+            return res.status(200).json({ message: 'Aucun texte trouvé' });
+        }
+
+        return res.json({ text: results });
+    });
+});
+
+
+
+
+
+
     
 
 
