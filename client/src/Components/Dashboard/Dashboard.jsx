@@ -192,7 +192,7 @@ const Dashboard = () => {
         <AnimatePresence initial={false}>
             <motion.div className="menu_dashboard" animate={{width: open_menu ? "18rem" : "5rem"}} style={{backgroundColor: theme.palette.primary.secondary, borderColor : theme.palette.primary.third}}>
                 <AnimatePresence initial={false}>
-                    <motion.div className="logo_contain" animate={{width: open_menu ? "10rem" : "3rem"}} style={{backgroundColor: theme.palette.primary.secondary}}>
+                    <motion.div className="logo_contain" animate={{width: open_menu ? "10rem" : "3rem"}}>
                         <Logo className="logo" alt="logo" style={{color: theme.palette.text.primary}}/>
                     </motion.div>
                 </AnimatePresence>
