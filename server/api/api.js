@@ -413,7 +413,7 @@ router.get('/sendPageImage',apiKeyMiddleware, (req, res) => {
 router.get('/sendPageRichText',apiKeyMiddleware, (req, res) => {
     const id = req.id_data;
 
-    const SQL = 'SELECT id_config, text_json FROM page_richText WHERE id_page = ?';
+    const SQL = 'SELECT id_config, text_json FROM page_richtext WHERE id_page = ?';
     const Values = [id];
     db.query(SQL, Values, (err, results) => {
         if (err) {
