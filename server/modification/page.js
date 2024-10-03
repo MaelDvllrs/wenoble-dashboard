@@ -75,30 +75,34 @@ router.get('/getImagePage', (req, res) => {
   const sentIdBlogPage = req.query.IdPage;
   const sentIdConfig = req.query.IdConfig;
 
-
-  const SQL = 'SELECT id_config, src_image, name_image, alt_image, size FROM page_photo WHERE id_page = ? AND id_config = ?'
-  const Values = [sentIdBlogPage, sentIdConfig]
+  const SQL = 'SELECT id_config, src_image, name_image, alt_image, size FROM page_photo WHERE id_page = ? AND id_config = ?';
+  const Values = [sentIdBlogPage, sentIdConfig];
 
   db.query(SQL, Values, (err, results) => {
     if (err) {
       console.log("erreur" + err);
-      res.send({ error: err })
+      res.send({ error: err });
       return;
     }
 
     const image = results;
 
-    const imageDirectory = path.join(__dirname, '..', 'images', 'page_image')
+    const imageDirectory = path.join(__dirname, '..', 'images', 'page_image');
     const imagesData = image.map(image => {
-      const imagePath = path.join(imageDirectory, image.src_image);
+      // Vérifier si src_image, name_image, ou alt_image sont null
+      const srcImage = image.src_image || 'default.jpg'; 
+      const nameImage = image.name_image || 'default_name';
+      const altImage = image.alt_image || 'default_alt';
+
+      const imagePath = path.join(imageDirectory, srcImage);
       try {
         const imageData = fs.readFileSync(imagePath);
         const imageDataBase64 = Buffer.from(imageData).toString('base64');
         return {
           id_config: image.id_config,
-          name: image.name_image,
+          name: nameImage,
           data: 'data:image/jpeg;base64,' + imageDataBase64,
-          alt: image.alt_image,
+          alt: altImage,
           size: image.size,
           create: true
         };
@@ -107,7 +111,7 @@ router.get('/getImagePage', (req, res) => {
         return null;
       }
     }).filter(Boolean);
-    res.status(200).json(imagesData);      
+    res.status(200).json(imagesData);
   });
 });
 
@@ -140,28 +144,29 @@ router.get('/getPageTexte', (req, res) => {
 });
 
 router.get('/getPageRichText', (req, res) => {
-
   const pageId = req.query.IdPage;
   const idConfig = req.query.IdConfig;
 
-  
   if (!pageId) {
-      return res.status(400).send('L\'id de la page est manquant.');
+    return res.status(400).send('L\'id de la page est manquant.');
   }
 
   const SQL = 'SELECT text_json, id_richText, id_config FROM page_richtext WHERE id_page = ? AND id_config = ?';
   const values = [pageId, idConfig];
 
   db.query(SQL, values, (err, results) => {
-      if (err) {
-          console.log('erreur bdd');
-          return res.status(500).send({error: err});   
-      }
+    if (err) {
+      console.log('erreur bdd');
+      return res.status(500).send({ error: err });
+    }
 
-      const pageTexte = results;
+    // Vérifier si text_json est null et le remplacer par une valeur par défaut si nécessaire
+    const pageTexte = results.map(result => ({
+      ...result,
+      text_json: result.text_json || 'Texte par défaut' // Remplacez 'Texte par défaut' par la valeur par défaut souhaitée
+    }));
 
-
-      res.status(200).json(pageTexte);
+    res.status(200).json(pageTexte);
   });
 });
 
