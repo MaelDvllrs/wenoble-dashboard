@@ -109,6 +109,8 @@ app.use('/api', apiRouter);
 //Static files
 app.use('/media/blog', express.static(path.join(__dirname, 'images', 'blog_image')));
 app.use('/media/portfolio', express.static(path.join(__dirname, 'images', 'portfolio_image')));
+app.use('/media/page', express.static(path.join(__dirname, 'images', 'page_image')));
+
 
 app.listen(3002, ()=>{
   console.log('Server is running on port 3002')
