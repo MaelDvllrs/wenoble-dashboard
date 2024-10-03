@@ -149,7 +149,7 @@ router.get('/getPageRichText', (req, res) => {
       return res.status(400).send('L\'id de la page est manquant.');
   }
 
-  const SQL = 'SELECT text_json, id_richText, id_config FROM page_richText WHERE id_page = ? AND id_config = ?';
+  const SQL = 'SELECT text_json, id_richText, id_config FROM page_richtext WHERE id_page = ? AND id_config = ?';
   const values = [pageId, idConfig];
 
   db.query(SQL, values, (err, results) => {
