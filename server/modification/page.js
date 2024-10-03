@@ -144,29 +144,28 @@ router.get('/getPageTexte', (req, res) => {
 });
 
 router.get('/getPageRichText', (req, res) => {
+
   const pageId = req.query.IdPage;
   const idConfig = req.query.IdConfig;
 
+  
   if (!pageId) {
-    return res.status(400).send('L\'id de la page est manquant.');
+      return res.status(400).send('L\'id de la page est manquant.');
   }
 
   const SQL = 'SELECT text_json, id_richText, id_config FROM page_richtext WHERE id_page = ? AND id_config = ?';
   const values = [pageId, idConfig];
 
   db.query(SQL, values, (err, results) => {
-    if (err) {
-      console.log('erreur bdd');
-      return res.status(500).send({ error: err });
-    }
+      if (err) {
+          console.log('erreur bdd');
+          return res.status(500).send({error: err});   
+      }
 
-    // Vérifier si text_json est null et le remplacer par une valeur par défaut si nécessaire
-    const pageTexte = results.map(result => ({
-      ...result,
-      text_json: result.text_json || 'Texte par défaut' // Remplacez 'Texte par défaut' par la valeur par défaut souhaitée
-    }));
+      const pageRichTexte = results;
 
-    res.status(200).json(pageTexte);
+
+      res.status(200).json(pageRichTexte);
   });
 });
 

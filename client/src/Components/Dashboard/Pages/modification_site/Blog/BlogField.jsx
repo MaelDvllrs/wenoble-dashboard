@@ -151,21 +151,27 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
 
     useEffect(() => {
       if (dataValue && Object.keys(dataValue).length > 0 && type === 'richText') {
-
-        // Assurez-vous que dataValue.text_json est bien un objet et non une chaîne JSON.
-        // Si c'est une chaîne, vous devez d'abord la parser :
-        const contentFromJSON = JSON.parse(dataValue.text_json);
-        // Sinon, si c'est déjà un objet, utilisez-le directement :
-    
-        // Convertir le JSON en ContentState
-        const contentState = convertFromRaw(contentFromJSON);
-    
-        // Créer un nouvel EditorState à partir du ContentState
-        const newEditorState = EditorState.createWithContent(contentState);
-    
-        // Mettre à jour l'état de l'éditeur avec les données converties
-        setEditorState(newEditorState);
-        setCreateBoolRichText(dataValue.create)
+        // Vérifiez si dataValue.text_json est null
+        if (dataValue.text_json) {
+          // Assurez-vous que dataValue.text_json est bien un objet et non une chaîne JSON.
+          // Si c'est une chaîne, vous devez d'abord la parser :
+          const contentFromJSON = JSON.parse(dataValue.text_json);
+          // Sinon, si c'est déjà un objet, utilisez-le directement :
+      
+          // Convertir le JSON en ContentState
+          const contentState = convertFromRaw(contentFromJSON);
+      
+          // Créer un nouvel EditorState à partir du ContentState
+          const newEditorState = EditorState.createWithContent(contentState);
+      
+          // Mettre à jour l'état de l'éditeur avec les données converties
+          setEditorState(newEditorState);
+        } else {
+          // Si text_json est null, initialisez l'éditeur avec un état vide
+          const emptyContentState = EditorState.createEmpty();
+          setEditorState(emptyContentState);
+        }
+        setCreateBoolRichText(dataValue.create);
       }
     }, [dataValue, type, setEditorState]);
 
