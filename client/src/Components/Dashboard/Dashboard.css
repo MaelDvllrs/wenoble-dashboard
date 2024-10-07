@@ -241,6 +241,7 @@
     height: 100vh;
     display: flex;
     flex-direction: column;
+    padding: 1rem;
 }
 
 
@@ -252,6 +253,8 @@
     justify-content: space-between;
     position: relative;
     z-index: 9999;
+    border: solid 1px;
+    border-radius: 0.5rem;
 }
 
 

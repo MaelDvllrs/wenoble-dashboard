@@ -38,12 +38,20 @@ const apiKeyMiddleware = (req, res, next) => {
     });
 };
 
+const emailLocks = new Set();
+
 router.post('/sendEmail', apiKeyMiddleware, async (req, res) => {
     const apiKey = req.apiKey;
     const subject = req.subject;
     const html = req.html;
     const emailSender = req.emailSender;
     const dateSend = new Date();
+
+    if (emailLocks.has(emailSender)) {
+        return res.status(429).json({ message: 'Vous avez déjà envoyé un email. Veuillez patienter.' });
+    }
+
+    emailLocks.add(emailSender);
 
     const serverUrl = process.env.SERVER_URL;
 
@@ -93,6 +101,8 @@ router.post('/sendEmail', apiKeyMiddleware, async (req, res) => {
 
                 return res.status(400).json({ error });
             }
+
+            emailLocks.delete(emailSender);
 
             res.status(200).json({ message: 'Email sent successfully', data });
         });

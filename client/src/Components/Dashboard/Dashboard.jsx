@@ -190,7 +190,7 @@ const Dashboard = () => {
     return (
         <div className='dashboard'>
         <AnimatePresence initial={false}>
-            <motion.div className="menu_dashboard" animate={{width: open_menu ? "18rem" : "5rem"}} style={{backgroundColor: theme.palette.primary.secondary, borderColor : theme.palette.primary.third}}>
+            <motion.div className="menu_dashboard" animate={{width: open_menu ? "18rem" : "5rem"}} style={{backgroundColor: theme.palette.primary.main, borderColor : theme.palette.primary.third}}>
                 <AnimatePresence initial={false}>
                     <motion.div className="logo_contain" animate={{width: open_menu ? "10rem" : "3rem"}}>
                         <Logo className="logo" alt="logo" style={{color: theme.palette.text.primary}}/>
@@ -293,7 +293,7 @@ const Dashboard = () => {
         </AnimatePresence>
         <AnimatePresence initial={false}>
             <motion.div className='dashboard_page' animate={{width : open_menu ? "calc(100% - 18rem)" : "calc(100% - 5rem)"}}>
-                <div className='dashboard_header'>
+                <div className='dashboard_header' style={{backgroundColor: theme.palette.primary.main, borderColor : theme.palette.primary.third}}>
                     <div className='header_box left'>
                         <Checkbox key='menu' style={{ color: theme.palette.text.primary }} checked={open_menu} onChange={toggle_menu} icon={<PiFunnelSimpleBold className='icon'/>} checkedIcon={<PiFunnelSimpleBold className='icon'/>}/>
                         <Checkbox key='theme' style={{ color: theme.palette.text.primary }} checked={isDark} onChange={toggleTheme} icon={<LuMoon className='icon' />} checkedIcon={<LuSun  className='icon'/>}/>
