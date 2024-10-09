@@ -305,6 +305,42 @@ export const createImageBlog = async (fields, blogPageId) => {
   }
 };
 
+
+
+
+export const createGalleryBlog = async (fields, blogPageId) => {
+  try {
+    const formData = new FormData();
+
+    // Ajouter chaque image au formulaire de données sous le même nom de champ
+    fields.gallery.forEach((field, index) => {
+      formData.append('gallery', field.data, field.name);
+    });
+
+    // Ajouter les autres champs nécessaires
+    formData.append('id_blog_page', blogPageId);
+    formData.append('id_config', fields.id_config);
+    formData.append('type', fields.type);
+
+    console.log(fields);
+
+    // Envoyer le formulaire de données à l'API
+    await Axios.post(`${apiUrl}/createGalleryBlog`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+
+  } catch (error) {
+    console.error('Message d\'erreur du serveur:', error);
+    // Propager l'erreur
+    throw error;
+  }
+};
+
+
+
+
 export const createVideoBlog = async (fields, blogPageId) => {
   try {
 

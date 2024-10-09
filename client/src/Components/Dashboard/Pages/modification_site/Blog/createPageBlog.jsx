@@ -9,7 +9,7 @@ import './createPageBlog.css'
 import {DefaultButton, SecondaryButton, Popup} from '../../../../../Theme/element';
 import SaveIcon from '@mui/icons-material/Save';
 import PublishIcon from '@mui/icons-material/Publish';
-import { createImageBlog, createBlogPage, createTextBlog, createRichTextBlog, createVideoBlog, createMultiReferenceBlog } from '../../../apiImage';
+import { createImageBlog, createBlogPage, createTextBlog, createRichTextBlog, createVideoBlog, createMultiReferenceBlog, createGalleryBlog } from '../../../apiImage';
 import { useTheme } from '@mui/material/styles';
 import { convertToRaw } from 'draft-js';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -42,7 +42,8 @@ const CreatePageBlog = () => {
         images: [],
         richText: [],
         video: [],
-        multiReference: []
+        multiReference: [],
+        gallery: [],
     });
 
     const apiUrl = config.apiUrl;
@@ -89,6 +90,8 @@ const CreatePageBlog = () => {
             setSlugValue(normalizeText(data.data.value).toLowerCase().replace(/[^\w\s]|_/g, '').replace(/\s+/g, '-'));            
           }
 
+          console.log(data);
+
           const type = data.data.type;
       
           if (isDelete) {
@@ -109,11 +112,16 @@ const CreatePageBlog = () => {
               newData[type].push(data.data);
             }
           }
+
+          
       
           return newData;
         });
     };
 
+    console.log(blogData);
+
+    
 
     
 
@@ -152,8 +160,6 @@ const CreatePageBlog = () => {
             // Gérer la réponse ici
             const blogPageId = response.id;
         
-
-
 
 
             // ENREGISTRER LES TEXTES
@@ -195,6 +201,16 @@ const CreatePageBlog = () => {
                     await createImageBlog(image, blogPageId);
                 }));
 
+            } catch (error) {
+                console.error(error);
+                return;
+            }
+
+            //ENREGISTRER LES GALLERIES
+            try {
+                await Promise.all(blogData.gallery.map(async (gallery) => {
+                    await createGalleryBlog(gallery, blogPageId);
+                }));
             } catch (error) {
                 console.error(error);
                 return;

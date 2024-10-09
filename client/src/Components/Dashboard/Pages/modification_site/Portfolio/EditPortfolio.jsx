@@ -32,7 +32,7 @@ const EditPortfolio = () => {
 
 
   const { control} = useForm();
-  const { fields, remove, append, update, move, swap } = useFieldArray({
+  const { fields, remove, append, move } = useFieldArray({
     control: control,
     name: "images",
   });

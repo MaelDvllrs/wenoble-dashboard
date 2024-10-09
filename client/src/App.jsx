@@ -3,7 +3,7 @@ import Dashboard from './Components/Dashboard/Dashboard'
 import Home from './Components/Dashboard/Pages/Home'
 import Account from'./Components/Dashboard/Pages/Account'
 import Portfolio from './Components/Dashboard/Pages/modification_site/Portfolio/portfolio'
-import Login from './Components/Login/Login'
+import Login from './Auth/Login'
 import EditPortfolio from './Components/Dashboard/Pages/modification_site/Portfolio/EditPortfolio'
 import Admin from './Components/Admin/Admin';
 import AdminHome from './Components/Admin/AdminHome'

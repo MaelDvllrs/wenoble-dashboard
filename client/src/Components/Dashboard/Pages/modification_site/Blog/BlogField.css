@@ -14,6 +14,16 @@
     padding-left: 30px;
 }
 
+.DragAndDropField{
+    height: 10rem;
+}
+
+.DragAndDropGallery{
+    padding-bottom: 1rem;
+    padding-top: 1rem;
+    border-radius: 0.5rem;
+}
+
 
 .editor_button_contain{
     display: flex;
@@ -44,6 +54,14 @@
     height: 10rem;
 }
 
+.gallery_blog{
+    height: auto;
+    display: flex;
+    flex-direction: column; 
+    gap: 1rem;
+}
+
+
 .ImageUploaded_contain{
     height: 100%;
     display: flex;
@@ -52,10 +70,61 @@
     overflow: hidden;
 }
 
+.gallery_contain{
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding-bottom: 1rem;
+    overflow: auto;
+    max-height: 30rem;
+    padding-top: 2rem;
+    border-top: solid 1px ;
+}
+
+.gallery_box{
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-right: 1rem;
+    min-height: 2rem;
+    cursor: grab;
+}
+
+.gallery_box:active{
+    cursor: grabbing;
+ 
+}
+
+.gallery_add_contain{
+    width: 100%;
+    padding-right: 1rem;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+
+.flex_gallery{
+    gap : 1rem;
+}
+
 .Image_uploaded{
     height: 8rem;
     object-fit: cover;
     border-radius: 0.5rem;
+}
+
+.image_gallery{
+    height: 100%;
+    width: 4rem;
+    object-fit: cover;
+    border-radius: 0.5rem;
+}
+
+
+.gallery_text{
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .logoUploadImage > svg{

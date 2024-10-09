@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import config from '../../../../../config';
 
+import { motion, AnimatePresence, Reorder } from 'framer-motion';
+import { useFieldArray, useForm } from 'react-hook-form';
+
+
 import { Editor, EditorState, RichUtils, CompositeDecorator, convertFromRaw } from 'draft-js';
 import 'draft-js/dist/Draft.css';
 import './BlogField.css'
@@ -16,6 +20,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
 import OpenInNewOutlinedIcon from '@mui/icons-material/OpenInNewOutlined';
 import ImageIcon from '@mui/icons-material/Image';
+import CollectionsIcon from '@mui/icons-material/Collections';
 import VideocamIcon from '@mui/icons-material/Videocam';
 
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -73,7 +78,18 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
 
   const theme = useTheme();
 
-  // TEXTE EDITOR
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  // -------------------------------TEXTE EDITOR----------------------------------
 
     const [editorState, setEditorState] = useState(EditorState.createEmpty(linkDecorator));
     const [createBoolRichText, setCreateBoolRichText] = useState('')
@@ -176,7 +192,18 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
     }, [dataValue, type, setEditorState]);
 
 
-    // IMAGE UPLOAD
+
+
+
+
+
+
+
+
+
+
+
+    // ------------------IMAGE UPLOAD---------------------
 
     const [imagesUploaded, setImagesUploaded] = useState([]);
     const [createBoolImage, setCreateBoolImage] = useState('')
@@ -189,7 +216,6 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
       if (file instanceof File) {
         const fileCompress = await compressImage(file);
 
-        const fileExtension = file.name.split('.').pop();
 
     
         const data = {
@@ -220,6 +246,7 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
         console.error("Aucun fichier n'a été téléchargé.");
       }
     };
+
 
 
     useEffect(() => {
@@ -255,8 +282,147 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
     }
 
 
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    // -----------------GALLERY UPLOAD-----------------
 
-    // VIDEO UPLOAD
+
+    const { control } = useForm();
+    const { fields, append, remove, move } = useFieldArray({
+      control,
+      name: "images",
+    });
+    const [active, setActive] = useState(0);
+
+    const handleGalleryChange = async (file, addImage = true) => {
+      console.log(fields);
+
+      const files = Array.from(file);
+
+      const newImages = await Promise.all(files.map(async (file) => {
+        if (file instanceof File) {
+          const fileCompress = await compressImage(file);
+          return {
+            data: fileCompress,
+            name: file.name,
+            alt: file.name,
+            url: URL.createObjectURL(file),
+            size: (fileCompress.size / 1024).toFixed(0),
+            create: createBoolImage
+          };
+        } else {
+          console.error("Aucun fichier n'a été téléchargé.");
+          return null;
+        }
+      }));
+
+      // Filtrez les images nulles
+      
+      const validNewImages = newImages.filter(image => image !== null);
+
+
+      if (addImage) {
+
+        const combinedImages = [...fields, ...validNewImages];
+
+        const data = { gallery:combinedImages, id_config: id_config, type: 'gallery' };
+
+        onChange({ data: data });
+
+        validNewImages.forEach(data => append(data));
+      } else {  
+        const data = { gallery:validNewImages, id_config: id_config, type: 'gallery' };
+        onChange({ data: data });
+      }
+
+
+    };
+
+    useEffect(() => {
+      // Vérifiez si dataValue existe et si le type est 'gallery'
+      if (dataValue && Object.keys(dataValue).length > 0 && type === 'gallery') {
+        // Préparez les données de l'image pour l'état initial de imagesUploaded
+        const initialGallery = dataValue.map((dataValue) => ({
+          id_blog_page: dataValue.id_blog_page || id_blog_page, // Utilisez id_blog_page de dataValue ou celui passé en prop
+          id_config: dataValue.id_config || id_config, // Utilisez id_config de dataValue ou celui passé en prop
+          data: dataValue.data, // Utilisez les données d'image en base64 de dataValue
+          name: dataValue.name, // Utilisez le nom de l'image de dataValue
+          alt: dataValue.alt, // Utilisez le texte alternatif de l'image de dataValue
+          url: dataValue.data, // Utilisez les données d'image en base64 comme URL
+          size: dataValue.size, // Utilisez la taille de l'image de dataValue
+          type: 'images', // Définissez le type comme 'images'
+        }));
+
+        // Initialisez les champs de formulaire avec les données de l'image
+        initialGallery.forEach(image => append(image));
+        setCreateBoolImage(dataValue.create);
+      }
+    }, [dataValue, type, id_blog_page, id_config, append]);
+
+
+
+    function handleDeleteGallery(indexToDelete) {
+      // Supprimer l'image à l'index spécifié
+      remove(indexToDelete);
+    
+      // Récupérer les fichiers restants après suppression
+      const remainingFiles = fields.filter((_, index) => index !== indexToDelete).map(item => {
+        return new File([item.data], item.name, { type: item.data.type });
+      });
+    
+      // Appeler handleGalleryChange avec les fichiers restants et un indicateur de suppression
+      handleGalleryChange(remainingFiles, false);
+    }
+
+    function handleReorderGallery(e) {
+      console.log(e);
+      e.forEach((item, index) => {
+        const activeElement = fields[active];
+        if (item === activeElement) {
+          move(active, index);
+          setActive(index);
+        }
+      });
+
+      const reorderedFiles = e.map(item => {
+        const file = new File([item.data], item.name, { type: item.data.type });
+        return file;
+      });
+  
+      // Passer les fichiers réordonnés à handleGalleryChange
+      handleGalleryChange(reorderedFiles, false);
+    }
+
+
+
+
+
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    // --------------------------------VIDEO UPLOAD-----------------------------------
 
     
     const videoTypes = ["MP4"];
@@ -337,7 +503,23 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
     }
 
 
-    //TEXT INPUT
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    //-----------------------------TEXT INPUT--------------------------------
 
     const [slugValueChange, setSlugValueChange] = useState(slugValue || "");
     const [createBool, setCreateBool] = useState('')
@@ -414,8 +596,24 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
     }, [dataValue, type]);
 
 
-    //MULTI REFERENCE
-     const [CollectionRef, setCollectionRef] = useState([]);
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    //-------------------------------MULTI REFERENCE--------------------------------
+    
+  
+    const [CollectionRef, setCollectionRef] = useState([]);
      const [optionDefault, setOptionDefault] = useState([]);
      const [createBoolMultiRef, setCreateBoolMultiRef] = useState('')
 
@@ -488,6 +686,16 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
 
     
 
+
+
+
+
+
+
+
+
+
+
     return (
         <div>
             {(() => {
@@ -513,6 +721,17 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
                               />
                             </div>
                           );
+
+
+
+
+
+
+
+
+
+
+
 
                     case 'image':
                         return (
@@ -542,7 +761,7 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
                                 ))
                               ) : (
                                 <FileUploader handleChange={handleImageChange} name="file" types={fileTypes} multiple={false}>
-                                  <div className="DragAndDrop">
+                                  <div className="DragAndDrop DragAndDropField">
                                     <span className="logoUploadImage">
                                       <ImageIcon />
                                     </span>
@@ -552,11 +771,95 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
                               )}
                             </div>
                           );
+
+
+
+
+
+
+
+
+
+
+
+                    case 'gallery':
+                        return (
+                          <div className='image_blog gallery_blog' style={{backgroundColor : theme.palette.primary.main, color : theme.palette.text.primary, borderColor : theme.palette.primary.main}}>
+                            {fields.length > 0 ? (
+                              <div>
+                                <div className='ImageUploaded_contain gallery_add_contain'>
+                                  <FileUploader handleChange={handleGalleryChange} name="file" types={fileTypes} multiple={true}>
+                                    <div className="DragAndDrop DragAndDropGallery" >
+                                      <span className="logoUploadImage">
+                                        <CollectionsIcon />
+                                      </span>
+                                      Télécharger ou glisser des photos ici (jpeg, png)
+                                    </div>
+                                  </FileUploader>
+                                </div>
+                                <Reorder.Group values={fields} onReorder={handleReorderGallery} className='gallery_contain' style={{borderColor: theme.palette.primary.third}}>
+                                  {fields.map((image, index) => (
+                                    <Reorder.Item
+                                      value={image}
+                                      key={image.name}
+                                      onDragStart={() => setActive(index)}
+                                      className="ImageUploaded_contain gallery_box"
+                                    >
+                                      <img className='Image_uploaded image_gallery' src={image.url} alt={image.alt} />
+                                      <p className='titlePage gallery_text'><b>{image.name}</b></p>
+                                      <p className='user_id titlePage gallery_text' style={{color: theme.palette.text.secondary}}>{image.alt}</p>
+
+                                      <div className='flex_contain  flex_gallery'>
+                                        <p style={{color: theme.palette.text.secondary}}>{image.size} Ko</p>
+
+                                        <div className='button_contain'>
+
+                                        <SecondaryButton theme={theme} className="button_image_blog" type="submit" variant="contained" onClick={() => handleDeleteGallery(index)}>
+                                          <DeleteIcon/>
+                                        </SecondaryButton>
+                                        </div>
+                                        <a href={image.url} target="_blank">
+                                          <OpenInNewOutlinedIcon style={{color: theme.palette.text.primary}}/>
+                                        </a> 
+                                      </div>
+                                    </Reorder.Item>
+                                  ))}
+                                </Reorder.Group>
+                              </div>
+                            ) : (
+                              <FileUploader handleChange={handleGalleryChange} name="file" types={fileTypes} multiple={true}>
+                                <div className="DragAndDrop DragAndDropField">
+                                  <span className="logoUploadImage">
+                                    <CollectionsIcon />
+                                  </span>
+                                  Télécharger ou glisser des photos ici (jpeg, png)
+                                </div>
+                              </FileUploader>
+                            )}
+                          </div>
+                        );
+
+
+
+
+
+
+
+
                     case 'text':
                         return (<div>
                                   <input className='input_text_blog' type='text' style={{backgroundColor : theme.palette.primary.main, color : theme.palette.text.primary, borderColor : theme.palette.primary.main}} onChange={handleTextChange} value={slugValueChange}/>                               
                                 </div>
                               );
+
+
+
+
+
+
+
+
+
                     case 'date':
                       return (<div className='blogfield_contain_auto'>
                                 <div style={{backgroundColor:  theme.palette.primary.main , borderRadius:"0.5rem"}}>
@@ -607,6 +910,14 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
                                 </div>
                               </div>
                             );
+
+
+
+
+
+
+
+
                     case 'video':
                       return (
                         <div className='image_blog' style={{backgroundColor : theme.palette.primary.main, color : theme.palette.text.primary, borderColor : theme.palette.primary.main}}>
@@ -640,7 +951,7 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
                             ))
                           ) : (
                             <FileUploader handleChange={handleVideoChange} name="file" types={videoTypes} multiple={false}>
-                              <div className="DragAndDrop">
+                              <div className="DragAndDrop DragAndDropField">
                                 <span className="logoUploadImage">
                                   <VideocamIcon />
                                 </span>
@@ -650,6 +961,16 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
                           )}
                         </div>
                       );
+
+
+
+
+
+
+
+
+
+
                     case 'multiReference' :
                       return (
                         <div>

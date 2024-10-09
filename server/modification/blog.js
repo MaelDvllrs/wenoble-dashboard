@@ -107,6 +107,16 @@ router.get('/getCollectionRef', (req, res) => {
 });
 
 
+
+
+
+
+
+
+
+
+
+
 const storageImage = multer.diskStorage({
   destination: function (req, file, cb) {
       cb(null, path.join(__dirname, '..', 'images', 'blog_image'));
@@ -117,6 +127,12 @@ const storageImage = multer.diskStorage({
       cb(null, uniqueName);
   }
 });
+
+
+
+
+
+
 
 const uploadImage = multer({ storage: storageImage });
 
@@ -151,6 +167,72 @@ router.post('/createImagesBlog', uploadImage.single('image'), (req, res) => {
 })
 
 
+
+
+
+
+const storageGallery = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(__dirname, '..', 'images', 'blog_gallery'));
+  },
+  filename: function (req, file, cb) {
+    const fileExtension = path.extname(file.originalname);
+    const uniqueName = uuidv4() + fileExtension;
+    cb(null, uniqueName);
+  }
+});
+
+const uploadGallery = multer({ storage: storageGallery });
+
+
+
+
+
+
+
+router.post('/createGalleryBlog', uploadGallery.single('image'), (req, res) => {
+
+  if (!req.file) {
+    console.error('Aucune image n\'a été téléchargée.');
+    return res.status(400).send('Aucune image n\'a été téléchargée.');
+  }
+
+  const id_photo = path.basename(req.file.filename, path.extname(req.file.filename));
+  const id_blog_page = req.body.id_blog_page;
+  const id_config = req.body.id_config;
+  const name = req.body.name;
+  const alt = req.body.alt;
+  const size = req.body.size;
+  const extension = path.extname(req.file.filename);
+  
+  const src_image = id_photo + extension;
+
+  const SQL = 'INSERT INTO blog_field_image (id_image, id_blog_page, id_config, src_image, name_image, alt_image, size) VALUES (?, ?, ?, ?, ?, ?, ?)';
+  const Values = [id_photo, id_blog_page, id_config, src_image, name, alt, size];
+
+  db.query(SQL, Values, (err, results) => {
+    if (err) {
+      console.error('Database query error:', err);
+      return res.status(500).send({ error: err });
+    }
+
+    res.status(200).send('Image sauvegardée avec succès');
+  });
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 const storageVideo = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, path.join(__dirname,  '..', 'images', 'blog_video'));
@@ -159,6 +241,15 @@ const storageVideo = multer.diskStorage({
     cb(null, file.originalname);
   }
 });
+
+
+
+
+
+
+
+
+
 
 const uploadVideo = multer({ storage: storageVideo });
 

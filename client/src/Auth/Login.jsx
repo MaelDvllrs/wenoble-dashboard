@@ -4,12 +4,12 @@ import {useNavigate} from 'react-router-dom';
 import Axios from 'axios';
 import {jwtDecode} from 'jwt-decode';
 import Cookies from 'js-cookie';
-import config from "../../config";
-import { IsAuthenticated, IsAuthenticatedAdmin } from "../../Auth/ProtectedRoutes";
+import config from "../config";
+import { IsAuthenticated, IsAuthenticatedAdmin } from "./ProtectedRoutes";
 import CryptoJS from 'crypto-js'; 
-import { LoginTextField, LoadingDefaultButton, SecondaryButton, DefaultSwitch } from '../../Theme/element';
+import { LoginTextField, LoadingDefaultButton, SecondaryButton, DefaultSwitch } from '../Theme/element';
 import { useTheme } from '@mui/material/styles';
-import backgroundLogin from '../../assets/background/backgroundLogin.svg';
+import backgroundLogin from '../assets/background/backgroundLogin.svg';
 
 
 const Login = () => {
