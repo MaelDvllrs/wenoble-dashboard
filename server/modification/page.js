@@ -344,10 +344,11 @@ router.post('/updateImagesPage', uploadUpdateImage.single('image'), (req, res) =
       return res.status(500).send({ error: err });
     }
 
-    console.log(results);
+    console.log(results[0].src_image);
 
-    if (results.src_image != null) {
-      const imageDirectory = path.join(__dirname, '..', 'images', 'blog_image');
+    if (results[0].src_image != null) {
+      console.log('Suppression de l\'ancienne image');
+      const imageDirectory = path.join(__dirname, '..', 'images', 'page_image');
       const imagePath = path.join(imageDirectory, results[0].src_image);
 
       fs.unlink(imagePath, (err) => {
@@ -368,6 +369,70 @@ router.post('/updateImagesPage', uploadUpdateImage.single('image'), (req, res) =
   
       res.status(200).send('Image sauvegardée avec succès');
     });
+  });
+});
+
+router.delete('/deletePageData', (req, res) => {
+
+  const id_page = req.body.id_page;
+  const data = req.body.data;
+
+
+  data.forEach((element) => {
+    const id_config = element.id_config;
+    const type = element.type;
+
+    switch (type) {    
+      case 'images':
+
+        const SQLImage = 'SELECT src_image FROM page_photo WHERE id_page = ? AND id_config = ?';
+        const ValuesImage = [id_page, id_config];
+
+        db.query(SQLImage, ValuesImage, (err, results) => {
+          if (err) {
+            console.error('Database query error:', err);
+            return res.status(500).send({ error: err });
+          }
+
+
+          const imageDirectory = path.join(__dirname, '..', 'images', 'page_image');
+          const imagePath = path.join(imageDirectory, results[0].src_image);
+
+          fs.unlink(imagePath, (err) => {
+            if (err) {
+              console.error('Erreur lors de la suppression de l\'image :', err);
+            }
+          });
+
+          const SQL = 'UPDATE page_photo SET  src_image = NULL, name_image = NULL, alt_image = NULL, size = NULL  WHERE id_page = ? AND 	id_config = ?';
+          const Values = [id_page, id_config];
+
+          db.query(SQL, Values, (err, results) => {
+            if (err) {
+              console.error('Database query error:', err);
+              return res.status(500).send({ error: err });
+            }
+            res.status(200).send('Image supprimée avec succès');
+          });
+        });
+        break;
+      case 'video':
+        const SQLVideo = 'DELETE FROM page_video WHERE id_page = ? AND id_config = ?';
+        const ValuesVideo = [id_page, id_config];
+
+        db.query(SQLVideo, ValuesVideo, (err, results) => {
+          if (err) {
+            console.error('Database query error:', err);
+            return res.status(500).send({ error: err });
+          }
+          res.status(200).send('Vidéo supprimée avec succès');
+        });
+        break;
+
+      default:
+          break;   
+      
+    } 
   });
 });
 

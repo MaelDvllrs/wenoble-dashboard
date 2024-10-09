@@ -244,6 +244,7 @@ const EditPage = () => {
             }
 
             if (deletedItems.length > 0) {
+                console.log(deletedItems); 
                 try {
                     await Axios.delete(`${apiUrl}/deletePageData`, {
                         data: {
