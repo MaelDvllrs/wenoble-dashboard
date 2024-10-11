@@ -33,6 +33,9 @@ const CreatePageBlog = () => {
 
     const [savingPage, setSavingPage] = useState(false);
 
+    const [titleFieldMissed , setTitleFieldMissed] = useState(false);
+    const [slugFieldMissed , setSlugFieldMissed] = useState(false);
+
     
     const navigate = useNavigate();
 
@@ -120,14 +123,36 @@ const CreatePageBlog = () => {
     
 
     const handleSave = async (status) => {
-        
-
-        if (blogData.text.length === 0) {
-            console.error('Valeur manquante');
-            return;
-        };
 
         setSavingPage(true);
+
+        let titleMissed = false;
+        let slugMissed = false;
+        
+        
+        blogData.text.forEach(text => {
+            console.log(text.id_config);
+            if (text.id_config === 'title') {
+                titleMissed = true;   
+            }
+            if(text.id_config === 'slug'){
+                slugMissed = true;
+            }
+        });
+
+        if (!titleMissed) {
+            setTitleFieldMissed(true);
+        }
+
+        if (!slugMissed) {
+            setSlugFieldMissed(true);
+        }
+
+        if (!titleMissed || !slugMissed) {
+            setSavingPage(false);
+            return;
+        }
+
 
         // CREER LA PAGE
 
@@ -254,14 +279,20 @@ const CreatePageBlog = () => {
                 </div>
             </div>
             <div className="Blog_creation_field_contain">
-                <div className="blogField_contain">
+                <div className={titleFieldMissed ? "blogField_contain missed_field" : "blogField_contain"}>
                     <p style={{color: theme.palette.text.secondary}}>Titre principal *</p>
                     <BlogField type='text' id_config="title" onChange={handleBlogDataChange}/>
                 </div>
-                <div className="blogField_contain">
+                {titleFieldMissed && (   
+                    <p className="missed_field_text">Champs obligatoires</p>
+                )}
+                <div className={slugFieldMissed ? "blogField_contain missed_field" : "blogField_contain"}>
                     <p style={{color: theme.palette.text.secondary}}>Slug *</p>
                     <BlogField type='text' id_config="slug" onChange={handleBlogDataChange} slugValue={slugValue}/>
                 </div>
+                {slugFieldMissed && (   
+                    <p className="missed_field_text">Champs obligatoires</p>
+                )}
                 <div className="line_horizontal" style={{backgroundColor: theme.palette.text.secondary}}></div>
                 {DecodeConfigblog.blogConfig && DecodeConfigblog.blogConfig.map((blogItem) => (
                   <div key={blogItem.id_config} className="blogField_contain">

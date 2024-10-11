@@ -624,11 +624,7 @@ const EditPageBlog = () => {
                         </Popup>
                     )}
 
-                    {savingPage && (   
-                        <Popup theme={theme}>
-                            <CircularProgress sx={{color:"rgb(5, 65, 183)"}}/>
-                        </Popup>
-                    )}
+                    
                    
 
                   </div>
@@ -636,6 +632,11 @@ const EditPageBlog = () => {
                 </div>
               ) : null
             }
+            {savingPage && (   
+                <Popup theme={theme}>
+                    <CircularProgress sx={{color:"rgb(5, 65, 183)"}}/>
+                </Popup>
+            )}
         </div>
 
     )
