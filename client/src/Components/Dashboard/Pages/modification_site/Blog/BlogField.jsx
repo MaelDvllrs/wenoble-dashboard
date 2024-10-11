@@ -362,17 +362,14 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
 
 
 
+    const [imagesAdded, setImagesAdded] = useState(false);
+
     useEffect(() => {
-
-      // Vérifiez si dataValue existe et si le type est 'gallery'
-      if (dataValue && Object.keys(dataValue).length > 0 && type === 'gallery') {
-
-
-        
+      // Vérifiez si dataValue existe, si le type est 'gallery' et si les images n'ont pas déjà été ajoutées
+      if (dataValue && Object.keys(dataValue).length > 0 && type === 'gallery' && !imagesAdded) {
         const galleryArray = JSON.parse(dataValue.gallery);
-
+  
         galleryArray.forEach(image => {
-
           const imageUpload = {
             alt: image.alt,
             data: image.data,
@@ -381,14 +378,16 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
             src: image.src_photo,
             url: apiUrl + '/media/blogGallery/' + image.src_photo,
             type: 'gallery',
-            create : true
+            create: true
           };
-
+  
           append(imageUpload);
         });
-
+  
+        // Marquez les images comme ajoutées
+        setImagesAdded(true);
       }
-    }, [dataValue]);
+    }, [dataValue, type, imagesAdded, append, apiUrl]);
 
     
 
