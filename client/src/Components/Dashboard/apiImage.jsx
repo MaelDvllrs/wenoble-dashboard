@@ -631,9 +631,12 @@ export const updateGalleryBlog = async (id, gallery) => {
     const formData = new FormData();
     let galleryCreate = false;
 
+
     if(gallery.gallery.length === 0){
       galleryCreate = true;
     }
+
+    
 
     // Ajouter chaque image au formulaire de données sous le même nom de champ
     gallery.gallery.forEach((field, index) => {
@@ -646,8 +649,6 @@ export const updateGalleryBlog = async (id, gallery) => {
         formData.append(`size_${index}`, field.size || '');
 
       } else {
-        console.log(field);
-        console.log(index);
         formData.append('gallery', field.data, field.name);
         formData.append(`alt_${index}`, field.alt || '');
       }
@@ -659,6 +660,8 @@ export const updateGalleryBlog = async (id, gallery) => {
     formData.append('id_blog_page', id);
     formData.append('id_config', gallery.id_config);
     formData.append('type', gallery.type);
+
+    
 
     if(galleryCreate){
       await Axios.post(`${apiUrl}/updateGalleryBlog`, formData, {
@@ -674,12 +677,13 @@ export const updateGalleryBlog = async (id, gallery) => {
         }
       });
     }
-
+  
   } catch (error) {
     console.error('Message d\'erreur du serveur:', error);
     // Propager l'erreur
     throw error;
   }
+  
 }
 
 

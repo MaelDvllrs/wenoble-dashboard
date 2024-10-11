@@ -827,6 +827,7 @@ router.post('/updateGalleryBlog', uploadUpdateGallery.array('gallery'), (req, re
     return res.status(400).send('Aucune image n\'a été téléchargée.');
   }
 
+  
   // Transformer les valeurs reçues en un tableau d'objets JSON
   const galleryArray = [];
   const keys = Object.keys(req.body);
@@ -875,6 +876,7 @@ router.post('/updateGalleryBlog', uploadUpdateGallery.array('gallery'), (req, re
     const oldGallery = JSON.parse(results[0].gallery);
     const newGallery = galleryArray;
 
+
     // Fonction pour comparer deux objets image
     function isImageEqual(image1, image2) {
       return image1.src_photo === image2.src_photo;
@@ -900,11 +902,20 @@ router.post('/updateGalleryBlog', uploadUpdateGallery.array('gallery'), (req, re
     const filesInfoJson = JSON.stringify(newGallery);
 
 
+    let SQLUPDATE;
+    let ValuesUPDATE;
 
-    const SQL = 'UPDATE blog_field_gallery SET gallery = ?, size = ? WHERE id_blog_page = ? AND id_config = ?';
-    const Values = [filesInfoJson, totalSize, id_blog_page, id_config];
-  
-      db.query(SQL, Values, (err, results) => {
+    if (galleryArray.length === 0) {
+      
+      SQLUPDATE = 'DELETE FROM blog_field_gallery WHERE id_blog_page = ? AND id_config = ?';
+      ValuesUPDATE = [id_blog_page, id_config];
+
+    } else {
+      
+      SQLUPDATE = 'UPDATE blog_field_gallery SET gallery = ?, size = ? WHERE id_blog_page = ? AND id_config = ?';
+      ValuesUPDATE = [filesInfoJson, totalSize, id_blog_page, id_config];
+    }
+      db.query(SQLUPDATE, ValuesUPDATE, (err, results) => {
         if (err) {
           console.error('Database query error:', err);
           return res.status(500).send({ error: err });
