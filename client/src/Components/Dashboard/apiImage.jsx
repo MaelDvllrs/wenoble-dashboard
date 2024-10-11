@@ -312,17 +312,18 @@ export const createGalleryBlog = async (fields, blogPageId) => {
   try {
     const formData = new FormData();
 
+    
+
     // Ajouter chaque image au formulaire de données sous le même nom de champ
     fields.gallery.forEach((field, index) => {
       formData.append('gallery', field.data, field.name);
+      formData.append(`alt_${index}`, field.alt || '');
     });
 
     // Ajouter les autres champs nécessaires
     formData.append('id_blog_page', blogPageId);
     formData.append('id_config', fields.id_config);
     formData.append('type', fields.type);
-
-    console.log(fields);
 
     // Envoyer le formulaire de données à l'API
     await Axios.post(`${apiUrl}/createGalleryBlog`, formData, {
@@ -617,6 +618,63 @@ export const updateMultiReferenceBlog = async (id, multiReference) => {
         }
       });
     }
+  } catch (error) {
+    console.error('Message d\'erreur du serveur:', error);
+    // Propager l'erreur
+    throw error;
+  }
+}
+
+
+export const updateGalleryBlog = async (id, gallery) => {
+  try {
+    const formData = new FormData();
+    let galleryCreate = false;
+
+    if(gallery.gallery.length === 0){
+      galleryCreate = true;
+    }
+
+    // Ajouter chaque image au formulaire de données sous le même nom de champ
+    gallery.gallery.forEach((field, index) => {
+
+      if(field.create){
+        galleryCreate = true;
+        formData.append(`alt_${index}`, field.alt || '');
+        formData.append(`name_${index}`, field.name || '');
+        formData.append(`src_${index}`, field.src || '');
+        formData.append(`size_${index}`, field.size || '');
+
+      } else {
+        console.log(field);
+        console.log(index);
+        formData.append('gallery', field.data, field.name);
+        formData.append(`alt_${index}`, field.alt || '');
+      }
+    });
+
+
+
+    // Ajouter les autres champs nécessaires
+    formData.append('id_blog_page', id);
+    formData.append('id_config', gallery.id_config);
+    formData.append('type', gallery.type);
+
+    if(galleryCreate){
+      await Axios.post(`${apiUrl}/updateGalleryBlog`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+    } else {
+      await Axios.post(`${apiUrl}/createGalleryBlog`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+    }
+
   } catch (error) {
     console.error('Message d\'erreur du serveur:', error);
     // Propager l'erreur

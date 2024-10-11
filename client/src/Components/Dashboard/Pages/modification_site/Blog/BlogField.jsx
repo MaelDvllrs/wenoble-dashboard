@@ -262,7 +262,6 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
           url: dataValue.data, // Utilisez les données d'image en base64 comme URL
           size: dataValue.size, // Utilisez la taille de l'image de dataValue
           type: 'images', // Définissez le type comme 'images'
-
         }];
     
         // Initialisez l'état imagesUploaded avec les données de l'image
@@ -303,32 +302,41 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
       control,
       name: "images",
     });
+
     const [active, setActive] = useState(0);
 
+    
+    
+    
+    
     const handleGalleryChange = async (file, addImage = true) => {
-      console.log(fields);
 
       const files = Array.from(file);
 
       const newImages = await Promise.all(files.map(async (file) => {
-        if (file instanceof File) {
-          const fileCompress = await compressImage(file);
-          return {
-            data: fileCompress,
-            name: file.name,
-            alt: file.name,
-            url: URL.createObjectURL(file),
-            size: (fileCompress.size / 1024).toFixed(0),
-            create: createBoolImage
-          };
+
+        if(!file.create) {
+          if (file instanceof File) {
+            const fileCompress = await compressImage(file);
+            return {
+              data: fileCompress,
+              name: file.name,
+              alt: file.name,
+              url: URL.createObjectURL(file),
+              size: (fileCompress.size / 1024).toFixed(0),
+            };
+          } else {
+            console.error("Aucun fichier n'a été téléchargé.");
+            return null;
+          }
         } else {
-          console.error("Aucun fichier n'a été téléchargé.");
-          return null;
+          return file;
         }
+        
       }));
 
       // Filtrez les images nulles
-      
+
       const validNewImages = newImages.filter(image => image !== null);
 
 
@@ -345,31 +353,44 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
         const data = { gallery:validNewImages, id_config: id_config, type: 'gallery' };
         onChange({ data: data });
       }
-
-
     };
 
+
+
+
+
+
+
+
     useEffect(() => {
+
       // Vérifiez si dataValue existe et si le type est 'gallery'
       if (dataValue && Object.keys(dataValue).length > 0 && type === 'gallery') {
-        // Préparez les données de l'image pour l'état initial de imagesUploaded
-        const initialGallery = dataValue.map((dataValue) => ({
-          id_blog_page: dataValue.id_blog_page || id_blog_page, // Utilisez id_blog_page de dataValue ou celui passé en prop
-          id_config: dataValue.id_config || id_config, // Utilisez id_config de dataValue ou celui passé en prop
-          data: dataValue.data, // Utilisez les données d'image en base64 de dataValue
-          name: dataValue.name, // Utilisez le nom de l'image de dataValue
-          alt: dataValue.alt, // Utilisez le texte alternatif de l'image de dataValue
-          url: dataValue.data, // Utilisez les données d'image en base64 comme URL
-          size: dataValue.size, // Utilisez la taille de l'image de dataValue
-          type: 'images', // Définissez le type comme 'images'
-        }));
 
-        // Initialisez les champs de formulaire avec les données de l'image
-        initialGallery.forEach(image => append(image));
-        setCreateBoolImage(dataValue.create);
+
+        
+        const galleryArray = JSON.parse(dataValue.gallery);
+
+        galleryArray.forEach(image => {
+
+          const imageUpload = {
+            alt: image.alt,
+            data: image.data,
+            name: image.name,
+            size: image.size,
+            src: image.src_photo,
+            url: apiUrl + '/media/blogGallery/' + image.src_photo,
+            type: 'gallery',
+            create : true
+          };
+
+          append(imageUpload);
+        });
+
       }
-    }, [dataValue, type, id_blog_page, id_config, append]);
+    }, [dataValue]);
 
+    
 
 
     function handleDeleteGallery(indexToDelete) {
@@ -377,16 +398,20 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
       remove(indexToDelete);
     
       // Récupérer les fichiers restants après suppression
+    
       const remainingFiles = fields.filter((_, index) => index !== indexToDelete).map(item => {
+        if (item.create) {
+          return item;
+        }
         return new File([item.data], item.name, { type: item.data.type });
       });
-    
+
+      
       // Appeler handleGalleryChange avec les fichiers restants et un indicateur de suppression
       handleGalleryChange(remainingFiles, false);
     }
 
     function handleReorderGallery(e) {
-      console.log(e);
       e.forEach((item, index) => {
         const activeElement = fields[active];
         if (item === activeElement) {
@@ -396,6 +421,10 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
       });
 
       const reorderedFiles = e.map(item => {
+
+        if (item.create) {
+          return item;
+        }
         const file = new File([item.data], item.name, { type: item.data.type });
         return file;
       });
@@ -413,13 +442,7 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
     
     
     
-    
-    
-    
-    
-    
-    
-    
+
     
     
     // --------------------------------VIDEO UPLOAD-----------------------------------
@@ -818,7 +841,7 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
                                           <DeleteIcon/>
                                         </SecondaryButton>
                                         </div>
-                                        <a href={image.url} target="_blank">
+                                        <a href={image.url} target="_blank" className='link_image_gallery'>
                                           <OpenInNewOutlinedIcon style={{color: theme.palette.text.primary}}/>
                                         </a> 
                                       </div>

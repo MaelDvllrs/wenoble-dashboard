@@ -111,6 +111,7 @@ app.use('/api', apiRouter);
 app.use('/media/blog', express.static(path.join(__dirname, 'images', 'blog_image')));
 app.use('/media/portfolio', express.static(path.join(__dirname, 'images', 'portfolio_image')));
 app.use('/media/page', express.static(path.join(__dirname, 'images', 'page_image')));
+app.use('/media/blogGallery', express.static(path.join(__dirname, 'images', 'blog_gallery')));
 
 
 app.listen(3002, ()=>{

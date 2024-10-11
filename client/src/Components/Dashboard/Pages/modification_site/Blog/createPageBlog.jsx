@@ -90,8 +90,6 @@ const CreatePageBlog = () => {
             setSlugValue(normalizeText(data.data.value).toLowerCase().replace(/[^\w\s]|_/g, '').replace(/\s+/g, '-'));            
           }
 
-          console.log(data);
-
           const type = data.data.type;
       
           if (isDelete) {
@@ -118,10 +116,6 @@ const CreatePageBlog = () => {
           return newData;
         });
     };
-
-    console.log(blogData);
-
-    
 
     
 

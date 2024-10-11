@@ -305,6 +305,10 @@ router.post('/updateRichTextPage', (req, res) => {
 });
 
 
+
+
+
+
 const storageImage = multer.diskStorage({
   destination: function (req, file, cb) {
       cb(null, path.join(__dirname, '..', 'images', 'page_image'));

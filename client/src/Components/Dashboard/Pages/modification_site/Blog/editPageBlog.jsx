@@ -10,7 +10,7 @@ import {DefaultButton, RedButton, SecondaryButton, Popup} from '../../../../../T
 import SaveIcon from '@mui/icons-material/Save';
 import PublishIcon from '@mui/icons-material/Publish';
 
-import { updateImageBlog, updateBlogPage, updateTextBlog, updateRichTextBlog, updateVideoBlog, updateMultiReferenceBlog } from '../../../apiImage';
+import { updateImageBlog, updateBlogPage, updateTextBlog, updateRichTextBlog, updateVideoBlog, updateMultiReferenceBlog, updateGalleryBlog } from '../../../apiImage';
 import { useTheme } from '@mui/material/styles';
 import { convertToRaw } from 'draft-js';
 import UnpublishedIcon from '@mui/icons-material/Unpublished';
@@ -60,7 +60,8 @@ const EditPageBlog = () => {
         images: [],
         richText: [],
         video: [],
-        multiReference: []
+        multiReference: [],
+        gallery: []
 
     });
 
@@ -70,7 +71,8 @@ const EditPageBlog = () => {
         images: [],
         richText: [],
         video: [],
-        multiReference: []
+        multiReference: [],
+        gallery: []
 
     });
 
@@ -128,6 +130,11 @@ const EditPageBlog = () => {
                 setBlogDataConfig(prevData => ({
                     ...prevData,
                     multiReference: [...prevData.multiReference, {id_config: blogItem.id_config}]
+                }));
+            } else if (blogItem.tab_field === 'gallery') {
+                setBlogDataConfig(prevData => ({
+                    ...prevData,
+                    gallery: [...prevData.gallery, {id_config: blogItem.id_config}]
                 }));
             }
 
@@ -225,12 +232,30 @@ const EditPageBlog = () => {
                 }
             }
 
+            for (const gallery of blogDataConfig.gallery) {
+                try{
+                    const response = await Axios.get(`${apiUrl}/getGalleryBlog`, {
+                        params: {
+                            IdBlogPage: idBlog,
+                            IdConfig: gallery.id_config
+                        }
+                    });
+
+                    if (response.data.length > 0) {
+                        allData.push(response.data[0]); 
+                    }
+                } catch (error) {
+                    console.error('Erreur lors de la récupération du texte :', error);
+                }
+            }
+
             setInfoBlogPage({ data: allData }); 
         };
         
         fetchData(); 
 
     }, [blogDataConfig, idBlog]);
+
 
 
     useEffect(() => {
@@ -292,9 +317,6 @@ const EditPageBlog = () => {
 
 
 
-
-
-
     const handleBlogDataChange = (data, isDelete = false) => {
 
 
@@ -308,7 +330,7 @@ const EditPageBlog = () => {
                 return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
             };
               
-            setSlugValue(normalizeText(data.data.value).toLowerCase().replace(/[^\w\s]|_/g, '').replace(/\s+/g, '-'));            
+            setSlugValue(normalizeText(data.data.value).toLowerCase().replace(/[^\w\s]|_/g, '').replace(/\s+/g, '-'));         
           }
       
           const type = data.data.type;
@@ -421,7 +443,6 @@ const EditPageBlog = () => {
                 try {
                     // Utiliser Promise.all pour attendre que toutes les images soient sauvegardées
                     await Promise.all(blogData.images.map(async (image) => {
-                        console.log(image)
                         await updateImageBlog(image, idBlog);
                     }));
 
@@ -436,7 +457,6 @@ const EditPageBlog = () => {
             if(blogData.video.length > 0){
                 try {
                     await Promise.all(blogData.video.map(async (video) => {
-                        console.log(video)
                         await updateVideoBlog(video, idBlog);
                     }));
                 } catch (error) {
@@ -450,6 +470,19 @@ const EditPageBlog = () => {
                 try {
                     await Promise.all(blogData.multiReference.map(async (multiReference) => {
                         await updateMultiReferenceBlog(idBlog, multiReference);
+                    }));
+                } catch (error) {
+                    console.error(error);
+                    return;
+                }
+            }
+
+            //ENREGISTRER LES GALLERIES
+
+            if(blogData.gallery.length > 0){
+                try {
+                    await Promise.all(blogData.gallery.map(async (gallery) => {
+                        await updateGalleryBlog(idBlog, gallery);
                     }));
                 } catch (error) {
                     console.error(error);

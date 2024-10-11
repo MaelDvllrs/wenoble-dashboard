@@ -284,6 +284,24 @@ router.get('/sendBlogInfoImage',apiKeyMiddleware, (req, res) => {
 });
 
 
+router.get('/sendInfoGallery', apiKeyMiddleware, (req, res) =>{
+    const id_blog_page = req.id_data;
+
+    const SQL = 'SELECT id_config, gallery FROM blog_field_gallery WHERE id_blog_page = ?';
+    const Values = [id_blog_page];
+    db.query(SQL, Values, (err, results) => {
+        if (err) {
+            return res.status(500).send({ error: err });
+        }
+        if (results.length === 0) {
+            return res.status(200).json({ message: 'Aucune gallery trouvée' });
+        }
+
+        return res.json({ gallery: results });
+    });
+})
+
+
 
 
 

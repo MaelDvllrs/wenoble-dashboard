@@ -6,6 +6,7 @@ const cors = require('cors')
 const db = require('../db')
 const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
+const { get } = require('http');
 
 
 const router = express.Router();
@@ -172,6 +173,7 @@ router.post('/createImagesBlog', uploadImage.single('image'), (req, res) => {
 
 
 const storageGallery = multer.diskStorage({
+  
   destination: function (req, file, cb) {
     cb(null, path.join(__dirname, '..', 'images', 'blog_gallery'));
   },
@@ -190,25 +192,44 @@ const uploadGallery = multer({ storage: storageGallery });
 
 
 
-router.post('/createGalleryBlog', uploadGallery.single('image'), (req, res) => {
+router.post('/createGalleryBlog', uploadGallery.array('gallery'), (req, res) => {
 
-  if (!req.file) {
+  if (!req.files) {
     console.error('Aucune image n\'a été téléchargée.');
     return res.status(400).send('Aucune image n\'a été téléchargée.');
   }
 
-  const id_photo = path.basename(req.file.filename, path.extname(req.file.filename));
+
   const id_blog_page = req.body.id_blog_page;
   const id_config = req.body.id_config;
-  const name = req.body.name;
-  const alt = req.body.alt;
-  const size = req.body.size;
-  const extension = path.extname(req.file.filename);
-  
-  const src_image = id_photo + extension;
 
-  const SQL = 'INSERT INTO blog_field_image (id_image, id_blog_page, id_config, src_image, name_image, alt_image, size) VALUES (?, ?, ?, ?, ?, ?, ?)';
-  const Values = [id_photo, id_blog_page, id_config, src_image, name, alt, size];
+  const filesInfo = [];
+  let totalsize = 0;
+
+  req.files.forEach((file, index) => {
+    const extension = path.extname(file.filename);
+    const src_photo = path.basename(file.filename, path.extname(file.filename)) + extension;
+    const name = file.originalname;
+    const alt = req.body[`alt_${index}`];
+    const size = Math.round(file.size / 1024);
+
+    totalsize += size;
+
+    const fileInfo = {
+      src_photo,
+      name,
+      alt,
+      size
+    };
+
+    filesInfo.push(fileInfo);
+  
+  });
+
+  const filesInfoJson = JSON.stringify(filesInfo);
+
+  const SQL = 'INSERT INTO blog_field_gallery (id_blog_page, id_config, gallery , size) VALUES (?, ?, ?, ?)';
+  const Values = [id_blog_page, id_config, filesInfoJson, totalsize];
 
   db.query(SQL, Values, (err, results) => {
     if (err) {
@@ -508,6 +529,28 @@ router.get('/getImageBlog', (req, res) => {
 });
 
 
+router.get ('/getGalleryBlog',  (req, res) => {
+  const sentIdBlogPage = req.query.IdBlogPage;
+  const sentIdConfig = req.query.IdConfig;
+
+  const SQL = 'SELECT id_config, gallery, size FROM blog_field_gallery WHERE id_blog_page = ? AND id_config = ?'
+  const Values = [sentIdBlogPage, sentIdConfig]
+
+  db.query(SQL, Values, (err, results) => {
+    if (err) {
+      res.send({ error: err })
+      return;
+    }
+
+    const gallery_blog = results;
+
+    res.status(200).json(gallery_blog);
+  });
+});
+
+
+
+
 router.get('/getVideoBlog', (req, res) => {
   const sentIdBlogPage = req.query.IdBlogPage;
   const sentIdConfig = req.query.IdConfig;
@@ -775,6 +818,111 @@ router.post('/updateImagesBlog', uploadUpdateImage.single('image'), (req, res) =
 });
 
 
+const uploadUpdateGallery = multer({ storage: storageGallery });
+
+
+router.post('/updateGalleryBlog', uploadUpdateGallery.array('gallery'), (req, res) => {
+  if (!req.files) {
+    console.error('Aucune image n\'a été téléchargée.');
+    return res.status(400).send('Aucune image n\'a été téléchargée.');
+  }
+
+  // Transformer les valeurs reçues en un tableau d'objets JSON
+  const galleryArray = [];
+  const keys = Object.keys(req.body);
+  const numImages = keys.filter(key => key.startsWith('alt_')).length;
+  let totalSize = 0;  
+
+  for (let i = 0; i < numImages; i++) {
+    const image = {
+      src_photo: req.body[`src_${i}`] || '',
+      name: req.body[`name_${i}`] || '',
+      alt: req.body[`alt_${i}`] || '',
+      size: parseInt(req.body[`size_${i}`], 10) || 0
+    };  
+
+    // Si l'image a des informations manquantes, les compléter avec req.files
+    if (!image.src_photo || !image.name || !image.size) {
+      const file = req.files.find(f => f.originalname === image.alt);
+      if (file) {
+        image.src_photo = file.filename;
+        image.name = file.originalname;
+        image.size = Math.round(file.size / 1024);
+      }
+    } 
+
+    // Ajouter la taille de l'image à la taille totale
+    totalSize += image.size;  
+
+    galleryArray.push(image);
+  } 
+
+
+  
+  const id_blog_page = req.body.id_blog_page;
+  const id_config = req.body.id_config;
+
+  const SQL = 'SELECT gallery, size FROM blog_field_gallery WHERE id_blog_page = ? AND id_config = ?';
+  const Values = [id_blog_page, id_config];
+
+  db.query(SQL, Values, (err, results) => {
+    if (err) {
+      console.error('Database query error:', err);
+      return res.status(500).send({ error: err });
+    }
+
+
+    const oldGallery = JSON.parse(results[0].gallery);
+    const newGallery = galleryArray;
+
+    // Fonction pour comparer deux objets image
+    function isImageEqual(image1, image2) {
+      return image1.src_photo === image2.src_photo;
+    }
+
+    // Trouver les images qui étaient présentes dans oldGallery mais qui ne sont plus présentes dans newGallery
+    const removedImages = oldGallery.filter(oldImage => 
+      !newGallery.some(newImage => isImageEqual(oldImage, newImage))
+    );
+
+
+    removedImages.forEach(image => {
+      const imagePath = path.join(__dirname, '..', 'images', 'blog_gallery', image.src_photo);
+      fs.unlink(imagePath, (
+        err => {
+          if (err) {
+            console.error('Erreur lors de la suppression de l\'image :', err);
+          }
+        }
+      ));
+    });
+
+    const filesInfoJson = JSON.stringify(newGallery);
+
+
+
+    const SQL = 'UPDATE blog_field_gallery SET gallery = ?, size = ? WHERE id_blog_page = ? AND id_config = ?';
+    const Values = [filesInfoJson, totalSize, id_blog_page, id_config];
+  
+      db.query(SQL, Values, (err, results) => {
+        if (err) {
+          console.error('Database query error:', err);
+          return res.status(500).send({ error: err });
+        }
+      
+        res.status(200).send('Galerie sauvegardée avec succès');
+      });
+  });
+});
+    
+
+
+
+ 
+
+
+
+
 
 
 const uploadUpdateVideo = multer({ storage: storageVideo });
@@ -977,6 +1125,30 @@ router.delete('/deleteBlogPage', (req, res) => {
             SQL = `DELETE FROM blog_field_video WHERE id_blog_page = ? AND id_config = ?`;
             VALUES = [idBlogPage, field.id_config];
             break;
+          
+            case 'gallery':
+              const SQLGallery = `SELECT gallery FROM blog_field_gallery WHERE id_blog_page = ? AND id_config = ?`;
+              const VALUESGallery = [idBlogPage, field.id_config];
+              db.query(SQLGallery, VALUESGallery, (err, results) => {
+                if (err) {
+                  console.log('Database query error:', err);
+                  return reject(err);
+                }
+                if (results[0]) {
+                  const gallery = JSON.parse(results[0].gallery);
+                  console.log(gallery);
+                  gallery.forEach(image => {
+                    fs.unlink(path.join(__dirname, '..', 'images', 'blog_gallery', image.src_photo), (err) => {
+                      if (err) {
+                        console.error('Erreur lors de la suppression de l\'image :', err);
+                      }
+                    });
+                  });
+                }
+              });
+              SQL = `DELETE FROM blog_field_gallery WHERE id_blog_page = ? AND id_config = ?`;
+              VALUES = [idBlogPage, field.id_config];
+              break;
         }
 
         db.query(SQL, VALUES, (err, results) => {
