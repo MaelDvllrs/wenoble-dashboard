@@ -66,6 +66,9 @@ const whitelist =
   'https://www.giltirletphotography.fr',
 
   'https://shine-photographie.webflow.io',
+
+
+  'https://la-plume-au-carre.webflow.io'
 ];
 
 // Configuration de CORS
