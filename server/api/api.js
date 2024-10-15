@@ -284,7 +284,7 @@ router.get('/sendBlogInfoImage',apiKeyMiddleware, (req, res) => {
 });
 
 
-router.get('/sendInfoGallery', apiKeyMiddleware, (req, res) =>{
+router.get('/sendBlogInfoGallery', apiKeyMiddleware, (req, res) =>{
     const id_blog_page = req.id_data;
 
     const SQL = 'SELECT id_config, gallery FROM blog_field_gallery WHERE id_blog_page = ?';
