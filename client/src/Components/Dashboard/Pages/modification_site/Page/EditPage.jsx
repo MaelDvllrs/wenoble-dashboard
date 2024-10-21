@@ -55,8 +55,13 @@ const EditPage = () => {
 
     useEffect(() => {
         if(InfoConfigPage !== null && typeof InfoConfigPage === 'string'){
+            setSavingPage(true);
             const decodedConfig = jwtDecode(InfoConfigPage);
+            console.log(decodedConfig.page.length);
             setDecodeConfigPage(decodedConfig);
+            if (decodedConfig.page.length === 0) {
+                setSavingPage(false);
+            }
         }
     }, [InfoConfigPage]);
 
@@ -137,9 +142,11 @@ const EditPage = () => {
                 }
             }
             setInfoItemspage({ data: allData });
+            setSavingPage(false);
         };
         
         fetchData(); 
+        
     }, [pageDataConfig, idPage]);
 
 

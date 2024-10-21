@@ -14,6 +14,7 @@ import { useTheme } from '@mui/material/styles';
 import { convertToRaw } from 'draft-js';
 import CircularProgress from '@mui/material/CircularProgress';
 import Tooltip from '@mui/material/Tooltip';
+import Field from "../Fields/fields";
 
 
 
@@ -281,14 +282,14 @@ const CreatePageBlog = () => {
             <div className="Blog_creation_field_contain">
                 <div className={titleFieldMissed ? "blogField_contain missed_field" : "blogField_contain"}>
                     <p style={{color: theme.palette.text.secondary}}>Titre principal *</p>
-                    <BlogField type='text' id_config="title" onChange={handleBlogDataChange}/>
+                    <Field type='text' id_config="title" onChange={handleBlogDataChange}/>
                 </div>
                 {titleFieldMissed && (   
                     <p className="missed_field_text">Champs obligatoires</p>
                 )}
                 <div className={slugFieldMissed ? "blogField_contain missed_field" : "blogField_contain"}>
                     <p style={{color: theme.palette.text.secondary}}>Slug *</p>
-                    <BlogField type='text' id_config="slug" onChange={handleBlogDataChange} slugValue={slugValue}/>
+                    <Field type='text' id_config="slug" onChange={handleBlogDataChange} slugValue={slugValue}/>
                 </div>
                 {slugFieldMissed && (   
                     <p className="missed_field_text">Champs obligatoires</p>
@@ -297,7 +298,7 @@ const CreatePageBlog = () => {
                 {DecodeConfigblog.blogConfig && DecodeConfigblog.blogConfig.map((blogItem) => (
                   <div key={blogItem.id_config} className="blogField_contain">
                     <p style={{ color: theme.palette.text.secondary }}>{blogItem.name_field}</p>
-                    <BlogField
+                    <Field
                       id_blog_page={id}
                       type={blogItem.tab_field}
                       id_config={blogItem.id_config}

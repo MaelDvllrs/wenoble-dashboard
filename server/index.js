@@ -68,7 +68,9 @@ const whitelist =
   'https://shine-photographie.webflow.io',
 
 
-  'https://la-plume-au-carre.webflow.io'
+  'https://la-plume-au-carre.webflow.io',
+
+  'https://deko-project.webflow.io'
 ];
 
 // Configuration de CORS

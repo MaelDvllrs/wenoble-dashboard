@@ -5,6 +5,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import config from "../../../../../config";
 import {jwtDecode} from 'jwt-decode'; 
 import BlogField from "./BlogField";
+import Field from "../Fields/fields";
 import './createPageBlog.css'
 import {DefaultButton, RedButton, SecondaryButton, Popup} from '../../../../../Theme/element';
 import SaveIcon from '@mui/icons-material/Save';
@@ -574,11 +575,11 @@ const EditPageBlog = () => {
                     
                     <div className="blogField_contain">
                       <p style={{color: theme.palette.text.secondary}}>Titre principal *</p>
-                      <BlogField fieldValue={DecodeBlog.blogPage[0]} type='text' id_config="title" onChange={handleBlogDataChange}/>
+                      <Field fieldValue={DecodeBlog.blogPage[0]} type='text' id_config="title" onChange={handleBlogDataChange}/>
                     </div>
                     <div className="blogField_contain">
                       <p style={{color: theme.palette.text.secondary}}>Slug *</p>
-                      <BlogField fieldValue={DecodeBlog.blogPage[0]} type='text' id_config="slug" onChange={handleBlogDataChange} slugValue={slugValue}/>
+                      <Field fieldValue={DecodeBlog.blogPage[0]} type='text' id_config="slug" onChange={handleBlogDataChange} slugValue={slugValue}/>
                     </div>
                     <div className="line_horizontal" style={{backgroundColor: theme.palette.text.secondary}}></div>
                     {DecodeConfigblog.blogConfig && DecodeConfigblog.blogConfig.map((blogItem) => {
@@ -588,7 +589,7 @@ const EditPageBlog = () => {
                         return (
                             <div key={blogItem.id_config} className="blogField_contain">
                                 <p style={{color: theme.palette.text.secondary}}>{blogItem.name_field}</p>
-                                <BlogField 
+                                <Field 
                                     id_blog_page={id} 
                                     type={blogItem.tab_field} 
                                     id_config={blogItem.id_config} 
