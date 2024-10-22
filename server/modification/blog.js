@@ -987,76 +987,76 @@ router.post('/updateVideoBlog', uploadUpdateVideo.single('video'), (req, res) =>
 });
 
 
-//router.delete('/deleteBlogData', (req, res) => {
-//  const id_blog_page = req.body.id_blog_page;
-//
-//  req.body.data.forEach((data) => {
-//
-//    const id_config = data.id_config;
-//    const type = data.type;
-//
-//    switch(type) {
-//      case 'images':
-//        const SQLImage = `SELECT src_image FROM blog_field_image WHERE id_blog_page = ? AND id_config = ?`;
-//        const VALUESImage = [id_blog_page, id_config];
-//
-//        db.query(SQLImage, VALUESImage, (err, results) => {
-//          if (err) {
-//            console.log('Database query error:', err);
-//            return res.status(500).send({ error: err });
-//          }
-//          if (!results[0]) {
-//            return;
-//          }
-//
-//          fs.unlink(path.join(__dirname, '..', 'images', 'blog_image', results[0].src_image), (err) => {
-//            if (err) {
-//              console.error('Erreur lors de la suppression de l\'image :', err);
-//            }
-//          });
-//        });
-//
-//        const SQLdeleteImage = `DELETE FROM blog_field_image WHERE id_blog_page = ? AND id_config = ?`;
-//
-//        db.query(SQLdeleteImage, VALUESImage, (err, results) => {
-//          if (err) {
-//            console.log('Database query error:', err);
-//            return res.status(500).send({ error: err });
-//          }
-//        });
-//        break;
-//      case 'video':
-//        const SQLVideo = `SELECT src_video FROM blog_field_video WHERE id_blog_page = ? AND id_config = ?`;
-//        const VALUESVideo = [id_blog_page, id_config];
-//        db.query(SQLVideo, VALUESVideo, (err, results) => {
-//          if (err) {
-//            console.log('Database query error:', err);
-//            return res.status(500).send({ error: err });
-//          }
-//          if (!results[0]) {
-//            return;
-//          }
-//
-//          fs.unlink(path.join(__dirname, '..', 'images', 'blog_video', results[0].src_video), (err) => {
-//            if (err) {
-//              console.error('Erreur lors de la suppression de la video :', err);
-//            }
-//          });
-//        });
-//
-//        const SQLdeleteVideo = `DELETE FROM blog_field_video WHERE id_blog_page = ? AND id_config = ?`;
-//
-//        db.query(SQLdeleteVideo, VALUESVideo, (err, results) => {
-//          if (err) {
-//            console.log('Database query error:', err);
-//            return res.status(500).send({ error: err });
-//          }
-//        });
-//        break;
-//    }
-//  });
-//  res.status(200).send({ message: 'Données supprimées avec succès'});
-//});
+router.delete('/deleteBlogData', (req, res) => {
+  const id_blog_page = req.body.id_blog_page;
+
+  req.body.data.forEach((data) => {
+
+    const id_config = data.id_config;
+    const type = data.type;
+
+    switch(type) {
+      case 'images':
+        const SQLImage = `SELECT src_image FROM blog_field_image WHERE id_blog_page = ? AND id_config = ?`;
+        const VALUESImage = [id_blog_page, id_config];
+
+        db.query(SQLImage, VALUESImage, (err, results) => {
+          if (err) {
+            console.log('Database query error:', err);
+            return res.status(500).send({ error: err });
+          }
+          if (!results[0]) {
+            return;
+          }
+
+          fs.unlink(path.join(__dirname, '..', 'images', 'blog_image', results[0].src_image), (err) => {
+            if (err) {
+              console.error('Erreur lors de la suppression de l\'image :', err);
+            }
+          });
+        });
+
+        const SQLdeleteImage = `DELETE FROM blog_field_image WHERE id_blog_page = ? AND id_config = ?`;
+
+        db.query(SQLdeleteImage, VALUESImage, (err, results) => {
+          if (err) {
+            console.log('Database query error:', err);
+            return res.status(500).send({ error: err });
+          }
+        });
+        break;
+      case 'video':
+        const SQLVideo = `SELECT src_video FROM blog_field_video WHERE id_blog_page = ? AND id_config = ?`;
+        const VALUESVideo = [id_blog_page, id_config];
+        db.query(SQLVideo, VALUESVideo, (err, results) => {
+          if (err) {
+            console.log('Database query error:', err);
+            return res.status(500).send({ error: err });
+          }
+          if (!results[0]) {
+            return;
+          }
+
+          fs.unlink(path.join(__dirname, '..', 'images', 'blog_video', results[0].src_video), (err) => {
+            if (err) {
+              console.error('Erreur lors de la suppression de la video :', err);
+            }
+          });
+        });
+
+        const SQLdeleteVideo = `DELETE FROM blog_field_video WHERE id_blog_page = ? AND id_config = ?`;
+
+        db.query(SQLdeleteVideo, VALUESVideo, (err, results) => {
+          if (err) {
+            console.log('Database query error:', err);
+            return res.status(500).send({ error: err });
+          }
+        });
+        break;
+    }
+  });
+  res.status(200).send({ message: 'Données supprimées avec succès'});
+});
 
 
 
