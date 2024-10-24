@@ -3,13 +3,6 @@ import config from '../../config';
 import imageCompression from 'browser-image-compression';
 
 
-
-
-
-
-
-
-
 const apiUrl = config.apiUrl; 
 
 
@@ -86,7 +79,7 @@ export const saveImagesPortfolio = async (fields) => {
   }
 };
 
-export const deleteImage = async (id_photo, type_photo, imageName) => {
+export const deleteImagePortfolio = async (id_photo, type_photo, imageName) => {
   try {
     await Axios.post(`${apiUrl}/deleteImage`, {
       params: {
@@ -631,8 +624,10 @@ export const updateGalleryBlog = async (id, gallery) => {
     const formData = new FormData();
     let galleryCreate = false;
 
+    console.log(gallery);
 
     if(gallery.gallery.length === 0){
+      console.log("galleryCreate");
       galleryCreate = true;
     }
 

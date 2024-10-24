@@ -4,21 +4,16 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import config from "../../../../../config";
 import {jwtDecode} from 'jwt-decode'; 
-import BlogField from "./BlogField";
 import './createPageBlog.css'
 import {DefaultButton, SecondaryButton, Popup} from '../../../../../Theme/element';
 import SaveIcon from '@mui/icons-material/Save';
 import PublishIcon from '@mui/icons-material/Publish';
-import { createImageBlog, createBlogPage, createTextBlog, createRichTextBlog, createVideoBlog, createMultiReferenceBlog, createGalleryBlog } from '../../../apiImage';
+import { createImageBlog, createBlogPage, createTextBlog, createRichTextBlog, createVideoBlog, createMultiReferenceBlog, createGalleryBlog } from './apiBlog';
 import { useTheme } from '@mui/material/styles';
 import { convertToRaw } from 'draft-js';
 import CircularProgress from '@mui/material/CircularProgress';
 import Tooltip from '@mui/material/Tooltip';
 import Field from "../Fields/fields";
-
-
-
-
 
 
 
@@ -132,7 +127,6 @@ const CreatePageBlog = () => {
         
         
         blogData.text.forEach(text => {
-            console.log(text.id_config);
             if (text.id_config === 'title') {
                 titleMissed = true;   
             }

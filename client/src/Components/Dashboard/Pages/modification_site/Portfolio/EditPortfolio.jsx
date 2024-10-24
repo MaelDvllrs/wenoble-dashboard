@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import "./EditPortfolio.css";
-import { saveImagesPortfolio, orderportfolio, compressImage, deleteImage } from "../../../apiImage";
+import { compressImage } from "../../../apiImage";
+import { saveImagesPortfolio, orderportfolio, deleteImagePortfolio } from "./apiPortfolio";
+
 import { SkeletonPortfolio } from "../../../../skeleton/skeleton";
 import { FileUploader } from "react-drag-drop-files";
 import { LiaCloudUploadAltSolid } from "react-icons/lia";
@@ -137,7 +139,7 @@ const EditPortfolio = () => {
 
   const handleDelete = async (id_photo, imageName, index) => {
     try {
-      await deleteImage(id_photo, "portfolio_image", imageName);
+      await deleteImagePortfolio(id_photo, "portfolio_image", imageName);
       remove(index);
 
       enqueueSnackbar('Image supprimée avec succès.', { variant: 'success' });

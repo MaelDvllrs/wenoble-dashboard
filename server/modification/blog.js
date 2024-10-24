@@ -529,20 +529,24 @@ router.get('/getImageBlog', (req, res) => {
 });
 
 
-router.get ('/getGalleryBlog',  (req, res) => {
+router.get('/getGalleryBlog', (req, res) => {
   const sentIdBlogPage = req.query.IdBlogPage;
   const sentIdConfig = req.query.IdConfig;
 
-  const SQL = 'SELECT id_config, gallery, size FROM blog_field_gallery WHERE id_blog_page = ? AND id_config = ?'
-  const Values = [sentIdBlogPage, sentIdConfig]
+  const SQL = 'SELECT id_config, gallery, size FROM blog_field_gallery WHERE id_blog_page = ? AND id_config = ?';
+  const Values = [sentIdBlogPage, sentIdConfig];
 
   db.query(SQL, Values, (err, results) => {
     if (err) {
-      res.send({ error: err })
+      res.send({ error: err });
       return;
     }
 
-    const gallery_blog = results;
+    // Ajoutez le booléen `create` à chaque résultat
+    const gallery_blog = results.map(result => ({
+      ...result,
+      create: true // ou false, selon votre logique
+    }));
 
     res.status(200).json(gallery_blog);
   });
@@ -875,6 +879,10 @@ router.post('/updateGalleryBlog', uploadUpdateGallery.array('gallery'), (req, re
 
     const oldGallery = JSON.parse(results[0].gallery);
     const newGallery = galleryArray;
+
+    console.log('oldGallery:', oldGallery);
+
+    console.log('newGallery:', newGallery);
 
 
     // Fonction pour comparer deux objets image

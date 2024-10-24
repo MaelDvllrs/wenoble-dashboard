@@ -8,7 +8,7 @@ import { SecondaryButton } from '../../../../../Theme/element';
 import DeleteIcon from '@mui/icons-material/Delete';
 import OpenInNewOutlinedIcon from '@mui/icons-material/OpenInNewOutlined';
 import CollectionsIcon from '@mui/icons-material/Collections';
-import '../Blog/BlogField.css';
+import './Field.css';
 
 const GalleryUpload = ({ id_blog_page,type, id_config, onChange, slugValue, fieldValue, dataValue, id_collection_ref, theme }) => {
     const { control } = useForm();
@@ -55,18 +55,26 @@ const GalleryUpload = ({ id_blog_page,type, id_config, onChange, slugValue, fiel
 
       const validNewImages = newImages.filter(image => image !== null);
 
+      let createBoolGallery = false;
+      if (dataValue) {
+        if (dataValue.create) {
+          createBoolGallery = true;
+        }
+      }
+
+
 
       if (addImage) {
 
         const combinedImages = [...fields, ...validNewImages];
 
-        const data = { gallery:combinedImages, id_config: id_config, type: 'gallery' };
+        const data = { gallery:combinedImages, id_config: id_config, type: 'gallery', create : createBoolGallery };
 
         onChange({ data: data });
 
         validNewImages.forEach(data => append(data));
       } else {  
-        const data = { gallery:validNewImages, id_config: id_config, type: 'gallery' };
+        const data = { gallery:validNewImages, id_config: id_config, type: 'gallery', create : createBoolGallery};
         onChange({ data: data });
       }
     };

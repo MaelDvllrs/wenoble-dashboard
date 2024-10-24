@@ -6,7 +6,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
 import OpenInNewOutlinedIcon from '@mui/icons-material/OpenInNewOutlined';
 import ImageIcon from '@mui/icons-material/Image';
-import '../Blog/BlogField.css';
+import './Field.css';
 
 const ImageUpload = ({ id_blog_page,type, id_config, onChange, slugValue, fieldValue, dataValue, id_collection_ref, theme }) => {
     const [imagesUploaded, setImagesUploaded] = useState([]);

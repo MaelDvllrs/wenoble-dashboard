@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Editor, EditorState, RichUtils, CompositeDecorator, convertFromRaw } from 'draft-js';
 import 'draft-js/dist/Draft.css';
 import { FaBold, FaItalic, FaLink, FaListUl, FaListOl } from "react-icons/fa";
-import '../Blog/BlogField.css';
+import './Field.css';
 
 const Link = (props) => {
   const { url } = props.contentState.getEntity(props.entityKey).getData();

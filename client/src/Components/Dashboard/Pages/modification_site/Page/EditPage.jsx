@@ -3,12 +3,12 @@ import Axios from 'axios';
 import { useParams, useNavigate } from "react-router-dom";
 import config from "../../../../../config";
 import { jwtDecode } from 'jwt-decode'; 
-import BlogField from "../Blog/BlogField";
+import Field from "../Fields/fields";
 import '../Blog/createPageBlog.css';
 import './EditPage.css';
-import { DefaultButton, RedButton, SecondaryButton, Popup } from '../../../../../Theme/element';
+import { DefaultButton, SecondaryButton, Popup } from '../../../../../Theme/element';
 import SaveIcon from '@mui/icons-material/Save';
-import { updateImagePage, updateTextPage, updateRichTextPage } from '../../../apiImage';
+import { updateImagePage, updateTextPage, updateRichTextPage } from './apiPage';
 import { useTheme } from '@mui/material/styles';
 import { convertToRaw } from 'draft-js';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -295,7 +295,7 @@ const EditPage = () => {
                                 return (
                                     <div key={pageItem.id_config} className="pageField_contain">
                                         <p style={{color: theme.palette.text.secondary}}>{pageItem.name}</p>
-                                        <BlogField 
+                                        <Field 
                                             id_page={idPage}
                                             type={pageItem.type} 
                                             id_config={pageItem.id_config} 

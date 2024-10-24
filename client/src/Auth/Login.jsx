@@ -69,11 +69,13 @@ const Login = () => {
                 setLoading(false);
             } else {
                 const token = response.data.token;
-                if (stayConnected) {
-                    Cookies.set('token', token, { expires: 365 });
-                } else {
-                    Cookies.set('token', token);
-                }
+                const cookieOptions = {
+                    expires: stayConnected ? 365 : undefined,
+                    secure: true,
+                    sameSite: 'Strict',
+                    path: '/',
+                };
+                Cookies.set('token', token, cookieOptions);
 
                 const decodedToken = jwtDecode(token);
                 const isAdmin = decodedToken.isAdmin;

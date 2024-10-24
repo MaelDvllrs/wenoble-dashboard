@@ -4,14 +4,13 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import config from "../../../../../config";
 import {jwtDecode} from 'jwt-decode'; 
-import BlogField from "./BlogField";
 import Field from "../Fields/fields";
 import './createPageBlog.css'
 import {DefaultButton, RedButton, SecondaryButton, Popup} from '../../../../../Theme/element';
 import SaveIcon from '@mui/icons-material/Save';
 import PublishIcon from '@mui/icons-material/Publish';
 
-import { updateImageBlog, updateBlogPage, updateTextBlog, updateRichTextBlog, updateVideoBlog, updateMultiReferenceBlog, updateGalleryBlog } from '../../../apiImage';
+import { updateImageBlog, updateBlogPage, updateTextBlog, updateRichTextBlog, updateVideoBlog, updateMultiReferenceBlog, updateGalleryBlog } from './apiBlog';
 import { useTheme } from '@mui/material/styles';
 import { convertToRaw } from 'draft-js';
 import UnpublishedIcon from '@mui/icons-material/Unpublished';
@@ -366,7 +365,6 @@ const EditPageBlog = () => {
           return newData;
         });
     };
-
 
     const handleSave = async (status, setpublishDate) => {
 
