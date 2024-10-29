@@ -22,7 +22,7 @@ export const CssTextField = styled(TextField)(({ theme }) => ({
             borderColor: theme.palette.secondary.main,
         },
         '&.Mui-focused fieldset': {
-            borderColor: "#0541b7",
+            borderColor: "var(--primary-color)",
         },
     },
 }));
@@ -55,10 +55,10 @@ export const LoginTextField = styled(TextField)(({ theme }) => ({
 
 export const DefaultSwitch = styled(Switch)(({ theme }) => ({
     '& .MuiSwitch-switchBase.Mui-checked': {
-      color: "#0541b7",
+      color: "var(--primary-color)",
     },
     '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-      backgroundColor: "#0541b7",
+      backgroundColor: "var(--primary-color)",
     },
     '& .MuiSwitch-track': {
         backgroundColor: theme.palette.secondary.main,
@@ -67,11 +67,11 @@ export const DefaultSwitch = styled(Switch)(({ theme }) => ({
 
 export const DefaultButton = styled(Button)(({ theme }) => ({
     '&.MuiButton-root': {
-        backgroundColor: "#0541b7", 
+        backgroundColor: "var(--primary-color)", 
         color: 'rgba(255, 255, 255, 0.8)',
     },
     '&:hover': {
-        backgroundColor: "#05286f", 
+        backgroundColor: "var(--primary-color)", 
     },
 }));
 
@@ -82,11 +82,11 @@ const WhiteCircularProgress = styled(CircularProgress)({
   // Personnaliser le LoadingButton
   export const LoadingButtonBase = styled(LoadingButton)(({ theme }) => ({
     '&.MuiButton-root': {
-      backgroundColor: "#0541b7", 
+      backgroundColor: "var(--primary-color)", 
       color: 'rgba(255, 255, 255, 0.8)',
     },
     '&:hover': {
-      backgroundColor: "#05286f", 
+      backgroundColor: "var(--primary-color)", 
     },
   }));
   

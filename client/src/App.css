@@ -187,13 +187,6 @@ a{
     z-index: 0;
 }
 
-.background_glow_portfolio{
-    background: radial-gradient(50% 50% at 50% 125%, #ff6363 0, rgba(39, 61, 180, 0.4) 49.9%, transparent 100%);
-}
-
-.background_glow_page{
-    background: radial-gradient(50% 50% at 50% 125%, #ff6363 0, rgba(82, 48, 145, 0.4) 49.9%, transparent 100%);
-}
 
 .header_modification{
     display: flex;
@@ -221,7 +214,7 @@ a{
 
 
 .blueText{
-    color: #0541b7;
+    color: var(--primary-color);
 }
 
 

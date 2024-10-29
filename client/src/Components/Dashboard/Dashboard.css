@@ -186,19 +186,19 @@
 }
 
 .menu_link:hover{
-    color: #0541b7 !important;
-    background-color: rgb(5, 65, 183, 0.2);
+    color: var(--primary-color) !important;
+    background-color: rgba(var(--primary-color-rgb), 0.2);
 
 }
 
 .menuActive > .menu_link{
-    background-color: rgb(5, 65, 183, 0.2);
-    color: #0541b7 !important;
+    background-color: rgba(var(--primary-color-rgb), 0.2);
+    color: var(--primary-color) !important;
 
 }
 
 .menuActive > .menu_link > .menu_link_active_curs{
-    background-color: #0541b7;
+    background-color: var(--primary-color);
 
 }
 
@@ -410,7 +410,7 @@
     left: 0;
     top: 0;
     width: 0.5rem;
-    background-color: #0541b7;
+    background-color: var(--primary-color);
 }
 
 

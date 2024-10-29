@@ -21,7 +21,7 @@
 
 .limit_size_bar_fill{
     height: 100%;
-    background: linear-gradient(90deg, rgba(12,0,218,1) 0%, rgba(5,65,183,1) 35%, rgba(66,0,124,1) 100%);
+    background: linear-gradient(90deg, var(--primary-color) 0%, var(--primary-color) 35%, rgb(0, 102, 43) 100%);
     border-radius: 0.5rem;
 }
 
@@ -42,94 +42,16 @@
     position: relative;
     border-radius: 1rem;
     display: flex;
-    align-items: center;
     flex-direction: column;
-    padding: 1rem;
     transition: all 0.5s ease;
+    border: solid 1px;
 }
 
-.modification_box_1{
-    background: radial-gradient(94.21% 78.4% at 50% 29.91%, rgba(39, 61, 180, 0.7), rgba(15, 9, 38, 0.4)), #07080a;
-    box-shadow: rgba(255, 255, 255, 0.1) 0px 1px 0px 0px inset, 
-                rgba(7, 13, 79, 0.05) 0px 0px 20px 3px, 
-                rgba(7, 13, 79, 0.05) 0px 0px 40px 20px, 
-                rgba(255, 255, 255, 0.06) 0px 0px 0px 1px inset;
-    
+.modification_box:hover{
+    border: solid 1px var(--primary-color) !important;
 }
 
-.modification_box_2{
-    background: radial-gradient(86.88% 75.47% at 50.00% 24.53%, rgba(82, 48, 145, 0.70), rgba(26, 11, 51, 0.14)), #07080a;
-    box-shadow: 0px 1px 0px 0px rgba(255, 255, 255, 0.10) inset, 0px 30px 50px 0px rgba(0, 0, 0, 0.40) , 0px 4px 24px 0px rgba(51, 3, 129, 0.09) , 0 0 0 1px rgba(255, 255, 255, 0.06) inset;
-}
 
-.modification_box_1::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    background: radial-gradient(94.21% 78.4% at 50% 29.91%, rgba(39, 61, 180, 0.9), rgba(15, 9, 38, 0.6));
-    opacity: 0;
-    transition: opacity 0.5s ease;
-    z-index: 1;
-    border-radius: 1rem;
-
-  }
-  
-  .modification_box_1:hover::before {
-    opacity: 1;
-  }
-
-
-  .modification_box_2::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    background: radial-gradient(86.88% 75.47% at 50.00% 24.53%, rgba(82, 48, 145, 0.9), rgba(26, 11, 51, 0.3));
-    opacity: 0;
-    transition: opacity 0.5s ease;
-    z-index: 1;
-    border-radius: 1rem;
-
-  }
-  
-  .modification_box_2:hover::before {
-    opacity: 1;
-  }
-
-  .modification_box_3{
-    background: radial-gradient(84.35% 70.19% at 50.00% 38.11%, rgba(2, 96, 101, 0.57), rgba(5, 136, 178, 0.06)), #07080a;
-    box-shadow: 0px 1px 0px 0px rgba(255, 255, 255, 0.10) inset, 0px 30px 50px 0px rgba(0, 0, 0, 0.40), 0px 4px 24px 0px rgba(3, 122, 129, 0.09), 0 0 0 1px rgba(255, 255, 255, 0.06) inset;
-  }
-
-  .modification_box_3::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    background: radial-gradient(84.35% 70.19% at 50.00% 38.11%, rgba(2, 96, 101, 0.67), rgba(5, 136, 178, 0.16));
-    opacity: 0;
-    transition: opacity 0.5s ease;
-    z-index: 1;
-    border-radius: 1rem;
-
-  }
-  
-  .modification_box_3:hover::before {
-    opacity: 1;
-  }
-
-
-
-  .modification_box:hover{
-    scale: 0.98;
-  }
 
   .modification_box > * {
     position: relative;
@@ -146,14 +68,12 @@
 }
 
 .modification_title_box{
-    width: 100%;
-
+    margin: 1rem;
     height: 3rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 1.5rem;
+    font-size: 1rem;
 }
 
 .modification_title{
@@ -172,8 +92,8 @@
 
 
 .button_modificationHome{
-    width: 3rem;
-    height: 3rem;
+    width: 2rem;
+    height: 2rem;
     background: linear-gradient(180deg, hsla(0, 0%, 100%, .03), hsla(0, 0%, 100%, .1));
     border-radius: 0.5rem;
     box-shadow: inset 0 1px 0 0 hsla(0, 0%, 100%, .05), 0 0 0 1px hsla(0, 0%, 100%, .25), inset 0 -1px 0 0 rgba(0, 0, 0, .2);
@@ -183,6 +103,8 @@
 }
 
 .texte_modification{
+    margin: 1rem;
+    font-size: 0.8rem;
     margin-top: 1rem;
     color: rgba(255, 255, 255, 0.8);
 }
@@ -193,6 +115,59 @@
     width: 100%;
     height: 1px;
 }
+
+
+.modification_image_box_blog{
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.grid_blog{
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    object-fit: cover;
+}
+
+.big_icon{
+    height: 5rem !important;
+    width: 5rem !important;
+    position: absolute;
+}
+
+
+.icon_modif_blog_1{
+    top: 60%;
+    left: 20%;
+
+}
+
+.icon_modif_blog_1{
+    top: 60%;
+    left: 15%;
+}
+
+.icon_modif_blog_2{
+    top: 20%;
+    left: 50%;
+}
+
+.icon_modif_blog_3{
+    top: 60%;
+    left: 70%;
+}
+
+
+
+
+
+
+
+
+
+
+
 
 .modification_image_box_portfolio{
     width: 100%;
@@ -243,6 +218,11 @@
     padding: 1rem;
     overflow: hidden;
 }
+
+
+
+
+
 
 .colone_modification_page{
     width: 100%;

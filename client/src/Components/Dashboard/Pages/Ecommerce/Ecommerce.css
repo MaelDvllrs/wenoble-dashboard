@@ -15,7 +15,7 @@
 }
 
 .menuEcom:hover{
-    background-color: #0541b7 !important;
+    background-color: var(--primary-color) !important;
     color: rgba(255, 255, 255, 0.8) !important;
 }
 
@@ -25,7 +25,7 @@
     padding-top: 0.5rem;
     padding-bottom: 0.5rem;
     border-radius: 2rem;
-    background-color: #0541b7 !important;
+    background-color: var(--primary-color) !important;
     color: rgba(255, 255, 255, 0.8) !important;
 }
 
@@ -108,7 +108,7 @@
     align-items: center;
     justify-content: center;
     border: solid 3px transparent;
-    border-bottom: solid 3px #0541b7;
+    border-bottom: solid 3px var(--primary-color);
 }
 
 .ecommerce_order_menu:hover{

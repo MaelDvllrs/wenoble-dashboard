@@ -66,9 +66,13 @@ const whitelist =
   'https://www.giltirletphotography.fr',
 
   'https://shine-photographie.webflow.io',
+  'http://www.nathaliemathern.ch',
+  'https://nathaliemathern.ch',
 
 
   'https://la-plume-au-carre.webflow.io',
+  'https://laplumeaucarre.fr',
+  'https://www.laplumeaucarre.fr',
 
   'https://deko-project.webflow.io'
 ];

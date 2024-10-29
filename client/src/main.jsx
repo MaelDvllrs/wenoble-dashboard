@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import CssBaseline from '@mui/material/CssBaseline';
 import ThemeHandler from './Theme/themeProvider.jsx'
+import './Theme/global.css';
 
 //if ('serviceWorker' in navigator) {
 //  window.addEventListener('load', () => {

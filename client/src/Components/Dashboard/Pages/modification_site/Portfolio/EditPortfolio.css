@@ -58,7 +58,7 @@
 }
 
 .Item_Portfolio:hover{
-    background-color: var(--hover-background-color);;
+    background-color: var(--hover-background-color);
 }
 
 .Item_Portfolio:active{

@@ -10,6 +10,7 @@ import CryptoJS from 'crypto-js';
 import { LoginTextField, LoadingDefaultButton, SecondaryButton, DefaultSwitch } from '../Theme/element';
 import { useTheme } from '@mui/material/styles';
 import backgroundLogin from '../assets/background/backgroundLogin.svg';
+import BackgroundAnimation from "../Theme/backgroundAnimation";
 
 
 const Login = () => {
@@ -98,7 +99,8 @@ const Login = () => {
         <div className="loginPage">
             <div className="loginContain" style={{backgroundColor:theme.palette.background.secondary}}>
                 <div className="loginImageContain">
-                    <img className="loginImage" src={backgroundLogin}/>
+                    <BackgroundAnimation/>
+                    {/*<img className="loginImage" src={backgroundLogin}/>*/}
                     <div className="fonduLoginImage" style={{background:`linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, ${theme.palette.background.secondary} 100%)`}}/>
                 </div>
                 <div className="loginBox">

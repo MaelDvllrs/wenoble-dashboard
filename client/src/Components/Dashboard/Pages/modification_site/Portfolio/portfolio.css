@@ -32,7 +32,7 @@
     padding-right: 1rem;
     cursor: pointer;
     margin-right: 1rem;
-    border-bottom: 3px solid #0541b7;
+    border-bottom: 3px solid var(--primary-color);
 }
 
 
