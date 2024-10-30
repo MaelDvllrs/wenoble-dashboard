@@ -11,6 +11,10 @@ import gridBlog from "../../../../assets/background/grid_blog.svg";
 import ImageIcon from '@mui/icons-material/Image';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import TextFieldsIcon from '@mui/icons-material/TextFields';
+import AddIcon from '@mui/icons-material/Add';
+import { BsCursor } from "react-icons/bs";
+
+
 
 
 
@@ -27,108 +31,140 @@ const ModificationHome = () => {
 
     const theme = useTheme();
 
-    const containerRef = useRef();
 
     const [sizeTotal, setSizeTotal] = useState(0);
     const [threshold, setThreshold] = useState(1); 
 
+
+const portfolioContainerRef = useRef();
+//
+//
+//useEffect(() => {
+//  const container = portfolioContainerRef.current;
+//
+//  container.addEventListener('mouseenter', () => {
+//    const rows = container.querySelectorAll('.row_modification_portfolio');
+//    rows.forEach((row, index) => {
+//      if (index % 2 === 0) {
+//        row.classList.add('scroll-left');
+//      } else {
+//        row.classList.add('scroll-right');
+//      }
+//    });
+//  });
+//
+//  container.addEventListener('mouseleave', () => {
+//    const rows = container.querySelectorAll('.row_modification_portfolio');
+//    rows.forEach((row) => {
+//      row.classList.remove('scroll-left');
+//      row.classList.remove('scroll-right');
+//    });
+//  });
+//});
+
+
+  
+
+
+
+
+
+
     
-    useEffect(() => {
-      const observer = new ResizeObserver(entries => {
-        for (let entry of entries) {
-          const width = entry.contentRect.width;
-          const target = entry.target;
-  
-          if (width <= 600) {
-            target.style.gridTemplateColumns = 'repeat(1, 1fr)';
-          } else if (width <= 1165) {
-            target.style.gridTemplateColumns = 'repeat(2, 1fr)';
-          } else if (width <= 1675) {
-            target.style.gridTemplateColumns = 'repeat(3, 1fr)';
-          } else if (width <= 1900) {
-            target.style.gridTemplateColumns = 'repeat(4, 1fr)';
-          } else {
-          target.style.gridTemplateColumns = 'repeat(5, 1fr)';
-        }
-          
-        }
-      });
-  
-      if (containerRef.current) {
-        observer.observe(containerRef.current);
+const containerRef = useRef();
+const iconContainerRef = useRef(null);
+const plusContainerRef = useRef(null);
+const cursorIconRef = useRef(null);
+const cursorPlusRef = useRef(null);
+
+useEffect(() => {
+  const container = iconContainerRef.current;
+  const cursorIcon = cursorIconRef.current;
+  const cursorPlus = cursorPlusRef.current;
+  const containerPlus = plusContainerRef.current;
+  const icons = container.querySelectorAll('.big_icon');
+
+  let animationFrameId;
+  let lastClientX, lastClientY;
+
+  const handleMouseMove = (event) => {
+    const { clientX, clientY } = event;
+    lastClientX = clientX;
+    lastClientY = clientY;
+    if (!animationFrameId) {
+      animationFrameId = requestAnimationFrame(updateCursor);
+    }
+  };
+
+  const updateCursor = () => {
+    animationFrameId = null;
+    const rect = container.getBoundingClientRect();
+    const offsetX = lastClientX - rect.left - 20;
+    const offsetY = lastClientY - rect.top - 7;
+    cursorIcon.style.left = `${offsetX}px`;
+    cursorIcon.style.top = `${offsetY}px`;
+
+    icons.forEach((icon, index) => {
+      const iconRect = icon.getBoundingClientRect();
+      const iconOffsetX = lastClientX - iconRect.left - iconRect.width / 2;
+      const iconOffsetY = lastClientY - iconRect.top - iconRect.height / 2;
+
+      let moveX = 0;
+      let moveY = 0;
+
+      switch (index) {
+        case 0:
+          moveX = -iconOffsetX / 5;
+          moveY = -iconOffsetY / 5;
+          break;
+        case 1:
+          moveX = iconOffsetX / 5;
+          moveY = -iconOffsetY / 5;
+          break;
+        case 2:
+          moveX = -iconOffsetX / 5;
+          moveY = iconOffsetY / 5;
+          break;
+        default:
+          break;
       }
-  
-      return () => {
-        if (containerRef.current) {
-          observer.unobserve(containerRef.current);
-        }
-      };
-    }, []);
 
+      icon.style.transform = `translate(${moveX}px, ${moveY}px) scale(1.3)`;
+    });
+  };
 
-    const iconContainerRef = useRef(null);
+  const handleMouseEnter = () => {
+    cursorIcon.style.display = 'flex';
+    window.addEventListener('mousemove', handleMouseMove);
+  };
 
+  const handleMouseLeave = () => {
+    cursorIcon.style.display = 'none';
+    window.removeEventListener('mousemove', handleMouseMove);
+    if (animationFrameId) cancelAnimationFrame(animationFrameId);
+    icons.forEach((icon) => {
+      icon.style.transition = 'transform 0.5s ease-out';
+      icon.style.transform = 'translate(0, 0)';
+    });
+  };
 
-    useEffect(() => {
-      const container = iconContainerRef.current;
-      const icons = container.querySelectorAll('.big_icon');
-  
-      const handleMouseMove = (event) => {
-        const { clientX, clientY } = event;
-  
-        icons.forEach((icon, index) => {
-          const rect = icon.getBoundingClientRect();
-          const offsetX = clientX - rect.left - rect.width / 2;
-          const offsetY = clientY - rect.top - rect.height / 2;
-  
-          let moveX = 0;
-          let moveY = 0;
-  
-          switch (index) {
-            case 0:
-              // Inverse de la souris
-              moveX = -offsetX /5;
-              moveY = -offsetY /5;
-              break;
-            case 1:
-              // Même X, inverse Y
-              moveX = offsetX / 5;
-              moveY = -offsetY / 5;
-              break;
-            case 2:
-              // Même Y, inverse X
-              moveX = -offsetX / 5;
-              moveY = offsetY / 5;
-              break;
-            default:
-              break;
-          }
-  
-          icon.style.transform = `translate(${moveX}px, ${moveY}px)`;
-        });
-      };
-  
-      const handleMouseEnter = () => {
-        window.addEventListener('mousemove', handleMouseMove);
-      };
-  
-      const handleMouseLeave = () => {
-        window.removeEventListener('mousemove', handleMouseMove);
-        icons.forEach((icon) => {
-          icon.style.transition = 'transform 0.5s ease-out';
-          icon.style.transform = 'translate(0, 0)';
-        });
-      };
-  
-      container.addEventListener('mouseenter', handleMouseEnter);
-      container.addEventListener('mouseleave', handleMouseLeave);
-  
-      return () => {
-        container.removeEventListener('mouseenter', handleMouseEnter);
-        container.removeEventListener('mouseleave', handleMouseLeave);
-        window.removeEventListener('mousemove', handleMouseMove);
-      };
-    }, []);
+  container.addEventListener('mouseenter', handleMouseEnter);
+  container.addEventListener('mouseleave', handleMouseLeave);
+
+  containerPlus.addEventListener('mouseenter', () => {
+    cursorPlus.style.opacity = 1;
+  });
+  containerPlus.addEventListener('mouseleave', () => {
+    cursorPlus.style.opacity = 0;
+  });
+
+  return () => {
+    container.removeEventListener('mouseenter', handleMouseEnter);
+    container.removeEventListener('mouseleave', handleMouseLeave);
+    window.removeEventListener('mousemove', handleMouseMove);
+    if (animationFrameId) cancelAnimationFrame(animationFrameId);
+  };
+}, []);
 
 
     
@@ -178,7 +214,7 @@ const ModificationHome = () => {
               </div>
               <div className="modification_page_contain">
                   <div ref={containerRef} className="modification_link_contain">
-                      <NavLink to={'/dashboard/modification/portfolio'} className="modification_box" style={{backgroundColor : theme.palette.primary.secondary, borderColor : theme.palette.primary.third}}>
+                      <NavLink to={'/dashboard/modification/portfolio'} className="modification_box" ref={portfolioContainerRef} style={{backgroundColor : theme.palette.primary.secondary, borderColor : theme.palette.primary.third}}>
                           <div className="modification_title_box" style={{color: theme.palette.text.primary}}>
                               <div className="modification_title"><MdImportContacts  className="icon_modifiaction_title"/><b>Portfolio</b></div>
                               <div className="button_modificationHome"><MdArrowForwardIos /></div>
@@ -186,19 +222,72 @@ const ModificationHome = () => {
                           <div className="texte_modification" style={{color: theme.palette.text.secondary}}>
                             Transformez vos portfolios photo en un instant ! Ajoutez, supprimez et réorganisez vos images pour créer des galeries captivantes.
                           </div>
-                          <div className="line_modification"></div>
-                          <div className="modification_image_box_portfolio">
-                              <div className="colone_modification_portfolio">
-                                  <div className="portfolio_modification_image portfolio_modification_image_1"></div>
-                                  <div className="portfolio_modification_image portfolio_modification_image_1"></div>
+                          <div className="modification_image_box_portfolio ">
+                              <div className="row_modification_portfolio">
+                                <div className="content">
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                </div>
+                                <div className="content">
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                </div>
                               </div>
-                              <div className="colone_modification_portfolio">
-                                  <div className="portfolio_modification_image portfolio_modification_image_2"></div>
-                                  <div className="portfolio_modification_image portfolio_modification_image_2"></div>
+                              <div className="row_modification_portfolio">
+                                <div className="content">
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                </div>
+                                <div className="content">
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                </div>
                               </div>
-                              <div className="colone_modification_portfolio">
-                                  <div className="portfolio_modification_image portfolio_modification_image_3"></div>
-                                  <div className="portfolio_modification_image portfolio_modification_image_3"></div>
+                              <div className="row_modification_portfolio">
+                                <div className="content">
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                </div>
+                                <div className="content">
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                                </div>
                               </div>
                           </div>
                       </NavLink>
@@ -227,7 +316,7 @@ const ModificationHome = () => {
                                   <div className="page_modification_image page_modification_image_last"></div>
                           </div>
                       </NavLink>
-                      <NavLink to={'/dashboard/modification/blog'} className="modification_box" style={{backgroundColor : theme.palette.primary.secondary, borderColor : theme.palette.primary.third}}>
+                      <NavLink to={'/dashboard/modification/blog'} className="modification_box box_blog" ref={iconContainerRef} style={{backgroundColor : theme.palette.primary.secondary, borderColor : theme.palette.primary.third}}>
                           <div className="modification_title_box" style={{color: theme.palette.text.primary}}>
                             <div className="modification_title"><MdArticle className="icon_modifiaction_title"/><b>Blog</b></div>
                             <div className="button_modificationHome"><MdArrowForwardIos /></div>
@@ -235,11 +324,16 @@ const ModificationHome = () => {
                           <div className="texte_modification" style={{color: theme.palette.text.secondary}}>
                             Dynamisez votre blog avec notre outil intuitif : publiez articles, images et vidéos facilement pour captiver vos lecteurs.
                           </div>
-                          <div className="modification_image_box_blog" ref={iconContainerRef}>
+                          <div className="modification_image_box_blog" ref={plusContainerRef}>
+                            <div className="cache_blog" style={{background: 'linear-gradient('+theme.palette.primary.secondary+', hsla(0, 0%, 100%, 0))'}}/>
                             <img src={gridBlog} alt="grid blog" className="grid_blog" />
                             <ImageIcon className="icon_modifiaction_title big_icon icon_modif_blog_1" style={{color: theme.palette.text.primary}}/>
                             <VideocamIcon className="icon_modifiaction_title big_icon icon_modif_blog_2" style={{color: theme.palette.text.primary}}/>
                             <TextFieldsIcon className="icon_modifiaction_title big_icon icon_modif_blog_3" style={{color: theme.palette.text.primary}}/>
+                          </div>
+                          <div className="cursor_modif_blog_contain" ref={cursorIconRef}>
+                              <BsCursor className="cursor_modif_blog"/>
+                              <div ref={cursorPlusRef} className="plus_modif_blog"><AddIcon className="cursor_modif_blog"/></div>
                           </div>
                       </NavLink>
                   </div>

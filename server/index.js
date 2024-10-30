@@ -109,9 +109,7 @@ app.use(notificationRouter);
 
 app.use(sendEmailRouter);
 
-
 app.use(clientRouter);
-
 
 app.use('/api', apiRouter);
 
