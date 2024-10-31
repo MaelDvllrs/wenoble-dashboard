@@ -334,7 +334,7 @@ const Dashboard = () => {
                                                 }}
                                             >
                                                 <NavLink key={index} to={`${notificationLink(notification.type)}${notification.id_element}`} onClick={handleCombinedClick} id={notification.id_notif} className={`${notification.isNew ? 'new-notification' : 'old-notification'}`}>
-                                                    <div className={`notification_box`} style={{backgroundColor: notification.is_read ? 'transparent' : 'rgb(5, 65, 183, 0.2)', color : theme.palette.text.primary}}>                                                    
+                                                    <div className={`notification_box`} style={{backgroundColor: notification.is_read ? 'transparent' : 'rgba(var(--primary-color-rgb), 0.2)', color : theme.palette.text.primary}}>                                                    
                                                         <div className='notification_headers'>
                                                             <div><b>{notificationTitle(notification.type)}</b></div>
                                                             <div className='notification_time' style={{color:theme.palette.text.secondary}}>{formatDistanceWithoutApprox(new Date(notification.date))}</div>
