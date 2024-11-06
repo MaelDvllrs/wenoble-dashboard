@@ -99,7 +99,7 @@ export const createImageBlog = async (fields, blogPageId) => {
   };
   
   
-  export const createBlogPage = async (id, mainText, date, status) => {
+  export const createBlogPage = async (id, mainText, date, status, idUser) => {
     try {
       const response = await Axios.post(`${apiUrl}/createBlogPage`, {
         params: {
@@ -109,6 +109,16 @@ export const createImageBlog = async (fields, blogPageId) => {
           status: status
         }
       });
+      if(status === 1){
+        const responseSitemap = await Axios.post(`${apiUrl}/addRouteBlogSitemap`, {
+          params: {
+            idUser: idUser,
+            idBlog: id,
+            slug: mainText[1].value,
+            date: date,
+          }
+        });
+      }
       return response.data;
     } catch (error) {
       console.error('Message d\'erreur du serveur:', error);
@@ -168,17 +178,49 @@ export const createImageBlog = async (fields, blogPageId) => {
   
   
   
-  export const updateBlogPage = async (id, mainText, date, status, setpublishDate) => {
+  export const updateBlogPage = async (idBlogPage, mainText, date, status, setpublishDate, oldStatus, idUser, idBlog) => {
     try {
+
+      if(status === 1 && oldStatus === 0){
+        const responseSitemap = await Axios.post(`${apiUrl}/addRouteBlogSitemap`, {
+          params: {
+            idUser: idUser,
+            idBlog: idBlog,
+            slug: mainText[1].value,
+            date: date,
+          }
+        });
+      } else if(status === 0 && oldStatus === 1){
+        const responseSitemap = await Axios.post(`${apiUrl}/deleteRouteBlogSitemap`, {
+          params: {
+            idUser: idUser,
+            idBlog: idBlog,
+            idBlogPage: idBlogPage,
+          }
+        });
+      } else if(status === 1 && oldStatus === 1){
+        const responseSitemap = await Axios.post(`${apiUrl}/updateRouteBlogSitemap`, {
+          params: {
+            idUser: idUser,
+            idBlog: idBlog,
+            idBlogPage: idBlogPage,
+            slug: mainText[1].value,
+            date: date,
+          }
+        });
+      }
+      
       const response = await Axios.post(`${apiUrl}/updateBlogPage`, {
         params: {
-          id : id,
+          id : idBlogPage,
           mainText: mainText,
           date: date,
           status: status,
           setpublishDate: setpublishDate
         }
       });
+      
+
       return response.data;
     } catch (error) {
       console.error('Message d\'erreur du serveur:', error);

@@ -14,6 +14,7 @@ import { convertToRaw } from 'draft-js';
 import CircularProgress from '@mui/material/CircularProgress';
 import Tooltip from '@mui/material/Tooltip';
 import Field from "../Fields/fields";
+import Cookies from 'js-cookie';
 
 
 
@@ -21,6 +22,10 @@ import Field from "../Fields/fields";
 const CreatePageBlog = () => {
 
     const theme = useTheme();
+
+    const token = Cookies.get('token');
+    
+    const idUser = jwtDecode(token).idUser;
 
 
     const [InfoConfigBlog, setConfigblog] = useState([]);
@@ -46,13 +51,13 @@ const CreatePageBlog = () => {
     });
 
     const apiUrl = config.apiUrl;
-    const { id } = useParams();
+    const { idBlog } = useParams();
 
     useEffect(() => {    
     
         Axios.get(`${apiUrl}/getConfigBlog`, {
             params: {
-                IdBlog: id,
+                IdBlog: idBlog,
             }
         }).then((response) => {
             setConfigblog(response.data);
@@ -170,7 +175,7 @@ const CreatePageBlog = () => {
 
         try {        
             // Appeler la fonction saveBlogPage
-            const response = await createBlogPage(id, mainText, localISOTime, status);
+            const response = await createBlogPage(idBlog, mainText, localISOTime, status, idUser);
             // Gérer la réponse ici
             const blogPageId = response.id;
         
@@ -251,7 +256,7 @@ const CreatePageBlog = () => {
                 return;
             }
 
-            navigate(`/dashboard/modification/blog/${id}`);
+            navigate(`/dashboard/modification/blog/${idBlog}`);
 
         } catch (error) {
             // Gérer l'erreur ici
@@ -269,7 +274,7 @@ const CreatePageBlog = () => {
                     <Tooltip title="Enregistrer comme brouillon" arrow placement="top">
                         <SecondaryButton className="SaveButton" variant="contained" theme={theme} onClick={ async () => {await handleSave(0)}}><SaveIcon/></SecondaryButton>
                     </Tooltip>
-                    <SecondaryButton  variant="contained" theme={theme} onClick={() => navigate(`/dashboard/modification/blog/${id}`)}>Annuler</SecondaryButton>
+                    <SecondaryButton  variant="contained" theme={theme} onClick={() => navigate(`/dashboard/modification/blog/${idBlog}`)}>Annuler</SecondaryButton>
                     <DefaultButton type="submit" variant="contained" onClick={ async () => {await handleSave(1)}}><PublishIcon/> Publier</DefaultButton>
                 </div>
             </div>
@@ -293,7 +298,7 @@ const CreatePageBlog = () => {
                   <div key={blogItem.id_config} className="blogField_contain">
                     <p style={{ color: theme.palette.text.secondary }}>{blogItem.name_field}</p>
                     <Field
-                      id_blog_page={id}
+                      id_blog_page={idBlog}
                       type={blogItem.tab_field}
                       id_config={blogItem.id_config}
                       id_collection_ref={blogItem.id_collection_ref}

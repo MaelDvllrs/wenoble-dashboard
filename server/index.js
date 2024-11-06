@@ -13,11 +13,13 @@ const portfolioRouter = require('./modification/portfolio');
 const pageRouter = require('./modification/page');
 const blogRouter = require('./modification/blog');
 const limitSizeRouter = require('./modification/limitSize');
+const sitemapRouter = require('./modification/sitemap');
 
 const orderRouter = require('./ecommerce/order');
 
 const sendEmailRouter = require('./contact/sendEmail');
 const contactRouter = require('./contact/contact');
+
 
 const { notificationRouter, notificationServer } = require('./users/notification');
 
@@ -110,6 +112,8 @@ app.use(notificationRouter);
 app.use(sendEmailRouter);
 
 app.use(clientRouter);
+
+app.use(sitemapRouter);
 
 app.use('/api', apiRouter);
 

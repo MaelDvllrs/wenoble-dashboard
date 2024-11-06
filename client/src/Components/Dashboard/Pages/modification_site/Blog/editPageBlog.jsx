@@ -16,6 +16,7 @@ import { convertToRaw } from 'draft-js';
 import UnpublishedIcon from '@mui/icons-material/Unpublished';
 import CircularProgress from '@mui/material/CircularProgress';
 import Tooltip from '@mui/material/Tooltip';
+import Cookies from 'js-cookie';
 
 
 
@@ -27,6 +28,9 @@ const EditPageBlog = () => {
 
     const theme = useTheme();
 
+    const token = Cookies.get('token');
+    
+    const idUser = jwtDecode(token).idUser;
 
     const [InfoConfigBlog, setConfigblog] = useState([]);
     const [DecodeConfigblog, setDecodeConfigblog] = useState([]);
@@ -77,7 +81,7 @@ const EditPageBlog = () => {
     });
 
     const apiUrl = config.apiUrl;
-    const { id } = useParams();
+    const { idBlogPage } = useParams();
     const { idBlog } = useParams();
 
 
@@ -85,7 +89,7 @@ const EditPageBlog = () => {
     
         Axios.get(`${apiUrl}/getConfigBlog`, {
             params: {
-                IdBlog: id,
+                IdBlog: idBlog,
             }
         }).then((response) => {
             setConfigblog(response.data);
@@ -152,7 +156,7 @@ const EditPageBlog = () => {
                 try {
                     const response = await Axios.get(`${apiUrl}/getTextBlog`, {
                         params: {
-                            IdBlogPage: idBlog,
+                            IdBlogPage: idBlogPage,
                             IdConfig: text.id_config
                         }
                     });
@@ -168,7 +172,7 @@ const EditPageBlog = () => {
                 try{
                     const response = await Axios.get(`${apiUrl}/getImageBlog`, {
                         params: {
-                            IdBlogPage: idBlog,
+                            IdBlogPage: idBlogPage,
                             IdConfig: images.id_config
                         }
                     });
@@ -184,7 +188,7 @@ const EditPageBlog = () => {
                 try{
                     const response = await Axios.get(`${apiUrl}/getVideoBlog`, {
                         params: {
-                            IdBlogPage: idBlog,
+                            IdBlogPage: idBlogPage,
                             IdConfig: video.id_config
                         }
                     });
@@ -202,7 +206,7 @@ const EditPageBlog = () => {
                 try{
                     const response = await Axios.get(`${apiUrl}/getRichTextBlog`, {
                         params: {
-                            IdBlogPage: idBlog,
+                            IdBlogPage: idBlogPage,
                             IdConfig: richText.id_config
                         }
                     });
@@ -219,7 +223,7 @@ const EditPageBlog = () => {
                 try{
                     const response = await Axios.get(`${apiUrl}/getMultiReferenceBlog`, {
                         params: {
-                            IdBlogPage: idBlog,
+                            IdBlogPage: idBlogPage,
                             IdConfig: multiReference.id_config
                         }
                     });
@@ -236,7 +240,7 @@ const EditPageBlog = () => {
                 try{
                     const response = await Axios.get(`${apiUrl}/getGalleryBlog`, {
                         params: {
-                            IdBlogPage: idBlog,
+                            IdBlogPage: idBlogPage,
                             IdConfig: gallery.id_config
                         }
                     });
@@ -254,7 +258,7 @@ const EditPageBlog = () => {
         
         fetchData(); 
 
-    }, [blogDataConfig, idBlog]);
+    }, [blogDataConfig, idBlogPage]);
 
 
 
@@ -262,14 +266,14 @@ const EditPageBlog = () => {
 
         Axios.get(`${apiUrl}/getBlogPage`, {
             params: {
-                IdBlogPage: idBlog,
+                IdBlogPage: idBlogPage,
             }
         }).then((response) => {
             setInfoBlog(response.data);
         }).catch((error) => {
             console.error('Erreur lors de la récupération de la page du Blog :', error);
         });
-    }, [idBlog]);
+    }, [idBlogPage]);
 
 
     useEffect(() => {
@@ -390,16 +394,15 @@ const EditPageBlog = () => {
 
         try {        
 
-            const response = await updateBlogPage(idBlog, mainText, localISOTime, status, setpublishDate);
-            // Appeler la fonction saveBlogPage
-        
 
+            const response = await updateBlogPage(idBlogPage, mainText, localISOTime, status, setpublishDate, DecodeBlog.blogPage[0].status, idUser, idBlog);
+        
             // ENREGISTRER LES TEXTES
 
             if (otherText.length > 0) {
 
                 try {
-                    const response = await updateTextBlog(idBlog, otherText);
+                    const response = await updateTextBlog(idBlogPage, otherText);
                     console.log(response)
 
                 } catch (error) {
@@ -424,8 +427,7 @@ const EditPageBlog = () => {
 
 
                 try {
-                    const response = await updateRichTextBlog(idBlog, infoRichText);
-                    console.log(response)
+                    const response = await updateRichTextBlog(idBlogPage, infoRichText);
 
                 } catch (error) {
                     console.error('Erreur lors de la création des richtextes :', error);
@@ -442,7 +444,7 @@ const EditPageBlog = () => {
                 try {
                     // Utiliser Promise.all pour attendre que toutes les images soient sauvegardées
                     await Promise.all(blogData.images.map(async (image) => {
-                        await updateImageBlog(image, idBlog);
+                        await updateImageBlog(image, idBlogPage);
                     }));
 
                 } catch (error) {
@@ -456,7 +458,7 @@ const EditPageBlog = () => {
             if(blogData.video.length > 0){
                 try {
                     await Promise.all(blogData.video.map(async (video) => {
-                        await updateVideoBlog(video, idBlog);
+                        await updateVideoBlog(video, idBlogPage);
                     }));
                 } catch (error) {
                     console.error(error);
@@ -468,7 +470,7 @@ const EditPageBlog = () => {
             if(blogData.multiReference.length > 0){
                 try {
                     await Promise.all(blogData.multiReference.map(async (multiReference) => {
-                        await updateMultiReferenceBlog(idBlog, multiReference);
+                        await updateMultiReferenceBlog(idBlogPage, multiReference);
                     }));
                 } catch (error) {
                     console.error(error);
@@ -481,7 +483,7 @@ const EditPageBlog = () => {
             if(blogData.gallery.length > 0){
                 try {
                     await Promise.all(blogData.gallery.map(async (gallery) => {
-                        await updateGalleryBlog(idBlog, gallery);
+                        await updateGalleryBlog(idBlogPage, gallery);
                     }));
                 } catch (error) {
                     console.error(error);
@@ -496,7 +498,7 @@ const EditPageBlog = () => {
                     await Axios.delete(`${apiUrl}/deleteBlogData`, {
                         data: {
                             data: deletedItems,
-                            id_blog_page : idBlog
+                            id_blog_page : idBlogPage
                         }
                     });
                 } catch (error) {
@@ -505,7 +507,7 @@ const EditPageBlog = () => {
                 }
             }
 
-            navigate(`/dashboard/modification/blog/${id}`);
+            navigate(`/dashboard/modification/blog/${idBlog}`);
 
         } catch (error) {
             // Gérer l'erreur ici
@@ -515,16 +517,24 @@ const EditPageBlog = () => {
 
     };
 
-    const handleDeletePage = async () => {
+    const handleDeletePage = async (slug) => {
         try {
             await Axios.delete(`${apiUrl}/deleteBlogPage`, {
                 params: {
-                    IdBlogPage: idBlog,
-                    Id: id
+                    IdBlogPage: idBlogPage,
+                    Id: idBlog
 
                 }
             });
-            navigate(`/dashboard/modification/blog/${id}`);
+            console.log(DecodeBlog.blogPage);
+            await Axios.post(`${apiUrl}/deleteRouteBlogSitemap`, {
+                params: {
+                    idUser: idUser,
+                    idBlog: idBlog,
+                    slug: slug,
+                }
+            });
+            navigate(`/dashboard/modification/blog/${idBlog}`);
         } catch (error) {
             console.error('Erreur lors de la suppression de la page :', error);
     }
@@ -557,7 +567,7 @@ const EditPageBlog = () => {
                                 </Tooltip>
                             )
                         }
-                        <SecondaryButton variant="contained" theme={theme} onClick={() => navigate(`/dashboard/modification/blog/${id}`)}>Annuler</SecondaryButton>
+                        <SecondaryButton variant="contained" theme={theme} onClick={() => navigate(`/dashboard/modification/blog/${idBlog}`)}>Annuler</SecondaryButton>
                         {
                             DecodeBlog.blogPage[0].status === 1 ? (
                                 <DefaultButton type="submit" variant="contained" onClick={async () => { await handleSave(1,0) }}><SaveIcon/> Enregistrer</DefaultButton>  
@@ -588,7 +598,7 @@ const EditPageBlog = () => {
                             <div key={blogItem.id_config} className="blogField_contain">
                                 <p style={{color: theme.palette.text.secondary}}>{blogItem.name_field}</p>
                                 <Field 
-                                    id_blog_page={id} 
+                                    id_blog_page={idBlogPage} 
                                     type={blogItem.tab_field} 
                                     id_config={blogItem.id_config} 
                                     onChange={handleBlogDataChange} 
@@ -618,14 +628,11 @@ const EditPageBlog = () => {
                             <p className="textCenter popupText">Êtes-vous sur de vouloir supprimer <b>{DecodeBlog.blogPage[0].page_blog_name}</b> définitivement</p>
                             <div className="button_save_contain">
                                 <SecondaryButton variant="contained" theme={theme} onClick={closePopup}>Annuler</SecondaryButton>
-                                <RedButton variant="contained" theme={theme} onClick={handleDeletePage} >Supprimer</RedButton>
+                                <RedButton variant="contained" theme={theme} onClick={() => handleDeletePage(DecodeBlog.blogPage[0].page_blog_slug)} >Supprimer</RedButton>
                             </div>
                         </Popup>
                     )}
-
                     
-                   
-
                   </div>
 
                 </div>

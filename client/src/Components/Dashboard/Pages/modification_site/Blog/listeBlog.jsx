@@ -20,7 +20,7 @@ const ListeBlog = () => {
 
     const [InfoListeblog, setInfoblog] = useState([]);
     const apiUrl = config.apiUrl;
-    const { id } = useParams();
+    const { idBlog } = useParams();
 
     const [LoadingBlog, setLoadingBlog] = useState(true);
 
@@ -32,7 +32,7 @@ const ListeBlog = () => {
     
             Axios.get(`${apiUrl}/getListeBlog`, {
                 params: {
-                    IdBlog: id,
+                    IdBlog: idBlog,
                     idUser: decodedUser.idUser,
                 }
             }).then((response) => {
@@ -42,7 +42,7 @@ const ListeBlog = () => {
                 console.error('Erreur lors de la récupération de la du Blog :', error);
             });
             
-    }, [id]);
+    }, [idBlog]);
 
 
 
