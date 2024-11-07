@@ -530,6 +530,10 @@ const EditPageBlog = () => {
                         data: {
                             data: deletedItems,
                             id_blog_page : idBlogPage
+                        },
+                        headers: {
+                          'Authorization': `Bearer ${token}`,
+                          'Content-Type': 'application/json'
                         }
                     });
                 } catch (error) {
@@ -555,16 +559,24 @@ const EditPageBlog = () => {
                     IdBlogPage: idBlogPage,
                     Id: idBlog
 
+                },
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json'
                 }
             });
-            console.log(DecodeBlog.blogPage);
             await Axios.post(`${apiUrl}/deleteRouteBlogSitemap`, {
                 params: {
-                    idUser: idUser,
-                    idBlog: idBlog,
-                    slug: slug,
+                  idUser: idUser,
+                  idBlog: idBlog,
+                  slug: slug,
                 }
-            });
+              }, {
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json'
+                }
+              });
             navigate(`/dashboard/modification/blog/${idBlog}`);
         } catch (error) {
             console.error('Erreur lors de la suppression de la page :', error);

@@ -18,6 +18,7 @@ import { v4 as uuidv4 } from 'uuid';
 import Cookies from 'js-cookie';
 import {jwtDecode} from 'jwt-decode'; 
 import {DefaultButton, SecondaryButton} from '../../../../../Theme/element';
+import { PiSmileyMeltingFill } from "react-icons/pi";
 
 
 
@@ -182,36 +183,45 @@ const EditPortfolio = () => {
       </div>
       <div className="line_horizontal" style={{ backgroundColor: theme.palette.text.secondary }}></div>
       <div className="portfolio_edit_place">
-        {LoadingPortfolio ? <SkeletonPortfolio /> : <Reorder.Group values={fields} onReorder={handleReorder}>
-        {fields.map((image, index) => {
-          const isBlob = image.data instanceof Blob;
-          const src = isBlob ? URL.createObjectURL(image.data) : image.data;
+        {LoadingPortfolio ? (
+          <SkeletonPortfolio />
+        ) : fields.length === 0 ? (
+          <div className="noImageContain">
+            <PiSmileyMeltingFill style={{ fontSize: 50, color: theme.palette.text.primary }}/>
+            <p style={{color: theme.palette.text.primary}}>Votre portfolio est vide.</p>  
+          </div>
+        ) : (
+          <Reorder.Group values={fields} onReorder={handleReorder}>
+            {fields.map((image, index) => {
+              const isBlob = image.data instanceof Blob;
+              const src = isBlob ? URL.createObjectURL(image.data) : image.data;
 
-          return (
-            <Reorder.Item
-              value={image}
-              key={image.id}
-              onDragStart={() => setActive(index)}
-            >
-              <div className="Item_Portfolio" style={{'--hover-background-color': theme.palette.secondary.secondary}}>
-                <p className="Item_portfolio_element order_element">{index}</p>
-                <p className="Item_portfolio_element alt_element">{image.alt}</p>
-                <p className="Item_portfolio_element name_element">{image.name}</p>
-                <p className="Item_portfolio_element option_element_menu">{image.size} Ko</p>
+              return (
+                <Reorder.Item
+                  value={image}
+                  key={image.id}
+                  onDragStart={() => setActive(index)}
+                >
+                  <div className="Item_Portfolio" style={{ '--hover-background-color': theme.palette.secondary.secondary }}>
+                    <p className="Item_portfolio_element order_element">{index}</p>
+                    <p className="Item_portfolio_element alt_element">{image.alt}</p>
+                    <p className="Item_portfolio_element name_element">{image.name}</p>
+                    <p className="Item_portfolio_element option_element_menu">{image.size} Ko</p>
 
-                <img className="Item_image Item_portfolio_element" src={src} alt={image.alt} />
-                <div className="Item_portfolio_element option_element">
-                  <div className="button_option_portfolio">
-                    <IconButton aria-label="delete"  onClick={() => {handleDelete(image.id_photo,image.name, index);}}>
-                      <DeleteIcon style={{color: theme.palette.text.primary}}/>
-                    </IconButton>
+                    <img className="Item_image Item_portfolio_element" src={src} alt={image.alt} />
+                    <div className="Item_portfolio_element option_element">
+                      <div className="button_option_portfolio">
+                        <IconButton aria-label="delete" onClick={() => handleDelete(image.id_photo, image.name, index)}>
+                          <DeleteIcon style={{ color: theme.palette.text.primary }} />
+                        </IconButton>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            </Reorder.Item>
-          );
-        })}
-        </Reorder.Group>}
+                </Reorder.Item>
+              );
+            })}
+          </Reorder.Group>
+        )}
       </div>
       </SnackbarProvider>
     </div>
