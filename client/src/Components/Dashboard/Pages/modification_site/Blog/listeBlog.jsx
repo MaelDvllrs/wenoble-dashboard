@@ -12,6 +12,7 @@ import config from "../../../../../config";
 import AddIcon from '@mui/icons-material/Add';
 import { SkeletonBlog } from "../../../../skeleton/skeleton";
 import { formatDate } from "../../../dateUtils";
+import { PiSmileyMeltingFill } from "react-icons/pi";
 
 
 const ListeBlog = () => {
@@ -72,32 +73,45 @@ const ListeBlog = () => {
             <div className="line_horizontal" style={{ backgroundColor: theme.palette.text.secondary }}></div>
 
             <div className="liste_blog_box">
-                {LoadingBlog ? <SkeletonBlog /> :
-                    <div>
-                            {InfoListeblog && Array.isArray(InfoListeblog.blogList) ? InfoListeblog.blogList.map((blogpage, index) => {
-                                const formattedCreateDate = formatDate(blogpage.page_blog_create_date);
-                                const formattedUpdateDate = formatDate(blogpage.page_blog_update_date);
-                                const formattedPublishDate = formatDate(blogpage.page_blog_publish_date);
-                            
-                                return (
-                                    <NavLink to={'editPage/' + blogpage.id_page_blog} key={index} className="Item_Portfolio Item_Blog" style={{'--hover-background-color': theme.palette.secondary.secondary, color: theme.palette.text.primary}}>
-                                        <p className="Item_portfolio_element order_element">{index}</p>
-                                        <p className="Item_portfolio_element blog_name_element">{blogpage.page_blog_name}</p>
-                                        {blogpage.status === 1 ? (
-                                            <p className="Item_portfolio_element blog_status publish_status">Publié</p>
-                                        ) : (
-                                            <p className="Item_portfolio_element blog_status draft_status">Brouillon</p>
-                                        )}
-                                        <p className="Item_portfolio_element blog_date_element">{formattedCreateDate}</p>
-                                        <p className="Item_portfolio_element blog_date_element">{formattedUpdateDate}</p>
-                                        <p className="Item_portfolio_element blog_date_element">{formattedPublishDate}</p>
-                                    </NavLink>
-                                );
-                            
-                            }): <p></p>}
+                {LoadingBlog ? (
+                  <SkeletonBlog />
+                  ) : InfoListeblog && Array.isArray(InfoListeblog.blogList) && InfoListeblog.blogList.length === 0 ? (
+                    <div className="noImageContain">
+                      <PiSmileyMeltingFill style={{ fontSize: 50, color: theme.palette.text.primary }} />
+                      <p style={{ color: theme.palette.text.primary }}>Votre blog est vide.</p>
                     </div>
-                }
-            </div> 
+                  ) : (
+                    InfoListeblog && Array.isArray(InfoListeblog.blogList) ? (
+                      InfoListeblog.blogList.map((blogpage, index) => {
+                        const formattedCreateDate = formatDate(blogpage.page_blog_create_date);
+                        const formattedUpdateDate = formatDate(blogpage.page_blog_update_date);
+                        const formattedPublishDate = formatDate(blogpage.page_blog_publish_date);
+
+                        return (
+                          <NavLink
+                            to={'editPage/' + blogpage.id_page_blog}
+                            key={index}
+                            className="Item_Portfolio Item_Blog"
+                            style={{ '--hover-background-color': theme.palette.secondary.secondary, color: theme.palette.text.primary }}
+                          >
+                            <p className="Item_portfolio_element order_element">{index}</p>
+                            <p className="Item_portfolio_element blog_name_element">{blogpage.page_blog_name}</p>
+                            {blogpage.status === 1 ? (
+                              <p className="Item_portfolio_element blog_status publish_status">Publié</p>
+                            ) : (
+                              <p className="Item_portfolio_element blog_status draft_status">Brouillon</p>
+                            )}
+                            <p className="Item_portfolio_element blog_date_element">{formattedCreateDate}</p>
+                            <p className="Item_portfolio_element blog_date_element">{formattedUpdateDate}</p>
+                            <p className="Item_portfolio_element blog_date_element">{formattedPublishDate}</p>
+                          </NavLink>
+                        );
+                      })
+                    ) : (
+                      <p></p>
+                    )
+                )}
+            </div>
             
         </div>
     )
