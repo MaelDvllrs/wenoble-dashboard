@@ -102,6 +102,8 @@ app.use(bodyParser.json({ limit: '500mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
 app.use('/api', apiRouter);
+
+
 app.use(authRoutes);
 app.use(authorisationRouter);
 
