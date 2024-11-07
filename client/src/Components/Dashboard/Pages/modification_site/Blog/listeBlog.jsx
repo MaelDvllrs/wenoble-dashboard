@@ -17,6 +17,7 @@ import { formatDate } from "../../../dateUtils";
 const ListeBlog = () => {
 
     const theme = useTheme();
+    const token = Cookies.get('token')
 
     const [InfoListeblog, setInfoblog] = useState([]);
     const apiUrl = config.apiUrl;
@@ -34,6 +35,10 @@ const ListeBlog = () => {
                 params: {
                     IdBlog: idBlog,
                     idUser: decodedUser.idUser,
+                },
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json'
                 }
             }).then((response) => {
                 setInfoblog(jwtDecode(response.data));

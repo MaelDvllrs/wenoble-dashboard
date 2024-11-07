@@ -23,6 +23,7 @@ const ContactList = () => {
 
     const theme = useTheme();
 
+    const token = Cookies.get('token');
     const [InfoListeMessage, setInfoListeMessage] = useState([]);
     const apiUrl = config.apiUrl;
     const { id } = useParams();
@@ -53,6 +54,10 @@ const ContactList = () => {
             Axios.get(`${apiUrl}/getMessage`, {
                 params: {
                     idUser: decodedUser.idUser,
+                },
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json'
                 }
             }).then((response) => {
                 setInfoListeMessage(jwtDecode(response.data));

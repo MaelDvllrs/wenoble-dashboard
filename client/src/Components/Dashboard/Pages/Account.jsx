@@ -41,6 +41,7 @@ const Account = () => {
       try {
         await Axios.post(`${apiUrl}/uploadProfileImage`, formData, {
           headers: {
+            'Authorization': `Bearer ${Cookies.get('token')}`,
             'Content-Type': 'multipart/form-data',
             username : username
           },

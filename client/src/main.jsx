@@ -4,6 +4,7 @@ import App from './App.jsx'
 import CssBaseline from '@mui/material/CssBaseline';
 import ThemeHandler from './Theme/themeProvider.jsx'
 import './Theme/global.css';
+import { BrowserRouter } from 'react-router-dom';
 
 //if ('serviceWorker' in navigator) {
 //  window.addEventListener('load', () => {
@@ -17,7 +18,6 @@ import './Theme/global.css';
 //}
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  
     <ThemeHandler>
       <CssBaseline />
       <App />

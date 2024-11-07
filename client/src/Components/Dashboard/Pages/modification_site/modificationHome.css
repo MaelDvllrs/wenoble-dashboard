@@ -10,6 +10,8 @@
     flex-direction: column;
     height: auto;
     overflow: visible !important;
+    margin-bottom: 2rem;
+
 }
 
 .limit_size_bar{
@@ -26,7 +28,6 @@
 }
 
 .modification_page_contain{
-    padding-top: 2rem;
     width: 100%;
     height: calc(100% - 7rem);
     display: flex;

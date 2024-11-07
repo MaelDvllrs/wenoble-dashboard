@@ -2,12 +2,11 @@ import React, { useState, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import "./EditPortfolio.css";
 import { compressImage } from "../../../apiImage";
-import { saveImagesPortfolio, orderportfolio, deleteImagePortfolio } from "./apiPortfolio";
+import {fetchImagesPortfolio, saveImagesPortfolio, orderportfolio, deleteImagePortfolio } from "./apiPortfolio";
 
 import { SkeletonPortfolio } from "../../../../skeleton/skeleton";
 import { FileUploader } from "react-drag-drop-files";
 import { LiaCloudUploadAltSolid } from "react-icons/lia";
-import { fetchImagesPortfolio } from "../../../apiImage";
 import { useParams } from "react-router-dom";
 import { Reorder } from "framer-motion";
 import { SnackbarProvider, enqueueSnackbar } from 'notistack'

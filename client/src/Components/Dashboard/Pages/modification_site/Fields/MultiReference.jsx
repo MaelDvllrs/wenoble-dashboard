@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import Select from 'react-select';
 import Axios from 'axios';
 import config from '../../../../../config';
+import Cookies from 'js-cookie';
 
 
 const MultiReference = ({ id_blog_page,type, id_config, onChange, slugValue, fieldValue, dataValue, id_collection_ref, theme }) => {
     const apiUrl = config.apiUrl; 
+    const token = Cookies.get('token');
     const [CollectionRef, setCollectionRef] = useState([]);
     const [optionDefault, setOptionDefault] = useState([]);
     const [createBoolMultiRef, setCreateBoolMultiRef] = useState('')
@@ -16,6 +18,10 @@ const MultiReference = ({ id_blog_page,type, id_config, onChange, slugValue, fie
        Axios.get(`${apiUrl}/getCollectionRef`, {
          params: {
            id_collection_ref: id_collection_ref,
+         },
+         headers: {
+           'Authorization': `Bearer ${token}`,
+           'Content-Type': 'application/json'
          }
        }).then((response) => {
 

@@ -1,9 +1,12 @@
 import Axios from 'axios';
 import config from '../../config';
 import imageCompression from 'browser-image-compression';
+import Cookies from 'js-cookie';
 
 
 const apiUrl = config.apiUrl; 
+const token = Cookies.get('token');
+
 
 
 // ------------------PROFILE------------------
@@ -14,6 +17,10 @@ export const fetchImages = async (username) => {
     const response = await Axios.get(`${apiUrl}/getProfileImages`, {
       params: {
         imagePrefix: 'profile_' + username + '.' 
+      },
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
       }
     });
     return response.data;

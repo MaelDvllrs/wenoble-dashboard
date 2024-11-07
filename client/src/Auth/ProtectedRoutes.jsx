@@ -20,7 +20,7 @@ const IsAuthenticated = () => {
           throw new Error('Token not found');
         }
 
-        const response = await axios.post(`${apiUrl}/api/auth/verify`, { token });
+        const response = await axios.post(`${apiUrl}/auth/verify`, { token });
 
         if (response.data.success && !response.data.user.isAdmin) {
           setIsAuthenticating(true);
@@ -50,7 +50,7 @@ const IsAuthenticatedAdmin = () => {
           throw new Error('Token not found');
         }
 
-        const response = await axios.post(`${apiUrl}/api/auth/verify`, { token });
+        const response = await axios.post(`${apiUrl}/auth/verify`, { token });
 
         if (response.data.success && response.data.user.isAdmin) {
           setIsAuthenticating(true);
@@ -69,7 +69,9 @@ const IsAuthenticatedAdmin = () => {
 
 };
 
-export { IsAuthenticatedAdmin, IsAuthenticated };
+
+
+export { IsAuthenticatedAdmin, IsAuthenticated};
 
 
 

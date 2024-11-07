@@ -4,6 +4,7 @@ import { useTheme } from '@mui/material/styles';
 import "./modificationHome.css"
 import Axios from 'axios';
 import { MdImportContacts, MdArrowForwardIos } from "react-icons/md";
+import { PiLockBold } from "react-icons/pi";  
 import { FaElementor } from "react-icons/fa";
 import { MdArticle } from "react-icons/md";
 import gridBlog from "../../../../assets/background/grid_blog.svg";
@@ -20,6 +21,8 @@ import { BsCursor } from "react-icons/bs";
 import Cookies from 'js-cookie';
 import config from "../../../../config";
 
+import { checkAutorisation } from "../../../../Authorisation/Authorisation";
+
 
 
 const ModificationHome = () => {
@@ -29,6 +32,38 @@ const apiUrl = config.apiUrl;
 const theme = useTheme();
 const [sizeTotal, setSizeTotal] = useState(0);
 const [threshold, setThreshold] = useState(1); 
+
+
+const [authPortfolio, setauthPortfolio] = useState(0);
+useEffect(() => {
+  const fetchPortAuth = async () => {
+    const isAuthorized = await checkAutorisation('auth_portfolio');
+    setauthPortfolio(isAuthorized);
+  };
+  fetchPortAuth();
+}, []);
+
+
+const [authPage, setauthPage] = useState(0);
+useEffect(() => {
+  const fetchPortAuth = async () => {
+    const isAuthorized = await checkAutorisation('auth_page');
+    setauthPage(isAuthorized);
+  };
+  fetchPortAuth();
+}, [])
+
+
+const [authBlog, setauthBlog] = useState(0);
+useEffect(() => {
+  const fetchPortAuth = async () => {
+    const isAuthorized = await checkAutorisation('auth_blog');
+    setauthBlog(isAuthorized);
+  };
+  fetchPortAuth();
+}, [])
+
+
 
 
 const portfolioContainerRef = useRef();
@@ -187,9 +222,6 @@ useEffect(() => {
     textRef.current = updatedText;
     
 
-    console.log('text', text);
-    console.log('fullText', fullText);
-
     if (!isDeletingRef.current && updatedText === fullText) {
       setTimeout(() => isDeletingRef.current = true, 500);
     } else if (isDeletingRef.current && updatedText === '') {
@@ -198,11 +230,10 @@ useEffect(() => {
     }
 
     typingSpeedRef.current = isDeletingRef.current ? 50 : 100;
-    console.log('typingSpeed', typingSpeed);
     if (isTypingRef.current){
       timer = setTimeout(handleType, typingSpeedRef.current);
     }
-  };
+};
 
 
   const startTyping = () => {
@@ -234,43 +265,40 @@ useEffect(() => {
 
 
 
+useEffect(() => {
+  const getTotalSize = async () => {
+    try {
+      const response = await Axios.get(`${apiUrl}/getSizeItem`, {
+          params: {
+            token: token,
+          },
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+      })
+      const totalSize = (response.data.totalSize / 1024);
+      
+      const totalSizeInGB = (totalSize / 1024).toFixed(4);
+      setSizeTotal(totalSizeInGB)
+      const newThreshold = Math.ceil(totalSizeInGB);
+      setThreshold(newThreshold)
+    } catch (error) {
+        console.error('Erreur lors de la récupération de la taille totale :', error);
+    }
+  };
+  getTotalSize();
+},[]);
 
 
 
 
-
-    useEffect(() => {
-      const getTotalSize = async () => {
-        try {
-          const response = await Axios.get(`${apiUrl}/getSizeItem`, {
-              params: {
-                token: token,
-              }
-          });
-
-          const totalSize = (response.data.totalSize / 1024);
-          
-          const totalSizeInGB = (totalSize / 1024).toFixed(4);
-          setSizeTotal(totalSizeInGB);
-
-
-          const newThreshold = Math.ceil(totalSizeInGB);
-          setThreshold(newThreshold);
-
-        } catch (error) {
-            console.error('Erreur lors de la récupération de la taille totale :', error);
-        }
-      };
-      getTotalSize();
-    },[]);
-
-
-
-
-    return(
-        <div className="outlet">
-            <div className="breadCrumbs"><NavLink style={{color: theme.palette.text.primary}} className={"breadCrumbsLink"} to={'/dashboard/home'}>Dashboard</NavLink> &gt; Modification</div>
-            <div className="modification_contain">
+return(
+    <div className="outlet">
+        <div className="breadCrumbs"><NavLink style={{color: theme.palette.text.primary}} className={"breadCrumbsLink"} to={'/dashboard/home'}>Dashboard</NavLink> &gt; Modification</div>
+        <div className="modification_contain">
+          {
+            authPortfolio === 1 || authPage === 1 || authBlog === 1 ? (
               <div className="dashboard_case_empty limit_size_contain" style={{backgroundColor : theme.palette.primary.secondary, borderColor : theme.palette.primary.third}}>
                 <h3 className="title_contain">Espace utilisé</h3>
                 <div className="limit_size_text">{sizeTotal} / {threshold} Go</div>
@@ -280,129 +308,151 @@ useEffect(() => {
                     style={{ width: `${(sizeTotal / (threshold)) * 100}%` }}
                   />      
                 </div>
+              </div> ) : null
+          }
+          
+          <div className="modification_page_contain">
+              <div ref={containerRef} className="modification_link_contain">
+                  <NavLink to={authPortfolio === 1 ? '/dashboard/modification/portfolio' : '#'}  className="modification_box" ref={portfolioContainerRef} style={{backgroundColor : theme.palette.primary.secondary, borderColor : theme.palette.primary.third}}>
+                      <div className="modification_title_box" style={{color: theme.palette.text.primary}}>
+                          <div className="modification_title"><MdImportContacts  className="icon_modifiaction_title"/>
+                            <b>Portfolio</b>
+                            {
+                              authPortfolio === 1 ? (
+                                null
+                              ) : <div style={{color: "var(--primary-color)", marginLeft:"1rem"}} className='icon_navigation icon_lock'><PiLockBold /></div>
+                            }
+                          </div>
+                          <div className="button_modificationHome"><MdArrowForwardIos /></div>
+                      </div>
+                      <div className="texte_modification" style={{color: theme.palette.text.secondary}}>
+                        Transformez vos portfolios photo en un instant ! Ajoutez, supprimez et réorganisez vos images pour créer des galeries captivantes.
+                      </div>
+                      <div className="modification_image_box_portfolio ">
+                          <div className="row_modification_portfolio">
+                            <div className="content">
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                            </div>
+                            <div className="content">
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                            </div>
+                          </div>
+                          <div className="row_modification_portfolio row_inverse_portfolio">
+                            <div className="content">
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                            </div>
+                            <div className="content">
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                            </div>
+                          </div>
+                          <div className="row_modification_portfolio">
+                            <div className="content">
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                            </div>
+                            <div className="content">
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                              <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
+                            </div>
+                          </div>
+                      </div>
+                  </NavLink>
+                  <NavLink to={authPage === 1 ? '/dashboard/modification/page' : '#'} className="modification_box" ref={pageContainerRef} style={{backgroundColor : theme.palette.primary.secondary, borderColor : theme.palette.primary.third}}>
+                      <div className="modification_title_box" style={{color: theme.palette.text.primary}}>
+                        <div className="modification_title"><FaElementor  className="icon_modifiaction_title"/>
+                          <b>Page</b>
+                          {
+                            authPage === 1 ? (
+                                null
+                            ) : <div style={{color: "var(--primary-color)", marginLeft:"1rem"}} className='icon_navigation icon_lock'><PiLockBold /></div>
+                          }
+                        </div>
+                        <div className="button_modificationHome"><MdArrowForwardIos /></div>
+                      </div>
+                      <div className="texte_modification" style={{color: theme.palette.text.secondary}}>  
+                        Ajustez facilement visuels et textes pour un design attrayant et des messages clairs, reflétant votre vision et captivant votre audience.
+                      </div>
+                      <div className="modification_image_box_page">
+                        <div className="modification_image_text" style={{ color: theme.palette.text.primary}}>
+                          <span>Modifiez pour </span>
+                          <span className="typed-text" ref={text_typing_page}><b>{text}</b></span>
+                          <span className="cursor" ref={cursor_typing_page}><b>|</b></span>
+                        </div>  
+                        <img src={sphere_page} alt="shere page" className="shere_page" />                          
+                      </div>
+                  </NavLink>
+                  <NavLink to={authBlog === 1 ? '/dashboard/modification/blog' : '#'} className="modification_box box_blog" ref={iconContainerRef} style={{backgroundColor : theme.palette.primary.secondary, borderColor : theme.palette.primary.third}}>
+                      <div className="modification_title_box" style={{color: theme.palette.text.primary}}>
+                        <div className="modification_title"><MdArticle className="icon_modifiaction_title"/><b>Blog</b>
+                        {
+                          authBlog === 1 ? (
+                              null
+                          ) : <div style={{color: "var(--primary-color)", marginLeft:"1rem"}} className='icon_navigation icon_lock'><PiLockBold /></div>
+                        }
+                        </div>
+                        <div className="button_modificationHome"><MdArrowForwardIos /></div>
+                      </div>
+                      <div className="texte_modification" style={{color: theme.palette.text.secondary}}>
+                        Dynamisez votre blog avec notre outil intuitif : publiez articles, images et vidéos facilement pour captiver vos lecteurs.
+                      </div>
+                      <div className="modification_image_box_blog" ref={plusContainerRef}>
+                        <div className="cache_blog" style={{background: 'linear-gradient('+theme.palette.primary.secondary+', hsla(0, 0%, 100%, 0))'}}/>
+                        <img src={gridBlog} alt="grid blog" className="grid_blog" />
+                        <ImageIcon className="icon_modifiaction_title big_icon icon_modif_blog_1" style={{color: theme.palette.text.primary}}/>
+                        <VideocamIcon className="icon_modifiaction_title big_icon icon_modif_blog_2" style={{color: theme.palette.text.primary}}/>
+                        <TextFieldsIcon className="icon_modifiaction_title big_icon icon_modif_blog_3" style={{color: theme.palette.text.primary}}/>
+                      </div>
+                      <div className="cursor_modif_blog_contain" ref={cursorIconRef}>
+                          <BsCursor className="cursor_modif_blog"/>
+                          <div ref={cursorPlusRef} className="plus_modif_blog"><AddIcon className="cursor_modif_blog"/></div>
+                      </div>
+                  </NavLink>
               </div>
-              <div className="modification_page_contain">
-                  <div ref={containerRef} className="modification_link_contain">
-                      <NavLink to={'/dashboard/modification/portfolio'} className="modification_box" ref={portfolioContainerRef} style={{backgroundColor : theme.palette.primary.secondary, borderColor : theme.palette.primary.third}}>
-                          <div className="modification_title_box" style={{color: theme.palette.text.primary}}>
-                              <div className="modification_title"><MdImportContacts  className="icon_modifiaction_title"/><b>Portfolio</b></div>
-                              <div className="button_modificationHome"><MdArrowForwardIos /></div>
-                          </div>
-                          <div className="texte_modification" style={{color: theme.palette.text.secondary}}>
-                            Transformez vos portfolios photo en un instant ! Ajoutez, supprimez et réorganisez vos images pour créer des galeries captivantes.
-                          </div>
-                          <div className="modification_image_box_portfolio ">
-                              <div className="row_modification_portfolio">
-                                <div className="content">
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                </div>
-                                <div className="content">
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                </div>
-                              </div>
-                              <div className="row_modification_portfolio row_inverse_portfolio">
-                                <div className="content">
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                </div>
-                                <div className="content">
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                </div>
-                              </div>
-                              <div className="row_modification_portfolio">
-                                <div className="content">
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                </div>
-                                <div className="content">
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                  <ImageIcon className="icon_modifiaction_title icon_modif_port" style={{ color: theme.palette.text.secondary }} />
-                                </div>
-                              </div>
-                          </div>
-                      </NavLink>
-                      <NavLink to={'/dashboard/modification/page'} className="modification_box" ref={pageContainerRef} style={{backgroundColor : theme.palette.primary.secondary, borderColor : theme.palette.primary.third}}>
-                          <div className="modification_title_box" style={{color: theme.palette.text.primary}}>
-                            <div className="modification_title"><FaElementor  className="icon_modifiaction_title"/><b>Page</b></div>
-                            <div className="button_modificationHome"><MdArrowForwardIos /></div>
-                          </div>
-                          <div className="texte_modification" style={{color: theme.palette.text.secondary}}>  
-                            Ajustez facilement visuels et textes pour un design attrayant et des messages clairs, reflétant votre vision et captivant votre audience.
-                          </div>
-                          <div className="modification_image_box_page">
-                            <div className="modification_image_text" style={{ color: theme.palette.text.primary}}>
-                              <span>Modifiez pour </span>
-                              <span className="typed-text" ref={text_typing_page}><b>{text}</b></span>
-                              <span className="cursor" ref={cursor_typing_page}><b>|</b></span>
-                            </div>  
-                            <img src={sphere_page} alt="shere page" className="shere_page" />                          
-                          </div>
-                      </NavLink>
-                      <NavLink to={'/dashboard/modification/blog'} className="modification_box box_blog" ref={iconContainerRef} style={{backgroundColor : theme.palette.primary.secondary, borderColor : theme.palette.primary.third}}>
-                          <div className="modification_title_box" style={{color: theme.palette.text.primary}}>
-                            <div className="modification_title"><MdArticle className="icon_modifiaction_title"/><b>Blog</b></div>
-                            <div className="button_modificationHome"><MdArrowForwardIos /></div>
-                          </div>
-                          <div className="texte_modification" style={{color: theme.palette.text.secondary}}>
-                            Dynamisez votre blog avec notre outil intuitif : publiez articles, images et vidéos facilement pour captiver vos lecteurs.
-                          </div>
-                          <div className="modification_image_box_blog" ref={plusContainerRef}>
-                            <div className="cache_blog" style={{background: 'linear-gradient('+theme.palette.primary.secondary+', hsla(0, 0%, 100%, 0))'}}/>
-                            <img src={gridBlog} alt="grid blog" className="grid_blog" />
-                            <ImageIcon className="icon_modifiaction_title big_icon icon_modif_blog_1" style={{color: theme.palette.text.primary}}/>
-                            <VideocamIcon className="icon_modifiaction_title big_icon icon_modif_blog_2" style={{color: theme.palette.text.primary}}/>
-                            <TextFieldsIcon className="icon_modifiaction_title big_icon icon_modif_blog_3" style={{color: theme.palette.text.primary}}/>
-                          </div>
-                          <div className="cursor_modif_blog_contain" ref={cursorIconRef}>
-                              <BsCursor className="cursor_modif_blog"/>
-                              <div ref={cursorPlusRef} className="plus_modif_blog"><AddIcon className="cursor_modif_blog"/></div>
-                          </div>
-                      </NavLink>
-                  </div>
-              </div>
-            </div>
-            
+          </div>
         </div>
-    )
+        
+    </div>
+  )
 }
 
 export default ModificationHome

@@ -58,6 +58,10 @@ const CreatePageBlog = () => {
         Axios.get(`${apiUrl}/getConfigBlog`, {
             params: {
                 IdBlog: idBlog,
+            },
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
             }
         }).then((response) => {
             setConfigblog(response.data);

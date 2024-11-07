@@ -9,6 +9,7 @@ import Admin from './Components/Admin/Admin';
 import AdminHome from './Components/Admin/AdminHome'
 import AdminClient from './Components/Admin/Clients/AdminClients'
 import {IsAuthenticated, IsAuthenticatedAdmin} from './Auth/ProtectedRoutes';
+import { AuthorisedRoutePortfolio, AuthorisedRoutePage, AuthorisedRouteBlog, AuthorisedRouteEcomm } from './Authorisation/Authorisation';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import ModificationHome from './Components/Dashboard/Pages/modification_site/modificationHome'
 import Page from './Components/Dashboard/Pages/modification_site/Page/page'
@@ -38,41 +39,28 @@ import 'dayjs/locale/fr';
 function App() {
 
 
-const ProtectedRoutesClient = ({children}) =>{
-  const dataAuth = IsAuthenticated()
-  const currentUser = dataAuth.isAuthenticating
-  const verifyAuth = dataAuth.verifyAuth
-  if(currentUser && verifyAuth){
-    return children;
-  } else if(verifyAuth){
+  const ProtectedRoutesClient = ({children}) =>{
+    const dataAuth = IsAuthenticated()
+    const currentUser = dataAuth.isAuthenticating
+    const verifyAuth = dataAuth.verifyAuth
+    if(currentUser && verifyAuth){
+      return children;
+    } else if(verifyAuth){
       return <Navigate to='/login'/>
+    }
+   }
+
+  const ProtectedRouteAdmin = ({children}) =>{
+    const dataAdm = IsAuthenticatedAdmin()
+    const currentAdmin = dataAdm.isAuthenticating
+    const verifyAdm = dataAdm.verifyAdm
+    if(currentAdmin && verifyAdm){
+      return children;
+    } else if(verifyAdm){
+      return <Navigate to='/login'/>
+    }
   }
- }
 
-const ProtectedRouteAdmin = ({children}) =>{
-  const dataAdm = IsAuthenticatedAdmin()
-  const currentAdmin = dataAdm.isAuthenticating
-  const verifyAdm = dataAdm.verifyAdm
-  if(currentAdmin && verifyAdm){
-    return children;
-  } else if(verifyAdm){
-    return <Navigate to='/login'/>
-  }
-}
-
-
-const ProtectedRoutePortfolio = ({children}) =>{
-  const dataAdm = IsAuthenticatedAdmin()
-  const currentAdmin = dataAdm.isAuthenticating
-  const verifyAdm = dataAdm.verifyAdm
-  if(currentAdmin && verifyAdm){
-    return children;
-  } else if(verifyAdm){
-
-    return <Navigate to='/login'/>
-  }
-  
-}
 
 
   return (
@@ -89,13 +77,13 @@ const ProtectedRoutePortfolio = ({children}) =>{
                 <Route path="/dashboard/account" element={<Account/>}/>
                 <Route path="/dashboard/modification" element={<ModificationHome/>}>
                 </Route>
-                <Route path="/dashboard/modification/portfolio" element={<Portfolio/>} >
+                <Route path="/dashboard/modification/portfolio" element={<AuthorisedRoutePortfolio><Portfolio/></AuthorisedRoutePortfolio>} >
                     <Route path="/dashboard/modification/portfolio/:id" element={<EditPortfolio/>}></Route>
                 </Route>
-                <Route path="/dashboard/modification/page" element={<Page/>} >
+                <Route path="/dashboard/modification/page" element={<AuthorisedRoutePage><Page/></AuthorisedRoutePage>} >
                     <Route path="/dashboard/modification/page/:idPage" element={<EditPage/>}></Route>
                 </Route>
-                <Route path="/dashboard/modification/blog" element={<Blog/>} >
+                <Route path="/dashboard/modification/blog" element={<AuthorisedRouteBlog><Blog/></AuthorisedRouteBlog>} >
                   <Route path="/dashboard/modification/blog/:idBlog" element={<ListeBlog/>}></Route>
                   <Route path="/dashboard/modification/blog/:idBlog/createPage" element={<CreatePageBlog/>}></Route>
                   <Route path="/dashboard/modification/blog/:idBlog/editPage/:idBlogPage" element={<EditPageBlog/>}></Route>
@@ -106,7 +94,7 @@ const ProtectedRoutePortfolio = ({children}) =>{
                 <Route path="/dashboard/contact" element={<ContactList/>}/>
                 <Route path="/dashboard/contact/message/:id" element={<ContactMessage/>}/>
 
-                <Route path="/dashboard/ecommerce" element={<Ecommerce/>} >
+                <Route path="/dashboard/ecommerce" element={<AuthorisedRouteEcomm><Ecommerce/></AuthorisedRouteEcomm>} >
                   <Route path="/dashboard/ecommerce/stats" element={<EcommerceStatistique/>}></Route>
                   <Route path="/dashboard/ecommerce/product" element={<EcommerceProduct/>}></Route>
                   <Route path="/dashboard/ecommerce/order" element={<EcommerceOrder/>}>
@@ -120,7 +108,6 @@ const ProtectedRoutePortfolio = ({children}) =>{
                 </Route>
               </Route>
             </Route>
-
             <Route path="/dashboard-admin">  
               <Route element={<ProtectedRouteAdmin><Admin /></ProtectedRouteAdmin>}>
                 <Route path="/dashboard-admin/home" element={<AdminHome/>}/>
@@ -129,7 +116,7 @@ const ProtectedRoutePortfolio = ({children}) =>{
               </Route>
             </Route>
           </Routes>
-        </Router>
+         </Router>
       </div>
     </LocalizationProvider>
 

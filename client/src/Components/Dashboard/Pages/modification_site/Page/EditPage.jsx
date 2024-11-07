@@ -13,11 +13,14 @@ import { useTheme } from '@mui/material/styles';
 import { convertToRaw } from 'draft-js';
 import CircularProgress from '@mui/material/CircularProgress';
 import { SnackbarProvider,enqueueSnackbar } from 'notistack';
+import Cookies from 'js-cookie';
 
 
 
 const EditPage = () => {
     const theme = useTheme();
+    const token = Cookies.get('token');
+
     const [savingPage, setSavingPage] = useState(false);
 
     const [InfoConfigPage, setConfigPage] = useState([]);
@@ -44,6 +47,10 @@ const EditPage = () => {
         Axios.get(`${apiUrl}/getConfigPage`, {
             params: {
                 IdPage: idPage,
+            },
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
             }
         }).then((response) => {
             setConfigPage(response.data);
@@ -57,7 +64,6 @@ const EditPage = () => {
         if(InfoConfigPage !== null && typeof InfoConfigPage === 'string'){
             setSavingPage(true);
             const decodedConfig = jwtDecode(InfoConfigPage);
-            console.log(decodedConfig.page.length);
             setDecodeConfigPage(decodedConfig);
             if (decodedConfig.page.length === 0) {
                 setSavingPage(false);
@@ -99,6 +105,10 @@ const EditPage = () => {
                         params: {
                             IdPage: idPage,
                             IdConfig: images.id_config
+                        },
+                        headers: {
+                          'Authorization': `Bearer ${token}`,
+                          'Content-Type': 'application/json'
                         }
                     });
 
@@ -116,6 +126,10 @@ const EditPage = () => {
                         params: {
                             IdPage: idPage,
                             IdConfig: text.id_config
+                        },
+                        headers: {
+                          'Authorization': `Bearer ${token}`,
+                          'Content-Type': 'application/json'
                         }
                     });
                     if (response.data.length > 0) {
@@ -132,6 +146,10 @@ const EditPage = () => {
                         params: {
                             IdPage: idPage,
                             IdConfig: richText.id_config
+                        },
+                        headers: {
+                          'Authorization': `Bearer ${token}`,
+                          'Content-Type': 'application/json'
                         }
                     });
                     if (response.data.length > 0) {
@@ -155,6 +173,10 @@ const EditPage = () => {
         Axios.get(`${apiUrl}/getPageDetail`, {
             params: {
                 IdPage: idPage,
+            },
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
             }
         }).then((response) => {
             setInfoPage(response.data);
@@ -257,6 +279,10 @@ const EditPage = () => {
                         data: {
                             data: deletedItems,
                             id_page : idPage
+                        },
+                        headers: {
+                          'Authorization': `Bearer ${token}`,
+                          'Content-Type': 'application/json'
                         }
                     });
                 } catch (error) {

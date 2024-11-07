@@ -16,6 +16,7 @@ import { useTheme } from '@mui/material/styles';
 const Portfolio = () => {
 
     const theme = useTheme();
+    const token = Cookies.get('token');
     const navigate = useNavigate()
 
 
@@ -29,22 +30,24 @@ const Portfolio = () => {
     const [Infoportfolio, setInfoportfolio] = useState(null);
     
     useEffect(() => {
-        const user = Cookies.get('token');
         
 
-        if (user) { 
-            const decodedUser = jwtDecode(user);
-
+        if (token) {
+            const decodedUser = jwtDecode(token);
+          
             Axios.get(`${apiUrl}/getPortfolio`, {
-                params: {
-                    IdUser: decodedUser.idUser,
-                }
-                
-                
+              params: {
+                IdUser: decodedUser.idUser,
+              },headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }              
             }).then((response) => {
-                setInfoportfolio(response.data);
+              setInfoportfolio(response.data);
+            }).catch((error) => {
+              console.error('Erreur lors de la récupération du portfolio', error);
             });
-        }
+          }
     }, [Infoportfolio]);
 
   

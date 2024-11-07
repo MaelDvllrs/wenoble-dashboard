@@ -12,6 +12,8 @@ import { useTheme } from '@mui/material/styles';
 const Page = () => {
 
     const theme = useTheme();
+    const token = Cookies.get('token');
+    
     const navigate = useNavigate()
     const [initialNavigationDone, setInitialNavigationDone] = useState(false);
 
@@ -33,6 +35,10 @@ const Page = () => {
             Axios.get(`${apiUrl}/getPage`, {
                 params: {
                     IdUser: decodedUser.idUser,
+                },
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json'
                 }
             }).then((response) => {
                 setInfopage(response.data);

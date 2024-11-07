@@ -13,8 +13,12 @@ import { useTheme } from '@mui/material/styles';
 const Blog = () => {
 
     const theme = useTheme();
+    const token = Cookies.get('token')
+    
     const navigate = useNavigate()
     const [initialNavigationDone, setInitialNavigationDone] = useState(false);
+
+    ;
 
     
 
@@ -34,6 +38,10 @@ const Blog = () => {
             Axios.get(`${apiUrl}/getBlog`, {
                 params: {
                     IdUser: decodedUser.idUser,
+                },
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json'
                 }
             }).then((response) => {
                 setInfoblog(response.data);

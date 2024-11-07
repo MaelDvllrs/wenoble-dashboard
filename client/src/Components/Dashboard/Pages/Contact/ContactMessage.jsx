@@ -30,6 +30,10 @@ const ContactMessage = () => {
                 params: {
                     idUser: decodedToken.idUser,
                     idMessage: id,
+                },
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json'
                 }
             }).then((response) => {
                 setInfoDetailMessage(jwtDecode(response.data));

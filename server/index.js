@@ -6,8 +6,11 @@ const path = require('path');
 
 
 // Client router
+const authenticateToken = require('./middleware/authToken'); 
 const apiRouter = require('./api/api');
+const videoRouter = require('./modification/video');
 const authRoutes = require('./users/auth');
+const authorisationRouter = require('./users/authorisation');
 const infoUserRouter = require('./users/infoUser');
 const portfolioRouter = require('./modification/portfolio');
 const pageRouter = require('./modification/page');
@@ -26,7 +29,6 @@ const { notificationRouter, notificationServer } = require('./users/notification
 
 
 
-// Admin router
 const clientRouter = require('./admin/client');
 
 
@@ -79,6 +81,9 @@ const whitelist =
   'https://deko-project.webflow.io'
 ];
 
+
+
+
 // Configuration de CORS
 const corsOptions = {
   origin: function (origin, callback) {
@@ -96,26 +101,9 @@ app.use(express.json())
 app.use(bodyParser.json({ limit: '500mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
-app.use(authRoutes);
-app.use(infoUserRouter);
-app.use(portfolioRouter);
-app.use(pageRouter);
-app.use(blogRouter);
-app.use(limitSizeRouter);
-
-app.use(orderRouter);
-
-app.use(contactRouter);
-
-app.use(notificationRouter);
-
-app.use(sendEmailRouter);
-
-app.use(clientRouter);
-
-app.use(sitemapRouter);
-
 app.use('/api', apiRouter);
+app.use(authRoutes);
+app.use(authorisationRouter);
 
 
 //Static files
@@ -123,6 +111,27 @@ app.use('/media/blog', express.static(path.join(__dirname, 'images', 'blog_image
 app.use('/media/portfolio', express.static(path.join(__dirname, 'images', 'portfolio_image')));
 app.use('/media/page', express.static(path.join(__dirname, 'images', 'page_image')));
 app.use('/media/blogGallery', express.static(path.join(__dirname, 'images', 'blog_gallery')));
+
+app.use(videoRouter);
+
+app.use(authenticateToken);
+
+app.use(infoUserRouter);
+app.use(portfolioRouter);
+app.use(pageRouter);
+app.use(blogRouter);
+app.use(limitSizeRouter);
+app.use(orderRouter);
+app.use(contactRouter);
+app.use(notificationRouter);
+app.use(sendEmailRouter);
+app.use(clientRouter);
+app.use(sitemapRouter);
+
+
+
+
+
 
 
 app.listen(3002, ()=>{

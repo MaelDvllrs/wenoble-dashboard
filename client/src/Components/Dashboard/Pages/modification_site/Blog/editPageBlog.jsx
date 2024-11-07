@@ -90,6 +90,10 @@ const EditPageBlog = () => {
         Axios.get(`${apiUrl}/getConfigBlog`, {
             params: {
                 IdBlog: idBlog,
+            },
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
             }
         }).then((response) => {
             setConfigblog(response.data);
@@ -158,6 +162,10 @@ const EditPageBlog = () => {
                         params: {
                             IdBlogPage: idBlogPage,
                             IdConfig: text.id_config
+                        },
+                        headers: {
+                          'Authorization': `Bearer ${token}`,
+                          'Content-Type': 'application/json'
                         }
                     });
                     if (response.data.length > 0) {
@@ -174,6 +182,10 @@ const EditPageBlog = () => {
                         params: {
                             IdBlogPage: idBlogPage,
                             IdConfig: images.id_config
+                        },
+                        headers: {
+                          'Authorization': `Bearer ${token}`,
+                          'Content-Type': 'application/json'
                         }
                     });
 
@@ -190,6 +202,10 @@ const EditPageBlog = () => {
                         params: {
                             IdBlogPage: idBlogPage,
                             IdConfig: video.id_config
+                        },
+                        headers: {
+                          'Authorization': `Bearer ${token}`,
+                          'Content-Type': 'application/json'
                         }
                     });
 
@@ -208,6 +224,10 @@ const EditPageBlog = () => {
                         params: {
                             IdBlogPage: idBlogPage,
                             IdConfig: richText.id_config
+                        },
+                        headers: {
+                          'Authorization': `Bearer ${token}`,
+                          'Content-Type': 'application/json'
                         }
                     });
 
@@ -225,6 +245,10 @@ const EditPageBlog = () => {
                         params: {
                             IdBlogPage: idBlogPage,
                             IdConfig: multiReference.id_config
+                        },
+                        headers: {
+                          'Authorization': `Bearer ${token}`,
+                          'Content-Type': 'application/json'
                         }
                     });
 
@@ -242,6 +266,10 @@ const EditPageBlog = () => {
                         params: {
                             IdBlogPage: idBlogPage,
                             IdConfig: gallery.id_config
+                        },
+                        headers: {
+                          'Authorization': `Bearer ${token}`,
+                          'Content-Type': 'application/json'
                         }
                     });
 
@@ -267,6 +295,10 @@ const EditPageBlog = () => {
         Axios.get(`${apiUrl}/getBlogPage`, {
             params: {
                 IdBlogPage: idBlogPage,
+            },
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
             }
         }).then((response) => {
             setInfoBlog(response.data);
@@ -403,7 +435,6 @@ const EditPageBlog = () => {
 
                 try {
                     const response = await updateTextBlog(idBlogPage, otherText);
-                    console.log(response)
 
                 } catch (error) {
                     console.error('Erreur lors de la création des textes :', error);

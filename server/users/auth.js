@@ -114,7 +114,7 @@ router.post('/login', async (req, res) => {
   });
 });
 
-router.post('/api/auth/verify', (req, res) => {
+router.post('/auth/verify', (req, res) => {
   const token = req.body.token;
 
   if (!token) {

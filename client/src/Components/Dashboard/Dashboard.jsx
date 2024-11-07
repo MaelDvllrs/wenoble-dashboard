@@ -6,7 +6,7 @@ import './Dashboard.css';
 import { Outlet, Link, NavLink, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion'
 import { BsChevronCompactDown } from "react-icons/bs";
-import { PiUserBold, PiGearSixBold, PiPowerBold, PiHouseBold, PiChartBarBold, PiPencilSimpleBold, PiNewspaperBold, PiFunnelSimpleBold, PiShoppingCartSimpleBold, PiQuestionBold, PiChatCircleDotsBold,PiBellBold} from "react-icons/pi";
+import { PiLockBold, PiUserBold, PiGearSixBold, PiPowerBold, PiHouseBold, PiChartBarBold, PiPencilSimpleBold, PiNewspaperBold, PiFunnelSimpleBold, PiShoppingCartSimpleBold, PiQuestionBold, PiChatCircleDotsBold,PiBellBold} from "react-icons/pi";
 import { LuMoon, LuSun } from "react-icons/lu";
 import { fetchImages } from "./apiImage";
 import Logo from "../../assets/icon/logo.svg?react"; 
@@ -23,8 +23,10 @@ import Grow from '@mui/material/Grow';
 import IconButton from '@mui/material/IconButton';
 //import io from 'socket.io-client';
 import { notificationTitle, notificationLink } from '../../Theme/element';
-import { formatDistance} from 'date-fns';
+import { formatDistance, set} from 'date-fns';
 import { fr } from 'date-fns/locale';
+
+import { checkAutorisation } from '../../Authorisation/Authorisation';
 
 
 
@@ -35,8 +37,25 @@ const Dashboard = () => {
     const theme = useTheme();
 
     const apiUrl = config.apiUrl; 
+    const token = Cookies.get('token');
 
     const apiUrlNotif = config.apiNotifServer;
+
+    const [ecommAuth, setEcommAuth] = useState(false);
+
+    useEffect(() => {
+      const fetchEcommAuth = async () => {
+        const isAuthorized = await checkAutorisation('auth_ecom');
+        setEcommAuth(isAuthorized);
+      };
+
+      fetchEcommAuth();
+    }, []);
+
+
+
+
+
 
     //const socket = io(apiUrlNotif);
 
@@ -52,6 +71,8 @@ const Dashboard = () => {
     const [notifRead, setNotifRead] = useState(false);
 
     const anchorRef = useRef(null);
+
+    
 
    //useEffect(() => {
    //    // Écouter les notifications en temps réel
@@ -73,6 +94,10 @@ const Dashboard = () => {
         const fetchNotifications = async () => {
             try {
                 const response = await Axios.get(`${apiUrl}/getNotifications`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
                     params: {
                         userId: jwtDecode(Cookies.get('token')).idUser,
                     }
@@ -90,6 +115,11 @@ const Dashboard = () => {
         const notificationId = event.currentTarget.id;
         Axios.post(`${apiUrl}/readNotification`, {
             IdNotif: notificationId,
+          }, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
         }).then((response) => {
             setNotifRead(false);
             console.log(response.data);
@@ -118,15 +148,20 @@ const Dashboard = () => {
 
     let decodedUser = null;
 
+
+    // A refaire--------------------------------------------------------------
+
     useEffect(() => {
-        const token = Cookies.get('token');
-    
         if (token) { 
             const decodedToken = jwtDecode(token);
-    
             Axios.post(`${apiUrl}/UserInfo`, {
                 IdUser: decodedToken.idUser,
                 Username: decodedToken.username,
+              }, {
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json'
+                }
             }).then((response) => {
                 setInfoUser(response.data);
             });
@@ -160,6 +195,8 @@ const Dashboard = () => {
             fetchData();
         }
     }, [infoUser]);
+
+    
    
     const [open_user, setopen_user] = useState(true);
     const [open_menu, setopen_menu] = useState(true);
@@ -186,6 +223,8 @@ const Dashboard = () => {
             }
         });
     };
+
+
     
     return (
         <div className='dashboard'>
@@ -221,7 +260,6 @@ const Dashboard = () => {
                     </motion.div>
                 </AnimatePresence>
                 <div className='navigation'>
-                    
                     <NavLink key="home" to='/dashboard/home' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
                         <AnimatePresence initial={false}>
                             <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.primary}}>
@@ -241,16 +279,20 @@ const Dashboard = () => {
                             </motion.div>
                         </AnimatePresence>
                     </NavLink>
-                    <NavLink key="ecommerce" to='/dashboard/ecommerce' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
+                    <NavLink key="ecommerce" to={ecommAuth === 1 ? '/dashboard/ecommerce' : '#'} className={({ isActive, ecommAuth }) => (isActive, ecommAuth ? 'menuActive' : '')}>
                         <AnimatePresence initial={false}>
                             <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.primary}}>
                                 <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><PiShoppingCartSimpleBold/></motion.div>
                                 <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>E-commerce</motion.span>
                                 <div className='menu_link_active_curs'></div>
+                                {
+                                    ecommAuth === 1 ? (
+                                        null
+                                    ) : <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem", marginLeft: open_menu ? "1rem" : "0.5rem"}} style={{color: theme.palette.text.secondary}} className='icon_navigation icon_lock'><PiLockBold /></motion.div>
+                                }
                             </motion.div>
                         </AnimatePresence>
                     </NavLink>
-                    
                     <NavLink key="stats" to='/dashboard/stats' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
                         <AnimatePresence initial={false}>
                             <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.primary}}>
