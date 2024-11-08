@@ -227,12 +227,9 @@ const EditPage = () => {
 
 
     const handleSave = async () => {
-
         setSavingPage(true);
 
-
         try {        
-
             if (pageData.text.length > 0) {
                 try {
                     const response = await updateTextPage(idPage, pageData.text);
@@ -259,7 +256,6 @@ const EditPage = () => {
                     return;
                 }
             }
-
 
             if(pageData.images.length > 0){
                 try {

@@ -384,7 +384,7 @@ router.post('/createRichTextBlog', (req, res) => {
   const saveImage = (base64Data, callback) => {
     const matches = base64Data.match(/^data:image\/([A-Za-z-+/]+);base64,(.+)$/);
     if (!matches || matches.length !== 3) {
-      return new Error('Invalid base64 data');
+      return callback(new Error('Invalid base64 data'));
     }
 
     const imageBuffer = Buffer.from(matches[2], 'base64');
@@ -768,30 +768,76 @@ router.post('/updateRichTextBlog', (req, res) => {
   const id = req.body.params.id;
   const richtext = req.body.params.infoRichText;
 
+  const saveImage = (base64Data, callback) => {
+    const matches = base64Data.match(/^data:image\/([A-Za-z-+/]+);base64,(.+)$/);
+    if (!matches || matches.length !== 3) {
+      return callback(new Error('Invalid base64 data'));
+    }
+
+    const imageBuffer = Buffer.from(matches[2], 'base64');
+    const imageExtension = matches[1];
+    const imageName = `${uuidv4()}.${imageExtension}`;
+    const imagePath = path.join(__dirname, '..', 'images', 'richtext_blog_images', imageName);
+
+    fs.writeFile(imagePath, imageBuffer, (err) => {
+      if (err) {
+        console.error('Erreur lors de l\'écriture de l\'image :', err);
+        return callback(err);
+      }
+      callback(null, `${process.env.SERVER_URL}/media/blog/richText/${imageName}`);
+    });
+  };
+
   const queries = richtext.map((item) => {
-
     return new Promise((resolve, reject) => {
-
-      const richTextJSON = item.richText;
+      let richTextJSON = item.richText;
       const id_config = item.id_config;
-      
-      const SQL = 'UPDATE blog_field_richText SET  text_json = ? WHERE 	id_config = ? AND id_blog_page = ?';
-      const VALUES = [richTextJSON,id_config, id];
-      
-      db.query(SQL, VALUES, (err, results) => {
-        if (err) {
-          console.log('Database query error:', err);
-          reject(err);
-        } else {
-          resolve('RichTexte créé avec succès');
+
+      // Parse the JSON to find and replace base64 images
+      const content = JSON.parse(richTextJSON);
+      const entityMap = content.entityMap;
+
+      const imagePromises = Object.keys(entityMap).map((key) => {
+        const entity = entityMap[key];
+        if (entity.type === 'IMAGE' && entity.data.src.startsWith('data:image/')) {
+          return new Promise((resolveImage, rejectImage) => {
+            saveImage(entity.data.src, (err, imageUrl) => {
+              if (err) {
+                return rejectImage(err);
+              }
+              
+              entity.data.src = imageUrl; // Remplacez les données encodées en base64 par l'URL de l'image
+              resolveImage();
+            });
+          });
         }
+        return Promise.resolve();
       });
+
+      Promise.all(imagePromises)
+        .then(() => {
+          richTextJSON = JSON.stringify(content);
+          const SQL = 'UPDATE blog_field_richText SET text_json = ? WHERE id_config = ? AND id_blog_page = ?';
+          const VALUES = [richTextJSON, id_config, id];
+
+          db.query(SQL, VALUES, (err, results) => {
+            if (err) {
+              console.log('Database query error:', err);
+              reject(err);
+            } else {
+              resolve('RichTexte modifié avec succès');
+            }
+          });
+        })
+        .catch((error) => {
+          reject(error);
+        });
     });
   });
 
   Promise.all(queries)
     .then((results) => {
-      res.status(200).send('Tous les RichTextes ont été créés avec succès');
+      res.status(200).send('Tous les RichTextes ont été modifiés avec succès');
     })
     .catch((error) => {
       res.status(500).send({ error: error.message });
