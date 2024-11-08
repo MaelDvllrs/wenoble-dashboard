@@ -96,7 +96,8 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.use(express.json())
+
+app.use(express.json({ limit: '500mb' })); 
 
 app.use(bodyParser.json({ limit: '500mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
@@ -113,6 +114,8 @@ app.use('/media/blog', express.static(path.join(__dirname, 'images', 'blog_image
 app.use('/media/portfolio', express.static(path.join(__dirname, 'images', 'portfolio_image')));
 app.use('/media/page', express.static(path.join(__dirname, 'images', 'page_image')));
 app.use('/media/blogGallery', express.static(path.join(__dirname, 'images', 'blog_gallery')));
+app.use('/media/blog/richText', express.static(path.join(__dirname, 'images', 'richtext_blog_images')));
+
 
 app.use(videoRouter);
 

@@ -289,6 +289,8 @@ const EditPageBlog = () => {
     }, [blogDataConfig, idBlogPage]);
 
 
+    console.log(InfoBlogPage);
+
 
     useEffect(() => {
 

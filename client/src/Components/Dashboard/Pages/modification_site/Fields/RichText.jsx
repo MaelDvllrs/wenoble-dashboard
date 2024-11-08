@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Editor, EditorState, RichUtils, CompositeDecorator, convertFromRaw } from 'draft-js';
+import React, { useState, useEffect, useRef } from 'react';
+import { Editor, EditorState, RichUtils, CompositeDecorator, convertFromRaw, AtomicBlockUtils } from 'draft-js';
 import 'draft-js/dist/Draft.css';
-import { FaBold, FaItalic, FaLink, FaListUl, FaListOl } from "react-icons/fa";
+import { FaBold, FaItalic, FaLink, FaListUl, FaListOl, FaImage } from "react-icons/fa";
+import { compressImage } from '../../../apiImage'; // Importer la fonction compressImage
 import './Field.css';
 
 const Link = (props) => {
@@ -13,10 +14,19 @@ const Link = (props) => {
   );
 };
 
+const Image = (props) => {
+  const { src, width } = props.contentState.getEntity(props.entityKey).getData();
+  return <img src={src} alt="" style={{ width: width }} />;
+};
+
 const linkDecorator = new CompositeDecorator([
   {
     strategy: findLinkEntities,
     component: Link,
+  },
+  {
+    strategy: findImageEntities,
+    component: Image,
   },
 ]);
 
@@ -33,119 +43,159 @@ function findLinkEntities(contentBlock, callback, contentState) {
   );
 }
 
-const RichTextUpload = ({ id_blog_page,type, id_config, onChange, slugValue, fieldValue, dataValue, id_collection_ref, theme }) => {
-    const [editorState, setEditorState] = useState(EditorState.createEmpty(linkDecorator));
-    const [createBoolRichText, setCreateBoolRichText] = useState('')
-
-    
-    const handleEditorChange = (newState) => {
-      setEditorState(newState);
-
-      const data = {
-        id_config : id_config,
-        type : 'richText',
-        value : newState.getCurrentContent(),
-        create : createBoolRichText
-      }
-
-      onChange({ data });
-
-      
-    };
-      
-    const handleBoldClick = () => {
-      setEditorState(RichUtils.toggleInlineStyle(editorState, 'BOLD'));
-    };
-
-    const handleItalicClick = () => {
-      setEditorState(RichUtils.toggleInlineStyle(editorState, 'ITALIC'));
-    };
-
-    const handleH1Click = () => {
-      setEditorState(RichUtils.toggleBlockType(editorState, 'header-one'));
-    };
-    
-    const handleH2Click = () => {
-      setEditorState(RichUtils.toggleBlockType(editorState, 'header-two'));
-    };
-    
-    const handleH3Click = () => {
-      setEditorState(RichUtils.toggleBlockType(editorState, 'header-three'));
-    };
-    
-    const handleH4Click = () => {
-      setEditorState(RichUtils.toggleBlockType(editorState, 'header-four'));
-    };
-
-    const handleULClick = () => {
-      setEditorState(RichUtils.toggleBlockType(editorState, 'unordered-list-item'));
-    };
-    
-    const handleOLClick = () => {
-      setEditorState(RichUtils.toggleBlockType(editorState, 'ordered-list-item'));
-    };
-
-
-    const handleLinkClick = () => {
-      const url = prompt('Enter a URL');
-      const contentState = editorState.getCurrentContent();
-      const contentStateWithEntity = contentState.createEntity(
-        'LINK',
-        'MUTABLE',
-        {url}
+function findImageEntities(contentBlock, callback, contentState) {
+  contentBlock.findEntityRanges(
+    (character) => {
+      const entityKey = character.getEntity();
+      return (
+        entityKey !== null &&
+        contentState.getEntity(entityKey).getType() === 'IMAGE'
       );
-      const entityKey = contentStateWithEntity.getLastCreatedEntityKey();
-      const newEditorState = EditorState.set(
-        editorState,
-        {currentContent: contentStateWithEntity}
-      );
-  
-      setEditorState(RichUtils.toggleLink(
-        newEditorState,
-        newEditorState.getSelection(),
-        entityKey
-      ));
+    },
+    callback
+  );
+}
+
+const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fieldValue, dataValue, id_collection_ref, theme }) => {
+  const [editorState, setEditorState] = useState(EditorState.createEmpty(linkDecorator));
+  const [createBoolRichText, setCreateBoolRichText] = useState('');
+  const fileInputRef = useRef(null);
+  console.log('dataValue', dataValue);
+
+  const handleEditorChange = (newState) => {
+    setEditorState(newState);
+
+    const data = {
+      id_config: id_config,
+      type: 'richText',
+      value: newState.getCurrentContent(),
+      create: createBoolRichText
     };
 
+    onChange({ data });
+  };
 
-    useEffect(() => {
-      if (dataValue && Object.keys(dataValue).length > 0 && type === 'richText') {
-        // Vérifiez si dataValue.text_json est null
-        if (dataValue.text_json) {
-          // Assurez-vous que dataValue.text_json est bien un objet et non une chaîne JSON.
-          // Si c'est une chaîne, vous devez d'abord la parser :
-          const contentFromJSON = JSON.parse(dataValue.text_json);
-          // Sinon, si c'est déjà un objet, utilisez-le directement :
-      
-          // Convertir le JSON en ContentState
-          const contentState = convertFromRaw(contentFromJSON);
-      
-          // Créer un nouvel EditorState à partir du ContentState
-          const newEditorState = EditorState.createWithContent(contentState);
-      
-          // Mettre à jour l'état de l'éditeur avec les données converties
+  const handleBoldClick = () => {
+    setEditorState(RichUtils.toggleInlineStyle(editorState, 'BOLD'));
+  };
+
+  const handleItalicClick = () => {
+    setEditorState(RichUtils.toggleInlineStyle(editorState, 'ITALIC'));
+  };
+
+  const handleH1Click = () => {
+    setEditorState(RichUtils.toggleBlockType(editorState, 'header-one'));
+  };
+
+  const handleH2Click = () => {
+    setEditorState(RichUtils.toggleBlockType(editorState, 'header-two'));
+  };
+
+  const handleH3Click = () => {
+    setEditorState(RichUtils.toggleBlockType(editorState, 'header-three'));
+  };
+
+  const handleH4Click = () => {
+    setEditorState(RichUtils.toggleBlockType(editorState, 'header-four'));
+  };
+
+  const handleULClick = () => {
+    setEditorState(RichUtils.toggleBlockType(editorState, 'unordered-list-item'));
+  };
+
+  const handleOLClick = () => {
+    setEditorState(RichUtils.toggleBlockType(editorState, 'ordered-list-item'));
+  };
+
+  const handleLinkClick = () => {
+    const url = prompt('Enter a URL');
+    const contentState = editorState.getCurrentContent();
+    const contentStateWithEntity = contentState.createEntity(
+      'LINK',
+      'MUTABLE',
+      { url }
+    );
+    const entityKey = contentStateWithEntity.getLastCreatedEntityKey();
+    const newEditorState = EditorState.set(
+      editorState,
+      { currentContent: contentStateWithEntity }
+    );
+
+    setEditorState(RichUtils.toggleLink(
+      newEditorState,
+      newEditorState.getSelection(),
+      entityKey
+    ));
+  };
+
+  const handleImageClick = () => {
+    fileInputRef.current.click();
+  };
+
+  const handleFileChange = async (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      try {
+        const compressedFile = await compressImage(file);
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const src = e.target.result;
+          const contentState = editorState.getCurrentContent();
+          const contentStateWithEntity = contentState.createEntity(
+            'IMAGE',
+            'IMMUTABLE',
+            { src, width: '100%' }
+          );
+          const entityKey = contentStateWithEntity.getLastCreatedEntityKey();
+          const newEditorState = AtomicBlockUtils.insertAtomicBlock(
+            editorState,
+            entityKey,
+            ' '
+          );
+
           setEditorState(newEditorState);
-        } else {
-          // Si text_json est null, initialisez l'éditeur avec un état vide
-          const emptyContentState = EditorState.createEmpty();
-          setEditorState(emptyContentState);
-        }
-        setCreateBoolRichText(dataValue.create);
+        };
+        reader.readAsDataURL(compressedFile);
+      } catch (error) {
+        console.error('Erreur lors de la compression de l\'image :', error);
       }
-    }, [dataValue, type, setEditorState]);
+    }
+  };
+
+  useEffect(() => {
+    if (dataValue && Object.keys(dataValue).length > 0 && type === 'richText') {
+      if (dataValue.text_json) {
+        const contentFromJSON = JSON.parse(dataValue.text_json);
+        const contentState = convertFromRaw(contentFromJSON);
+        const newEditorState = EditorState.createWithContent(contentState, linkDecorator);
+        setEditorState(newEditorState);
+      } else {
+        const emptyContentState = EditorState.createEmpty(linkDecorator);
+        setEditorState(emptyContentState);
+      }
+      setCreateBoolRichText(dataValue.create);
+    }
+  }, [dataValue, type, setEditorState]);
 
   return (
-    <div className="editor-container" style={{backgroundColor : theme.palette.primary.main, borderColor : theme.palette.primary.main}}>
+    <div className="editor-container" style={{ backgroundColor: theme.palette.primary.main, borderColor: theme.palette.primary.main }}>
       <div className='editor_button_contain'>
-        <button style={{color : theme.palette.text.primary}} className='editor_button' onClick={handleBoldClick}><FaBold/></button>
-        <button style={{color : theme.palette.text.primary}} className='editor_button' onClick={handleItalicClick}><FaItalic/></button>
-        <button style={{color : theme.palette.text.primary}} className='editor_button' onClick={handleH1Click}>H1</button>
-        <button style={{color : theme.palette.text.primary}} className='editor_button' onClick={handleH2Click}>H2</button>
-        <button style={{color : theme.palette.text.primary}} className='editor_button' onClick={handleH3Click}>H3</button>
-        <button style={{color : theme.palette.text.primary}} className='editor_button' onClick={handleH4Click}>H4</button>
-        <button style={{color : theme.palette.text.primary}} className='editor_button' onClick={handleLinkClick}><FaLink /></button>
-        <button style={{color : theme.palette.text.primary}} className='editor_button' onClick={handleULClick}><FaListUl /></button>
-        <button style={{color : theme.palette.text.primary}} className='editor_button' onClick={handleOLClick}><FaListOl /></button>
+        <button style={{ color: theme.palette.text.primary }} className='editor_button' onClick={handleBoldClick}><FaBold /></button>
+        <button style={{ color: theme.palette.text.primary }} className='editor_button' onClick={handleItalicClick}><FaItalic /></button>
+        <button style={{ color: theme.palette.text.primary }} className='editor_button' onClick={handleH1Click}>H1</button>
+        <button style={{ color: theme.palette.text.primary }} className='editor_button' onClick={handleH2Click}>H2</button>
+        <button style={{ color: theme.palette.text.primary }} className='editor_button' onClick={handleH3Click}>H3</button>
+        <button style={{ color: theme.palette.text.primary }} className='editor_button' onClick={handleH4Click}>H4</button>
+        <button style={{ color: theme.palette.text.primary }} className='editor_button' onClick={handleLinkClick}><FaLink /></button>
+        <button style={{ color: theme.palette.text.primary }} className='editor_button' onClick={handleULClick}><FaListUl /></button>
+        <button style={{ color: theme.palette.text.primary }} className='editor_button' onClick={handleOLClick}><FaListOl /></button>
+        <button style={{ color: theme.palette.text.primary }} className='editor_button' onClick={handleImageClick}><FaImage /></button>
+        <input
+          type="file"
+          ref={fileInputRef}
+          style={{ display: 'none' }}
+          onChange={handleFileChange}
+        />
       </div>
       <Editor
         editorState={editorState}

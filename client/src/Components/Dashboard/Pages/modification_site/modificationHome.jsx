@@ -279,6 +279,7 @@ useEffect(() => {
       })
       const totalSize = (response.data.totalSize / 1024);
       
+      
       const totalSizeInGB = (totalSize / 1024).toFixed(4);
       setSizeTotal(totalSizeInGB)
       const newThreshold = Math.ceil(totalSizeInGB);
