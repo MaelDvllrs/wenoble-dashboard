@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Editor, EditorState, RichUtils, CompositeDecorator, convertFromRaw, AtomicBlockUtils } from 'draft-js';
+import { Editor, EditorState, RichUtils, CompositeDecorator, convertFromRaw, AtomicBlockUtils, convertToRaw } from 'draft-js';
 import 'draft-js/dist/Draft.css';
 import { FaBold, FaItalic, FaLink, FaListUl, FaListOl, FaImage, FaTrash } from "react-icons/fa";
 import { compressImage } from '../../../apiImage'; // Importer la fonction compressImage
@@ -76,7 +76,6 @@ function findImageEntities(contentBlock, callback, contentState) {
   contentBlock.findEntityRanges(
     (character) => {
       const entityKey = character.getEntity();
-      console.log('entityKey', entityKey);
       return (
         entityKey !== null &&
         contentState.getEntity(entityKey).getType() === 'IMAGE'
@@ -86,11 +85,10 @@ function findImageEntities(contentBlock, callback, contentState) {
   );
 }
 
-const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fieldValue, dataValue, id_collection_ref, theme }) => {
+const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fieldValue, dataValue, id_collection_ref, theme, imagefunction }) => {
   const [editorState, setEditorState] = useState(EditorState.createEmpty(blockDecorator));
   const [createBoolRichText, setCreateBoolRichText] = useState('');
   const fileInputRef = useRef(null);
-  console.log('dataValue', dataValue);
 
   const handleEditorChange = (newState) => {
     setEditorState(newState);
@@ -208,7 +206,6 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
   };
 
   const handleRemoveImage = (blockKey) => {
-    console.log('blockKey à supprimer:', blockKey);
     const contentState = editorState.getCurrentContent();
     const blockMap = contentState.getBlockMap().delete(blockKey);
     const newContentState = contentState.merge({
@@ -217,6 +214,16 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
     });
     const newEditorState = EditorState.push(editorState, newContentState, 'remove-range');
     setEditorState(newEditorState);
+
+    // Mettre à jour dataValue.text_json
+    const updatedContent = convertToRaw(newContentState);
+    const updatedData = {
+      id_config: id_config,
+      type: 'richText',
+      value: updatedContent,
+      create: createBoolRichText
+    };
+    onChange({ data: updatedData });
   };
 
   const handleReturn = (e) => {
@@ -281,19 +288,28 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
         <button style={{ color: theme.palette.text.primary }} className='editor_button' onClick={handleLinkClick}><FaLink /></button>
         <button style={{ color: theme.palette.text.primary }} className='editor_button' onClick={handleULClick}><FaListUl /></button>
         <button style={{ color: theme.palette.text.primary }} className='editor_button' onClick={handleOLClick}><FaListOl /></button>
-        <button style={{ color: theme.palette.text.primary }} className='editor_button' onClick={handleImageClick}><FaImage /></button>
-        <input
-          type="file"
-          ref={fileInputRef}
-          style={{ display: 'none' }}
-          onChange={handleFileChange}
-        />
+        {
+          imagefunction === true ? (
+            <div>
+              <button style={{ color: theme.palette.text.primary }} className='editor_button' onClick={handleImageClick}><FaImage /></button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                style={{ display: 'none' }}
+                onChange={handleFileChange}
+                accept="image/*" 
+              />
+            </div>
+          ) : 
+          null
+        }
+        
       </div>
       <Editor
         editorState={editorState}
         onChange={handleEditorChange}
         handleReturn={handleReturn}
-        blockRendererFn={blockRendererFn} // Utilisation de blockRendererFn pour les blocs atomiques (images)
+        blockRendererFn={blockRendererFn} 
         className="editor"
       />
     </div>

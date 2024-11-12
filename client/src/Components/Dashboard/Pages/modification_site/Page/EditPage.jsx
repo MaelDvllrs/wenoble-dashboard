@@ -323,6 +323,7 @@ const EditPage = () => {
                                             id_config={pageItem.id_config} 
                                             onChange={handlePageDataChange} 
                                             dataValue={correspondingData || {}}
+                                            imagefunction={false}
                                         />
                                     </div>
                                 );

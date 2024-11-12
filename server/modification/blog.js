@@ -397,7 +397,13 @@ router.post('/createRichTextBlog', (req, res) => {
         console.error('Erreur lors de l\'écriture de l\'image :', err);
         return callback(err);
       }
-      callback(null, `${process.env.SERVER_URL}/media/blog/richText/${imageName}`);
+
+      // Obtenir la taille du fichier en octets
+      const fileSizeInBytes = Buffer.byteLength(imageBuffer);
+      // Convertir la taille en kilo-octets
+      const fileSizeInKB = fileSizeInBytes / 1024;
+
+      callback(null, `${process.env.SERVER_URL}/media/blog/richText/${imageName}`, fileSizeInKB);
     });
   };
 
@@ -414,11 +420,12 @@ router.post('/createRichTextBlog', (req, res) => {
         const entity = entityMap[key];
         if (entity.type === 'IMAGE' && entity.data.src.startsWith('data:image/')) {
           return new Promise((resolveImage, rejectImage) => {
-            saveImage(entity.data.src, (err, imageUrl) => {
+            saveImage(entity.data.src, (err, imageUrl, fileSizeInKB) => {
               if (err) {
                 return rejectImage(err);
               }
               entity.data.src = imageUrl; // Remplacez les données encodées en base64 par l'URL de l'image
+              entity.data.size = fileSizeInKB; // Ajoutez la taille de l'image en Ko
               resolveImage();
             });
           });
@@ -429,8 +436,12 @@ router.post('/createRichTextBlog', (req, res) => {
       Promise.all(imagePromises)
         .then(() => {
           richTextJSON = JSON.stringify(content);
-          const SQL = 'INSERT INTO blog_field_richText (id_blog_page, id_config, text_json) VALUES (?, ?, ?)';
-          const VALUES = [id, id_config, richTextJSON];
+          const SQL = 'INSERT INTO blog_field_richText (id_blog_page, id_config, text_json, size) VALUES (?, ?, ?, ?)';
+          const totalSize = Object.keys(entityMap).reduce((acc, key) => {
+            const entity = entityMap[key];
+            return acc + (entity.data.size || 0);
+          }, 0);
+          const VALUES = [id, id_config, richTextJSON, totalSize];
 
           db.query(SQL, VALUES, (err, results) => {
             if (err) {
@@ -455,6 +466,7 @@ router.post('/createRichTextBlog', (req, res) => {
       res.status(500).send({ error: error.message });
     });
 });
+
 
 
 
@@ -764,6 +776,10 @@ router.post('/updateTextBlog', (req, res) => {
 });
 
 
+
+
+
+
 router.post('/updateRichTextBlog', (req, res) => {
   const id = req.body.params.id;
   const richtext = req.body.params.infoRichText;
@@ -784,7 +800,13 @@ router.post('/updateRichTextBlog', (req, res) => {
         console.error('Erreur lors de l\'écriture de l\'image :', err);
         return callback(err);
       }
-      callback(null, `${process.env.SERVER_URL}/media/blog/richText/${imageName}`);
+
+      // Obtenir la taille du fichier en octets
+      const fileSizeInBytes = Buffer.byteLength(imageBuffer);
+      // Convertir la taille en kilo-octets
+      const fileSizeInKB = fileSizeInBytes / 1024;
+
+      callback(null, `${process.env.SERVER_URL}/media/blog/richText/${imageName}`, fileSizeInKB);
     });
   };
 
@@ -801,12 +823,12 @@ router.post('/updateRichTextBlog', (req, res) => {
         const entity = entityMap[key];
         if (entity.type === 'IMAGE' && entity.data.src.startsWith('data:image/')) {
           return new Promise((resolveImage, rejectImage) => {
-            saveImage(entity.data.src, (err, imageUrl) => {
+            saveImage(entity.data.src, (err, imageUrl, fileSizeInKB) => {
               if (err) {
                 return rejectImage(err);
               }
-              
               entity.data.src = imageUrl; // Remplacez les données encodées en base64 par l'URL de l'image
+              entity.data.size = fileSizeInKB; // Ajoutez la taille de l'image en Ko
               resolveImage();
             });
           });
@@ -816,17 +838,56 @@ router.post('/updateRichTextBlog', (req, res) => {
 
       Promise.all(imagePromises)
         .then(() => {
-          richTextJSON = JSON.stringify(content);
-          const SQL = 'UPDATE blog_field_richText SET text_json = ? WHERE id_config = ? AND id_blog_page = ?';
-          const VALUES = [richTextJSON, id_config, id];
+          const SQL_old = 'SELECT text_json FROM blog_field_richText WHERE id_blog_page = ? AND id_config = ?';
+          const VALUES_old = [id, id_config];
 
-          db.query(SQL, VALUES, (err, results) => {
+          db.query(SQL_old, VALUES_old, (err, results) => {
             if (err) {
               console.log('Database query error:', err);
-              reject(err);
-            } else {
-              resolve('RichTexte modifié avec succès');
+              return reject(err);
             }
+            const oldContent = JSON.parse(results[0].text_json);
+            const oldEntityMap = oldContent.entityMap;
+
+            // Trouver les images à supprimer
+            const oldImages = Object.keys(oldEntityMap)
+              .filter(key => oldEntityMap[key].type === 'IMAGE')
+              .map(key => oldEntityMap[key].data.src);
+
+            const newImages = Object.keys(entityMap)
+              .filter(key => entityMap[key].type === 'IMAGE')
+              .map(key => entityMap[key].data.src);
+
+            const imagesToDelete = oldImages.filter(src => !newImages.includes(src));
+
+            // Supprimer les images qui ne sont plus utilisées
+            imagesToDelete.forEach(src => {
+              const imagePath = path.join(__dirname, '..', 'images', 'richtext_blog_images', path.basename(src));
+              fs.unlink(imagePath, (err) => {
+                if (err) {
+                  console.error('Erreur lors de la suppression de l\'image :', err);
+                } else {
+                  console.log('Image supprimée :', imagePath);
+                }
+              });
+            });
+
+            richTextJSON = JSON.stringify(content);
+            const totalSize = Object.keys(entityMap).reduce((acc, key) => {
+              const entity = entityMap[key];
+              return acc + (entity.data.size || 0);
+            }, 0);
+            const SQL = 'UPDATE blog_field_richText SET text_json = ?, size = ? WHERE id_config = ? AND id_blog_page = ?';
+            const VALUES = [richTextJSON, totalSize, id_config, id];
+
+            db.query(SQL, VALUES, (err, results) => {
+              if (err) {
+                console.log('Database query error:', err);
+                reject(err);
+              } else {
+                resolve('RichTexte modifié avec succès');
+              }
+            });
           });
         })
         .catch((error) => {
@@ -843,6 +904,7 @@ router.post('/updateRichTextBlog', (req, res) => {
       res.status(500).send({ error: error.message });
     });
 });
+
 
 
 const uploadUpdateImage = multer({ storage: storageImage });
@@ -895,9 +957,7 @@ router.post('/updateImagesBlog', uploadUpdateImage.single('image'), (req, res) =
   });
 });
 
-
 const uploadUpdateGallery = multer({ storage: storageGallery });
-
 
 router.post('/updateGalleryBlog', uploadUpdateGallery.array('gallery'), (req, res) => {
   if (!req.files) {
@@ -1134,6 +1194,8 @@ router.delete('/deleteBlogData', (req, res) => {
             return res.status(500).send({ error: err });
           }
         });
+
+        
         break;
     }
   });
@@ -1154,7 +1216,6 @@ router.delete('/deleteBlogPage', (req, res) => {
       return res.status(500).send({ error: err });
     }
 
-    console.log(results);
 
     const deletePromises = results.map((field) => {
       return new Promise((resolve, reject) => {
@@ -1167,10 +1228,37 @@ router.delete('/deleteBlogPage', (req, res) => {
             VALUES = [idBlogPage, field.id_config];
             break;
 
-          case 'richText':
-            SQL = `DELETE FROM blog_field_richText WHERE id_blog_page = ? AND id_config = ?`;
-            VALUES = [idBlogPage, field.id_config];
-            break;
+            case 'richText':
+              const SQLRichText = 'SELECT text_json FROM blog_field_richText WHERE id_blog_page = ? AND id_config = ?';
+              const VALUESRichText = [idBlogPage, field.id_config];
+              db.query(SQLRichText, VALUESRichText, (err, results) => {
+                if (err) {
+                  console.log('Database query error:', err);
+                  return reject(err);
+                }
+                if (results[0]) {
+                  const content = JSON.parse(results[0].text_json);
+                  const entityMap = content.entityMap;
+  
+                  // Extraire les URLs des images du JSON
+                  const imageUrls = Object.keys(entityMap)
+                    .filter(key => entityMap[key].type === 'IMAGE')
+                    .map(key => entityMap[key].data.src);
+  
+                  // Supprimer les images correspondantes des dossiers
+                  imageUrls.forEach(src => {
+                    const imagePath = path.join(__dirname, '..', 'images', 'richtext_blog_images', path.basename(src));
+                    fs.unlink(imagePath, (err) => {
+                      if (err) {
+                        console.error('Erreur lors de la suppression de l\'image :', err);
+                      }
+                    });
+                  });
+                }
+              });
+              SQL = `DELETE FROM blog_field_richText WHERE id_blog_page = ? AND id_config = ?`;
+              VALUES = [idBlogPage, field.id_config];
+              break;
 
           case 'multiReference':
             SQL = `DELETE FROM blog_field_multiReference WHERE id_blog_page = ? AND id_config = ?`;

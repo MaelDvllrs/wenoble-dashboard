@@ -12,7 +12,7 @@ import PublishIcon from '@mui/icons-material/Publish';
 
 import { updateImageBlog, updateBlogPage, updateTextBlog, updateRichTextBlog, updateVideoBlog, updateMultiReferenceBlog, updateGalleryBlog } from './apiBlog';
 import { useTheme } from '@mui/material/styles';
-import { convertToRaw } from 'draft-js';
+import { convertToRaw, ContentState, convertFromRaw } from 'draft-js';
 import UnpublishedIcon from '@mui/icons-material/Unpublished';
 import CircularProgress from '@mui/material/CircularProgress';
 import Tooltip from '@mui/material/Tooltip';
@@ -289,8 +289,6 @@ const EditPageBlog = () => {
     }, [blogDataConfig, idBlogPage]);
 
 
-    console.log(InfoBlogPage);
-
 
     useEffect(() => {
 
@@ -449,25 +447,36 @@ const EditPageBlog = () => {
             // ENREGISTRER LES RICHTEXT
 
             if (blogData.richText.length > 0) {
-                
+                console.log(blogData.richText);
                 const infoRichText = [];
                 blogData.richText.forEach(richText => {
-                    const contentRichText = richText.value;
-                    const richTextJS = convertToRaw(contentRichText);
-                    const richTextJSON = JSON.stringify(richTextJS);
-                    infoRichText.push({richText : richTextJSON, id_config: richText.id_config, create: richText.create});
-                });
-
-
-                try {
-                    const response = await updateRichTextBlog(idBlogPage, infoRichText);
-
-                } catch (error) {
-                    console.error('Erreur lors de la création des richtextes :', error);
+                  const contentRichText = richText.value;
+          
+                  // Vérifiez que contentRichText est un objet ContentState valide
+                  let contentState;
+                  if (typeof contentRichText === 'object' && contentRichText.blocks) {
+                    // Si contentRichText est déjà au format brut (raw) JSON, convertissez-le en ContentState
+                    contentState = convertFromRaw(contentRichText);
+                  } else if (contentRichText instanceof ContentState) {
+                    contentState = contentRichText;
+                  } else {
+                    console.error('contentRichText is not a valid ContentState object or raw JSON');
                     return;
+                  }
+          
+                  const richTextJS = convertToRaw(contentState);
+                  const richTextJSON = JSON.stringify(richTextJS);
+                  infoRichText.push({ richText: richTextJSON, id_config: richText.id_config, create: richText.create });
+                });
+          
+                try {
+                  const response = await updateRichTextBlog(idBlogPage, infoRichText);
+                  console.log('RichText updated successfully:', response);
+                } catch (error) {
+                  console.error('Erreur lors de la création des richtextes :', error);
+                  return;
                 }
-
-            }
+              }
 
 
             
@@ -649,6 +658,7 @@ const EditPageBlog = () => {
                                     onChange={handleBlogDataChange} 
                                     dataValue={correspondingData || {}}
                                     id_collection_ref={blogItem.id_collection_ref}
+                                    imagefunction={true}
                                 />
                             </div>
                         );

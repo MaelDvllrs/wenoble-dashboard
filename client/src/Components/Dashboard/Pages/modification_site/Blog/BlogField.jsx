@@ -80,13 +80,7 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
 
   
   
-  
-  
-  
-  
-  
-  
-  
+
   
   
   // -------------------------------TEXTE EDITOR----------------------------------

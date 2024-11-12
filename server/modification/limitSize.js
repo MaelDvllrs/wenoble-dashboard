@@ -41,10 +41,15 @@ router.get('/getSizeItem', (req, res) => {
                     JOIN blog_page ON blog_field_gallery.id_blog_page = blog_page.id_page_blog
                     JOIN blog ON blog_page.id_blog = blog.id_blog
                     WHERE blog.id_user = ?
+                    UNION ALL 
+                    SELECT size FROM blog_field_richtext
+                    JOIN blog_page ON blog_field_richtext.id_blog_page = blog_page.id_page_blog
+                    JOIN blog ON blog_page.id_blog = blog.id_blog
+                    WHERE blog.id_user = ?
                  ) AS sizes;
     `;
     
-    const Values = [idUser, idUser, idUser, idUser, idUser];
+    const Values = [idUser, idUser, idUser, idUser, idUser, idUser];
 
     db.query(SQL, Values, (err, results) => {
         if (err) {

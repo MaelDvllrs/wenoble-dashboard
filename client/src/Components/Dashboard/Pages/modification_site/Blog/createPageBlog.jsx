@@ -308,6 +308,7 @@ const CreatePageBlog = () => {
                       id_config={blogItem.id_config}
                       id_collection_ref={blogItem.id_collection_ref}
                       onChange={handleBlogDataChange}
+                      imagefunction={true}
                     />
                   </div>
                 ))}
