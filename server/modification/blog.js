@@ -1333,6 +1333,9 @@ router.delete('/deleteBlogPage', (req, res) => {
               break;
         }
         console.log('SQL:', SQL);
+        if (!SQL) {
+          return resolve();
+        }
         db.query(SQL, VALUES, (err, results) => {
           if (err) {
             console.log('Database query error:', err);
