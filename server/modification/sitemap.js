@@ -139,6 +139,8 @@ router.post('/deleteRouteBlogSitemap', async (req, res) => {
     const folder = userResult[0].folder_project;
 
         //Récuperer le slug de la page de blog
+
+
     const page_blog_slug = await new Promise((resolve, reject) => {
       const SQL = "SELECT page_blog_slug FROM blog_page WHERE id_page_blog = ? AND id_blog = ?";  
       db.query(SQL, [idBlogPage, idBlog], (err, result) => {
@@ -148,7 +150,6 @@ router.post('/deleteRouteBlogSitemap', async (req, res) => {
         resolve(result);
       });
     });
-    console.log(page_blog_slug);
     const slug = page_blog_slug[0].page_blog_slug;
 
     // Récupérer le slug de l'article de blog

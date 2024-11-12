@@ -565,6 +565,19 @@ const EditPageBlog = () => {
 
     const handleDeletePage = async (slug) => {
         try {
+            await Axios.post(`${apiUrl}/deleteRouteBlogSitemap`, {
+                params: {
+                  idUser: idUser,
+                  idBlog: idBlog,
+                  slug: slug,
+                  idBlogPage: idBlogPage
+                }
+              }, {
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json'
+                }
+            });
             await Axios.delete(`${apiUrl}/deleteBlogPage`, {
                 params: {
                     IdBlogPage: idBlogPage,
@@ -576,18 +589,7 @@ const EditPageBlog = () => {
                   'Content-Type': 'application/json'
                 }
             });
-            await Axios.post(`${apiUrl}/deleteRouteBlogSitemap`, {
-                params: {
-                  idUser: idUser,
-                  idBlog: idBlog,
-                  slug: slug,
-                }
-              }, {
-                headers: {
-                  'Authorization': `Bearer ${token}`,
-                  'Content-Type': 'application/json'
-                }
-              });
+            
             navigate(`/dashboard/modification/blog/${idBlog}`);
         } catch (error) {
             console.error('Erreur lors de la suppression de la page :', error);
