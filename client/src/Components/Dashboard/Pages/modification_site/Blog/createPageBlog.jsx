@@ -209,7 +209,6 @@ const CreatePageBlog = () => {
                 infoRichText.push({richText : richTextJSON, id_config: richText.id_config});
             });
 
-            console.log('RichText Data to be sent:', infoRichText); // Add this line to log the data
 
             try {
                 const response = await createRichTextBlog(blogPageId, infoRichText);

@@ -1258,7 +1258,6 @@ router.delete('/deleteBlogPage', (req, res) => {
               });
               SQL = `DELETE FROM blog_field_richText WHERE id_blog_page = ? AND id_config = ?`;
               VALUES = [idBlogPage, field.id_config];
-              console.log('SQLrichtext:', SQL);
               break;
 
           case 'multiReference':
@@ -1332,7 +1331,6 @@ router.delete('/deleteBlogPage', (req, res) => {
               VALUES = [idBlogPage, field.id_config];
               break;
         }
-        console.log('SQL:', SQL);
         if (!SQL) {
           return resolve();
         }
