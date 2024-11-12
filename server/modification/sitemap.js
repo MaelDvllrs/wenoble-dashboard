@@ -148,7 +148,7 @@ router.post('/deleteRouteBlogSitemap', async (req, res) => {
         resolve(result);
       });
     });
-
+    console.log(page_blog_slug);
     const slug = page_blog_slug[0].page_blog_slug;
 
     // Récupérer le slug de l'article de blog
