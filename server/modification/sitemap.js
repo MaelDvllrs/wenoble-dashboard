@@ -180,7 +180,9 @@ router.post('/deleteRouteBlogSitemap', async (req, res) => {
 
     res.status(200).json({ message: 'Article supprimé du sitemap avec succès' });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error });
+    
   }
 });
 
@@ -255,6 +257,7 @@ router.post('/updateRouteBlogSitemap', async (req, res) => {
 
     res.status(200).json({ message: 'Article modifié dans le sitemap avec succès' });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error });
   }
 });
