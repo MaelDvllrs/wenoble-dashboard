@@ -109,6 +109,9 @@ app.use(authRoutes);
 app.use(authorisationRouter);
 
 
+app.use(sendEmailRouter);
+
+
 //Static files
 app.use('/media/blog', express.static(path.join(__dirname, 'images', 'blog_image')));
 app.use('/media/portfolio', express.static(path.join(__dirname, 'images', 'portfolio_image')));
@@ -129,7 +132,7 @@ app.use(limitSizeRouter);
 app.use(orderRouter);
 app.use(contactRouter);
 app.use(notificationRouter);
-app.use(sendEmailRouter);
+
 app.use(clientRouter);
 app.use(sitemapRouter);
 
