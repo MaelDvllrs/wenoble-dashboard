@@ -44,7 +44,7 @@ const LIGHT_THEME = createTheme({
         primary: {
             main: 'hsl(215, 15%, 97%)',
             secondary:'#ffffff',
-            third: '#ffffff'
+            third: '#cbcbcb'
         },
         secondary: {
             main: "#141414",

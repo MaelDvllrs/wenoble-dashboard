@@ -367,25 +367,29 @@ router.get('/streamVideo/:videoName',apiKeyMiddleware, (req, res) => {
     });
 });
 
-router.get('/sendMultiReference',apiKeyMiddleware, (req, res) => {
-    const id_blog_page = req.id_data;
 
+
+
+router.get('/sendMultiReference', apiKeyMiddleware, (req, res) => {
+    const id_blog_page = req.id_data;
+  
     const SQL = 'SELECT id_config, info_ref FROM blog_field_multiReference WHERE id_blog_page = ?';
     const Values = [id_blog_page];
-
+  
     db.query(SQL, Values, (err, results) => {
-        if (err) {
-            res.status(500).send({ error: err });
-        }
-        if (results.length === 0) {
-            return res.status(200).json({ message: 'Aucune référence trouvée' });
-        }
-
-        const infoRefParsed = JSON.parse(results[0].info_ref);
-        return res.json({ references: infoRefParsed });
-            
+      if (err) {
+        return res.status(500).send({ error: err });
+      }
+      if (results.length === 0) {
+        return res.status(200).json({ message: 'Aucune référence trouvée' });
+      }
+  
+      // Parse each reference and flatten the arrays
+      const references = results.flatMap(result => JSON.parse(result.info_ref));
+  
+      return res.json({ references });
     });
-});
+  });
 
 
 
@@ -468,6 +472,37 @@ router.get('/sendPageText',apiKeyMiddleware, (req, res) => {
         }
 
         return res.json({ text: results });
+    });
+});
+
+
+router.get('/sendBlogAuteur',apiKeyMiddleware, (req, res) => {
+    const id_blog = req.id_data;
+
+    const SQL = 'SELECT id_user FROM blog WHERE id_blog = ?';
+    const Values = [id_blog];
+    db.query(SQL, Values, (err, results) => {
+        if (err) {
+            return res.status(500).send({ error: err });
+        }
+        if (results.length === 0) {
+            return res.status(200).json({ message: 'Aucun auteur trouvée' });
+        }
+
+        const SQL = 'SELECT username FROM users WHERE id_user = ?';
+        const Values = [results[0].id_user];
+        db.query(SQL, Values, (err, results) => {
+            if (err) {
+                return res.status(500).send({ error: err });
+            }
+            if (results.length === 0) {
+                return res.status(200).json({ message: 'Aucun auteur trouvé' });
+            }
+
+            const author = results[0];
+
+            return res.json({ author });
+        });
     });
 });
 
