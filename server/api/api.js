@@ -99,6 +99,8 @@ router.get('/sendBlog',apiKeyMiddleware, (req, res) => {
     const joinTable = req.query.joinTable || 'blog_page'; // Par défaut, on joint la table blog_page
     const configs = req.query.configs || null; // Configs des blogs passés en paramètre de requête 
 
+    console.log(ids);
+
     let SQL;
     let Values;
 

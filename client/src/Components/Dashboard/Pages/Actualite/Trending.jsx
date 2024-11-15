@@ -1,14 +1,14 @@
 import React from "react"
 import { useTheme } from '@mui/material/styles';
 import config from '../../../../config';
-import {useBlogs} from './useBlog'
+import {useArticles} from './useArticle'
 import WhatshotIcon from '@mui/icons-material/Whatshot';
 import { NavLink } from 'react-router-dom';
 
 export const TrendingArticle = () => {
     const theme = useTheme();
     const apiUrl = config.apiUrl;
-    const articles = useBlogs(2);
+    const articles = useArticles(2);
     
     
     return (
@@ -19,6 +19,8 @@ export const TrendingArticle = () => {
             </div>
             {articles.map((article, index) => (
                 <NavLink 
+                    key={index}
+                    to={`/dashboard/actu/article/${article.slug}`}
                     className="textContainArticle trendingTextContain" 
                     style={{ 
                         borderColor: theme.palette.primary.third, 

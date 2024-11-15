@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { getBlogs, getBlogInfo, getBlogText, getBlogImage, getBlogMultiReference, getBlogAuteur } from './apiActu';
+import { getBlogs, getBlogInfo,  getBlogMultiReference } from './apiActu';
 import config from '../../../../config';
 import { formatDistance, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
-export const useBlogs = (limit) => {
-  const [articles, setArticles] = useState([]);
+export const useUpdates = (limit) => {
+  const [updates, setUpdates] = useState([]);
 
   const formatDistanceWithoutApprox = (date) => {
     return formatDistance(date, new Date(), {
@@ -18,21 +18,17 @@ export const useBlogs = (limit) => {
             }
         }
     });
-};
+  };
+
 
   useEffect(() => {
     const fetchBlogs = async () => {
       const tab = [];
       try {
-        const blogs = await getBlogs(config.idBlogArticle, 'DESC', limit);
+        const blogs = await getBlogs(config.idUpdateActu, 'DESC', limit);
         for (const blog of blogs.blog) {
-            console.log(blog);
           try {
-            const blogText = await getBlogText(blog.id_page_blog);
-            const blogImage = await getBlogImage(blog.id_page_blog);
             const blogMultiReference = await getBlogMultiReference(blog.id_page_blog);
-            const auteur = await getBlogAuteur(blog.id_blog);
-            console.log(auteur);
 
 
             let blogCategoryName = { blog: [{ page_blog_name: 'Auteur non trouvé' }] };
@@ -42,21 +38,12 @@ export const useBlogs = (limit) => {
             }
 
             const date = formatDistanceWithoutApprox(blog.page_blog_publish_date);
-            const resume = blogText.text?.find(item => config.idResumeArticle.includes(item.id_config)) || { text: 'Résumé non trouvé' };
-            const image = blogImage.images?.find(item => config.idMainImageArticle.includes(item.id_config)) || { url: 'Image non trouvée' };
-
-            console.log(date);
-
 
             tab.push({
               name: blog.page_blog_name,
               slug: blog.page_blog_slug,
-              resume: resume,
-              imageUrl: image,
               id: blog.id_page_blog,
               date: date,
-              auteurName: auteur.author.username,
-              auteurPhoto:  'Photo non trouvée',
               categorie: blogCategoryName.blog[0]?.page_blog_name || 'Categorie non trouvée'
             });
           } catch (error) {
@@ -66,11 +53,11 @@ export const useBlogs = (limit) => {
       } catch (error) {
         console.error('Erreur:', error);
       }
-      setArticles(tab);
+      setUpdates(tab);
     };
 
     fetchBlogs();
   }, []);
 
-  return articles;
+  return updates;
 };

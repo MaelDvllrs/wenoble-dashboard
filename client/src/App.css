@@ -242,3 +242,15 @@ figure > div{
 }
 
 
+.backButton{
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-bottom: 1rem;
+}
+
+.backButton:hover{
+    color: var(--primary-hover-color);
+}
+
+

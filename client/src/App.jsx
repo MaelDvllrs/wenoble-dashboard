@@ -21,6 +21,8 @@ import CreatePageBlog from './Components/Dashboard/Pages/modification_site/Blog/
 import EditPageBlog from './Components/Dashboard/Pages/modification_site/Blog/editPageBlog'
 import Statistique from './Components/Dashboard/Pages/Statistique/Statistique'
 import Actualite from './Components/Dashboard/Pages/Actualite/Actualite'
+import Article from './Components/Dashboard/Pages/Actualite/Article'
+import ArticleTemplate from './Components/Dashboard/Pages/Actualite/ArticleTemplate'
 import ContactList from './Components/Dashboard/Pages/Contact/ContactListe'
 import ContactMessage from './Components/Dashboard/Pages/Contact/ContactMessage'
 import Ecommerce from './Components/Dashboard/Pages/Ecommerce/EcommerceHome'
@@ -104,7 +106,10 @@ function App() {
                     <Route path="/dashboard/ecommerce/order/orderAll" element={<EcommerceOrderAll/>}></Route>
                   </Route>
                 </Route>
-                <Route path="/dashboard/actu" element={<Actualite/>} >
+                <Route path="/dashboard/actu" element={<Actualite/>}>
+                  <Route path="/dashboard/actu/article" element={<Article/>}></Route>
+                  <Route path="/dashboard/actu/update" element={<Article/>}></Route>
+                  <Route path="/dashboard/actu/article/:slug" element={<ArticleTemplate/>}></Route>
                 </Route>
               </Route>
             </Route>

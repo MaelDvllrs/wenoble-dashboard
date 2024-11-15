@@ -1,19 +1,22 @@
 import React from 'react';
 import { useTheme } from '@mui/material/styles';
 import config from '../../../../config';
-import {useBlogs} from './useBlog'
+import {useArticles} from './useArticle'
 import { NavLink } from 'react-router-dom';
 
 const Article = () => {
   const theme = useTheme();
   const apiUrl = config.apiUrl;
-  const articles = useBlogs();
+  const articles = useArticles();
 
   return (
     <div className='article_container'>
       {articles.map((article, index) => (
-        <NavLink key={index} className="articleBox" 
-        style={{ 
+        <NavLink 
+          key={index} 
+          to={`/dashboard/actu/article/${article.slug}`}
+          className="articleBox" 
+          style={{ 
             backgroundColor: theme.palette.primary.main, 
             borderColor: theme.palette.primary.third, 
             color:theme.palette.text.primary,

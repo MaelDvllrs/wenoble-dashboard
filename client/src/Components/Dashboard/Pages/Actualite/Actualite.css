@@ -26,6 +26,9 @@
 .actu_trending{
     width: min(20rem, 100%);
     max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 }
 
 .trendingTitleContain{
@@ -46,6 +49,7 @@
 
     gap: 0rem;
     padding-bottom: 0rem;
+    height: auto;
 }
 
 .articleBox{
@@ -61,6 +65,8 @@
 .articleBox:hover{
     background-color: var(--primary-hover-background-color);
 }
+
+
 
 .imageArticle{
     width: 100%;
@@ -92,6 +98,8 @@
     border-top: 1px solid;
 }
 
+
+
 .trendingTitle{
     margin: 0 !important;
 }
@@ -121,7 +129,7 @@
 
 .categorieArticleContain{
     padding: 0.3rem 1rem;
-    background-color: rgb(var(--primary-color-rgb), 0.3);
+    border: 1px solid var(--primary-color);
     border-radius: 3rem;
     color: var(--primary-color);
 }
@@ -130,6 +138,13 @@
     font-weight: bold;
     margin: 0.5rem 0;
     color: var(--primary-color) !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 1; /* Nombre de lignes avant de couper le texte */
+    -webkit-box-orient: vertical;
+    line-clamp: 1; /* Pour les navigateurs qui supportent line-clamp */
+    box-orient: vertical;
 }
 
 .articleResume {
@@ -148,4 +163,97 @@
 }
 
 
+.updateTitle{
+    border-bottom: 1px solid;
+}
 
+
+.updateTextContain{
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: start;
+    padding-top: 0;
+    padding-bottom: 0;
+    border: none;
+    padding: 0.8rem;
+}
+
+.UpdateLineContain{
+    height: 100%;
+    display: flex;
+
+    flex-direction: column;
+    align-items: center;
+}
+
+
+
+
+.UpdateLine{
+    width: 1px;
+    height: 100%;
+}
+
+.UpdateContainActu{
+    display: flex;
+    gap: 1rem;
+    align-items: start;
+    justify-content: stretch;
+}
+
+.UpdateTitleBox{
+    font-size: 1rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Nombre de lignes avant de couper le texte */
+    -webkit-box-orient: vertical;
+    line-clamp: 2; /* Pour les navigateurs qui supportent line-clamp */
+    box-orient: vertical;
+}
+
+
+
+.article_template_container{
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding-bottom: 3rem;
+    margin-bottom: 0.5rem;
+    align-items: start;
+    border-bottom: solid 1px;
+
+}
+
+.articleTemplateTitle{
+    font-size: 2rem;
+}
+
+.articleTemplateTitleBox{
+    display: flex;
+    align-items: start;
+    flex-direction: column;
+    margin-bottom: 3rem;
+}
+
+.textBoxArticleTemplate{
+    width: 100%;
+    border-bottom: solid 1px;
+    padding-bottom: 0.5rem;
+}
+
+
+.imageArticleTemplate{
+    height: auto;
+    border-radius: 0.5rem;
+}
+
+.ArticleTemplateContenue > figure > img{
+    border-radius: 0.5rem;
+}
+
+
+.ArticleTemplateBottom{
+    padding-bottom: 1rem;
+}

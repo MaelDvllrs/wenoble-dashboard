@@ -312,7 +312,7 @@ const Dashboard = () => {
                         </AnimatePresence>
                     </NavLink>
                     <div className='menu_title'><p className='menu_title_text' style={{color: theme.palette.text.primary}}><b>Wenoble</b></p></div>
-                    <NavLink key="actu" to='/dashboard/actu' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
+                    <NavLink key="actu" to='/dashboard/actu/article' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
                         <AnimatePresence initial={false}>
                             <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.primary}}>
                                 <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><PiNewspaperBold/></motion.div>

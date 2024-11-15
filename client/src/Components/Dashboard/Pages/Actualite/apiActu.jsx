@@ -2,7 +2,7 @@ import axios from 'axios';
 import config from '../../../../config';
 
 const apiUrl = config.apiUrl;
-const apiKey = 'APITEST';
+const apiKey = 'APICLIENT';
 
 async function fetchBlogData(url, headers) {
   try {
@@ -39,6 +39,19 @@ export async function getBlogInfo(blogId) {
   return await fetchBlogData(url, headers);
 }
 
+
+export async function getBlogInfoSlug(slug, id) {
+  console.log(slug, id);
+  const headers = {
+    'api_key': apiKey,
+    'slug': slug,
+    'id_blog': id
+  };
+  const url = `${apiUrl}/api/sendBlogInfoSlug`;
+  return await fetchBlogData(url, headers);
+}
+
+
 export async function getBlogText(blogId) {
   const headers = {
     'api_key': apiKey,
@@ -65,6 +78,15 @@ export async function getBlogMultiReference(blogId) {
   const url = `${apiUrl}/api/sendMultiReference`;
   return await fetchBlogData(url, headers);
 }
+
+export async function getBlogRichText(blogId) {
+  const headers = {
+    'api_key': apiKey,
+    'id_data': blogId
+  };
+  const url = `${apiUrl}/api/sendBlogRichText`;
+  return await fetchBlogData(url, headers);
+} 
 
 
 export async function getBlogAuteur(blogId) {
