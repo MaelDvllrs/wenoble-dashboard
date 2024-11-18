@@ -1,17 +1,17 @@
 import React from 'react';
 import { useTheme } from '@mui/material/styles';
 import config from '../../../../config';
-import {useArticlesTemplates} from './useArticleTemplate'
+import {useUpdateTemplates} from './useUpdateTemplate'
 import { NavLink, useParams } from 'react-router-dom';
 import {formatDate} from '../../dateUtils'
 import ArrowLeftIcon from '@mui/icons-material/ArrowLeft';
 
-const ArticleTemplate = () => {
+const UpdateTemplate = () => {
   const theme = useTheme();
   const apiUrl = config.apiUrl;
   const slug = useParams().slug;
-  const articles = useArticlesTemplates(slug);
-  const article = articles[0];
+  const updates = useUpdateTemplates(slug);
+  const update = updates[0];
 
   return (
     <div>
@@ -26,22 +26,16 @@ const ArticleTemplate = () => {
         <ArrowLeftIcon/>
         Retour
       </NavLink>
-      {article ? ( 
+      {update ? ( 
         <div className='article_template_container' style={{borderColor : theme.palette.text.secondary}}>
-          <img src={`${apiUrl}/media/blog/${article.imageUrl.src_image}`} alt={article.imageUrl.alt_image} className="imageArticle imageArticleTemplate" />
-          <div className='articleTemplateTitleBox'>
-            <h2 className='articleTemplateTitle green_title'>{article.name}</h2>
-            <div className="categorieArticleContain">{article.categorie}</div>
+          <div className='articleTemplateTitleBox updateTemplateTitleBox'>
+            <h2 className='articleTemplateTitle'>{update.name}</h2>
           </div>
           
           <div className='textBoxArticle textBoxArticleTemplate' style={{borderColor : theme.palette.text.secondary}}>
-              <div className="auteurArticleContain">
-                <img src={`${apiUrl}/media/blog/${article.auteurPhoto}`} alt={article.auteurName} className="auteurArticlePhoto" />
-                <p style={{color : theme.palette.text.secondary}}>{article.auteurName}</p>
-              </div>
-              <p style={{color : theme.palette.text.secondary}}>{formatDate(article.date)}</p>
+              <p style={{color : theme.palette.text.secondary}}>{formatDate(update.date)}</p>
           </div>
-          <div className='ArticleTemplateContenue'  dangerouslySetInnerHTML={{ __html: article.contenue }}/>
+          <div className='ArticleTemplateContenue'  dangerouslySetInnerHTML={{ __html: update.contenue }}/>
         </div>
       ) : null
     }
@@ -51,4 +45,4 @@ const ArticleTemplate = () => {
     </div>
   );
 };
-export default ArticleTemplate;
+export default UpdateTemplate;

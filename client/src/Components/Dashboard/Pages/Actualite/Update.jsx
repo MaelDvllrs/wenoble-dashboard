@@ -20,6 +20,7 @@ export const Update = () => {
             {updates.map((update, index) => (
                 <NavLink 
                     key={index}
+                    to={`/dashboard/actu/update/${update.slug}`}
                     className="textContainArticle updateTextContain" 
                     style={{ 
                         color : theme.palette.text.primary,

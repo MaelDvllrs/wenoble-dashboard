@@ -247,10 +247,11 @@ figure > div{
     align-items: center;
     gap: 0.3rem;
     margin-bottom: 1rem;
+    transition: all 0.2s ease;
 }
 
 .backButton:hover{
-    color: var(--primary-hover-color);
+    color: var(--primary-hover-color) !important;
 }
 
 

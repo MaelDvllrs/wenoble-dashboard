@@ -23,6 +23,7 @@ import Statistique from './Components/Dashboard/Pages/Statistique/Statistique'
 import Actualite from './Components/Dashboard/Pages/Actualite/Actualite'
 import Article from './Components/Dashboard/Pages/Actualite/Article'
 import ArticleTemplate from './Components/Dashboard/Pages/Actualite/ArticleTemplate'
+import UpdateTemplate from './Components/Dashboard/Pages/Actualite/UpdateTemplate'
 import ContactList from './Components/Dashboard/Pages/Contact/ContactListe'
 import ContactMessage from './Components/Dashboard/Pages/Contact/ContactMessage'
 import Ecommerce from './Components/Dashboard/Pages/Ecommerce/EcommerceHome'
@@ -36,6 +37,7 @@ import EcommerceOrderAll from './Components/Dashboard/Pages/Ecommerce/EcommerceO
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import 'dayjs/locale/fr';
+
 
 
 function App() {
@@ -110,6 +112,7 @@ function App() {
                   <Route path="/dashboard/actu/article" element={<Article/>}></Route>
                   <Route path="/dashboard/actu/update" element={<Article/>}></Route>
                   <Route path="/dashboard/actu/article/:slug" element={<ArticleTemplate/>}></Route>
+                  <Route path="/dashboard/actu/update/:slug" element={<UpdateTemplate/>}></Route>
                 </Route>
               </Route>
             </Route>

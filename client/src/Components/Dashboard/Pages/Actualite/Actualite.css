@@ -230,11 +230,19 @@
     font-size: 2rem;
 }
 
+.green_title{
+    color: var(--primary-color);
+}
+
 .articleTemplateTitleBox{
     display: flex;
     align-items: start;
     flex-direction: column;
     margin-bottom: 3rem;
+}
+
+.updateTemplateTitleBox{
+    margin-bottom: 0;
 }
 
 .textBoxArticleTemplate{
