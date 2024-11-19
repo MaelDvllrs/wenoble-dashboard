@@ -19,28 +19,55 @@ const secretKey = process.env.SECRET_KEY;
 
 
 
-router.post('/UserInfo', (req, res)=>{
-    
-    const sentIdUser = req.body.IdUser
-    const sentUsername = req.body.Username
+router.get('/getUserInfoBasic', (req, res)=>{
 
-    const SQL = 'SELECT email, username, id_user, website FROM users WHERE username = ? && id_user = ?'
 
-    const Values = [sentUsername, sentIdUser]
+    const id_user = req.user.idUser 
+
+    const SQL = 'SELECT email, username, id_user, website FROM users WHERE id_user = ?'
+
+    const Values = [id_user]
 
     db.query(SQL, Values, (err, results)=>{
         if(err){
             res.send({error: err})
         }
 
-        const user = results
+        const SQL_image = 'SELECT src_profile_image FROM users_info WHERE id_user = ?'
+        const Values_image = [id_user]
 
-        const userCrypt = jwt.sign({
-            user : user
-        }, secretKey);
+        db.query(SQL_image, Values_image, (err, results_image)=>{
+            if(err){
+                res.send({error: err})
+            }
 
-        res.send(userCrypt)
-    }) 
+            const user = results
+            const image = results_image
+
+            const userCrypt = jwt.sign({
+              user : user,
+              image : image
+            }, secretKey);
+
+
+            res.send(userCrypt)
+        })
+      }) 
+  });
+
+
+  router.get('/getUserInfo', (req, res)=>{
+
+    const id_user = req.user.idUser 
+
+    const SQL = 'SELECT website FROM users_info WHERE id_user = ?'
+    const Values = [id_user]
+    db.query(SQL,Values, (err, results)=>{
+        if(err){
+            res.send({error: err})
+        }
+        res.send(results)
+    })
   });
 
 

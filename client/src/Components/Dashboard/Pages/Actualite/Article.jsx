@@ -12,6 +12,7 @@ const Article = () => {
 
 
 
+
   return (
     <div className='article_container'>
       {articles.map((article, index) => (

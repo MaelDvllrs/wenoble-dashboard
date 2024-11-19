@@ -2,14 +2,26 @@ import React from "react"
 import {  NavLink, Outlet } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import './Actualite.css'
-import  Article from './Article'
 import {TrendingArticle} from './Trending'
-import { Update } from './Update'
+import { UpdateLast } from './UpdateLast'
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 
 const Actualite = () => {
 
     const theme = useTheme();
+
+    const navigate = useNavigate()
+    const [initialNavigationDone, setInitialNavigationDone] = useState(false);
+  
+  
+    useEffect(() => {
+      if(!initialNavigationDone) {
+        navigate('/dashboard/actu/article');
+        setInitialNavigationDone(true);
+      }
+    }, [ initialNavigationDone, navigate]);
     
 
     return(
@@ -26,8 +38,9 @@ const Actualite = () => {
                         <TrendingArticle/>
                     </div>
                     <div className="articleBox trendingBox" style={{ backgroundColor: theme.palette.primary.main, borderColor: theme.palette.primary.third }}>
-                        <Update/>
+                        <UpdateLast/>
                     </div>
+                    <div className="margeBottomTrending">‎ </div>
                 </div>
             </div>
         </div>

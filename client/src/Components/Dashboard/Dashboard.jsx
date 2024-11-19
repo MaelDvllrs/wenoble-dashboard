@@ -153,11 +153,7 @@ const Dashboard = () => {
 
     useEffect(() => {
         if (token) { 
-            const decodedToken = jwtDecode(token);
-            Axios.post(`${apiUrl}/UserInfo`, {
-                IdUser: decodedToken.idUser,
-                Username: decodedToken.username,
-              }, {
+            Axios.get(`${apiUrl}/getUserInfoBasic`, {
                 headers: {
                   'Authorization': `Bearer ${token}`,
                   'Content-Type': 'application/json'
@@ -349,7 +345,7 @@ const Dashboard = () => {
                             </IconButton>
                         
                         <ClickAwayListener onClickAway={handleClickAway}>
-                        <Popper open={openNotif} anchorEl={anchorRef.current} transition placement="bottom-end">
+                        <Popper open={openNotif} anchorEl={anchorRef.current} transition placement="bottom-end" style={{zIndex:100}}>
                         {({ TransitionProps }) => (
                           <Grow {...TransitionProps} timeout={350}>
                                 <div className='dashboard_case_empty notification_case' style={{backgroundColor : theme.palette.primary.main, borderColor : theme.palette.primary.third}}>

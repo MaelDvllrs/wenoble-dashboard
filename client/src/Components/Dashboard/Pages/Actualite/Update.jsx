@@ -1,45 +1,47 @@
-import React from "react"
+import React from 'react';
 import { useTheme } from '@mui/material/styles';
 import config from '../../../../config';
-import {useUpdates} from './useUpdate' 
-import UpdateIcon from '@mui/icons-material/Update';
+import {useUpdates} from './useUpdate'
 import { NavLink } from 'react-router-dom';
+import './Actualite.css'
 
-export const Update = () => {
-    const theme = useTheme();
-    const apiUrl = config.apiUrl;
-    const updates = useUpdates(5);
-    
-    
-    return (
-        <div className='article_container trending_container' >
-            <div className="trendingTitleContain updateTitle" style={{backgroundColor : theme.palette.primary.secondary, borderColor: theme.palette.primary.third, }}>
-                <UpdateIcon/>
-                <p><b>Mise à jour</b> <span style={{color : theme.palette.text.secondary, fontSize: '0.8rem'}}>aujourd'hui</span></p>
+const Update = () => {
+  const theme = useTheme();
+  const apiUrl = config.apiUrl;
+  const updates = useUpdates();
+
+
+
+
+  return (
+    <div className='article_container'>
+      {updates.map((update, index) => (
+        <div>
+            <div className="UpdateContainActu">
+                <div className="UpdateLineContain">
+                    <p className="UpdateCirlce" style={{color : theme.palette.text.secondary}}>●</p>
+                    <div className="UpdateLine" style={{backgroundColor : theme.palette.text.secondary}}></div>
+                </div>
+                <div className="UpdateTitleContain">
+                    <p style={{color : theme.palette.text.secondary}}>{update.date}</p>
+                    <NavLink
+                        key={index}
+                        to={`/dashboard/actu/update/${update.slug}`}
+                        className={"UpdateTitleBoxPage"}
+                        style={{ 
+                            color : theme.palette.text.primary,
+                            '--primary-hover-color': theme.palette.text.secondary,
+                        }}
+                    >
+                         <p className="articleTemplateTitle updateTitlepage">{update.name}</p>
+                    </NavLink>
+                   
+                </div>
             </div>
-            {updates.map((update, index) => (
-                <NavLink 
-                    key={index}
-                    to={`/dashboard/actu/update/${update.slug}`}
-                    className="textContainArticle updateTextContain" 
-                    style={{ 
-                        color : theme.palette.text.primary,
-                        '--primary-hover-background-color': theme.palette.primary.secondary,
-                }}>
-                    <div className="UpdateContainActu">
-                        <div className="UpdateLineContain">
-                            <p className="UpdateCirlce" style={{color : theme.palette.text.secondary}}>●</p>
-                            <div className="UpdateLine" style={{backgroundColor : theme.palette.text.secondary}}></div>
-                        </div>
-                        <div className="UpdateTitleContain">
-                            <p style={{color : theme.palette.text.secondary}}>{update.date}</p>
-                            <p className="UpdateTitleBox"><b>{update.name}</b></p>
-                        </div>
-                    </div>
-                    
-
-                </NavLink>
-            ))}
         </div>
-    );
-}
+      ))}
+    </div>
+  );
+};
+
+export default Update;

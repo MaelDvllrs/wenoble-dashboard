@@ -16,7 +16,7 @@ const UpdateTemplate = () => {
   return (
     <div>
       <NavLink 
-        to='/dashboard/actu/article' 
+        to='/dashboard/actu/update' 
         className='backButton' 
         style={{
           color : theme.palette.text.secondary,

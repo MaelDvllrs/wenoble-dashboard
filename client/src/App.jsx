@@ -1,7 +1,7 @@
 import './App.css'
 import Dashboard from './Components/Dashboard/Dashboard'
 import Home from './Components/Dashboard/Pages/Home'
-import Account from'./Components/Dashboard/Pages/Account'
+import Account from'./Components/Dashboard/Pages/Users/Account'
 import Portfolio from './Components/Dashboard/Pages/modification_site/Portfolio/portfolio'
 import Login from './Auth/Login'
 import EditPortfolio from './Components/Dashboard/Pages/modification_site/Portfolio/EditPortfolio'
@@ -22,6 +22,7 @@ import EditPageBlog from './Components/Dashboard/Pages/modification_site/Blog/ed
 import Statistique from './Components/Dashboard/Pages/Statistique/Statistique'
 import Actualite from './Components/Dashboard/Pages/Actualite/Actualite'
 import Article from './Components/Dashboard/Pages/Actualite/Article'
+import Update from './Components/Dashboard/Pages/Actualite/Update'
 import ArticleTemplate from './Components/Dashboard/Pages/Actualite/ArticleTemplate'
 import UpdateTemplate from './Components/Dashboard/Pages/Actualite/UpdateTemplate'
 import ContactList from './Components/Dashboard/Pages/Contact/ContactListe'
@@ -110,9 +111,12 @@ function App() {
                 </Route>
                 <Route path="/dashboard/actu" element={<Actualite/>}>
                   <Route path="/dashboard/actu/article" element={<Article/>}></Route>
-                  <Route path="/dashboard/actu/update" element={<Article/>}></Route>
+                  <Route path="/dashboard/actu/update" element={<Update/>}></Route>
                   <Route path="/dashboard/actu/article/:slug" element={<ArticleTemplate/>}></Route>
                   <Route path="/dashboard/actu/update/:slug" element={<UpdateTemplate/>}></Route>
+                </Route>
+                <Route path="/dashboard/account" element={<Account/>}>
+
                 </Route>
               </Route>
             </Route>

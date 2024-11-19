@@ -115,6 +115,7 @@ app.use('/media/portfolio', express.static(path.join(__dirname, 'images', 'portf
 app.use('/media/page', express.static(path.join(__dirname, 'images', 'page_image')));
 app.use('/media/blogGallery', express.static(path.join(__dirname, 'images', 'blog_gallery')));
 app.use('/media/blog/richText', express.static(path.join(__dirname, 'images', 'richtext_blog_images')));
+app.use('/media/profile', express.static(path.join(__dirname, 'images', 'profile_image')));
 
 
 app.use(videoRouter);

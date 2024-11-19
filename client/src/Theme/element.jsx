@@ -32,7 +32,7 @@ export const LoginTextField = styled(TextField)(({ theme }) => ({
     '& .MuiOutlinedInput-root': {
         '& fieldset': {
             borderColor: theme.palette.text.secondary, 
-            borderRadius: '1rem',
+            borderRadius: '0.5rem',
         },
         '&:hover fieldset': {
             borderColor: theme.palette.text.secondary, 

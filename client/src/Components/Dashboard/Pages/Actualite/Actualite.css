@@ -46,7 +46,8 @@
 }
 
 .trending_container{
-
+    border-radius: 0.5rem;
+    overflow: hidden;
     gap: 0rem;
     padding-bottom: 0rem;
     height: auto;
@@ -65,6 +66,12 @@
 .articleBox:hover{
     background-color: var(--primary-hover-background-color);
 }
+
+.trendingBox{
+    overflow: visible;
+}
+
+
 
 
 
@@ -182,11 +189,36 @@
 .UpdateLineContain{
     height: 100%;
     display: flex;
-
+    position: absolute;
+    top: 0;
+    bottom: 0;
     flex-direction: column;
     align-items: center;
 }
 
+
+.UpdateDown{
+    border-bottom: none;
+    border-top: solid 1px;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+}
+
+.UpdateDownLink{
+    transition: all 0.2s ease;
+}
+
+.UpdateDownLink:hover{
+    color: var(--primary-hover-color) !important;
+    
+}
+
+.updateTitlepage{
+    font-size: 1.5rem;
+    font-weight: 600 !important;
+    line-height: 1.2;
+    font-size: 1.5rem !important;
+}
 
 
 
@@ -200,6 +232,7 @@
     gap: 1rem;
     align-items: start;
     justify-content: stretch;
+    position: relative;
 }
 
 .UpdateTitleBox{
@@ -211,6 +244,19 @@
     -webkit-box-orient: vertical;
     line-clamp: 2; /* Pour les navigateurs qui supportent line-clamp */
     box-orient: vertical;
+}
+
+.UpdateTitleBoxPage{
+    transition: all 0.2s ease;
+}
+
+.UpdateTitleBoxPage:hover{  
+    color: var(--primary-hover-color) !important;
+
+}
+
+.UpdateTitleContain{
+    margin-left: 1rem;
 }
 
 
