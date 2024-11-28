@@ -45,7 +45,6 @@ export const updateUserInfo = async (userInfoNew, token) => {
         }
       });
     }
-    console.log(response);
     return response.data;
   } catch (error) {
     console.error('Erreur lors de la mise à jour des informations utilisateur:', error);

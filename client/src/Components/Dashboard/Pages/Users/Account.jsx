@@ -78,9 +78,7 @@ const Account = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(userInfoNew);
     const response = await updateUserInfo(userInfoNew, token);
-    console.log(response);
     setMessage(response.message);
     enqueueSnackbar(`Informations sauvegardée avec succès.`, { variant: 'success' });
     setIsModified(false);
@@ -139,7 +137,7 @@ const Account = () => {
             <div className="account-info" style={{ backgroundColor: theme.palette.primary.main, borderColor: theme.palette.primary.third }}>
               <div className='bannerAccount'></div>
               <div className='accountInfoBox accountInfoBasicBox' style={{ borderColor: theme.palette.primary.third }}>
-                {userInfo.image[0].src_profile_image || userInfoNew.image.url ? (
+                {userInfo.image && userInfo.image[0] && userInfo.image[0].src_profile_image || userInfoNew.image ? (
                   <img
                     src={userInfoNew.image ? userInfoNew.image.url : `${apiUrl}/media/profile/${userInfo.image[0].src_profile_image}`}
                     className='profile_photo account_photo'
