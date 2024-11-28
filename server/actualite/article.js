@@ -35,7 +35,7 @@ const formatDistanceWithoutApprox = (date) => {
     const parsedDate = (date instanceof Date) ? date : new Date(date);
 
     const userTimeZoneOffset = new Date().getTimezoneOffset() * 60000; // En millisecondes
-    const localDate = new Date(parsedDate.getTime() - userTimeZoneOffset); // Ajuste la date pour le fuseau horaire local
+    const localDate = new Date(parsedDate.getTime() + userTimeZoneOffset); // Ajuste la date pour le fuseau horaire local
 
     return formatDistance(localDate, new Date(), {
         addSuffix: true,
