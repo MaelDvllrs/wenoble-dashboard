@@ -50,7 +50,7 @@
     overflow: hidden;
     gap: 0rem;
     padding-bottom: 0rem;
-    height: auto;
+    height: 100%;
 }
 
 .articleBox{
@@ -202,6 +202,8 @@
     border-top: solid 1px;
     padding-top: 0.5rem;
     padding-bottom: 0.5rem;
+    position: relative;
+    bottom: 0;
 }
 
 .UpdateDownLink{
