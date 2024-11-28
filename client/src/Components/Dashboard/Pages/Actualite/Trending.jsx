@@ -18,6 +18,7 @@ export const TrendingArticle = () => {
                 <WhatshotIcon/>
                 <p><b>Article à la une</b> <span style={{color : theme.palette.text.secondary, fontSize: '0.8rem'}}>aujourd'hui</span></p>
             </div>
+            <div className="actuLinkContainer">
             {articles.map((article, index) => (
                 <NavLink 
                     key={index}
@@ -40,6 +41,7 @@ export const TrendingArticle = () => {
                 <p style={{color : theme.palette.text.secondary}}>{formatDistanceWithoutApprox(article.date)}</p>
                 </NavLink>
             ))}
+            </div>
             <div className="trendingTitleContain updateTitle UpdateDown" style={{backgroundColor : theme.palette.primary.secondary, borderColor: theme.palette.primary.third, }}>
                 <NavLink
                 to={'/dashboard/actu/article'}

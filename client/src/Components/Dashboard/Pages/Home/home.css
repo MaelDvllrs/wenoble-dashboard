@@ -1,0 +1,14 @@
+
+
+.gridHome{
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(2, calc(50% - 0.5rem));
+    grid-column-gap: 1rem;
+    grid-row-gap: 1rem;
+    height: calc(100% - 2.5rem);
+}
+
+.gridHome > div{
+    max-height: 100%;
+}

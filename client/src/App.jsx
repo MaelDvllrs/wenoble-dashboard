@@ -1,6 +1,6 @@
 import './App.css'
 import Dashboard from './Components/Dashboard/Dashboard'
-import Home from './Components/Dashboard/Pages/Home'
+import Home from './Components/Dashboard/Pages/Home/Home'
 import Account from'./Components/Dashboard/Pages/Users/Account'
 import Portfolio from './Components/Dashboard/Pages/modification_site/Portfolio/portfolio'
 import Login from './Auth/Login'
