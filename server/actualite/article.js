@@ -39,7 +39,7 @@ const formatDistanceWithoutApprox = (date) => {
             }
         }
     });
-  };
+};
 
 router.get('/getArticle', async (req, res) => {
     const limit = req.query.limit; 
