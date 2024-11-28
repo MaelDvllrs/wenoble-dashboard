@@ -13,8 +13,6 @@ const apiKeyMiddleware = (req, res, next) => {
     const apiKey = req.headers['api_key'];
     const id_data = req.headers['id_data']
     const ids = req.headers['ids']
-
-    console.log('authentification api');
     
     if (!apiKey) {
         return res.status(401).json({ message: 'Clé API ou ID de data manquant.' });
@@ -94,12 +92,10 @@ router.get('/sendPhotoPortfolio',apiKeyMiddleware, (req, res) => {
 router.get('/sendBlog',apiKeyMiddleware, (req, res) => {
     const ids = req.ids; // IDs des blogs passés en paramètre de requête
     const order = req.query.order || 'ASC'; // Par défaut, l'ordre est croissant
-    const limit = req.query.limit ? parseInt(req.query.limit, 10) : null; // Pas de limite par défaut
+    const limit = req.query.limit ? parseInt(req.query.limit, 10) : null;
     const colone = req.query.colone || 'page_blog_publish_date'; // Par défaut, on trie par date de publication
     const joinTable = req.query.joinTable || 'blog_page'; // Par défaut, on joint la table blog_page
     const configs = req.query.configs || null; // Configs des blogs passés en paramètre de requête 
-
-    console.log(ids);
 
     let SQL;
     let Values;
@@ -491,8 +487,10 @@ router.get('/sendBlogAuteur',apiKeyMiddleware, (req, res) => {
             return res.status(200).json({ message: 'Aucun auteur trouvée' });
         }
 
+        const id_user = results[0].id_user;
+
         const SQL = 'SELECT username FROM users WHERE id_user = ?';
-        const Values = [results[0].id_user];
+        const Values = [id_user];
         db.query(SQL, Values, (err, results) => {
             if (err) {
                 return res.status(500).send({ error: err });
@@ -501,9 +499,27 @@ router.get('/sendBlogAuteur',apiKeyMiddleware, (req, res) => {
                 return res.status(200).json({ message: 'Aucun auteur trouvé' });
             }
 
-            const author = results[0];
+            const name = results[0];
 
-            return res.json({ author });
+            const SQL = 'SELECT src_profile_image FROM users_info WHERE id_user = ?';
+            const Values = [id_user];
+
+            db.query(SQL, Values, (err, results) => {
+                if (err) {
+                    return res.status(500).send({ error: err });
+                }
+
+                if (results.length === 0) {
+                    return res.status(200).json({ message: 'Aucune image de profil trouvée' });
+                }
+                
+                const author = { username: name.username, src_profile_image: results[0].src_profile_image };
+
+                return res.json({ author });
+            }
+        );
+
+
         });
     });
 });

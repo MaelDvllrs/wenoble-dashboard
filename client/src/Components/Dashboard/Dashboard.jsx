@@ -28,6 +28,8 @@ import { fr } from 'date-fns/locale';
 
 import { checkAutorisation } from '../../Authorisation/Authorisation';
 
+import {fetchUserInfo} from './Pages/Users/apiAccount';
+
 
 
 
@@ -146,29 +148,18 @@ const Dashboard = () => {
     };
 
 
-    let decodedUser = null;
 
-
-    // A refaire--------------------------------------------------------------
 
     useEffect(() => {
-        if (token) { 
-            Axios.get(`${apiUrl}/getUserInfoBasic`, {
-                headers: {
-                  'Authorization': `Bearer ${token}`,
-                  'Content-Type': 'application/json'
-                }
-            }).then((response) => {
-                setInfoUser(response.data);
-            });
-        }
-    }, []);
+            const fetchUserInfoLocal = async (token) => {
+                const response = await fetchUserInfo(token);
+                setInfoUser(jwtDecode(response));
+            };
+            fetchUserInfoLocal(token);
+            setLoadingProfile(false);
+    }, [token]);
 
-    if(infoUser != null){
-        decodedUser = jwtDecode(infoUser);
-    }
 
-    const [images, setImages] = useState([]);
 
 
     const navigateTo = useNavigate()
@@ -177,20 +168,6 @@ const Dashboard = () => {
         Cookies.remove('token');
         navigateTo('/');
     }
-
-
-
-    useEffect(() => {
-        if(decodedUser != null){
-            const fetchData = async () => {
-                const imagesData = await fetchImages(decodedUser.user[0].username); 
-                setImages(imagesData);
-                setLoadingProfile(false);
-            };
-
-            fetchData();
-        }
-    }, [infoUser]);
 
     
    
@@ -221,6 +198,7 @@ const Dashboard = () => {
     };
 
 
+
     
     return (
         <div className='dashboard'>
@@ -235,16 +213,24 @@ const Dashboard = () => {
                     <motion.div className="user_menu"  animate={{height: open_user ? "5rem" : "auto", paddingRight: open_menu ? "1rem" : "0rem", paddingLeft: open_menu ? "1rem" : "0rem", width: open_menu ? "auto" : "3rem", border: open_menu ? "1px #434853 solid" : "none"}}>
                         <div className='user_menu_hide'>
                             <div className='user_menu_box'>
-                                {LoadingProfile ? <SkeletonProfile /> : <div className='flex_left'>
-                                    {
-                                      images[0] ? (
-                                        <img src={`data:image/jpeg;base64,${images[0].data}`} alt={images[0].name} className='profile_photo'/>
-                                      ) : (
-                                        <Avatar alt="Avatar par défaut" className='profile_photo'/>
-                                      )
-                                    }
-                                    {decodedUser && <p className='user_name' ><b className='user_name_contain' style={{color: theme.palette.text.primary}}>{decodedUser.user[0].username}</b><span className='user_id' style={{color: theme.palette.text.secondary}}>#{String(decodedUser.user[0].id_user).padStart(4, '0')}</span></p>}
-                                </div>}
+                                {LoadingProfile ? <SkeletonProfile /> : 
+                                <div className='flex_left'>
+                                    {infoUser && infoUser.image && infoUser.image[0] ? (
+                                      <img src={`${apiUrl}/media/profile/${infoUser.image[0].src_profile_image}`} className='profile_photo' />
+                                    ) : (
+                                      <Avatar alt="Avatar par défaut" className='profile_photo' />
+                                    )}
+                                    {infoUser && infoUser.user && infoUser.user[0] && (
+                                      <p className='user_name'>
+                                        <b className='user_name_contain' style={{ color: theme.palette.text.primary }}>
+                                          {infoUser.user[0].username}
+                                        </b>
+                                        <span className='user_id' style={{ color: theme.palette.text.secondary }}>
+                                          #{String(infoUser.user[0].id_user).padStart(4, '0')}
+                                        </span>
+                                      </p>
+                                    )}
+                              </div>}
                                 <button id='id_user_menu_button' className='user_menu_button' onClick={toggle_user} style={{color: theme.palette.text.primary}}><BsChevronCompactDown className='user_menu_button_arrow'/></button>  
                             </div>
                             <div className="option_user_box">

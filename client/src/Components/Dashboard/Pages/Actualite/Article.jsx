@@ -30,7 +30,7 @@ const Article = () => {
           <div className="textContainArticle" style={{borderColor: theme.palette.primary.third}}>
             <div className='textBoxArticle'>
                 <div className="auteurArticleContain">
-                  <img src={`${apiUrl}/media/blog/${article.auteurPhoto}`} alt={article.auteurName} className="auteurArticlePhoto" />
+                  <img src={`${apiUrl}/media/profile/${article.auteurPhoto}`} alt={article.auteurName} className="auteurArticlePhoto" />
                   <p style={{color : theme.palette.text.secondary}}>{article.auteurName}</p>
                 </div>
                 <div className="categorieArticleContain">{article.categorie}</div>

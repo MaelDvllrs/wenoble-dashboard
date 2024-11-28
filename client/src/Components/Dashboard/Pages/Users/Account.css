@@ -78,6 +78,11 @@
 .account-info-container{
     width: min(40rem, 100%);
     max-width: 800px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    align-items: center;
 }
 
 
@@ -107,6 +112,10 @@
 }
 
 
+.account-info-section{
+    width: 100%;
+}
+
 .account_photo{
     width: 6rem !important;
     height: 6rem !important;
@@ -114,6 +123,12 @@
     position: relative;
     z-index: 2;
     border: 0.5rem solid;
+    transition: all 0.2s ease;
+}
+
+.account_photo:hover{
+    cursor: pointer;
+    border-color: var(--primary-color) !important;
 }
 
 .accountInfoBasicBox{
@@ -141,4 +156,23 @@
     padding: 1rem !important;
     display: flex;
     flex-direction: column;
+}
+
+
+.accountSave{
+    position: fixed;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2rem;
+    border: 1px solid;
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    margin-top: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    bottom: 1rem;
+
+
+
 }

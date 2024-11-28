@@ -5,6 +5,8 @@ const cors = require('cors')
 const multer  = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { v4: uuidv4 } = require('uuid');
+
 
 
 
@@ -130,14 +132,74 @@ router.get('/getUserInfoBasic', (req, res)=>{
   });
 
 
-  router.post('/updatedInfo', (req, res) => {
-    const sentIdUser = req.body.IdUser
-    const sentUsername = req.body.Username
+  const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, path.join(__dirname, '..', 'images', 'profile_image')); // Répertoire de destination pour les fichiers téléchargés
+    },
+    filename: function (req, file, cb) {
+      const fileExtension = path.extname(file.originalname);
+      const uniqueName = uuidv4() + fileExtension;
+      cb(null, uniqueName);
+    }
+  });
 
-    const SQL = 'SELECT email, username, id_user, website FROM users WHERE username = ? && id_user = ?'
 
-    const Values = [sentUsername, sentIdUser]
-  })
+  const upload = multer({ storage: storage });
+
+  router.post('/updateInfoUser', upload.single('image'), (req, res) => {
+    const idUser = req.user.idUser;
+
+
+    const { email=null } = JSON.parse(req.body.data);
+    const image = req.file ? req.file.filename : null;
+
+    if(email){
+      const SQLEmail = 'UPDATE users SET email = ? WHERE id_user = ?';
+      const ValuesEmail = [email, idUser];
+      db.query(SQLEmail, ValuesEmail, (err, result) => {
+        if (err) {
+          console.error('Erreur lors de la mise à jour de l\'email:', err);
+          return res.status(500).json({ message: 'Erreur lors de la mise à jour de l\'email' });
+        }
+        res.status(200).json({ message: 'Email mis à jour avec succès' });
+      });
+    }
+
+    if (image) {
+
+      const SQLSelect = 'SELECT src_profile_image FROM users_info WHERE id_user = ?';
+      const ValuesSelect = [idUser];
+
+      db.query(SQLSelect, ValuesSelect, (err, results) => {
+        if (err) {
+          console.error('Erreur lors de la récupération de l\'image de profil:', err);
+          return res.status(500).json({ message: 'Erreur lors de la récupération de l\'image de profil' });
+        }
+        if (results.length !== 0) {
+          const oldImage = results[0].src_profile_image;
+          if (oldImage) {
+            fs.unlink(path.join(__dirname, '..', 'images', 'profile_image', oldImage), (err) => {
+              if (err) {
+                console.error('Erreur lors de la suppression de l\'ancienne image de profil:', err);
+              }
+            });
+          }
+        }
+
+        const SQL = 'UPDATE users_info SET src_profile_image = ? WHERE id_user = ?';
+        const Values = [image, idUser];
+
+        db.query(SQL, Values, (err, result) => {
+          if (err) {
+            console.error('Erreur lors de la mise à jour de l\'image de profil:', err);
+            return res.status(500).json({ message: 'Erreur lors de la mise à jour de l\'image de profil' });
+          }
+          res.status(200).json({ message: 'Image de profil mise à jour avec succès' });
+        });
+      });
+    }
+  });
+  
 
 
   router.get('/getTotalSize', (req, res) => {

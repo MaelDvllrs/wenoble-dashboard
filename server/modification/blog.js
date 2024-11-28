@@ -6,6 +6,7 @@ const cors = require('cors')
 const db = require('../db')
 const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
+const axios = require('axios');
 
 
 const router = express.Router();
@@ -15,6 +16,53 @@ router.use(express.json());
 
 require('dotenv').config();
 const secretKey = process.env.SECRET_KEY; 
+
+const idBlogArticleArray = process.env.idBlogArticle ? process.env.idBlogArticle.split(',') : [];
+
+const checkIdInArray = (id) => {
+  return idBlogArticleArray.includes(id);
+};
+
+
+const createNotification = async (id, title, dateSend, slug) => {
+  const serverUrl = process.env.SERVER_URL;
+
+  if (checkIdInArray(id)) {
+    try {
+      const SQL = 'SELECT id_user FROM users';
+      db.query(SQL, async (err, results) => {
+        if (err) {
+          console.log("Erreur:", err);
+          return;
+        }
+        const idUsers = results.map(result => result.id_user);
+
+        try {
+          const response = await axios({
+            url: `${serverUrl}/createNotification`,
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            data: {
+              IdUsers: idUsers,
+              Type: 'actu',
+              Date: dateSend,
+              Message: `${title}`,
+              IdElement: slug
+            }
+          });
+          console.log('Notification créée :', response.data);
+        } catch (error) {
+          console.error('Erreur lors de la création de la notification :', error);
+        }
+      });
+    } catch (error) {
+      console.error('Erreur lors de la création de la notification :', error);
+    }
+  }
+};
+
 
 
 router.get('/getBlog', (req, res) => {
@@ -307,6 +355,12 @@ router.post('/createVideoBlog', uploadVideo.single('video'), (req, res) => {
 
 
 
+
+
+
+
+
+
 router.post('/createBlogPage', (req, res) => {
   const id = req.body.params.id;
   const title = req.body.params.mainText[0].value;
@@ -329,10 +383,21 @@ router.post('/createBlogPage', (req, res) => {
 
     const insertedId = results.insertId;
 
+    if (status === 1){
+      createNotification(id, title, publishDate, slug);
+    }
+
+
+
+
     res.status(200).send({ message: 'Page créée avec succès', id: insertedId });
   });
 
 })
+
+
+
+
 
 
 router.post('/createTextBlog', (req, res) => {
@@ -717,10 +782,13 @@ router.post('/updateBlogPage', (req, res) => {
   let SQL;
   let VALUES;
 
+  let setCreateNotification = false;
+
   if (setPublishDate === 1) {
       SQL = 'UPDATE blog_page SET page_blog_name = ?, page_blog_slug = ?, status = ?, page_blog_update_date = ?, page_blog_publish_date = ? WHERE id_page_blog = ?';
     if (status === 1) {
       VALUES = [title, slug, status, date, date, id];
+      setCreateNotification = true;
     } else {
       VALUES = [title, slug, status, date, null, id];
     }
@@ -733,6 +801,21 @@ router.post('/updateBlogPage', (req, res) => {
     if (err) {
       console.log('Database query error:', err);
       return res.status(500).send({ error: err });
+    }
+
+    if (setCreateNotification) {
+      SQL = 'SELECT id_blog FROM blog_page WHERE id_page_blog = ?';
+      VALUES = [id];
+      db.query(SQL, VALUES, (err, results) => {
+        if (err) {
+          console.log('Database query error:', err);
+          return res.status(500).send({ error: err });
+        }
+        const idBlog = results[0].id_blog;
+        const idBlogString = idBlog.toString();
+
+        createNotification(idBlogString, title, date, slug);
+      }); 
     }
 
     res.status(200).send({ message: 'Page modifiée avec succès'});

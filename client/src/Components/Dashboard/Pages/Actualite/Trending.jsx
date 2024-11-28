@@ -29,7 +29,7 @@ export const TrendingArticle = () => {
                     }}>
                 <div className='textBoxArticle'>
                     <div className="auteurArticleContain">
-                        <img src={`${apiUrl}/media/blog/${article.auteurPhoto}`} alt={article.auteurName} className="auteurArticlePhoto" />
+                        <img src={`${apiUrl}/media/profile/${article.auteurPhoto}`} alt={article.auteurName} className="auteurArticlePhoto" />
                         <p style={{color : theme.palette.text.secondary}}>{article.auteurName}</p>
                     </div>
                     <div className="categorieArticleContain">{article.categorie}</div>
@@ -39,6 +39,18 @@ export const TrendingArticle = () => {
                 <p style={{color : theme.palette.text.secondary}}>{article.date}</p>
                 </NavLink>
             ))}
+            <div className="trendingTitleContain updateTitle UpdateDown" style={{backgroundColor : theme.palette.primary.secondary, borderColor: theme.palette.primary.third, }}>
+                <NavLink
+                to={'/dashboard/actu/article'}
+                className={"UpdateDownLink"}
+                style={{color: theme.palette.text.secondary,
+                        '--primary-hover-color': theme.palette.text.primary,
+                }}
+                >
+                    <p><span style={{fontSize: '0.8rem'}}>Voir tous les articles</span></p>
+                </NavLink>
+                
+            </div>
         </div>
     );
 }

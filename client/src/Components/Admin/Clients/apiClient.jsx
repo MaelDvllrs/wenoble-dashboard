@@ -8,9 +8,14 @@ export const fetchSaveClient = async (fields) => {
     try {
       const response = await Axios.post(`${apiUrl}/SaveClient`, {
         params: {
-            fields: fields
+          fields: fields
         }
-      });
+    }, {
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    });
       return response.data;
     } catch (error) {
       console.error('Erreur lors de l\'enregistrement du client :', error);

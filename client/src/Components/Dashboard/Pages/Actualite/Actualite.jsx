@@ -17,12 +17,18 @@ const Actualite = () => {
   
   
     useEffect(() => {
-      if(!initialNavigationDone) {
-        navigate('/dashboard/actu/article');
-        setInitialNavigationDone(true);
-      }
-    }, [ initialNavigationDone, navigate]);
-    
+        if (!initialNavigationDone && location.pathname === '/dashboard/actu/') {
+          navigate('/dashboard/actu/article');
+          setInitialNavigationDone(true);
+        }
+      }, [initialNavigationDone, navigate, location.pathname]);
+    console.log('initialNavigationDone', initialNavigationDone) 
+
+    useEffect(() => {
+        if (location.pathname !== '/dashboard/actu/' && initialNavigationDone) {
+          setInitialNavigationDone(false);
+        }
+      }, [location.pathname, initialNavigationDone]);
 
     return(
         <div className="outlet">

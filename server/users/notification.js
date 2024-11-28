@@ -24,26 +24,29 @@ app.use(express.json());
 
 
 notificationRouter.post('/createNotification', async (req, res) => {
-    const sentIdUser = req.body.IdUser;
+    const sentIdUsers = req.body.IdUsers;
     const sentType = req.body.Type;
     const sentMessage = req.body.Message;
     const sentIdElement = req.body.IdElement;
 
+  
     const date = new Date();
-
-    const SQL = 'INSERT INTO notifications (id_user, type, message, id_element, date) VALUES (?, ?, ?, ?, ?)';
-    const Values = [sentIdUser, sentType, sentMessage, sentIdElement, date];
-
-    db.query(SQL, Values, (err, results) => {
-        if (err) {
-            res.send({ error: err });
-        } else {
-            io.to(sentIdUser).emit('notification', { message: sentMessage, type : sentType, date: date });
-
-            res.send({ message: 'Notification created' });
-        }
+  
+    const SQL = 'INSERT INTO notifications (id_user, type, message, id_element, date) VALUES ?';
+    const Values = sentIdUsers.map(idUser => [idUser, sentType, sentMessage, sentIdElement, date]);
+  
+    db.query(SQL, [Values], (err, results) => {
+      if (err) {
+        res.send({ error: err });
+      } else {
+        sentIdUsers.forEach(idUser => {
+          io.to(idUser).emit('notification', { message: sentMessage, type: sentType, date: date });
+        });
+  
+        res.send({ message: 'Notifications created' });
+      }
     });
-});
+  });
 
 notificationRouter.get('/getNotifications', (req, res) => {
     const sentIdUser = req.query.userId;

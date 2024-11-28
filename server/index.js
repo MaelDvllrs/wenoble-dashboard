@@ -17,6 +17,7 @@ const pageRouter = require('./modification/page');
 const blogRouter = require('./modification/blog');
 const limitSizeRouter = require('./modification/limitSize');
 const sitemapRouter = require('./modification/sitemap');
+const articleRouter = require('./actualite/article');
 
 const orderRouter = require('./ecommerce/order');
 
@@ -105,8 +106,17 @@ app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use('/api', apiRouter);
 
 
+
+
+
+
 app.use(authRoutes);
 app.use(authorisationRouter);
+
+app.use(sendEmailRouter);
+app.use(notificationRouter);
+
+
 
 
 //Static files
@@ -120,6 +130,8 @@ app.use('/media/profile', express.static(path.join(__dirname, 'images', 'profile
 
 app.use(videoRouter);
 
+
+
 app.use(authenticateToken);
 
 app.use(infoUserRouter);
@@ -129,11 +141,9 @@ app.use(blogRouter);
 app.use(limitSizeRouter);
 app.use(orderRouter);
 app.use(contactRouter);
-app.use(notificationRouter);
-app.use(sendEmailRouter);
 app.use(clientRouter);
 app.use(sitemapRouter);
-
+app.use(articleRouter);
 
 
 

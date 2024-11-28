@@ -36,7 +36,7 @@ const ArticleTemplate = () => {
           
           <div className='textBoxArticle textBoxArticleTemplate' style={{borderColor : theme.palette.text.secondary}}>
               <div className="auteurArticleContain">
-                <img src={`${apiUrl}/media/blog/${article.auteurPhoto}`} alt={article.auteurName} className="auteurArticlePhoto" />
+                <img src={`${apiUrl}/media/profile/${article.auteurPhoto}`} alt={article.auteurName} className="auteurArticlePhoto" />
                 <p style={{color : theme.palette.text.secondary}}>{article.auteurName}</p>
               </div>
               <p style={{color : theme.palette.text.secondary}}>{formatDate(article.date)}</p>

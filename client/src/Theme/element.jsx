@@ -153,7 +153,7 @@ export const notificationTitle = (type) => {
 
 export const notificationLink = (type) => {
     const links = {
-        actu: '/actualites',
+        actu: '/dashboard/actu/article/',
         message: '/dashboard/contact/message/',
         order: '/order',
         info: '/info',

@@ -78,7 +78,7 @@ router.post('/sendEmail', apiKeyMiddleware, async (req, res) => {
                     'Content-Type': 'application/json',
                 },
                 data: {
-                    IdUser: idUser,
+                    IdUsers: [idUser],
                     Type: 'message',
                     Date: dateSend,
                     Message: `Message de ${emailSender} - ${subject}`,

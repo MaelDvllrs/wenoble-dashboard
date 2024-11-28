@@ -16,7 +16,7 @@ const Update = () => {
   return (
     <div className='article_container'>
       {updates.map((update, index) => (
-        <div>
+        <div key={index}>
             <div className="UpdateContainActu">
                 <div className="UpdateLineContain">
                     <p className="UpdateCirlce" style={{color : theme.palette.text.secondary}}>●</p>
