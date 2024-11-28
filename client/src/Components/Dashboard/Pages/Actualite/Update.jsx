@@ -4,6 +4,7 @@ import config from '../../../../config';
 import {useUpdates} from './useUpdate'
 import { NavLink } from 'react-router-dom';
 import './Actualite.css'
+import {formatDistanceWithoutApprox} from '../../dateUtils'
 
 const Update = () => {
   const theme = useTheme();
@@ -23,7 +24,7 @@ const Update = () => {
                     <div className="UpdateLine" style={{backgroundColor : theme.palette.text.secondary}}></div>
                 </div>
                 <div className="UpdateTitleContain">
-                    <p style={{color : theme.palette.text.secondary}}>{update.date}</p>
+                    <p style={{color : theme.palette.text.secondary}}>{formatDistanceWithoutApprox(update.date)}</p>
                     <NavLink
                         key={index}
                         to={`/dashboard/actu/update/${update.slug}`}

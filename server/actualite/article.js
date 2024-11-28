@@ -28,27 +28,6 @@ const fetchData = async (url, params) => {
     }
 };
 
-
-
-const formatDistanceWithoutApprox = (date) => {
-    // Vérifie si `date` est déjà un objet Date
-    const parsedDate = (date instanceof Date) ? date : new Date(date);
-
-    const userTimeZoneOffset = new Date().getTimezoneOffset() * 60000; // En millisecondes
-    const localDate = new Date(parsedDate.getTime() + userTimeZoneOffset); // Ajuste la date pour le fuseau horaire local
-
-    return formatDistance(localDate, new Date(), {
-        addSuffix: true,
-        locale: {
-            ...fr,
-            formatDistance: (token, count, options) => {
-                const result = fr.formatDistance(token, count, options);
-                return result.replace('environ ', '');
-            }
-        }
-    });
-};
-
 router.get('/getArticle', async (req, res) => {
     const limit = req.query.limit; 
     const tab = [];
@@ -73,7 +52,7 @@ router.get('/getArticle', async (req, res) => {
                     blogCategoryName = await fetchData(`${apiUrl}/api/sendBlogInfo`, { id_data: blogMultiReference.references[0].value });
                 }
 
-                const date = formatDistanceWithoutApprox(blog.page_blog_publish_date);
+                const date = blog.page_blog_publish_date;
                 const resume = blogText.text?.find(item => process.env.idResumeArticle.includes(item.id_config)) || { text: 'Résumé non trouvé' };
                 const image = blogImage.images?.find(item => process.env.idMainImageArticle.includes(item.id_config)) || { url: 'Image non trouvée' };
 
@@ -120,7 +99,7 @@ router.get('/getUpdate', async (req, res) => {
                     blogCategoryName = await fetchData(`${apiUrl}/api/sendBlogInfo`, { id_data: blogMultiReference.references[0].value });
                 }
 
-                const date = formatDistanceWithoutApprox(blog.page_blog_publish_date);
+                const date = blog.page_blog_publish_date;
 
                 tab.push({
                     name: blog.page_blog_name,

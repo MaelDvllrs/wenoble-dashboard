@@ -4,6 +4,7 @@ import config from '../../../../config';
 import {useUpdates} from './useUpdate' 
 import UpdateIcon from '@mui/icons-material/Update';
 import { NavLink } from 'react-router-dom';
+import {formatDistanceWithoutApprox} from '../../dateUtils'
 
 export const UpdateLast = () => {
     const theme = useTheme();
@@ -32,7 +33,7 @@ export const UpdateLast = () => {
                             <div className="UpdateLine" style={{backgroundColor : theme.palette.text.secondary}}></div>
                         </div>
                         <div className="UpdateTitleContain">
-                            <p style={{color : theme.palette.text.secondary}}>{update.date}</p>
+                            <p style={{color : theme.palette.text.secondary}}>{formatDistanceWithoutApprox(update.date)}</p>
                             <p className="UpdateTitleBox"><b>{update.name}</b></p>
                         </div>
                     </div>

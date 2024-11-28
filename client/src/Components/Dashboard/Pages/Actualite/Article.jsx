@@ -4,6 +4,7 @@ import { useTheme } from '@mui/material/styles';
 import config from '../../../../config';
 import {useArticles} from './useArticle'
 import { NavLink } from 'react-router-dom';
+import {formatDistanceWithoutApprox} from '../../dateUtils'
 
 const Article = () => {
   const theme = useTheme();
@@ -37,7 +38,7 @@ const Article = () => {
             </div>
             <h2 className='articleTitle'>{article.name}</h2>
             <p className='articleResume'>{article.resume.text}</p>
-            <p style={{color : theme.palette.text.secondary}}>{article.date}</p>
+            <p style={{color : theme.palette.text.secondary}}>{formatDistanceWithoutApprox(article.date)}</p>
           </div>
         </NavLink>
       ))}

@@ -4,6 +4,7 @@ import config from '../../../../config';
 import {useArticles} from './useArticle'
 import WhatshotIcon from '@mui/icons-material/Whatshot';
 import { NavLink } from 'react-router-dom';
+import {formatDistanceWithoutApprox} from '../../dateUtils'
 
 export const TrendingArticle = () => {
     const theme = useTheme();
@@ -36,7 +37,7 @@ export const TrendingArticle = () => {
                 </div>
                 <h2 className='articleTitle trendingTitle'>{article.name}</h2>
                 <p className='articleResume trendingResume'>{article.resume.text}</p>
-                <p style={{color : theme.palette.text.secondary}}>{article.date}</p>
+                <p style={{color : theme.palette.text.secondary}}>{formatDistanceWithoutApprox(article.date)}</p>
                 </NavLink>
             ))}
             <div className="trendingTitleContain updateTitle UpdateDown" style={{backgroundColor : theme.palette.primary.secondary, borderColor: theme.palette.primary.third, }}>
