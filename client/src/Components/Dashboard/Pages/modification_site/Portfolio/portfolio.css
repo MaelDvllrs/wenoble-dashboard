@@ -35,4 +35,10 @@
     border-bottom: 3px solid var(--primary-color);
 }
 
+.portfolio_edit_place > ul{
+        list-style: none;
+        margin: 0;
+        padding: 0;
+}
+
 
