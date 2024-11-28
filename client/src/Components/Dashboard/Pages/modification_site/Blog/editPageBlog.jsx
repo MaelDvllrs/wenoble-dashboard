@@ -409,11 +409,16 @@ const EditPageBlog = () => {
 
 
         const date = new Date();
+        console.log('date: ' + date);
 
         const adjustedTime = new Date(date.getTime() + 3600000);
 
+        console.log('adjusteDate:' +adjustedTime);
+
 
         const localISOTime = adjustedTime.toISOString().slice(0, 19).replace('T', ' ');
+
+        console.log('localISOTime: ' + localISOTime);
 
         const mainText = [];
         const otherText = [];
