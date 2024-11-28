@@ -1,8 +1,10 @@
 import Axios from 'axios';
 import config from '../../../config';
+import Cookies from 'js-cookie';
 
 
-const apiUrl = config.apiUrl; 
+const apiUrl = config.apiUrl;
+const token = Cookies.get('token'); 
 
 export const fetchSaveClient = async (fields) => {
     try {
