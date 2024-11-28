@@ -215,7 +215,7 @@ const Dashboard = () => {
                             <div className='user_menu_box'>
                                 {LoadingProfile ? <SkeletonProfile /> : 
                                 <div className='flex_left'>
-                                    {infoUser && infoUser.image && infoUser.image[0] ? (
+                                    {infoUser && infoUser.image && infoUser.image[0] && infoUser.image[0].src_profile_image ? (
                                       <img src={`${apiUrl}/media/profile/${infoUser.image[0].src_profile_image}`} className='profile_photo' />
                                     ) : (
                                       <Avatar alt="Avatar par défaut" className='profile_photo' />
