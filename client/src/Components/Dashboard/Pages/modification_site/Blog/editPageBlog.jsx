@@ -409,9 +409,11 @@ const EditPageBlog = () => {
 
 
         const date = new Date();
-        const offset = date.getTimezoneOffset() * 60000; // Convertir le décalage en millisecondes
-        // Correction ici: remplace 'T' par un espace et enlève les millisecondes et le 'Z'
-        const localISOTime = (new Date(date - offset)).toISOString().slice(0, 19).replace('T', ' ');
+
+        const adjustedTime = new Date(date.getTime() + 3600000);
+
+
+        const localISOTime = adjustedTime.toISOString().slice(0, 19).replace('T', ' ');
 
         const mainText = [];
         const otherText = [];

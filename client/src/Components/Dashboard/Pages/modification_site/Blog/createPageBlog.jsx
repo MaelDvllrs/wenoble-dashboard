@@ -19,6 +19,7 @@ import Cookies from 'js-cookie';
 
 
 
+
 const CreatePageBlog = () => {
 
     const theme = useTheme();
@@ -39,6 +40,7 @@ const CreatePageBlog = () => {
 
     
     const navigate = useNavigate();
+
 
 
     const [blogData, setBlogData] = useState({
@@ -161,9 +163,11 @@ const CreatePageBlog = () => {
         // CREER LA PAGE
 
         const date = new Date();
-        const offset = date.getTimezoneOffset() * 60000; 
 
-        const localISOTime = (new Date(date - offset)).toISOString().slice(0, 19).replace('T', ' ');
+        const adjustedTime = new Date(date.getTime() + 3600000);
+
+
+        const localISOTime = adjustedTime.toISOString().slice(0, 19).replace('T', ' ');
 
         const mainText = [];
         const otherText = [];

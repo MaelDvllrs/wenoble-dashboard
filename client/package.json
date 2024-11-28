@@ -14,14 +14,14 @@
     "host": "vite --host"
   },
   "dependencies": {
-    "@emotion/react": "^11.13.3",
-    "@emotion/styled": "^11.13.0",
+    "@emotion/react": "^11.13.5",
+    "@emotion/styled": "^11.13.5",
     "@ffmpeg/core": "^0.12.6",
     "@ffmpeg/ffmpeg": "^0.12.10",
     "@mui/icons-material": "^5.15.18",
     "@mui/lab": "^5.0.0-alpha.170",
-    "@mui/material": "^5.15.18",
-    "@mui/x-date-pickers": "^7.15.0",
+    "@mui/material": "^5.16.8",
+    "@mui/x-date-pickers": "^7.22.3",
     "axios": "^1.6.8",
     "browser-image-compression": "^2.0.2",
     "crypto-js": "^4.2.0",
