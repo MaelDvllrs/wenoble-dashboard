@@ -42,8 +42,8 @@ router.get('/getSizeItem', (req, res) => {
                     JOIN blog ON blog_page.id_blog = blog.id_blog
                     WHERE blog.id_user = ?
                     UNION ALL 
-                    SELECT size FROM blog_field_richtext
-                    JOIN blog_page ON blog_field_richtext.id_blog_page = blog_page.id_page_blog
+                    SELECT size FROM blog_field_richText
+                    JOIN blog_page ON blog_field_richText.id_blog_page = blog_page.id_page_blog
                     JOIN blog ON blog_page.id_blog = blog.id_blog
                     WHERE blog.id_user = ?
                  ) AS sizes;
