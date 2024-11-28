@@ -1,8 +1,6 @@
 export const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
 
-    console.log('dateString:', dateString);
-
     const date = new Date(dateString);
     return new Intl.DateTimeFormat('fr-FR', {
         timeZone: 'UTC',

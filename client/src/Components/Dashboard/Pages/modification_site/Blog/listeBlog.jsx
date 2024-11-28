@@ -50,9 +50,6 @@ const ListeBlog = () => {
             
     }, [idBlog]);
 
-    console.log(InfoListeblog);
-
-
 
 
     return(

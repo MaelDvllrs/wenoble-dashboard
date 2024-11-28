@@ -28,8 +28,16 @@ const fetchData = async (url, params) => {
     }
 };
 
+
+
 const formatDistanceWithoutApprox = (date) => {
-    return formatDistance(date, new Date(), {
+    // Vérifie si `date` est déjà un objet Date
+    const parsedDate = (date instanceof Date) ? date : new Date(date);
+
+    const userTimeZoneOffset = new Date().getTimezoneOffset() * 60000; // En millisecondes
+    const localDate = new Date(parsedDate.getTime() - userTimeZoneOffset); // Ajuste la date pour le fuseau horaire local
+
+    return formatDistance(localDate, new Date(), {
         addSuffix: true,
         locale: {
             ...fr,
