@@ -80,6 +80,8 @@ const whitelist =
   'https://www.laplumeaucarre.fr',
 
   'https://deko-project.webflow.io',
+  'https://dekoproject.fr',
+  'https://www.dekoproject.fr',
 
   'https://emotion-sonore.webflow.io'
 ];
