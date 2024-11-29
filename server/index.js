@@ -79,7 +79,9 @@ const whitelist =
   'https://laplumeaucarre.fr',
   'https://www.laplumeaucarre.fr',
 
-  'https://deko-project.webflow.io'
+  'https://deko-project.webflow.io',
+
+  'https://emotion-sonore.webflow.io'
 ];
 
 
