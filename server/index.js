@@ -53,6 +53,8 @@ const whitelist =
   'https://perfoseos.webflow.io', 
   'https://perfoseos.com', 
   'https://www.perfoseos.com',
+  'https://perfoseos.fr',
+  'https://www.perfoseos.fr',
 
   'https://savoirfairetatouagepreview.webflow.io',
   'https://savoirfairetatouage.com',
