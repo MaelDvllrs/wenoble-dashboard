@@ -4,7 +4,7 @@ import config from '../../../../config';
 import {useUpdates} from './useUpdate' 
 import UpdateIcon from '@mui/icons-material/Update';
 import { NavLink } from 'react-router-dom';
-import {formatDistanceWithoutApprox} from '../../dateUtils'
+import {formatDistanceWithoutApprox} from '../../utils/dateUtils'
 
 export const UpdateLast = ({limit = 5}) => {
     const theme = useTheme();

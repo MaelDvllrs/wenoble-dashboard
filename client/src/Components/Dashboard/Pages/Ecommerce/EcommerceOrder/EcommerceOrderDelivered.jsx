@@ -6,7 +6,7 @@ import Cookies from 'js-cookie';
 import {jwtDecode} from 'jwt-decode';
 import { useTheme } from '@mui/material/styles';
 import { NavLink } from "react-router-dom";
-import { formatDate } from "../../../dateUtils";
+import { formatDate } from "../../../utils/dateUtils";
 import { DefaultButton } from "../../../../../Theme/element";
 
 const EcommerceOrderDelivered = () => {

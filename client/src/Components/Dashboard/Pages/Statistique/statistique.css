@@ -1,0 +1,42 @@
+.statistique-container{
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border: solid 1px;
+    align-items: start;
+}
+
+.statistique-section{
+
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+    height: calc(100% - 2rem);
+    overflow: auto;
+    scrollbar-color: #272a31 transparent; 
+    scrollbar-width: thin;
+    padding-bottom: 0.5rem;
+
+}
+
+.grid-line-statistique{
+    display: flex;
+    gap: 1rem;
+}
+
+.info-statistique{
+   font-size: 2rem;
+}
+
+.select-stat-container{
+    display: flex;
+   align-items: center;
+}
+
+.icon-select-stat-container{
+    width: 1rem !important;
+    height: 1rem !important;
+}

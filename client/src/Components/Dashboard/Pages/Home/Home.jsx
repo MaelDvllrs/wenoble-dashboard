@@ -29,9 +29,11 @@ const Home = () => {
                 <div className="breadCrumbs">Dashboard</div>
             </div>
             <div className="gridHome">
-                <div></div>
-                <div></div>
-                <div></div>
+                <div className="welcomeMessage" style={{ gridColumn: '1 / span 3', gridRow: '1'}}>
+                    <p className="home-title">Bienvenue sur votre tableau de bord !</p>
+                    <p className="home-subtitle">Vous pouvez modifier votre site, consulter les dernières actualités et les dernières mises à jour.</p>
+                </div>
+
                 <div className="articleBox trendingBox" style={{ backgroundColor: theme.palette.primary.main, borderColor: theme.palette.primary.third }}>
                     <TrendingArticle/>
                 </div>

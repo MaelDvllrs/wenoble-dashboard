@@ -8,7 +8,7 @@ import { useTheme } from '@mui/material/styles';
 import '../modification_site/Portfolio/portfolio.css';
 import './Contact.css';
 import config from "../../../../config";
-import { formatDate } from "../../dateUtils";
+import { formatDate } from "../../utils/dateUtils";
 import EmailIcon from '@mui/icons-material/Email';
 import { DefaultButton } from "../../../../Theme/element";
 

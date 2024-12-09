@@ -2,8 +2,19 @@ import TextField from '@mui/material/TextField';
 import { styled } from '@mui/material/styles';
 import Switch from '@mui/material/Switch';
 import Button from '@mui/material/Button';
+import Select from '@mui/material/Select';
 import LoadingButton from '@mui/lab/LoadingButton';
 import CircularProgress from '@mui/material/CircularProgress';
+import NoSsr from '@mui/material/NoSsr';
+import Popper from '@mui/material/Popper';
+import Paper from '@mui/material/Paper';
+import { useAxisTooltip, useItemTooltip, useMouseTracker } from '@mui/x-charts/ChartsTooltip';
+import { formatTime } from '../Components/Dashboard/utils/numberFormatted';
+import Flag from 'react-world-flags';
+import dayjs from 'dayjs';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+import 'dayjs/locale/fr';
+import React from 'react';
 
 
 export const CssTextField = styled(TextField)(({ theme }) => ({
@@ -49,6 +60,214 @@ export const LoginTextField = styled(TextField)(({ theme }) => ({
     },
 }));
 
+
+export const SelectField = styled(Select)(({ theme }) => ({
+    color: theme.palette.text.primary,
+    borderColor: theme.palette.primary.third,
+    transition: 'border-color 0.3s ease, background-color 0.3s ease', // Ajout de la transition
+
+    '& .MuiSelect-select': {
+        padding: ' 0.5rem 0.8rem',
+    },
+
+    '& .MuiOutlinedInput-notchedOutline': {
+      borderColor: theme.palette.primary.third,
+    },
+    '&:hover .MuiOutlinedInput-notchedOutline': {
+      borderColor: theme.palette.text.secondary,
+    },
+    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+      borderColor: theme.palette.primary.third,
+    },
+    '& .MuiSvgIcon-root': {
+      color: theme.palette.text.primary,
+    },
+  }));
+  
+  SelectField.defaultProps = {
+    MenuProps: {
+      PaperProps: {
+        sx: (theme) => ({
+          bgcolor: theme.palette.background.default,
+          border: `1px solid ${theme.palette.primary.third}`,
+          transition: 'border-color 0.3s ease, background-color 0.3s ease', // Ajout de la transition
+
+          '& .MuiMenuItem-root': {
+            color: theme.palette.text.primary,
+            '&:hover': {
+              bgcolor: theme.palette.primary.third,
+            },
+            '&.Mui-selected': {
+              bgcolor: theme.palette.primary.third,
+            },
+            '&.Mui-selected:hover': {
+              bgcolor: theme.palette.primary.dark,
+            },
+          },
+        }),
+      },
+    },
+  };
+
+  export const SelectFieldSecondary = styled(Select)(({ theme }) => ({
+    color: theme.palette.text.secondary,
+    borderColor: theme.palette.primary.third,
+    transition: 'border-color 0.3s ease, background-color 0.3s ease', // Ajout de la transition
+
+    '& .MuiSelect-select': {
+        padding: 0,
+    },
+
+    '& .MuiOutlinedInput-notchedOutline': {
+      border: 'none',
+    },
+    '& .MuiSvgIcon-root': {
+      color: theme.palette.text.secondary,
+    },
+  }));
+  
+  SelectFieldSecondary.defaultProps = {
+    MenuProps: {
+      PaperProps: {
+        sx: (theme) => ({
+          bgcolor: theme.palette.background.default,
+          border: `1px solid ${theme.palette.primary.third}`,
+          transition: 'border-color 0.3s ease, background-color 0.3s ease', // Ajout de la transition
+
+          '& .MuiMenuItem-root': {
+            color: theme.palette.text.primary,
+            '&:hover': {
+              bgcolor: theme.palette.primary.third,
+            },
+            '&.Mui-selected': {
+              bgcolor: theme.palette.primary.third,
+            },
+            '&.Mui-selected:hover': {
+              bgcolor: theme.palette.primary.dark,
+            },
+          },
+        }),
+      },
+    },
+  };
+          
+  
+  dayjs.extend(customParseFormat);
+  dayjs.locale('fr');
+
+  export function CustomAxisTooltip({ themeColor, type, unite }) {
+    const mousePosition = useMouseTracker(); // Track the mouse position on chart.
+    const tooltipData = type === 'axes' ? useAxisTooltip() : useItemTooltip();
+
+    const items = type === 'axes' ? tooltipData?.seriesItems : tooltipData?.value;
+    
+    console.log(unite);
+    if (!tooltipData || !mousePosition) {
+      // No data to display
+      return null;
+    }
+      // The pointer type can be used to have different behavior based on pointer type.
+    const isMousePointer = mousePosition?.pointerType === 'mouse';
+    // Adapt the tooltip offset to the size of the pointer.
+    const yOffset = isMousePointer ? 0 : 40 - mousePosition.height;
+  
+    // Vérifier si tooltipData.axisFormattedValue est une date valide
+    const formattedDate = dayjs(tooltipData.axisFormattedValue).isValid()
+      ? dayjs(tooltipData.axisFormattedValue).format('ddd. DD MMM.')
+      : tooltipData.axisFormattedValue;
+      
+    return (
+      <NoSsr>
+        <Popper
+          sx={{
+            pointerEvents: 'none',
+            zIndex: (theme) => theme.zIndex.modal,
+          }}
+          open
+          placement={isMousePointer ? 'top-end' : 'top'}
+          anchorEl={{
+            getBoundingClientRect: () => ({
+              top: mousePosition.y,
+              left: mousePosition.x,
+              right: mousePosition.x,
+              bottom: mousePosition.y,
+              width: 0,
+              height: 0,
+            }),
+          }}
+          modifiers={[
+            {
+              name: 'offset',
+              options: {
+                offset: [0, yOffset],
+              },
+            },
+          ]}
+        >
+          <Paper
+            elevation={0}
+            sx={{
+              m: 1,
+              border: 'solid',
+              borderWidth: 1,
+              borderColor: themeColor.palette.primary.third,
+              backgroundColor: themeColor.palette.primary.main,
+              table: { borderSpacing: 0 },
+              thead: {
+                td: {
+                  px: 1.5,
+                  py: 0.75,
+                  borderBottom: 'solid',
+                  borderWidth: 2,
+                  borderColor: 'divider',
+                },
+              },
+              tbody: {
+                'tr:first-child': { td: { paddingTop: 1.5 } },
+                'tr:last-child': { td: { paddingBottom: 1.5 } },
+                tr: {
+                  'td:first-child': { paddingLeft: 1.5 },
+                  'td:last-child': { paddingRight: 1.5 },
+                  td: {
+                    paddingRight: '7px',
+                    paddingBottom: '10px',
+                  },
+                },
+              },
+            }}
+          >
+            <div style={{ padding: "0.8rem" }}>
+            {Array.isArray(items) ? (
+              <div>
+                <div>
+                  <p colSpan={3} style={{ fontSize: '0.8rem', color: themeColor.palette.text.secondary }}>
+                    {formattedDate}
+                  </p>
+                </div>
+                {items.map((item) => (
+                  <div key={item.seriesId} style={{ marginTop: "0.8rem", display: 'flex', gap: '0.5rem' }}>
+                    <p>
+                      {item.formattedLabel} :
+                    </p>
+                    <p>
+                      <b>{unite === 's' ? formatTime(item.formattedValue) : item.formattedValue}</b>
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div>
+                {unite === 'country' && <Flag code={items.id} style={{ marginRight: 8, width: 20, height: 15 }} />}
+                <p style={{ fontSize: '0.8rem', color: themeColor.palette.text.secondary }}>{items.id}</p>
+                <p>Nombre d'utilisateurs : <b>{items.formattedValue}</b></p>
+              </div>
+            )}
+          </div>
+          </Paper>
+        </Popper>
+      </NoSsr>
+    );
+  }
 
 
 
@@ -161,3 +380,6 @@ export const notificationLink = (type) => {
 
     return links[type] || '/home';
 }
+
+
+
