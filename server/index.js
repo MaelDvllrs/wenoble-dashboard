@@ -18,6 +18,7 @@ const blogRouter = require('./modification/blog');
 const limitSizeRouter = require('./modification/limitSize');
 const sitemapRouter = require('./modification/sitemap');
 const articleRouter = require('./actualite/article');
+const analyticsRouter = require('./analytics/googleAnalytics');
 
 const orderRouter = require('./ecommerce/order');
 
@@ -150,6 +151,7 @@ app.use(contactRouter);
 app.use(clientRouter);
 app.use(sitemapRouter);
 app.use(articleRouter);
+app.use(analyticsRouter);
 
 
 
