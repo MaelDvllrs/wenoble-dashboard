@@ -146,7 +146,8 @@ router.get('/getLocationAnalytics', async (req, res) => {
   const id_user = req.user.idUser
   const period = req.query.period
   const typeLocation = req.query.typeLocation 
-  const typeLocationID = req.query.typeLocationID
+  const locationID = req.query.locationID
+  const typeUser = req.query.typeUser
 
 
   db.query('SELECT id_analytic FROM users_info WHERE id_user = ?', [id_user], async (err, results) => {
@@ -175,22 +176,16 @@ router.get('/getLocationAnalytics', async (req, res) => {
                 name: typeLocation,
               },
               {
-                name: typeLocationID,
+                name: locationID,
               }
             ],
             metrics: [
               {
-                name: 'activeUsers',
+                name: typeUser,
               },
             ],
           });
 
-
-
-          console.log('Report result:');
-          response.rows.forEach((row) => {
-            console.log(row.dimensionValues[0], row.metricValues[0]);
-          });
 
           res.json(response.rows);
 
@@ -205,6 +200,9 @@ router.get('/getLocationAnalytics', async (req, res) => {
 router.get('/getPlateformCategorieAnalytics', async (req, res) => {
   const id_user = req.user.idUser
   const period = req.query.period
+  const typePlatform = req.query.typePlatform
+  const typeUser = req.query.typeUser
+
 
 
   db.query('SELECT id_analytic FROM users_info WHERE id_user = ?', [id_user], async (err, results) => {
@@ -230,17 +228,69 @@ router.get('/getPlateformCategorieAnalytics', async (req, res) => {
             ],
             dimensions: [
               {
-                name: 'platformDeviceCategory',
+                name: typePlatform,
               },
             ],
             metrics: [
               {
-                name: 'activeUsers',
+                name: typeUser,
               },
             ],
           });
 
 
+
+
+          res.json(response.rows);
+
+    } catch (error) {
+        console.error('Error querying Google Analytics API:', JSON.stringify(error, null, 2));
+        res.status(500).send(`Error querying Google Analytics API: ${error.message}`);
+    }
+  });
+});
+
+
+router.get('/getPageAnalytics', async (req, res) => {
+  const id_user = req.user.idUser
+  const period = req.query.period
+  const typePage = req.query.typePage 
+  const typeUser = req.query.typeUser
+
+
+
+  db.query('SELECT id_analytic FROM users_info WHERE id_user = ?', [id_user], async (err, results) => {
+    if (err) {
+      console.error('Database query error:', err);
+      return res.status(500).send('Database query error');
+    }
+
+    if (results.length === 0) {
+      return res.status(404).send('Site not found');
+    }
+    const id_analytic = results[0].id_analytic;
+    const dateRange = getDateRange(period);
+
+    try {
+        const [response] = await analyticsDataClient.runReport({
+            property: `properties/${id_analytic}`,
+            dateRanges: [
+              {
+                startDate: dateRange.startDate,
+                endDate: dateRange.endDate,
+              },
+            ],
+            dimensions: [
+              {
+                name: typePage,
+              },
+            ],
+            metrics: [
+              {
+                name: typeUser,
+              },
+            ],
+          });
 
 
           res.json(response.rows);

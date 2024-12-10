@@ -24,6 +24,7 @@ export const CityStatistique = () => {
   const [locationStatistique, setLocationStatistique] = useState(null);
   const [location, setLocation] = useState([]);
   const [typeLocation, setTypeLocation] = useState('city');
+  const [typeUser, setTypeUser] = useState('activeUsers');
 
   const [values, setValues] = useState([]);
   const [period, setPeriod] = useState('last14days');
@@ -37,15 +38,24 @@ export const CityStatistique = () => {
     setTypeLocation(selectedValue);
   };
 
+  const handleChangeTypeUser = (event) => {
+    const selectedValue = event.target.value;
+    setTypeUser(selectedValue);
+  };
+
   useEffect(() => {
     const fetchLocationStatistique = async () => {
-      const locationData = await getLocationStatistique(period, typeLocation, token);
+      const locationData = await getLocationStatistique(period, typeLocation, labelMap[typeLocation].locationID, typeUser, token);
       setLocationStatistique(locationData);
     };
     fetchLocationStatistique();
-  }, [period, typeLocation, token]);
+  }, [period, typeLocation, typeUser, token]);
 
-
+  const formatLocation = (location) => {
+    console.log(location);
+    const locationArray = location.split(' ');
+    return locationArray[0];  
+  }
  
   useEffect(() => {
     if (locationStatistique) {
@@ -56,7 +66,7 @@ export const CityStatistique = () => {
         if (data.dimensionValues[0].value === '(not set)' || data.dimensionValues[0].value === 'not set') {
           return;
         }
-        location.push(data.dimensionValues[0].value);
+        location.push({ name: data.dimensionValues[0].value, id: data.dimensionValues[1].value });
         values.push(parseInt(data.metricValues[0].value));
       });
 
@@ -66,8 +76,15 @@ export const CityStatistique = () => {
     }}, [locationStatistique, period]);
 
   const labelMap = {
-    city: { label: 'Nombre d\'utilisateurs par ville', description: 'Ville dans laquelle l\'activité de l\'utilisateur a été enregistrée.' },
-    country: { label: 'Nombre d\'utilisateurs par pays', description: 'Pays dans lequel l\'activité de l\'utilisateur a été enregistrée.', unite: 'country'},
+    city: { label: 'Ville', description: 'Ville dans laquelle l\'activité de l\'utilisateur a été enregistrée.' , unite: 'country', locationID: 'countryId'},
+    country: { label: 'Pays', description: 'Pays dans lequel l\'activité de l\'utilisateur a été enregistrée.', unite: 'country', locationID: 'countryId' },
+  };
+
+  const labelUser = {
+    activeUsers: { label: 'Utilisateurs actifs', description: 'Nombre d\'utilisateurs distincts ayant consulté votre site.' },
+    newUsers: { label: 'Nouveaux utilisateurs', description: 'Nombre d\'utilisateurs ayant interagi avec votre site pour la première fois' },
+    userEngagementDuration: { label: 'Durée d\'engagement des utilisateurs', description: 'Durée totale (en secondes) pendant laquelle votre site Web ou votre application ont été affichés au premier plan sur les appareils des utilisateurs.', unite:'s' },
+    screenPageViews: { label: 'Vues', description: 'Nombre d\'écrans ou de pages Web consultés par les utilisateurs. Les vues répétées d\'une même page ou d\'un même écran sont comptabilisées.' },
   };
   
   const series = [
@@ -75,7 +92,7 @@ export const CityStatistique = () => {
       type: 'bar',
       yAxisId: 'value',
       color: '#2ec96d',
-      label: labelMap[typeLocation].label,
+      label: labelUser[typeUser].label,
       data: values,
     },
   ]
@@ -83,6 +100,19 @@ export const CityStatistique = () => {
   return (
     <div className="statistique-container" style={{ borderColor: theme.palette.primary.third, backgroundColor: theme.palette.primary.main }}>
         <div className='select-stat-container'>  
+        <SelectFieldSecondary
+            id="period-select"
+            value={typeUser}
+            onChange={handleChangeTypeUser}
+            theme={theme}
+        >
+            {Object.entries(labelUser).map(([value, { label }]) => (
+                <MenuItem key={value} value={value}>
+                    {label}
+                </MenuItem>
+            ))}
+        </SelectFieldSecondary>
+        <p style={{marginRight:"1rem"}}>par</p>
         <SelectFieldSecondary
             id="period-select"
             value={typeLocation}
@@ -108,13 +138,14 @@ export const CityStatistique = () => {
           xAxis={[
             {
               id: 'date',
-              data: location,
+              data: location[0] ? location.map((loc) => `${loc.id} ${loc.name}`) : [],
               scaleType: 'band',
             },
           ]}
           yAxis={[
             {
               id: 'value',
+              
               scaleType: 'linear',
             },
           ]}
@@ -143,14 +174,14 @@ export const CityStatistique = () => {
             axisId="date"
             tickLabelStyle={{
               fontSize: 10,
-            }}
-            // Masquer la ligne de l'axe
+            }}        
           />
           <ChartsYAxis
             label=""
             position="left"
             axisId="value"
             tickLabelStyle={{ fontSize: 10 }}
+            
             sx={{
               [`& .${axisClasses.label}`]: {
                 transform: 'translateX(-5px)',

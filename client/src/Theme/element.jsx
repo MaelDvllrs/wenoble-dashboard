@@ -155,17 +155,27 @@ export const SelectField = styled(Select)(({ theme }) => ({
   dayjs.extend(customParseFormat);
   dayjs.locale('fr');
 
-  export function CustomAxisTooltip({ themeColor, type, unite }) {
-    const mousePosition = useMouseTracker(); // Track the mouse position on chart.
+  export function CustomAxisTooltip({ themeColor, type, unite}) {
+    const mousePosition = useMouseTracker();
+
+
     const tooltipData = type === 'axes' ? useAxisTooltip() : useItemTooltip();
+
 
     const items = type === 'axes' ? tooltipData?.seriesItems : tooltipData?.value;
     
-    console.log(unite);
     if (!tooltipData || !mousePosition) {
       // No data to display
       return null;
     }
+
+    if (unite === 'country') {
+      const [id, ...rest] = tooltipData.axisFormattedValue.split(' ');
+      const country = rest.join(' ');
+      items[0].value = { name: country, id: id };
+    }
+
+
       // The pointer type can be used to have different behavior based on pointer type.
     const isMousePointer = mousePosition?.pointerType === 'mouse';
     // Adapt the tooltip offset to the size of the pointer.
@@ -173,7 +183,7 @@ export const SelectField = styled(Select)(({ theme }) => ({
   
     // Vérifier si tooltipData.axisFormattedValue est une date valide
     const formattedDate = dayjs(tooltipData.axisFormattedValue).isValid()
-      ? dayjs(tooltipData.axisFormattedValue).format('ddd. DD MMM.')
+      ? dayjs(tooltipData.axisFormattedValue).format('ddd DD MMM')
       : tooltipData.axisFormattedValue;
       
     return (
@@ -239,13 +249,15 @@ export const SelectField = styled(Select)(({ theme }) => ({
             <div style={{ padding: "0.8rem" }}>
             {Array.isArray(items) ? (
               <div>
-                <div>
+                <div style={{display: 'flex', alignItems:'center'}}>
+                {unite === 'country'  && <Flag code={items[0].value.id} style={{ marginRight: 8, width: 20, height: 15, borderRadius: 5 }} />}
                   <p colSpan={3} style={{ fontSize: '0.8rem', color: themeColor.palette.text.secondary }}>
-                    {formattedDate}
+                    {unite === 'country' ? items[0].value.name : formattedDate}
                   </p>
                 </div>
                 {items.map((item) => (
                   <div key={item.seriesId} style={{ marginTop: "0.8rem", display: 'flex', gap: '0.5rem' }}>
+                     
                     <p>
                       {item.formattedLabel} :
                     </p>
@@ -257,9 +269,8 @@ export const SelectField = styled(Select)(({ theme }) => ({
               </div>
             ) : (
               <div>
-                {unite === 'country' && <Flag code={items.id} style={{ marginRight: 8, width: 20, height: 15 }} />}
                 <p style={{ fontSize: '0.8rem', color: themeColor.palette.text.secondary }}>{items.id}</p>
-                <p>Nombre d'utilisateurs : <b>{items.formattedValue}</b></p>
+                <p>{items.tooltip} <b>{unite === 's' ? formatTime(items.formattedValue) : items.formattedValue}</b></p>
               </div>
             )}
           </div>

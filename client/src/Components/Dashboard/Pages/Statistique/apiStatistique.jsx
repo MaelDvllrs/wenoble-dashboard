@@ -23,32 +23,16 @@ export const getStatistique = async (period, typeUser, token) => {
       }
 }
 
-export const getEventStatistique = async (period, token) => {
-    try {
-    
-        const response = await Axios.get(`${apiUrl}/getEventAnalytics`, {
-            params: {
-                period: period
-            },
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-        });
-        return response;
-      } catch (error) {
-        console.error('Erreur lors de la récupération des données analytics:', error);
-        throw error;
-      }
-}
 
-export const getLocationStatistique = async (period, typeLocation, token) => {
+export const getLocationStatistique = async (period, typeLocation, locationID, typeUser, token) => {
   try {
   
       const response = await Axios.get(`${apiUrl}/getLocationAnalytics`, {
           params: {
               period: period,
-              typeLocation: typeLocation
+              typeLocation: typeLocation,
+              locationID: locationID,
+              typeUser: typeUser
           },
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -62,12 +46,36 @@ export const getLocationStatistique = async (period, typeLocation, token) => {
     }
 }
 
-export const getPlatformCategorieStatistique = async (period, token) => {
+export const getPlatformCategorieStatistique = async (period, typePlatform, typeUser, token) => {
   try {
   
       const response = await Axios.get(`${apiUrl}/getPlateformCategorieAnalytics`, {
           params: {
-              period: period
+              period: period,
+              typePlatform: typePlatform,
+              typeUser: typeUser
+          },
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+      });
+      return response;
+    } catch (error) {
+      console.error('Erreur lors de la récupération des données analytics:', error);
+      throw error;
+    }
+}
+
+
+export const getPageStatistique = async (period, typePage, typeUser ,token) => {
+  try {
+  
+      const response = await Axios.get(`${apiUrl}/getPageAnalytics`, {
+          params: {
+              period: period,
+              typePage: typePage,
+              typeUser: typeUser
           },
           headers: {
             'Authorization': `Bearer ${token}`,

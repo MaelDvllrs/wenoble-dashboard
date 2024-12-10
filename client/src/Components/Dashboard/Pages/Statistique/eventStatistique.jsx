@@ -39,9 +39,6 @@ export const EventStatistique = () => {
   const handleChangeTypeEvent = (event) => {
     const selectedValue = event.target.value;
     setTypeEvent(selectedValue);
-    console.log(
-        `Value: ${selectedValue}, Label: ${labelMap[selectedValue].label}, Description: ${labelMap[selectedValue].description}`
-    );
   };
 
 
@@ -198,7 +195,8 @@ export const EventStatistique = () => {
               vertical: 'top',
             }}
             labelStyle={{fontSize: 10}}
-            itemMarkHeight={2}
+            itemMarkHeight={10}
+            itemMarkWidth={10}
           />
           
         </ResponsiveChartContainer>
