@@ -75,7 +75,7 @@ export const createVideoBlog = async (fields, blogPageId) => {
 };
 
 export const createBlogPage = async (id, mainText, date, status, idUser, token) => {
-    
+    console.log(token);
     try {
         const response = await Axios.post(`${apiUrl}/createBlogPage`, {
             params: {
