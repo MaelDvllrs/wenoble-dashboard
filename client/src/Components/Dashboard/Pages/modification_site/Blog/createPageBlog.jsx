@@ -183,7 +183,7 @@ const CreatePageBlog = () => {
 
         try {        
             // Appeler la fonction saveBlogPage
-            const response = await createBlogPage(idBlog, mainText, localISOTime, status, idUser);
+            const response = await createBlogPage(idBlog, mainText, localISOTime, status, idUser, token);
             // Gérer la réponse ici
             const blogPageId = response.id;
         
