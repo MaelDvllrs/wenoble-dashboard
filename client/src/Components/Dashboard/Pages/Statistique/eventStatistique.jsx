@@ -13,6 +13,8 @@ import { ChartsLegend } from '@mui/x-charts';
 import Tooltip from '@mui/material/Tooltip';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
+import { PiSmileyMeltingFill } from "react-icons/pi";
+
 import { formatNumber, formatTime } from '../../utils/numberFormatted';
 
 import Cookies from 'js-cookie';
@@ -52,12 +54,22 @@ export const EventStatistique = () => {
 
 
  
+
+
   useEffect(() => {
     if (eventStatistique) {
       const dates = [];
       const values = [];
-      const startDate = dayjs().subtract(parseInt(period.replace('last', '').replace('days', '')), 'day');
+      let startDate;
       const endDate = dayjs();
+
+      if (period === 'today') {
+        startDate = dayjs();
+      } else if (period === 'yesterday') {
+        startDate = dayjs().subtract(1, 'day');
+      } else {
+        startDate = dayjs().subtract(parseInt(period.replace('last', '').replace('days', '')), 'day');
+      }
 
       for (let date = startDate; date.isBefore(endDate) || date.isSame(endDate); date = date.add(1, 'day')) {
         const dateString = date.format('YYYYMMDD');
@@ -75,6 +87,7 @@ export const EventStatistique = () => {
       const total = values.reduce((acc, value) => acc + value, 0);
       setTotalValues(total);
     }
+
   }, [eventStatistique, period]);
 
   const labelMap = {
@@ -120,86 +133,91 @@ export const EventStatistique = () => {
           {labelMap[typeEvent]?.unite === 's' ? formatTime(totalValues) : formatNumber(totalValues)}
         </p>
         
-        
-        <ResponsiveChartContainer
-          
-          series={series}
-          height={300}
-          xAxis={[
-            {
-              id: 'date',
-              data: dates,
-              scaleType: 'band',
-            },
-          ]}
-          yAxis={[
-            {
-              id: 'value',
-              scaleType: 'linear',
-            },
-          ]}
+        {eventStatistique && eventStatistique.data.length > 0 ? (
+          <ResponsiveChartContainer
+            series={series}
+            height={300}
+            xAxis={[
+              {
+                id: 'date',
+                data: dates,
+                scaleType: 'band',
+              },
+            ]}
+            yAxis={[
+              {
+                id: 'value',
+                scaleType: 'linear',
+              },
+            ]}
 
-          sx={{
-            // bottomAxis Line Styles
-             "& .MuiChartsAxis-bottom .MuiChartsAxis-line":{
-                stroke:"none",
-             },
-
-             // leftAxis Line Styles
-             "& .MuiChartsAxis-left .MuiChartsAxis-line":{
-                stroke:"none",
-             },
-             "& .MuiChartsAxis-tick":{
-                stroke:"none !important", 
-            },
-          }}
-        >
-
-          <LinePlot />
-          <ChartsXAxis
-            label=""
-            position="bottom"
-            axisId="date"
-            tickLabelStyle={{
-              fontSize: 10,
-            }}
-            // Masquer la ligne de l'axe
-          />
-          <ChartsYAxis
-            label=""
-            position="left"
-            axisId="value"
-            tickLabelStyle={{ fontSize: 10 }}
             sx={{
-              [`& .${axisClasses.label}`]: {
-                transform: 'translateX(-5px)',
+              // bottomAxis Line Styles
+              "& .MuiChartsAxis-bottom .MuiChartsAxis-line":{
+                  stroke:"none",
+              },
+
+              // leftAxis Line Styles
+              "& .MuiChartsAxis-left .MuiChartsAxis-line":{
+                  stroke:"none",
+              },
+              "& .MuiChartsAxis-tick":{
+                  stroke:"none !important", 
               },
             }}
-          />
+          >
 
-          <ChartsGrid 
-            horizontal 
-            sx={{
-                "& .MuiChartsGrid-line": {
-                    stroke: theme.palette.primary.third,
-                    opacity: 0.2,
+            <LinePlot />
+            <ChartsXAxis
+              label=""
+              position="bottom"
+              axisId="date"
+              tickLabelStyle={{
+                fontSize: 10,
+              }}
+              // Masquer la ligne de l'axe
+            />
+            <ChartsYAxis
+              label=""
+              position="left"
+              axisId="value"
+              tickLabelStyle={{ fontSize: 10 }}
+              sx={{
+                [`& .${axisClasses.label}`]: {
+                  transform: 'translateX(-5px)',
                 },
-                }}  
-          />
-          <CustomAxisTooltip  themeColor={theme} type='axes'/>
-          <LineHighlightPlot />
-          <ChartsLegend
-            direction="row"
-            position={{
-              horizontal: 'right', 
-              vertical: 'top',
-            }}
-            labelStyle={{fontSize: 10}}
-            itemMarkHeight={10}
-            itemMarkWidth={10}
-          />
-          
-        </ResponsiveChartContainer>
+              }}
+            />
+
+            <ChartsGrid 
+              horizontal 
+              sx={{
+                  "& .MuiChartsGrid-line": {
+                      stroke: theme.palette.primary.third,
+                      opacity: 0.2,
+                  },
+                  }}  
+            />
+            <CustomAxisTooltip  themeColor={theme} type='axes'/>
+            <LineHighlightPlot />
+            <ChartsLegend
+              direction="row"
+              position={{
+                horizontal: 'right', 
+                vertical: 'top',
+              }}
+              labelStyle={{fontSize: 10}}
+              itemMarkHeight={10}
+              itemMarkWidth={10}
+            />
+            
+          </ResponsiveChartContainer>
+        ) : (
+          <div className='no-data-message-stats'>
+            <PiSmileyMeltingFill style={{ fontSize: 50, color: theme.palette.text.primary }} />
+            Aucune donnée disponible.
+          </div>
+        )}
 
         <SelectField
             id="period-select"

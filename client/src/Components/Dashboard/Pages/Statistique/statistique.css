@@ -6,6 +6,8 @@
     border-radius: 0.5rem;
     border: solid 1px;
     align-items: start;
+    justify-content: space-between;
+    
 }
 
 .statistique-section{
@@ -60,4 +62,13 @@
     white-space: nowrap;
     text-overflow: ellipsis;
     width: 100%;
+}
+
+.no-data-message-stats{
+    width: 100%;
+    flex-direction: column;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 300px;
 }

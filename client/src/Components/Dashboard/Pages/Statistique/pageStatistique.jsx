@@ -12,6 +12,8 @@ import { ChartsGrid } from '@mui/x-charts/ChartsGrid';
 import { axisClasses } from '@mui/x-charts/ChartsAxis';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
+import { PiSmileyMeltingFill } from "react-icons/pi";
+
 import Tooltip from '@mui/material/Tooltip';
 import Cookies from 'js-cookie';
 
@@ -133,8 +135,8 @@ export const PageStatistique = () => {
         </Tooltip>
       </div>
         
-        
-        <ResponsiveChartContainer
+        {pageStatistique && pageStatistique.data.length > 0 ? (
+          <ResponsiveChartContainer
           
           series={series}
           height={300}
@@ -205,6 +207,12 @@ export const PageStatistique = () => {
           <LineHighlightPlot/>
           
         </ResponsiveChartContainer>
+        ) : (
+          <div className='no-data-message-stats'>
+            <PiSmileyMeltingFill style={{ fontSize: 50, color: theme.palette.text.primary }} />
+            Aucune donnée disponible.
+          </div>
+        )}
 
         <SelectField
             id="period-select"

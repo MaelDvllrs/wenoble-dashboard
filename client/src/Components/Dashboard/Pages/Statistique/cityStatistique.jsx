@@ -12,6 +12,8 @@ import { ChartsGrid } from '@mui/x-charts/ChartsGrid';
 import { axisClasses } from '@mui/x-charts/ChartsAxis';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
+import { PiSmileyMeltingFill } from "react-icons/pi";
+
 import Tooltip from '@mui/material/Tooltip';
 import Cookies from 'js-cookie';
 
@@ -130,78 +132,83 @@ export const CityStatistique = () => {
         </Tooltip>
       </div>
         
-        
-        <ResponsiveChartContainer
-          
-          series={series}
-          height={300}
-          xAxis={[
-            {
-              id: 'date',
-              data: location[0] ? location.map((loc) => `${loc.id} ${loc.name}`) : [],
-              scaleType: 'band',
-            },
-          ]}
-          yAxis={[
-            {
-              id: 'value',
-              
-              scaleType: 'linear',
-            },
-          ]}
-
-          sx={{
-            // bottomAxis Line Styles
-             "& .MuiChartsAxis-bottom .MuiChartsAxis-line":{
-                stroke:"none",
-             },
-
-             // leftAxis Line Styles
-             "& .MuiChartsAxis-left .MuiChartsAxis-line":{
-                stroke:"none",
-             },
-             "& .MuiChartsAxis-tick":{
-                stroke:"none !important", 
-            },
-
-          }}
-        >
-
-          <BarPlot/>
-          <ChartsXAxis
-            label=""
-            position="bottom"
-            axisId="date"
-            tickLabelStyle={{
-              fontSize: 10,
-            }}        
-          />
-          <ChartsYAxis
-            label=""
-            position="left"
-            axisId="value"
-            tickLabelStyle={{ fontSize: 10 }}
-            
-            sx={{
-              [`& .${axisClasses.label}`]: {
-                transform: 'translateX(-5px)',
+        {locationStatistique && locationStatistique.data.length > 0 ? (
+          <ResponsiveChartContainer
+            series={series}
+            height={300}
+            xAxis={[
+              {
+                id: 'date',
+                data: location[0] ? location.map((loc) => `${loc.id} ${loc.name}`) : [],
+                scaleType: 'band',
               },
-            }}
-          />
+            ]}
+            yAxis={[
+              {
+                id: 'value',
+                
+                scaleType: 'linear',
+              },
+            ]}
 
-          <ChartsGrid 
-            horizontal 
             sx={{
-                "& .MuiChartsGrid-line": {
-                    stroke: theme.palette.primary.third,
-                    opacity: 0.2,
+              // bottomAxis Line Styles
+              "& .MuiChartsAxis-bottom .MuiChartsAxis-line":{
+                  stroke:"none",
+              },
+
+              // leftAxis Line Styles
+              "& .MuiChartsAxis-left .MuiChartsAxis-line":{
+                  stroke:"none",
+              },
+              "& .MuiChartsAxis-tick":{
+                  stroke:"none !important", 
+              },
+
+            }}
+          >
+
+            <BarPlot/>
+            <ChartsXAxis
+              label=""
+              position="bottom"
+              axisId="date"
+              tickLabelStyle={{
+                fontSize: 10,
+              }}        
+            />
+            <ChartsYAxis
+              label=""
+              position="left"
+              axisId="value"
+              tickLabelStyle={{ fontSize: 10 }}
+              
+              sx={{
+                [`& .${axisClasses.label}`]: {
+                  transform: 'translateX(-5px)',
                 },
-                }}  
-          />
-          <CustomAxisTooltip  themeColor={theme} type='axes' unite={labelMap[typeLocation].unite}/>
-          <LineHighlightPlot/>
-          
-        </ResponsiveChartContainer>
+              }}
+            />
+
+            <ChartsGrid 
+              horizontal 
+              sx={{
+                  "& .MuiChartsGrid-line": {
+                      stroke: theme.palette.primary.third,
+                      opacity: 0.2,
+                  },
+                  }}  
+            />
+            <CustomAxisTooltip  themeColor={theme} type='axes' unite={labelMap[typeLocation].unite}/>
+            <LineHighlightPlot/>
+            
+          </ResponsiveChartContainer>
+        ) : (
+          <div className='no-data-message-stats'>
+            <PiSmileyMeltingFill style={{ fontSize: 50, color: theme.palette.text.primary }} />
+            Aucune donnée disponible.
+          </div>
+        )}
 
         <SelectField
             id="period-select"

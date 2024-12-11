@@ -12,6 +12,8 @@ import Tooltip from '@mui/material/Tooltip';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { SelectFieldSecondary } from '../../../../Theme/element';
 
+import { PiSmileyMeltingFill } from "react-icons/pi";
+
 
 import { getPlatformCategorieStatistique } from './apiStatistique';
 import './statistique.css';
@@ -45,14 +47,14 @@ export const PlatformCategorieStatistique = () => {
 
 
   useEffect(() => {
+
     const fetchUserStatistique = async () => {
+      setDataLoaded(false);
       const userData = await getPlatformCategorieStatistique(period, typePlatform, typeUser, token);
       setPlatformCategorieStatistique(userData);
-      setDataLoaded(true); 
     };
     fetchUserStatistique();
   }, [period, typePlatform, typeUser, token]);
-
 
  
   useEffect(() => {
@@ -75,6 +77,10 @@ export const PlatformCategorieStatistique = () => {
 
       setPlatformCategorie(platformCategorie);
       setValues(values);
+
+      setTimeout(() => {
+        setDataLoaded(true);
+      }, 1000);
     }}, [platformCategorieStatistique, period]);
 
 
@@ -146,49 +152,56 @@ export const PlatformCategorieStatistique = () => {
             <InfoOutlinedIcon className='icon-select-stat-container' style={{color: theme.palette.text.secondary}}/>
           </Tooltip>
         </div>
-        <ResponsiveChartContainer
-          
-          series={series}
-          height={300}
-
-          sx={{
-            "& .MuiPieArc-series-auto-generated-id-0":{
-              stroke: theme.palette.primary.main,
-            },
-            // bottomAxis Line Styles
-             "& .MuiChartsAxis-bottom .MuiChartsAxis-line":{
-                stroke:"none",
-             },
-
-             // leftAxis Line Styles
-             "& .MuiChartsAxis-left .MuiChartsAxis-line":{
-                stroke:"none",
-             },
-             "& .MuiChartsAxis-tick":{
-                stroke:"none !important", 
-             },
-
-          }}
-        >
-
-          <PiePlot />
-
-          <ChartsLegend
-            direction="row"
-            position={{
-              horizontal: 'middle', 
-              vertical: 'bottom',
+        {platformCategorieStatistique && platformCategorieStatistique.data.length > 0 ? (
+          <ResponsiveChartContainer
+            series={series}
+            height={300}
+            sx={{
+              "& .MuiPieArc-series-auto-generated-id-0":{
+                stroke: theme.palette.primary.main,
+              },
+              // bottomAxis Line Styles
+               "& .MuiChartsAxis-bottom .MuiChartsAxis-line":{
+                  stroke:"none",
+               },
+  
+               // leftAxis Line Styles
+               "& .MuiChartsAxis-left .MuiChartsAxis-line":{
+                  stroke:"none",
+               },
+               "& .MuiChartsAxis-tick":{
+                  stroke:"none !important", 
+               },
+  
             }}
-            itemMarkHeight={10}
-            itemMarkWidth={10}
+          >
+            <PiePlot />
+            <ChartsLegend
+              direction="row"
+              position={{
+                horizontal: 'middle', 
+                vertical: 'bottom',
+              }}
+              itemMarkHeight={10}
+              itemMarkWidth={10}
+            />
 
-          />
 
-          <CustomAxisTooltip  themeColor={theme} type='item' unite={labelUser[typeUser].unite}/>
-          <LineHighlightPlot/>
-          
-        </ResponsiveChartContainer>
-
+            {dataLoaded && (
+              <CustomAxisTooltip
+                themeColor={theme}
+                type='item'
+                unite='country'
+              />
+            )}
+            <LineHighlightPlot/>
+          </ResponsiveChartContainer>
+        ) : (
+          <div className='no-data-message-stats'>
+            <PiSmileyMeltingFill style={{ fontSize: 50, color: theme.palette.text.primary }} />
+            Aucune donnée disponible.
+          </div>
+        )}
         <SelectField
             id="period-select"
             value={period}

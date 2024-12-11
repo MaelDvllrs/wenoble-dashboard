@@ -155,21 +155,24 @@ export const SelectField = styled(Select)(({ theme }) => ({
   dayjs.extend(customParseFormat);
   dayjs.locale('fr');
 
-  export function CustomAxisTooltip({ themeColor, type, unite}) {
+  export function CustomAxisTooltip({ themeColor, type, unite }) {
+    
+
+
+
     const mousePosition = useMouseTracker();
 
-
+    
     const tooltipData = type === 'axes' ? useAxisTooltip() : useItemTooltip();
 
 
     const items = type === 'axes' ? tooltipData?.seriesItems : tooltipData?.value;
     
     if (!tooltipData || !mousePosition) {
-      // No data to display
       return null;
     }
 
-    if (unite === 'country') {
+    if (unite === 'country' && tooltipData.axisFormattedValue) {
       const [id, ...rest] = tooltipData.axisFormattedValue.split(' ');
       const country = rest.join(' ');
       items[0].value = { name: country, id: id };
@@ -233,11 +236,11 @@ export const SelectField = styled(Select)(({ theme }) => ({
                 },
               },
               tbody: {
-                'tr:first-child': { td: { paddingTop: 1.5 } },
-                'tr:last-child': { td: { paddingBottom: 1.5 } },
+                'tr:first-of-type': { td: { paddingTop: 1.5 } },
+                'tr:first-of-type': { td: { paddingBottom: 1.5 } },
                 tr: {
-                  'td:first-child': { paddingLeft: 1.5 },
-                  'td:last-child': { paddingRight: 1.5 },
+                  'td:first-of-type': { paddingLeft: 1.5 },
+                  'td:first-of-type': { paddingRight: 1.5 },
                   td: {
                     paddingRight: '7px',
                     paddingBottom: '10px',
