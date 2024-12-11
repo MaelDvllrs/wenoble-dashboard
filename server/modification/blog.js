@@ -367,6 +367,7 @@ router.post('/createBlogPage', (req, res) => {
   const slug = req.body.params.mainText[1].value;
   const date = req.body.params.date;
   const status = req.body.params.status;
+
   let publishDate;
   if (status === 1) {
     publishDate = date;

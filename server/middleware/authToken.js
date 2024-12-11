@@ -9,6 +9,7 @@ const authenticateToken = (req, res, next) => {
 
   if (token == null) return res.sendStatus(401); // Si aucun token n'est fourni
 
+  console.log("token" ,token);
   jwt.verify(token, secretKey, (err, user) => {
     if (err) return res.sendStatus(403); // Si le token est invalide
     req.user = user;
