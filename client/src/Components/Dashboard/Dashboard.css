@@ -430,6 +430,17 @@
 }
 
 
+.new-section{
+    min-height: 0.6rem;
+    padding-left: 0.3rem;
+    padding-right: 0.3rem;
+    font-size: 0.7rem;
+    background-color: red;
+    color: white;
+    border-radius: 1rem;
+    margin-left: 0.5rem;
+}
+
 
 
 

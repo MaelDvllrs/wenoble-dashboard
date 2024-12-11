@@ -280,6 +280,7 @@ const Dashboard = () => {
                             <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.primary}}>
                                 <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><PiChartBarBold/></motion.div>
                                 <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Statistiques</motion.span>
+                                <div className='new-section'>{open_menu && 'New'}</div>
                                 <div className='menu_link_active_curs'></div>
                             </motion.div>
                         </AnimatePresence>
