@@ -193,7 +193,7 @@ const CreatePageBlog = () => {
             // ENREGISTRER LES TEXTES
 
             try {
-                const response = await createTextBlog(blogPageId, otherText);
+                const response = await createTextBlog(blogPageId, otherText, token);
 
             } catch (error) {
                 console.error('Erreur lors de la création des textes :', error);
@@ -216,7 +216,7 @@ const CreatePageBlog = () => {
 
 
             try {
-                const response = await createRichTextBlog(blogPageId, infoRichText);
+                const response = await createRichTextBlog(blogPageId, infoRichText, token);
             } catch (error) {
                 console.error('Erreur lors de la création des richtextes :', error);
                 return;
@@ -226,7 +226,7 @@ const CreatePageBlog = () => {
             try {
                 // Utiliser Promise.all pour attendre que toutes les images soient sauvegardées
                 await Promise.all(blogData.images.map(async (image) => {
-                    await createImageBlog(image, blogPageId);
+                    await createImageBlog(image, blogPageId, token);
                 }));
 
             } catch (error) {
@@ -237,7 +237,7 @@ const CreatePageBlog = () => {
             //ENREGISTRER LES GALLERIES
             try {
                 await Promise.all(blogData.gallery.map(async (gallery) => {
-                    await createGalleryBlog(gallery, blogPageId);
+                    await createGalleryBlog(gallery, blogPageId, token);
                 }));
             } catch (error) {
                 console.error(error);
@@ -248,7 +248,7 @@ const CreatePageBlog = () => {
             //ENREGISTRER LES VIDEO
             try {
                 await Promise.all(blogData.video.map(async (video) => {
-                    await createVideoBlog(video, blogPageId);
+                    await createVideoBlog(video, blogPageId, token);
                 }));
             } catch (error) {
                 console.error(error);
@@ -258,7 +258,7 @@ const CreatePageBlog = () => {
             //ENREGISTRER LES MULTIREFERENCE
             try {
                 await Promise.all(blogData.multiReference.map(async (multiReference) => {
-                    await createMultiReferenceBlog(blogPageId, multiReference);
+                    await createMultiReferenceBlog(blogPageId, multiReference, token);
                 }));
             } catch (error) {
                 console.error(error);

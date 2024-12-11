@@ -5,7 +5,7 @@ import Cookies from 'js-cookie';
 const apiUrl = config.apiUrl; 
 const token = Cookies.get('token');
 
-export const createImageBlog = async (fields, blogPageId) => {
+export const createImageBlog = async (fields, blogPageId, token) => {
     try {
         const formData = new FormData();
         formData.append('image', fields.data, fields.name);
@@ -27,7 +27,7 @@ export const createImageBlog = async (fields, blogPageId) => {
     }
 };
 
-export const createGalleryBlog = async (fields, blogPageId) => {
+export const createGalleryBlog = async (fields, blogPageId, token) => {
     try {
         const formData = new FormData();
         fields.gallery.forEach((field, index) => {
@@ -50,7 +50,7 @@ export const createGalleryBlog = async (fields, blogPageId) => {
     }
 };
 
-export const createVideoBlog = async (fields, blogPageId) => {
+export const createVideoBlog = async (fields, blogPageId, token) => {
     try {
         const formData = new FormData();
         const src = fields.id_video + ".mp4";
@@ -75,8 +75,9 @@ export const createVideoBlog = async (fields, blogPageId) => {
 };
 
 export const createBlogPage = async (id, mainText, date, status, idUser, token) => {
+
     try {
-        const response = await Axios.post(`${apiUrl}/createBlogPage`, {
+        const createBlogResponse = await Axios.post(`${apiUrl}/createBlogPage`, {
             params: {
                 id: id,
                 mainText: mainText,
@@ -104,14 +105,14 @@ export const createBlogPage = async (id, mainText, date, status, idUser, token) 
                 }
             });
         }
-        return response.data;
+        return createBlogResponse.data;
     } catch (error) {
         console.error('Message d\'erreur du serveur:', error);
         throw error;
     }
 };
 
-export const createTextBlog = async (id, otherText) => {
+export const createTextBlog = async (id, otherText, token) => {
     try {
         await Axios.post(`${apiUrl}/createTextBlog`, {
             params: {
@@ -130,7 +131,7 @@ export const createTextBlog = async (id, otherText) => {
     }
 };
 
-export const createRichTextBlog = async (id, infoRichText) => {
+export const createRichTextBlog = async (id, infoRichText, token) => {
     try {
         await Axios.post(`${apiUrl}/createRichTextBlog`, {
             params: {
@@ -149,7 +150,7 @@ export const createRichTextBlog = async (id, infoRichText) => {
     }
 };
 
-export const createMultiReferenceBlog = async (id, multiReference) => {
+export const createMultiReferenceBlog = async (id, multiReference, token) => {
     try {
         await Axios.post(`${apiUrl}/createMultiReferenceBlog`, {
             params: {
@@ -168,7 +169,7 @@ export const createMultiReferenceBlog = async (id, multiReference) => {
     }
 };
 
-export const updateBlogPage = async (idBlogPage, mainText, date, status, setpublishDate, oldStatus, idUser, idBlog) => {
+export const updateBlogPage = async (idBlogPage, mainText, date, status, setpublishDate, oldStatus, idUser, idBlog, token) => {
     try {
         if (status === 1 && oldStatus === 0) {
             await Axios.post(`${apiUrl}/addRouteBlogSitemap`, {
@@ -236,7 +237,7 @@ export const updateBlogPage = async (idBlogPage, mainText, date, status, setpubl
     }
 };
 
-export const updateTextBlog = async (id, otherText) => {
+export const updateTextBlog = async (id, otherText, token) => {
     try {
         if (otherText[0].create) {
             console.log("enregistrer " + otherText);
@@ -270,7 +271,7 @@ export const updateTextBlog = async (id, otherText) => {
     }
 };
 
-export const updateRichTextBlog = async (id, infoRichText) => {
+export const updateRichTextBlog = async (id, infoRichText, token) => {
     try {
         if (infoRichText[0].create) {
             await Axios.post(`${apiUrl}/updateRichTextBlog`, {
@@ -303,7 +304,7 @@ export const updateRichTextBlog = async (id, infoRichText) => {
     }
 };
 
-export const updateImageBlog = async (fields, blogPageId) => {
+export const updateImageBlog = async (fields, blogPageId, token) => {
     try {
         const formData = new FormData();
         formData.append('image', fields.data, fields.name);
@@ -334,7 +335,7 @@ export const updateImageBlog = async (fields, blogPageId) => {
     }
 };
 
-export const updateVideoBlog = async (fields, blogPageId) => {
+export const updateVideoBlog = async (fields, blogPageId, token) => {
     try {
         const formData = new FormData();
         const src = fields.id_video + ".mp4";
@@ -367,7 +368,7 @@ export const updateVideoBlog = async (fields, blogPageId) => {
     }
 };
 
-export const updateMultiReferenceBlog = async (id, multiReference) => {
+export const updateMultiReferenceBlog = async (id, multiReference, token) => {
     try {
         if (multiReference.create) {
             await Axios.post(`${apiUrl}/updateMultiReferenceBlog`, {
@@ -400,7 +401,7 @@ export const updateMultiReferenceBlog = async (id, multiReference) => {
     }
 };
 
-export const updateGalleryBlog = async (id, gallery) => {
+export const updateGalleryBlog = async (id, gallery, token) => {
     try {
         const formData = new FormData();
         let galleryCreate = false;

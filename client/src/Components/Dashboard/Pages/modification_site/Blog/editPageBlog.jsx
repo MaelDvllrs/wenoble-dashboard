@@ -409,16 +409,13 @@ const EditPageBlog = () => {
 
 
         const date = new Date();
-        console.log('date: ' + date);
 
         const adjustedTime = new Date(date.getTime() + 3600000);
 
-        console.log('adjusteDate:' +adjustedTime);
 
 
         const localISOTime = adjustedTime.toISOString().slice(0, 19).replace('T', ' ');
 
-        console.log('localISOTime: ' + localISOTime);
 
         const mainText = [];
         const otherText = [];
@@ -434,14 +431,14 @@ const EditPageBlog = () => {
         try {        
 
 
-            const response = await updateBlogPage(idBlogPage, mainText, localISOTime, status, setpublishDate, DecodeBlog.blogPage[0].status, idUser, idBlog);
+            const response = await updateBlogPage(idBlogPage, mainText, localISOTime, status, setpublishDate, DecodeBlog.blogPage[0].status, idUser, idBlog, token);
         
             // ENREGISTRER LES TEXTES
 
             if (otherText.length > 0) {
 
                 try {
-                    const response = await updateTextBlog(idBlogPage, otherText);
+                    const response = await updateTextBlog(idBlogPage, otherText, token);
 
                 } catch (error) {
                     console.error('Erreur lors de la création des textes :', error);
@@ -454,7 +451,6 @@ const EditPageBlog = () => {
             // ENREGISTRER LES RICHTEXT
 
             if (blogData.richText.length > 0) {
-                console.log(blogData.richText);
                 const infoRichText = [];
                 blogData.richText.forEach(richText => {
                   const contentRichText = richText.value;
@@ -477,8 +473,7 @@ const EditPageBlog = () => {
                 });
           
                 try {
-                  const response = await updateRichTextBlog(idBlogPage, infoRichText);
-                  console.log('RichText updated successfully:', response);
+                  const response = await updateRichTextBlog(idBlogPage, infoRichText, token);
                 } catch (error) {
                   console.error('Erreur lors de la création des richtextes :', error);
                   return;
@@ -493,7 +488,7 @@ const EditPageBlog = () => {
                 try {
                     // Utiliser Promise.all pour attendre que toutes les images soient sauvegardées
                     await Promise.all(blogData.images.map(async (image) => {
-                        await updateImageBlog(image, idBlogPage);
+                        await updateImageBlog(image, idBlogPage, token);
                     }));
 
                 } catch (error) {
@@ -507,7 +502,7 @@ const EditPageBlog = () => {
             if(blogData.video.length > 0){
                 try {
                     await Promise.all(blogData.video.map(async (video) => {
-                        await updateVideoBlog(video, idBlogPage);
+                        await updateVideoBlog(video, idBlogPage, token);
                     }));
                 } catch (error) {
                     console.error(error);
@@ -519,7 +514,7 @@ const EditPageBlog = () => {
             if(blogData.multiReference.length > 0){
                 try {
                     await Promise.all(blogData.multiReference.map(async (multiReference) => {
-                        await updateMultiReferenceBlog(idBlogPage, multiReference);
+                        await updateMultiReferenceBlog(idBlogPage, multiReference, token);
                     }));
                 } catch (error) {
                     console.error(error);
@@ -532,7 +527,7 @@ const EditPageBlog = () => {
             if(blogData.gallery.length > 0){
                 try {
                     await Promise.all(blogData.gallery.map(async (gallery) => {
-                        await updateGalleryBlog(idBlogPage, gallery);
+                        await updateGalleryBlog(idBlogPage, gallery, token);
                     }));
                 } catch (error) {
                     console.error(error);
