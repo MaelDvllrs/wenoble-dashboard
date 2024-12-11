@@ -11,7 +11,7 @@ import '../Portfolio/portfolio.css';
 import config from "../../../../../config";
 import AddIcon from '@mui/icons-material/Add';
 import { SkeletonBlog } from "../../../../skeleton/skeleton";
-import { formatDate } from "../../../dateUtils";
+import { formatDate } from "../../../utils/dateUtils";
 import { PiSmileyMeltingFill } from "react-icons/pi";
 
 

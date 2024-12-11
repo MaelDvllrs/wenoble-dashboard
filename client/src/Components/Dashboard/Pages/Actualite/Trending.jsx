@@ -4,7 +4,7 @@ import config from '../../../../config';
 import {useArticles} from './useArticle'
 import WhatshotIcon from '@mui/icons-material/Whatshot';
 import { NavLink } from 'react-router-dom';
-import {formatDistanceWithoutApprox} from '../../dateUtils'
+import {formatDistanceWithoutApprox} from '../../utils/dateUtils'
 
 export const TrendingArticle = () => {
     const theme = useTheme();

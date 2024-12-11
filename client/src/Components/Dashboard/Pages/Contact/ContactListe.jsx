@@ -10,7 +10,7 @@ import '../modification_site/Portfolio/portfolio.css';
 import './Contact.css';
 import config from "../../../../config";
 import { SkeletonBlog } from "../../../skeleton/skeleton";
-import { formatDate } from "../../dateUtils";
+import { formatDate } from "../../utils/dateUtils";
 import IconButton from '@mui/material/IconButton';
 import Popper  from '@mui/material/Popper';
 import ClickAwayListener from '@mui/material/ClickAwayListener';

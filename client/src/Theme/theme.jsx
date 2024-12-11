@@ -58,7 +58,7 @@ const LIGHT_THEME = createTheme({
         },
         text: {
             primary: '#141414',
-            secondary: '#b9b7b7'
+            secondary: '#757575'
         },
     }
 })
