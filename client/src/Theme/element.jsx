@@ -236,11 +236,9 @@ export const SelectField = styled(Select)(({ theme }) => ({
                 },
               },
               tbody: {
-                'tr:first-of-type': { td: { paddingTop: 1.5 } },
-                'tr:first-of-type': { td: { paddingBottom: 1.5 } },
+                'tr:first-of-type': { td: { paddingTop: 1.5, paddingBottom: 1.5 } },
                 tr: {
-                  'td:first-of-type': { paddingLeft: 1.5 },
-                  'td:first-of-type': { paddingRight: 1.5 },
+                  'td:first-of-type': { paddingLeft: 1.5, paddingRight: 1.5 },
                   td: {
                     paddingRight: '7px',
                     paddingBottom: '10px',

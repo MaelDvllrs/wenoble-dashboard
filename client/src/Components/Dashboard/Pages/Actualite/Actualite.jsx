@@ -22,7 +22,6 @@ const Actualite = () => {
           setInitialNavigationDone(true);
         }
       }, [initialNavigationDone, navigate, location.pathname]);
-    console.log('initialNavigationDone', initialNavigationDone) 
 
     useEffect(() => {
         if (location.pathname !== '/dashboard/actu/' && initialNavigationDone) {

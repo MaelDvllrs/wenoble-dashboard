@@ -14,7 +14,7 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import Tooltip from '@mui/material/Tooltip';
 
 import { PiSmileyMeltingFill } from "react-icons/pi";
- 
+import CircularProgress from '@mui/material/CircularProgress';
 
 import { formatNumber, formatTime } from '../../utils/numberFormatted';
 
@@ -34,6 +34,7 @@ export const UserStatistique = () => {
   const [period, setPeriod] = useState('last14days');
   const [typeUser, setTypeUser] = useState('activeUsers');
   const [totalValues, setTotalValues] = useState(0);
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (event) => {
     setPeriod(event.target.value);
@@ -49,6 +50,7 @@ export const UserStatistique = () => {
     const fetchUserStatistique = async () => {
       const userData = await getStatistique(period, typeUser, token);
       setUserStatistique(userData);
+      setLoading(true);
     };
     fetchUserStatistique();
   }, [period, typeUser, token]);
@@ -134,90 +136,95 @@ export const UserStatistique = () => {
           </p>
         )}
 
-        {userStatistique && userStatistique.data.length > 0 ? (
-          <ResponsiveChartContainer
-            series={series}
-            height={300}
-            xAxis={[
-              {
-                id: 'date',
-                data: dates,
-                scaleType: 'band',
-              },
-            ]}
-            yAxis={[
-              {
-                id: 'value',
-                scaleType: 'linear',
-              },
-            ]}
+        {!loading ? (
+          <div className='loading-message-stats'>
+            <CircularProgress sx={{color:"#2ec96d"}}/>
+          </div>
+        ) : (
+          userStatistique && userStatistique.data.length > 0 ? (
+            <ResponsiveChartContainer
+              series={series}
+              xAxis={[
+                {
+                  id: 'date',
+                  data: dates,
+                  scaleType: 'band',
+                },
+              ]}
+              yAxis={[
+                {
+                  id: 'value',
+                  scaleType: 'linear',
+                },
+              ]}
 
-            sx={{
-              // bottomAxis Line Styles
-              "& .MuiChartsAxis-bottom .MuiChartsAxis-line":{
-                stroke:"none",
-              },
-
-              // leftAxis Line Styles
-              "& .MuiChartsAxis-left .MuiChartsAxis-line":{
-                stroke:"none",
-              },
-              "& .MuiChartsAxis-tick":{
-                stroke:"none !important", 
-              },
-            }}
-          >
-
-            <LinePlot />
-            <ChartsXAxis
-              label=""
-              position="bottom"
-              axisId="date"
-              tickLabelStyle={{
-                fontSize: 10,
-              }}
-              // Masquer la ligne de l'axe
-            />
-            <ChartsYAxis
-              label=""
-              position="left"
-              axisId="value"
-              tickLabelStyle={{ fontSize: 10 }}
               sx={{
-                [`& .${axisClasses.label}`]: {
-                  transform: 'translateX(-5px)',
+                // bottomAxis Line Styles
+                "& .MuiChartsAxis-bottom .MuiChartsAxis-line":{
+                  stroke:"none",
+                },
+
+                // leftAxis Line Styles
+                "& .MuiChartsAxis-left .MuiChartsAxis-line":{
+                  stroke:"none",
+                },
+                "& .MuiChartsAxis-tick":{
+                  stroke:"none !important", 
                 },
               }}
-            />
+            >
 
-            <ChartsGrid 
-              horizontal 
-              sx={{
-                  "& .MuiChartsGrid-line": {
-                      stroke: theme.palette.primary.third,
-                      opacity: 0.2,
+              <LinePlot />
+              <ChartsXAxis
+                label=""
+                position="bottom"
+                axisId="date"
+                tickLabelStyle={{
+                  fontSize: 10,
+                }}
+                // Masquer la ligne de l'axe
+              />
+              <ChartsYAxis
+                label=""
+                position="left"
+                axisId="value"
+                tickLabelStyle={{ fontSize: 10 }}
+                sx={{
+                  [`& .${axisClasses.label}`]: {
+                    transform: 'translateX(-5px)',
                   },
-                  }}  
-            />
-            <CustomAxisTooltip  themeColor={theme} type='axes' unite={labelMap[typeUser].unite}/>
-            <LineHighlightPlot />
-            <ChartsLegend
-              direction="row"
-              position={{
-                horizontal: 'right', 
-                vertical: 'top',
-              }}
-              labelStyle={{fontSize: 10}}
-              itemMarkHeight={10}
-              itemMarkWidth={10}
-            />
-            
-          </ResponsiveChartContainer>
-        ) : (
-          <div className='no-data-message-stats'>
-            <PiSmileyMeltingFill style={{ fontSize: 50, color: theme.palette.text.primary }} />
-            Aucune donnée disponible.
-          </div>
+                }}
+              />
+
+              <ChartsGrid 
+                horizontal 
+                sx={{
+                    "& .MuiChartsGrid-line": {
+                        stroke: theme.palette.primary.third,
+                        opacity: 0.2,
+                    },
+                    }}  
+              />
+              <CustomAxisTooltip  themeColor={theme} type='axes' unite={labelMap[typeUser].unite}/>
+              <LineHighlightPlot />
+              <ChartsLegend
+                direction="row"
+                position={{
+                  horizontal: 'right', 
+                  vertical: 'top',
+                }}
+                labelStyle={{fontSize: 10}}
+                itemMarkHeight={10}
+                itemMarkWidth={10}
+              />
+              
+            </ResponsiveChartContainer>
+          ) : (
+            <div className='no-data-message-stats'>
+              <PiSmileyMeltingFill style={{ fontSize: 50, color: theme.palette.text.primary }} />
+              Aucune donnée disponible.
+            </div>
+          )
         )}
 
         <SelectField

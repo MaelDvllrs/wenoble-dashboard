@@ -11,6 +11,8 @@ import { ChartsYAxis } from '@mui/x-charts/ChartsYAxis';
 import { ChartsGrid } from '@mui/x-charts/ChartsGrid';
 import { axisClasses } from '@mui/x-charts/ChartsAxis';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import CircularProgress from '@mui/material/CircularProgress';
+
 
 import { PiSmileyMeltingFill } from "react-icons/pi";
 
@@ -30,6 +32,7 @@ export const PageStatistique = () => {
 
   const [values, setValues] = useState([]);
   const [period, setPeriod] = useState('last14days');
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (event) => {
     setPeriod(event.target.value);
@@ -49,6 +52,7 @@ export const PageStatistique = () => {
     const fetchPageStatistique = async () => {
       const pageData = await getPageStatistique(period, typePage, typeUser, token);
       setPageStatistique(pageData);
+      setLoading(true);
     };
     fetchPageStatistique();
   }, [period, typePage, typeUser, token]);
@@ -135,83 +139,89 @@ export const PageStatistique = () => {
         </Tooltip>
       </div>
         
-        {pageStatistique && pageStatistique.data.length > 0 ? (
-          <ResponsiveChartContainer
-          
-          series={series}
-          height={300}
-          xAxis={[
-            {
-              id: 'date',
-              data: page,
-              scaleType: 'band',
-            },
-          ]}
-          yAxis={[
-            {
-              id: 'value',
-              
-              scaleType: 'linear',
-            },
-          ]}
-
-          sx={{
-            // bottomAxis Line Styles
-             "& .MuiChartsAxis-bottom .MuiChartsAxis-line":{
-                stroke:"none",
-             },
-
-             // leftAxis Line Styles
-             "& .MuiChartsAxis-left .MuiChartsAxis-line":{
-                stroke:"none",
-             },
-             "& .MuiChartsAxis-tick":{
-                stroke:"none !important", 
-            },
-
-          }}
-        >
-
-          <BarPlot/>
-          <ChartsXAxis
-            label=""
-            position="bottom"
-            axisId="date"
-            tickLabelStyle={{
-              fontSize: 10,
-            }}        
-          />
-          <ChartsYAxis
-            label=""
-            position="left"
-            axisId="value"
-            tickLabelStyle={{ fontSize: 10 }}
-            
-            sx={{
-              [`& .${axisClasses.label}`]: {
-                transform: 'translateX(-5px)',
-              },
-            }}
-          />
-
-          <ChartsGrid 
-            horizontal 
-            sx={{
-                "& .MuiChartsGrid-line": {
-                    stroke: theme.palette.primary.third,
-                    opacity: 0.2,
-                },
-                }}  
-          />
-          <CustomAxisTooltip  themeColor={theme} type='axes' unite={labelUser[typeUser].unite }/>
-          <LineHighlightPlot/>
-          
-        </ResponsiveChartContainer>
-        ) : (
-          <div className='no-data-message-stats'>
-            <PiSmileyMeltingFill style={{ fontSize: 50, color: theme.palette.text.primary }} />
-            Aucune donnée disponible.
+        {!loading ? (
+          <div className='loading-message-stats'>
+            <CircularProgress sx={{color:"#2ec96d"}}/>
           </div>
+        ) : (
+          pageStatistique && pageStatistique.data.length > 0 ? (
+            <ResponsiveChartContainer
+          
+            series={series}
+            height={300}
+            xAxis={[
+              {
+                id: 'date',
+                data: page,
+                scaleType: 'band',
+              },
+            ]}
+            yAxis={[
+              {
+                id: 'value',
+                
+                scaleType: 'linear',
+              },
+            ]}
+
+            sx={{
+              // bottomAxis Line Styles
+              "& .MuiChartsAxis-bottom .MuiChartsAxis-line":{
+                  stroke:"none",
+              },
+
+              // leftAxis Line Styles
+              "& .MuiChartsAxis-left .MuiChartsAxis-line":{
+                  stroke:"none",
+              },
+              "& .MuiChartsAxis-tick":{
+                  stroke:"none !important", 
+              },
+
+            }}
+          >
+
+            <BarPlot/>
+            <ChartsXAxis
+              label=""
+              position="bottom"
+              axisId="date"
+              tickLabelStyle={{
+                fontSize: 10,
+              }}        
+            />
+            <ChartsYAxis
+              label=""
+              position="left"
+              axisId="value"
+              tickLabelStyle={{ fontSize: 10 }}
+              
+              sx={{
+                [`& .${axisClasses.label}`]: {
+                  transform: 'translateX(-5px)',
+                },
+              }}
+            />
+
+            <ChartsGrid 
+              horizontal 
+              sx={{
+                  "& .MuiChartsGrid-line": {
+                      stroke: theme.palette.primary.third,
+                      opacity: 0.2,
+                  },
+                  }}  
+            />
+            <CustomAxisTooltip  themeColor={theme} type='axes' unite={labelUser[typeUser].unite }/>
+            <LineHighlightPlot/>
+            
+          </ResponsiveChartContainer>
+          ) : (
+            <div className='no-data-message-stats'>
+              <PiSmileyMeltingFill style={{ fontSize: 50, color: theme.palette.text.primary }} />
+              Aucune donnée disponible.
+            </div>
+          )
         )}
 
         <SelectField

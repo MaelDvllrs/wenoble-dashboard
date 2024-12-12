@@ -11,6 +11,8 @@ import { ChartsYAxis } from '@mui/x-charts/ChartsYAxis';
 import { ChartsGrid } from '@mui/x-charts/ChartsGrid';
 import { axisClasses } from '@mui/x-charts/ChartsAxis';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import CircularProgress from '@mui/material/CircularProgress';
+
 
 import { PiSmileyMeltingFill } from "react-icons/pi";
 
@@ -27,6 +29,7 @@ export const CityStatistique = () => {
   const [location, setLocation] = useState([]);
   const [typeLocation, setTypeLocation] = useState('city');
   const [typeUser, setTypeUser] = useState('activeUsers');
+  const [loading, setLoading] = useState(false);
 
   const [values, setValues] = useState([]);
   const [period, setPeriod] = useState('last14days');
@@ -49,15 +52,11 @@ export const CityStatistique = () => {
     const fetchLocationStatistique = async () => {
       const locationData = await getLocationStatistique(period, typeLocation, labelMap[typeLocation].locationID, typeUser, token);
       setLocationStatistique(locationData);
+      setLoading(true);
     };
     fetchLocationStatistique();
   }, [period, typeLocation, typeUser, token]);
 
-  const formatLocation = (location) => {
-    console.log(location);
-    const locationArray = location.split(' ');
-    return locationArray[0];  
-  }
  
   useEffect(() => {
     if (locationStatistique) {
@@ -131,8 +130,15 @@ export const CityStatistique = () => {
             <InfoOutlinedIcon className='icon-select-stat-container' style={{color: theme.palette.text.secondary}}/>
         </Tooltip>
       </div>
+
+        {!loading ? (
+          <div className='loading-message-stats'>
+            <CircularProgress sx={{color:"#2ec96d"}}/>
+          </div>
+        ) : (
+          
         
-        {locationStatistique && locationStatistique.data.length > 0 ? (
+        locationStatistique && locationStatistique.data.length > 0 ? (
           <ResponsiveChartContainer
             series={series}
             height={300}
@@ -208,7 +214,8 @@ export const CityStatistique = () => {
             <PiSmileyMeltingFill style={{ fontSize: 50, color: theme.palette.text.primary }} />
             Aucune donnée disponible.
           </div>
-        )}
+        )
+       )}
 
         <SelectField
             id="period-select"

@@ -337,10 +337,10 @@ const Dashboard = () => {
                           <Grow {...TransitionProps} timeout={350}>
                                 <div className='dashboard_case_empty notification_case' style={{backgroundColor : theme.palette.primary.main, borderColor : theme.palette.primary.third}}>
                                     <div className='notification_title_contain'>
-                                        <h3>Notifications</h3>
-                                        <p className='notification_time' style={{color:theme.palette.text.secondary}}>Supprimer</p>
+                                        <p><b>Notifications</b></p>
+                                        <p className='notification_time' style={{color:theme.palette.text.secondary}}></p>
                                     </div>
-                                    <div className="line_horizontal notification_line" style={{ backgroundColor: theme.palette.text.secondary }}></div>
+                                    <div className="line_horizontal notification_line" style={{ backgroundColor: theme.palette.primary.third }}></div>
                                     <div className='notification_contain'>
                                         {notifications.length === 0 && <div className='notification_box'><div className='notification_text'>Aucune notification</div></div>}
                                         {notifications.map((notification, index) => (

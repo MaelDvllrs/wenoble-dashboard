@@ -11,6 +11,8 @@ import Cookies from 'js-cookie';
 import Tooltip from '@mui/material/Tooltip';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { SelectFieldSecondary } from '../../../../Theme/element';
+import CircularProgress from '@mui/material/CircularProgress';
+
 
 import { PiSmileyMeltingFill } from "react-icons/pi";
 
@@ -28,6 +30,7 @@ export const PlatformCategorieStatistique = () => {
   const [typePlatform, setTypePlatform] = useState('deviceCategory');
   const [dataLoaded, setDataLoaded] = useState(false);
   const [typeUser, setTypeUser] = useState('activeUsers');
+  const [loading, setLoading] = useState(false);
 
 
 
@@ -47,11 +50,10 @@ export const PlatformCategorieStatistique = () => {
 
 
   useEffect(() => {
-
     const fetchUserStatistique = async () => {
-      setDataLoaded(false);
       const userData = await getPlatformCategorieStatistique(period, typePlatform, typeUser, token);
       setPlatformCategorieStatistique(userData);
+      setLoading(true);
     };
     fetchUserStatistique();
   }, [period, typePlatform, typeUser, token]);
@@ -152,55 +154,61 @@ export const PlatformCategorieStatistique = () => {
             <InfoOutlinedIcon className='icon-select-stat-container' style={{color: theme.palette.text.secondary}}/>
           </Tooltip>
         </div>
-        {platformCategorieStatistique && platformCategorieStatistique.data.length > 0 ? (
-          <ResponsiveChartContainer
-            series={series}
-            height={300}
-            sx={{
-              "& .MuiPieArc-series-auto-generated-id-0":{
-                stroke: theme.palette.primary.main,
-              },
-              // bottomAxis Line Styles
-               "& .MuiChartsAxis-bottom .MuiChartsAxis-line":{
-                  stroke:"none",
-               },
-  
-               // leftAxis Line Styles
-               "& .MuiChartsAxis-left .MuiChartsAxis-line":{
-                  stroke:"none",
-               },
-               "& .MuiChartsAxis-tick":{
-                  stroke:"none !important", 
-               },
-  
-            }}
-          >
-            <PiePlot />
-            <ChartsLegend
-              direction="row"
-              position={{
-                horizontal: 'middle', 
-                vertical: 'bottom',
-              }}
-              itemMarkHeight={10}
-              itemMarkWidth={10}
-            />
-
-
-            {dataLoaded && (
-              <CustomAxisTooltip
-                themeColor={theme}
-                type='item'
-                unite='country'
-              />
-            )}
-            <LineHighlightPlot/>
-          </ResponsiveChartContainer>
-        ) : (
-          <div className='no-data-message-stats'>
-            <PiSmileyMeltingFill style={{ fontSize: 50, color: theme.palette.text.primary }} />
-            Aucune donnée disponible.
+        {!loading ? (
+          <div className='loading-message-stats'>
+            <CircularProgress sx={{color:"#2ec96d"}}/>
           </div>
+        ) : (
+          platformCategorieStatistique && platformCategorieStatistique.data.length > 0 ? (
+            <ResponsiveChartContainer
+              series={series}
+              height={300}
+              sx={{
+                "& .MuiPieArc-series-auto-generated-id-0":{
+                  stroke: theme.palette.primary.main,
+                },
+                // bottomAxis Line Styles
+                 "& .MuiChartsAxis-bottom .MuiChartsAxis-line":{
+                    stroke:"none",
+                 },
+    
+                 // leftAxis Line Styles
+                 "& .MuiChartsAxis-left .MuiChartsAxis-line":{
+                    stroke:"none",
+                 },
+                 "& .MuiChartsAxis-tick":{
+                    stroke:"none !important", 
+                 },
+    
+              }}
+            >
+              <PiePlot />
+              <ChartsLegend
+                direction="row"
+                position={{
+                  horizontal: 'middle', 
+                  vertical: 'bottom',
+                }}
+                itemMarkHeight={10}
+                itemMarkWidth={10}
+              />
+    
+    
+              {dataLoaded && (
+                <CustomAxisTooltip
+                  themeColor={theme}
+                  type='item'
+                  unite='country'
+                />
+              )}
+              <LineHighlightPlot/>
+            </ResponsiveChartContainer>
+          ) : (
+            <div className='no-data-message-stats'>
+              <PiSmileyMeltingFill style={{ fontSize: 50, color: theme.palette.text.primary }} />
+              Aucune donnée disponible.
+            </div>
+          )
         )}
         <SelectField
             id="period-select"
