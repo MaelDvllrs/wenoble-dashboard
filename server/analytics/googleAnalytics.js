@@ -17,25 +17,60 @@ const analyticsDataClient = new BetaAnalyticsDataClient({
 
 
 const getDateRange = (period) => {
+  let startDate, endDate, compareStartDate, compareEndDate;
+
   switch (period) {
     case 'today':
-      return { startDate: dayjs().format('YYYY-MM-DD'), endDate: dayjs().format('YYYY-MM-DD') };
+      startDate = dayjs().format('YYYY-MM-DD');
+      endDate = dayjs().format('YYYY-MM-DD');
+      compareStartDate = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
+      compareEndDate = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
+      break;
     case 'yesterday':
-      return { startDate: dayjs().subtract(1, 'day').format('YYYY-MM-DD'), endDate: dayjs().subtract(1, 'day').format('YYYY-MM-DD') };
+      startDate = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
+      endDate = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
+      compareStartDate = dayjs().subtract(2, 'day').format('YYYY-MM-DD');
+      compareEndDate = dayjs().subtract(2, 'day').format('YYYY-MM-DD');
+      break;
     case 'last7days':
-      return { startDate: dayjs().subtract(7, 'day').format('YYYY-MM-DD'), endDate: dayjs().format('YYYY-MM-DD') };
+      startDate = dayjs().subtract(7, 'day').format('YYYY-MM-DD');
+      endDate = dayjs().format('YYYY-MM-DD');
+      compareStartDate = dayjs().subtract(14, 'day').subtract(7, 'day').format('YYYY-MM-DD');
+      compareEndDate = dayjs().subtract(7, 'day').format('YYYY-MM-DD');
+      break;
     case 'last14days':
-      return { startDate: dayjs().subtract(14, 'day').format('YYYY-MM-DD'), endDate: dayjs().format('YYYY-MM-DD') };
+      startDate = dayjs().subtract(14, 'day').format('YYYY-MM-DD');
+      endDate = dayjs().format('YYYY-MM-DD');
+      compareStartDate = dayjs().subtract(28, 'day').format('YYYY-MM-DD');
+      compareEndDate = dayjs().subtract(14, 'day').format('YYYY-MM-DD');
+      break;
     case 'last30days':
-      return { startDate: dayjs().subtract(30, 'day').format('YYYY-MM-DD'), endDate: dayjs().format('YYYY-MM-DD') };
+      startDate = dayjs().subtract(30, 'day').format('YYYY-MM-DD');
+      endDate = dayjs().format('YYYY-MM-DD');
+      compareStartDate = dayjs().subtract(60, 'day').subtract(30, 'day').format('YYYY-MM-DD');
+      compareEndDate = dayjs().subtract(30, 'day').format('YYYY-MM-DD');
+      break;
     case 'last90days':
-      return { startDate: dayjs().subtract(90, 'day').format('YYYY-MM-DD'), endDate: dayjs().format('YYYY-MM-DD') };
+      startDate = dayjs().subtract(90, 'day').format('YYYY-MM-DD');
+      endDate = dayjs().format('YYYY-MM-DD');
+      compareStartDate = dayjs().subtract(180, 'day').subtract(90, 'day').format('YYYY-MM-DD');
+      compareEndDate = dayjs().subtract(90, 'day').format('YYYY-MM-DD');
+      break;
     case 'last365days':
-      return { startDate: dayjs().subtract(365, 'day').format('YYYY-MM-DD'), endDate: dayjs().format('YYYY-MM-DD') };
-    
-      default:
-      return { startDate: '2020-03-31', endDate: 'today' };
+      startDate = dayjs().subtract(365, 'day').format('YYYY-MM-DD');
+      endDate = dayjs().format('YYYY-MM-DD');
+      compareStartDate = dayjs().subtract(730, 'day').subtract(365, 'day').format('YYYY-MM-DD');
+      compareEndDate = dayjs().subtract(365, 'day').format('YYYY-MM-DD');
+      break;
+    default:
+      startDate = '2020-03-31';
+      endDate = dayjs().format('YYYY-MM-DD');
+      compareStartDate = '2019-03-31';
+      compareEndDate = '2020-03-30';
+      break;
   }
+
+  return { startDate, endDate, compareStartDate, compareEndDate };
 };
 
 
@@ -58,13 +93,17 @@ router.get('/getUserAnalytics', async (req, res) => {
     const dateRange = getDateRange(period);
 
     try {
-        const [response] = await analyticsDataClient.runReport({
+      const [response] = await analyticsDataClient.runReport({
             property: `properties/${id_analytic}`,
             dateRanges: [
               {
                 startDate: dateRange.startDate,
                 endDate: dateRange.endDate,
               },
+              {
+                startDate: dateRange.compareStartDate,
+                endDate: dateRange.compareEndDate
+              }
             ],
             dimensions: [
               {
@@ -76,10 +115,45 @@ router.get('/getUserAnalytics', async (req, res) => {
                 name: typeUser,
               },
             ],
-          });
+      });
 
+          
 
-          res.json(response.rows);
+      const currentPeriodData = [];
+      const comparePeriodData = [];
+      
+      response.rows.forEach(row => {
+        const date = row.dimensionValues[0].value; // format YYYYMMDD
+        const value = row.metricValues[0].value;
+    
+        // Convertir les dates du range en YYYYMMDD
+        const startDate = dateRange.startDate.replace(/-/g, '');
+        const endDate = dateRange.endDate.replace(/-/g, '');
+        const compareStartDate = dateRange.compareStartDate.replace(/-/g, '');
+        const compareEndDate = dateRange.compareEndDate.replace(/-/g, '');
+    
+        console.log('date: ' + date);
+        console.log('value: ' + value);
+        console.log('startDate: ' + startDate);
+    
+        if (date >= startDate && date <= endDate && value !== '0') {
+            currentPeriodData.push({ date, value });
+        } else if (date >= compareStartDate && date <= compareEndDate && value !== '0') {
+            comparePeriodData.push({ date, value });
+        }
+    });
+
+    
+      console.log(currentPeriodData);
+      console.log(comparePeriodData);
+
+      const formattedData = {
+          currentPeriod: currentPeriodData,
+          comparePeriod: comparePeriodData,
+      };
+
+      res.json(formattedData);
+
 
     } catch (error) {
         console.error('Error querying Google Analytics API:', JSON.stringify(error, null, 2));

@@ -55,6 +55,8 @@ export const UserStatistique = () => {
     fetchUserStatistique();
   }, [period, typeUser, token]);
 
+  console.log(userStatistique);
+
 
  
   useEffect(() => {

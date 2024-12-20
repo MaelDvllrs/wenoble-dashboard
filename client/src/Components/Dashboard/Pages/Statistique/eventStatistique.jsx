@@ -36,6 +36,8 @@ export const EventStatistique = () => {
   const [typeEvent, setTypeEvent] = useState('eventCount');
   const [totalValues, setTotalValues] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [percentageChanges, setPercentageChanges] = useState([]);
+  const [compareValues, setCompareValues] = useState([]);
 
   const handleChange = (event) => {
     setPeriod(event.target.value);
@@ -56,14 +58,17 @@ export const EventStatistique = () => {
     fetchEventStatistique();
   }, [period, typeEvent, token]);
 
+  console.log(eventStatistique);
+
 
  
 
 
   useEffect(() => {
     if (eventStatistique) {
-      const dates = [];
-      const values = [];
+      const currentDates = [];
+      const currentValues = [];
+      const previousValues = [];
       let startDate;
       const endDate = dayjs();
 
@@ -77,22 +82,46 @@ export const EventStatistique = () => {
 
       for (let date = startDate; date.isBefore(endDate) || date.isSame(endDate); date = date.add(1, 'day')) {
         const dateString = date.format('YYYYMMDD');
-        const dataPoint = eventStatistique.data.find(d => d.dimensionValues[0].value === dateString);
-        dates.push(date.format('MM-DD'));
-        values.push(dataPoint ? parseInt(dataPoint.metricValues[0].value) : 0);
+        const currentDataPoint = eventStatistique.data.currentPeriod.find(d => d.date === dateString);
+        currentDates.push(date.format('MM-DD'));
+        currentValues.push(currentDataPoint ? parseInt(currentDataPoint.value) : 0);
       }
 
-      const sortedData = dates.map((date, index) => ({ date, value: values[index] }))
-        .sort((a, b) => dayjs(a.date).isBefore(dayjs(b.date)) ? -1 : 1);
+      const previousStartDate = startDate.subtract(parseInt(period.replace('last', '').replace('days', '')), 'day');
+      const previousEndDate = endDate.subtract(parseInt(period.replace('last', '').replace('days', '')), 'day');
 
-      setDates(sortedData.map(d => d.date));
-      setValues(sortedData.map(d => d.value));
+      for (let date = previousStartDate; date.isBefore(previousEndDate) || date.isSame(previousEndDate); date = date.add(1, 'day')) {
+        const dateString = date.format('YYYYMMDD');
+        const previousDataPoint = eventStatistique.data.comparePeriod.find(d => d.date === dateString);
+        previousValues.push(previousDataPoint ? parseInt(previousDataPoint.value) : 0);
+      }
 
-      const total = values.reduce((acc, value) => acc + value, 0);
-      setTotalValues(total);
+      const sortedCurrentData = currentDates.map((date, index) => ({ date, value: currentValues[index] }))
+        .sort((a, b) => dayjs(a.date, 'MM-DD').isBefore(dayjs(b.date, 'MM-DD')) ? -1 : 1);
+
+      const sortedPreviousData = currentDates.map((date, index) => ({ date, value: previousValues[index] }))
+        .sort((a, b) => dayjs(a.date, 'MM-DD').isBefore(dayjs(b.date, 'MM-DD')) ? -1 : 1);
+
+      setDates(sortedCurrentData.map(d => d.date));
+      setValues(sortedCurrentData.map(d => d.value));
+      setCompareValues(sortedPreviousData.map(d => d.value));
+
+      const percentageChanges = sortedCurrentData.map((current, index) => {
+        const previous = sortedPreviousData[index];
+        if (previous.value === 0) {
+          return 0;
+        }
+        return ((current.value - previous.value) / previous.value) * 100;
+      });
+
+      setPercentageChanges(percentageChanges.map(change => change.toFixed(2)));
     }
-
   }, [eventStatistique, period]);
+
+  console.log(values);
+  console.log(dates);
+  console.log(compareValues);
+  console.log(percentageChanges);
 
   const labelMap = {
     eventCount: { label: 'Nombre d\'événements', description: 'Le nombre d\'événements représente le total des interactions spécifiques (comme clics, téléchargements ou lectures de vidéos) enregistrées sur un site.' },
@@ -142,7 +171,7 @@ export const EventStatistique = () => {
             <CircularProgress sx={{color:"#2ec96d"}}/>
           </div>
         ) : (
-          eventStatistique && eventStatistique.data.length > 0 ? (
+          eventStatistique && eventStatistique.data.currentPeriod.length > 0 ? (
             <ResponsiveChartContainer
               series={series}
               height={300}
