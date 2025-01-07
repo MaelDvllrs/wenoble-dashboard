@@ -1,9 +1,7 @@
 import Axios from 'axios';
 import config from '../../../../../config';
-import Cookies from 'js-cookie';
 
 const apiUrl = config.apiUrl; 
-const token = Cookies.get('token');
 
 export const createImageBlog = async (fields, blogPageId, token) => {
     try {

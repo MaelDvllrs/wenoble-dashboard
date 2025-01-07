@@ -5,7 +5,7 @@ import Cookies from 'js-cookie';
 const apiUrl = config.apiUrl; 
 const token = Cookies.get('token');
   
-export const fetchImagesPage = async (pageId) => {
+export const fetchImagesPage = async (pageId, token) => {
   try {
     const response = await Axios.get(`${apiUrl}/getPageImages`, {
       params: {
@@ -23,7 +23,7 @@ export const fetchImagesPage = async (pageId) => {
   }
 };
   
-export const saveImagePage = async (fields) => {
+export const saveImagePage = async (fields, token) => {
   try {
     if (fields.data) {
       const formData = new FormData();
@@ -58,7 +58,7 @@ export const saveImagePage = async (fields) => {
   }
 }
 
-export const fetchTextePage = async (pageId) => {
+export const fetchTextePage = async (pageId, token) => {
   try {
     const response = await Axios.get(`${apiUrl}/getPageTexte`, {
       params: {
@@ -76,7 +76,7 @@ export const fetchTextePage = async (pageId) => {
   }
 }
 
-export const updateTextPage = async (idPage, text) => {
+export const updateTextPage = async (idPage, text, token) => {
   try {
     await Axios.post(`${apiUrl}/updateTextPage`, {
       params: {
@@ -95,7 +95,7 @@ export const updateTextPage = async (idPage, text) => {
   }
 }
 
-export const updateRichTextPage = async (idPage, richtext) => {
+export const updateRichTextPage = async (idPage, richtext, token) => {
   try {
     await Axios.post(`${apiUrl}/updateRichTextPage`, {
       params: {
@@ -114,7 +114,7 @@ export const updateRichTextPage = async (idPage, richtext) => {
   }
 }
 
-export const updateImagePage = async (fields, pageId) => {
+export const updateImagePage = async (fields, pageId, token) => {
   try {
     const formData = new FormData();
     formData.append('image', fields.data, fields.name);

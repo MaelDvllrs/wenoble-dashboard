@@ -49,11 +49,16 @@ const EditPortfolio = () => {
       }
       const imagesData = await fetchImagesPortfolio(id, decodedUser.idUser);
       imagesData.forEach((image) => append(image));
-      setLoadingPortfolio(false);
     };
 
     fetchData();
   }, [id]);
+
+  useEffect(() => {
+    if (fields.length > 0) {
+      setLoadingPortfolio(false);
+    }
+  }, [fields]);
 
 
   const [initialDate, setInitialDate] = useState(Date.now()); // Date d'initialisation de la page

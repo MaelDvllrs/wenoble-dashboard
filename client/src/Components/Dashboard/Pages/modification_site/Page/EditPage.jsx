@@ -232,7 +232,7 @@ const EditPage = () => {
         try {        
             if (pageData.text.length > 0) {
                 try {
-                    const response = await updateTextPage(idPage, pageData.text);
+                    const response = await updateTextPage(idPage, pageData.text, token);
                     console.log(response);
                 } catch (error) {
                     console.error('Erreur lors de la création des textes :', error);
@@ -250,7 +250,7 @@ const EditPage = () => {
                 });
 
                 try {
-                    const response = await updateRichTextPage(idPage, infoRichText);
+                    const response = await updateRichTextPage(idPage, infoRichText, token);
                 } catch (error) {
                     console.error('Erreur lors de la création des rich texts :', error);
                     return;
@@ -260,7 +260,7 @@ const EditPage = () => {
             if(pageData.images.length > 0){
                 try {
                     await Promise.all(pageData.images.map(async (image) => {
-                        await updateImagePage(image, idPage);
+                        await updateImagePage(image, idPage, token);
                     }));
                 } catch (error) {
                     console.error(error);
