@@ -92,6 +92,8 @@ const whitelist =
 
   'https://top-pizza-bd8e7e.webflow.io',
   'https://www.toppizzaburger.com',  
+
+  'https://psc-environnement-preview.webflow.io',
 ];
 
 
