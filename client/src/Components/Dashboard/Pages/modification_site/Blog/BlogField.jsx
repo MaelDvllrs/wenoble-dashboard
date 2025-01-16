@@ -240,12 +240,13 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
         console.error("Aucun fichier n'a été téléchargé.");
       }
     };
-
+    
 
 
     useEffect(() => {
       // Vérifiez si dataValue existe et si le type est 'image'
       if (dataValue && Object.keys(dataValue).length > 0 && type === 'image') {
+        
         // Préparez les données de l'image pour l'état initial de imagesUploaded
         const initialImages = [{
           id_blog_page: dataValue.id_blog_page || id_blog_page, // Utilisez id_blog_page de dataValue ou celui passé en prop

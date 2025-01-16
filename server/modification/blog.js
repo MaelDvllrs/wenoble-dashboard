@@ -650,29 +650,21 @@ router.get('/getImageBlog', (req, res) => {
     }
 
     const image_blog = results;
+    
 
-    const imageDirectory = path.join(__dirname, '..', 'images', 'blog_image')
     const imagesData = image_blog.map(image => {
-      const imagePath = path.join(imageDirectory, image.src_image);
-      try {
-        const imageData = fs.readFileSync(imagePath);
-        const imageDataBase64 = Buffer.from(imageData).toString('base64');
-        return {
-          id_config: image.id_config,
-          name: image.name_image,
-          data: 'data:image/jpeg;base64,' + imageDataBase64,
-          alt: image.alt_image,
-          size: image.size,
-          create: true
-        };
-      } catch (error) {
-        console.error('Erreur lors de la lecture de l\'image :', error);
-        return null;
-      }
-    }).filter(Boolean);
-    res.status(200).json(imagesData);      
-  });
-});
+      return {
+        id_config: image.id_config,
+        name: image.name_image,
+        src: image.src_image, 
+        alt: image.alt_image,
+        size: image.size,
+        create: true
+      };
+    });
+    res.status(200).json(imagesData);    
+      });
+    });
 
 
 router.get('/getGalleryBlog', (req, res) => {

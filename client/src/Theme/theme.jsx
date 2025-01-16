@@ -25,6 +25,12 @@ const DARK_THEME = createTheme({
             third: '#131416'
 
         },
+        shadow: {
+            main: '0 0 0 1px hsla(0, 0%, 100%, .145)',
+        },
+        globe: {
+            dark: '1.1',
+        },
         background: {
             default: '#05050a',
             secondary: '#000000'
@@ -51,6 +57,12 @@ const LIGHT_THEME = createTheme({
             secondary: '#E5E5E5',
             third: '#b9b7b7'
 
+        },
+        shadow: {
+            main: '0 0 0 1px rgba(0, 0, 0, .08)',
+        },
+        globe: {
+            dark: '0',
         },
         background: {
             default: '#eff1f5',

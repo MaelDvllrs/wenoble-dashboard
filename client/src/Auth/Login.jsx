@@ -11,6 +11,7 @@ import { LoginTextField, LoadingDefaultButton, SecondaryButton, DefaultSwitch } 
 import { useTheme } from '@mui/material/styles';
 import backgroundLogin from '../assets/background/backgroundLogin.svg';
 import BackgroundAnimation from "../Theme/backgroundAnimation";
+import {GlobeComponent} from "../Theme/globeComponent";
 
 
 const Login = () => {
@@ -99,7 +100,7 @@ const Login = () => {
         <div className="loginPage">
             <div className="loginContain" style={{backgroundColor:theme.palette.background.secondary}}>
                 <div className="loginImageContain">
-                    <BackgroundAnimation/>
+                    <GlobeComponent/>
                     {/*<img className="loginImage" src={backgroundLogin}/>*/}
                     <div className="fonduLoginImage" style={{background:`linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, ${theme.palette.background.secondary} 100%)`}}/>
                 </div>

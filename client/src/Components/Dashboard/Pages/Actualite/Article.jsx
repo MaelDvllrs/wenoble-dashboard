@@ -23,7 +23,7 @@ const Article = () => {
           className="articleBox" 
           style={{ 
             backgroundColor: theme.palette.primary.main, 
-            borderColor: theme.palette.primary.third, 
+            boxShadow : theme.palette.shadow.main,
             color:theme.palette.text.primary,
             '--primary-hover-background-color': theme.palette.primary.secondary,
         }}>

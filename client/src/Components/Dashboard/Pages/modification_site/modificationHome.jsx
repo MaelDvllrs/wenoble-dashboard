@@ -300,7 +300,7 @@ return(
         <div className="modification_contain">
           {
             authPortfolio === 1 || authPage === 1 || authBlog === 1 ? (
-              <div className="dashboard_case_empty limit_size_contain" style={{backgroundColor : theme.palette.primary.secondary, borderColor : theme.palette.primary.third}}>
+              <div className="dashboard_case_empty limit_size_contain" style={{backgroundColor : theme.palette.primary.secondary, boxShadow: theme.palette.shadow.main}}>
                 <h3 className="title_contain">Espace utilisé</h3>
                 <div className="limit_size_text">{sizeTotal} / {threshold} Go</div>
                 <div className="limit_size_bar" style={{backgroundColor:theme.palette.secondary.secondary}}>
@@ -314,7 +314,7 @@ return(
           
           <div className="modification_page_contain">
               <div ref={containerRef} className="modification_link_contain">
-                  <NavLink to={authPortfolio === 1 ? '/dashboard/modification/portfolio' : '#'}  className="modification_box" ref={portfolioContainerRef} style={{backgroundColor : theme.palette.primary.secondary, borderColor : theme.palette.primary.third}}>
+                  <NavLink to={authPortfolio === 1 ? '/dashboard/modification/portfolio' : '#'}  className="modification_box" ref={portfolioContainerRef} style={{backgroundColor : theme.palette.primary.secondary, boxShadow: theme.palette.shadow.main}}>
                       <div className="modification_title_box" style={{color: theme.palette.text.primary}}>
                           <div className="modification_title"><MdImportContacts  className="icon_modifiaction_title"/>
                             <b>Portfolio</b>
@@ -398,7 +398,7 @@ return(
                           </div>
                       </div>
                   </NavLink>
-                  <NavLink to={authPage === 1 ? '/dashboard/modification/page' : '#'} className="modification_box" ref={pageContainerRef} style={{backgroundColor : theme.palette.primary.secondary, borderColor : theme.palette.primary.third}}>
+                  <NavLink to={authPage === 1 ? '/dashboard/modification/page' : '#'} className="modification_box" ref={pageContainerRef} style={{backgroundColor : theme.palette.primary.secondary, boxShadow: theme.palette.shadow.main}}>
                       <div className="modification_title_box" style={{color: theme.palette.text.primary}}>
                         <div className="modification_title"><FaElementor  className="icon_modifiaction_title"/>
                           <b>Page</b>
@@ -422,7 +422,7 @@ return(
                         <img src={sphere_page} alt="shere page" className="shere_page" />                          
                       </div>
                   </NavLink>
-                  <NavLink to={authBlog === 1 ? '/dashboard/modification/blog' : '#'} className="modification_box box_blog" ref={iconContainerRef} style={{backgroundColor : theme.palette.primary.secondary, borderColor : theme.palette.primary.third}}>
+                  <NavLink to={authBlog === 1 ? '/dashboard/modification/blog' : '#'} className="modification_box box_blog" ref={iconContainerRef} style={{backgroundColor : theme.palette.primary.secondary, boxShadow: theme.palette.shadow.main}}>
                       <div className="modification_title_box" style={{color: theme.palette.text.primary}}>
                         <div className="modification_title"><MdArticle className="icon_modifiaction_title"/><b>Blog</b>
                         {

@@ -37,11 +37,11 @@ const Home = () => {
                     <p className="home-title">Bonjour,</p>
                 </div>
 
-                <div className="articleBox trendingBox" style={{ backgroundColor: theme.palette.primary.main, borderColor: theme.palette.primary.third }}>
+                <div className="articleBox trendingBox" style={{ backgroundColor: theme.palette.primary.main, boxShadow : theme.palette.shadow.main, }}>
                     <TrendingArticle/>
                 </div>
                 <div>
-                    <div className='dashboard_case_empty notification_case notification_home' style={{backgroundColor : theme.palette.primary.main, borderColor : theme.palette.primary.third}}>
+                    <div className='dashboard_case_empty notification_case notification_home' style={{backgroundColor : theme.palette.primary.main, boxShadow : theme.palette.shadow.main,}}>
                         <div className='notification_title_contain' style={{backgroundColor : theme.palette.primary.secondary}}>
                             <p><b>Notifications</b></p>
                             <p className='notification_time' style={{color:theme.palette.text.secondary}}></p>
@@ -53,7 +53,7 @@ const Home = () => {
                 <div style={{ gridColumn: '1 / span 2', gridRow: '2'}}>
                     <UserStatistique/>
                 </div>
-                <div className="articleBox trendingBox" style={{ backgroundColor: theme.palette.primary.main, borderColor: theme.palette.primary.third }}>
+                <div className="articleBox trendingBox" style={{ backgroundColor: theme.palette.primary.main, boxShadow : theme.palette.shadow.main, }}>
                     <UpdateLast limit={4}/>
                 </div>
             </div>

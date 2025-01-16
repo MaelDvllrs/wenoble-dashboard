@@ -35,6 +35,7 @@
     justify-content: center;
     scrollbar-color: #272a31 transparent; 
     scrollbar-width: thin;
+    padding: 1px;
 }
 
 .modification_box{
@@ -44,7 +45,7 @@
     display: flex;
     flex-direction: column;
     transition: all 0.5s ease;
-    border: solid 1px;
+    border: solid 1px transparent;
     overflow: hidden;
     
 }
