@@ -288,7 +288,9 @@ const EditPageBlog = () => {
 
     }, [blogDataConfig, idBlogPage]);
 
+    
 
+    console.log(InfoBlogPage);
 
     useEffect(() => {
 
@@ -314,6 +316,7 @@ const EditPageBlog = () => {
             setDecodeBlog(decodedBloginfo);
         }
     }, [InfoBlog]);
+
 
 
 
@@ -628,9 +631,9 @@ const EditPageBlog = () => {
                         <SecondaryButton variant="contained" theme={theme} onClick={() => navigate(`/dashboard/modification/blog/${idBlog}`)}>Annuler</SecondaryButton>
                         {
                             DecodeBlog.blogPage[0].status === 1 ? (
-                                <DefaultButton type="submit" variant="contained" onClick={async () => { await handleSave(1,0) }}><SaveIcon/> Enregistrer</DefaultButton>  
+                                <DefaultButton type="submit" variant="contained" onClick={async () => { await handleSave(1,0) }}>Enregistrer</DefaultButton>  
                             ) : (
-                                <DefaultButton type="submit" variant="contained" onClick={async () => { await handleSave(1,1) }}><PublishIcon/> Publier</DefaultButton>
+                                <DefaultButton type="submit" variant="contained" onClick={async () => { await handleSave(1,1) }}> Publier</DefaultButton>
                             )
                         }
                         
@@ -663,6 +666,7 @@ const EditPageBlog = () => {
                                     dataValue={correspondingData || {}}
                                     id_collection_ref={blogItem.id_collection_ref}
                                     imagefunction={true}
+                                    imageDirectory={"/media/blog/"}
                                 />
                             </div>
                         );

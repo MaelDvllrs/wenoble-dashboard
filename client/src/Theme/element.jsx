@@ -300,10 +300,14 @@ export const DefaultButton = styled(Button)(({ theme }) => ({
     '&.MuiButton-root': {
         backgroundColor: "var(--primary-color)", 
         color: 'rgba(255, 255, 255, 0.8)',
+        fontSize: '0.8rem',
+        padding: '0.2rem 0.5rem 0.1rem 0.5rem',
+        boxShadow: 'none',
     },
     '&:hover': {
-        backgroundColor: "var(--primary-color)", 
+        backgroundColor: "var(--primary-color-hover)", 
     },
+
 }));
 
 const WhiteCircularProgress = styled(CircularProgress)({
@@ -334,11 +338,14 @@ const WhiteCircularProgress = styled(CircularProgress)({
 
 export const SecondaryButton = styled(Button)(({ theme }) => ({
     '&.MuiButton-root': {
-        backgroundColor : theme.palette.secondary.secondary, 
-        color : theme.palette.text.primary
+        backgroundColor : "transparent", 
+        color : theme.palette.text.primary,
+        fontSize: '0.8rem',
+        padding: '0.2rem 0.5rem 0.1rem 0.5rem',
+        boxShadow: theme.palette.shadow.main,
     },
     '&:hover': {
-        backgroundColor: theme.palette.secondary.third, 
+        boxShadow: theme.palette.shadow.secondary,
     },
 }));
 

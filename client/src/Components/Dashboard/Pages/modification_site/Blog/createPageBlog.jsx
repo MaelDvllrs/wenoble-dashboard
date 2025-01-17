@@ -284,7 +284,7 @@ const CreatePageBlog = () => {
                         <SecondaryButton className="SaveButton" variant="contained" theme={theme} onClick={ async () => {await handleSave(0)}}><SaveIcon/></SecondaryButton>
                     </Tooltip>
                     <SecondaryButton  variant="contained" theme={theme} onClick={() => navigate(`/dashboard/modification/blog/${idBlog}`)}>Annuler</SecondaryButton>
-                    <DefaultButton type="submit" variant="contained" onClick={ async () => {await handleSave(1)}}><PublishIcon/> Publier</DefaultButton>
+                    <DefaultButton type="submit" variant="contained" onClick={ async () => {await handleSave(1)}}>Publier</DefaultButton>
                 </div>
             </div>
             <div className="Blog_creation_field_contain">

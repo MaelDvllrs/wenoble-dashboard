@@ -22,14 +22,14 @@ const VideoUpload = ({ id_blog_page,type, id_config, onChange, slugValue, fieldV
         const data = {
           id_blog_page: id_blog_page,
           id_config: id_config,
-          id_video: uuidv4(), // Assurez-vous que cela génère un ID unique pour chaque nouvelle image
+          id_video: uuidv4(),
           data: file,
           name: file.name,
           alt: file.name,
           url: URL.createObjectURL(file),
           size: (file.size / 1024).toFixed(0),
           type: 'video',
-          create : createBoolVideo
+          create : createBoolVideo,
         };
 
         setVideoUploaded(prevVideoq => {

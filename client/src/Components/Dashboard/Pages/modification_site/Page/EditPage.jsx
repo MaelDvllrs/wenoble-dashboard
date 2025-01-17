@@ -307,7 +307,7 @@ const EditPage = () => {
                             <div className="button_save_contain">
                                 <SecondaryButton variant="contained" theme={theme} onClick={() => navigate(`/dashboard/modification/page/${id}`)}>Annuler</SecondaryButton>
 
-                                <DefaultButton type="submit" variant="contained" onClick={async () => { await handleSave(1,0) }}><SaveIcon/> Enregistrer</DefaultButton>  
+                                <DefaultButton type="submit" variant="contained" onClick={async () => { await handleSave(1,0) }}>Enregistrer</DefaultButton>  
                             </div>
                         </div>
 
@@ -324,6 +324,7 @@ const EditPage = () => {
                                             onChange={handlePageDataChange} 
                                             dataValue={correspondingData || {}}
                                             imagefunction={false}
+                                            imageDirectory={"/media/page/"}
                                         />
                                     </div>
                                 );

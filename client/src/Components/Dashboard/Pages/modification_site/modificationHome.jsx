@@ -436,9 +436,7 @@ return(
                       <div className="texte_modification" style={{color: theme.palette.text.secondary}}>
                         Dynamisez votre blog avec notre outil intuitif : publiez articles, images et vidéos facilement pour captiver vos lecteurs.
                       </div>
-                      <div className="modification_image_box_blog" ref={plusContainerRef}>
-                        <div className="cache_blog" style={{background: 'linear-gradient('+theme.palette.primary.secondary+', hsla(0, 0%, 100%, 0))'}}/>
-                        <img src={gridBlog} alt="grid blog" className="grid_blog" />
+                      <div className="modification_image_box_blog point-background" ref={plusContainerRef} style={{ '--point-color': theme.palette.primary.third }}>
                         <ImageIcon className="icon_modifiaction_title big_icon icon_modif_blog_1" style={{color: theme.palette.text.primary}}/>
                         <VideocamIcon className="icon_modifiaction_title big_icon icon_modif_blog_2" style={{color: theme.palette.text.primary}}/>
                         <TextFieldsIcon className="icon_modifiaction_title big_icon icon_modif_blog_3" style={{color: theme.palette.text.primary}}/>

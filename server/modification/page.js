@@ -85,35 +85,27 @@ router.get('/getImagePage', (req, res) => {
       return;
     }
 
-    const image = results;
-
-    const imageDirectory = path.join(__dirname, '..', 'images', 'page_image');
-    const imagesData = image.map(image => {
+    const imagesData = results.map(image => {
       // Vérifier si src_image, name_image, ou alt_image sont null
       const srcImage = image.src_image || 'default.jpg'; 
       const nameImage = image.name_image || 'default_name';
       const altImage = image.alt_image || 'default_alt';
 
-      const imagePath = path.join(imageDirectory, srcImage);
-      try {
-        const imageData = fs.readFileSync(imagePath);
-        const imageDataBase64 = Buffer.from(imageData).toString('base64');
-        return {
-          id_config: image.id_config,
-          name: nameImage,
-          data: 'data:image/jpeg;base64,' + imageDataBase64,
-          alt: altImage,
-          size: image.size,
-          create: true
-        };
-      } catch (error) {
-        console.error('Erreur lors de la lecture de l\'image :', error);
-        return null;
-      }
-    }).filter(Boolean);
+      return {
+        id_config: image.id_config,
+        name: nameImage,
+        src: srcImage, // Envoyer la source de l'image
+        alt: altImage,
+        size: image.size,
+        create: true
+      };
+    });
+
     res.status(200).json(imagesData);
   });
 });
+
+module.exports = router;
 
 
 
