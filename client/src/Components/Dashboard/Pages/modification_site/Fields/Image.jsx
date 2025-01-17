@@ -7,11 +7,14 @@ import AutorenewIcon from '@mui/icons-material/Autorenew';
 import OpenInNewOutlinedIcon from '@mui/icons-material/OpenInNewOutlined';
 import ImageIcon from '@mui/icons-material/Image';
 import './Field.css';
+import config from '../../../../../config';
 
-const ImageUpload = ({ id_blog_page,type, id_config, onChange, slugValue, fieldValue, dataValue, id_collection_ref, theme }) => {
+const ImageUpload = ({ id_blog_page, type, id_config, onChange, dataValue, theme, imageDirectory }) => {
     const [imagesUploaded, setImagesUploaded] = useState([]);
     const [createBoolImage, setCreateBoolImage] = useState('')
     const fileTypes = ["JPG", "PNG"];
+    const apiUrl = config.apiUrl;
+
     const handleImageChange = async (file, idToReplace) => {
 
       if (file instanceof File) {
@@ -55,7 +58,7 @@ const ImageUpload = ({ id_blog_page,type, id_config, onChange, slugValue, fieldV
           data: dataValue.data, // Utilisez les données d'image en base64 de dataValue
           name: dataValue.name, // Utilisez le nom de l'image de dataValue
           alt: dataValue.alt, // Utilisez le texte alternatif de l'image de dataValue
-          url: dataValue.data, // Utilisez les données d'image en base64 comme URL
+          url: apiUrl + imageDirectory + dataValue.src, // Utilisez les données d'image en base64 comme URL
           size: dataValue.size, // Utilisez la taille de l'image de dataValue
           type: 'images', // Définissez le type comme 'images'
         }];

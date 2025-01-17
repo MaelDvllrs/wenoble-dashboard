@@ -49,11 +49,16 @@ const EditPortfolio = () => {
       }
       const imagesData = await fetchImagesPortfolio(id, decodedUser.idUser);
       imagesData.forEach((image) => append(image));
-      setLoadingPortfolio(false);
     };
 
     fetchData();
   }, [id]);
+
+  useEffect(() => {
+    if (fields.length > 0) {
+      setLoadingPortfolio(false);
+    }
+  }, [fields]);
 
 
   const [initialDate, setInitialDate] = useState(Date.now()); // Date d'initialisation de la page
@@ -160,7 +165,7 @@ const EditPortfolio = () => {
           <h3>Ajout de photo</h3>
           <div className="button_save_contain">
               <SecondaryButton onClick={reloadPage}  variant="contained" theme={theme}>Annuler</SecondaryButton>
-              <DefaultButton type="submit" variant="contained" onClick={ async () => {await handleSave()}}><SaveIcon/> Enregitrer</DefaultButton>
+              <DefaultButton type="submit" variant="contained" onClick={ async () => {await handleSave()}}><span>Enregitrer</span></DefaultButton>
           </div>
       </div>
       <SnackbarProvider maxSnack={3} autoHideDuration={2000}>

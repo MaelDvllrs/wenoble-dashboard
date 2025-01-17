@@ -109,7 +109,7 @@ export const PageStatistique = () => {
   ]
 
   return (
-    <div className="statistique-container" style={{ borderColor: theme.palette.primary.third, backgroundColor: theme.palette.primary.main }}>
+    <div className="statistique-container" style={{ boxShadow: theme.palette.shadow.main, backgroundColor: theme.palette.primary.main }}>
         <div className='select-stat-container'>  
         <SelectFieldSecondary
             id="period-select"

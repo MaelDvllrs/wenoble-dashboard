@@ -86,7 +86,14 @@ const whitelist =
   'https://dekoproject.fr',
   'https://www.dekoproject.fr',
 
-  'https://emotion-sonore.webflow.io'
+  'https://emotion-sonore.webflow.io',
+
+  'https://neo-interieur.webflow.io',
+
+  'https://top-pizza-bd8e7e.webflow.io',
+  'https://www.toppizzaburger.com',  
+
+  'https://psc-environnement-preview.webflow.io',
 ];
 
 

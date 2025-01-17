@@ -134,7 +134,7 @@ const Account = () => {
         <div className='account-info-container'>
           <div className='account-info-section'>
             <h2>Mon Compte</h2>
-            <div className="account-info" style={{ backgroundColor: theme.palette.primary.main, borderColor: theme.palette.primary.third }}>
+            <div className="account-info" style={{ backgroundColor: theme.palette.primary.main, boxShadow : theme.palette.shadow.main }}>
               <div className='bannerAccount'></div>
               <div className='accountInfoBox accountInfoBasicBox' style={{ borderColor: theme.palette.primary.third }}>
                 {userInfo.image && userInfo.image[0] && userInfo.image[0].src_profile_image || userInfoNew.image ? (

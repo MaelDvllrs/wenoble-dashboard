@@ -232,7 +232,7 @@ const EditPage = () => {
         try {        
             if (pageData.text.length > 0) {
                 try {
-                    const response = await updateTextPage(idPage, pageData.text);
+                    const response = await updateTextPage(idPage, pageData.text, token);
                     console.log(response);
                 } catch (error) {
                     console.error('Erreur lors de la création des textes :', error);
@@ -250,7 +250,7 @@ const EditPage = () => {
                 });
 
                 try {
-                    const response = await updateRichTextPage(idPage, infoRichText);
+                    const response = await updateRichTextPage(idPage, infoRichText, token);
                 } catch (error) {
                     console.error('Erreur lors de la création des rich texts :', error);
                     return;
@@ -260,7 +260,7 @@ const EditPage = () => {
             if(pageData.images.length > 0){
                 try {
                     await Promise.all(pageData.images.map(async (image) => {
-                        await updateImagePage(image, idPage);
+                        await updateImagePage(image, idPage, token);
                     }));
                 } catch (error) {
                     console.error(error);
@@ -307,7 +307,7 @@ const EditPage = () => {
                             <div className="button_save_contain">
                                 <SecondaryButton variant="contained" theme={theme} onClick={() => navigate(`/dashboard/modification/page/${id}`)}>Annuler</SecondaryButton>
 
-                                <DefaultButton type="submit" variant="contained" onClick={async () => { await handleSave(1,0) }}><SaveIcon/> Enregistrer</DefaultButton>  
+                                <DefaultButton type="submit" variant="contained" onClick={async () => { await handleSave(1,0) }}>Enregistrer</DefaultButton>  
                             </div>
                         </div>
 
@@ -324,6 +324,7 @@ const EditPage = () => {
                                             onChange={handlePageDataChange} 
                                             dataValue={correspondingData || {}}
                                             imagefunction={false}
+                                            imageDirectory={"/media/page/"}
                                         />
                                     </div>
                                 );

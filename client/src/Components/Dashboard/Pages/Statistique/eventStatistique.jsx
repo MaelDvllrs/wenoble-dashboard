@@ -4,12 +4,11 @@ import MenuItem from '@mui/material/MenuItem';
 import { SelectField, CustomAxisTooltip, SelectFieldSecondary } from '../../../../Theme/element';
 import { LineHighlightPlot, LinePlot } from '@mui/x-charts/LineChart';
 import { ResponsiveChartContainer } from '@mui/x-charts/ResponsiveChartContainer';
-
 import { ChartsXAxis } from '@mui/x-charts/ChartsXAxis';
 import { ChartsYAxis } from '@mui/x-charts/ChartsYAxis';
 import { ChartsGrid } from '@mui/x-charts/ChartsGrid';
 import { axisClasses } from '@mui/x-charts/ChartsAxis';
-import { ChartsLegend } from '@mui/x-charts';
+import { areaElementClasses, ChartsLegend } from '@mui/x-charts';
 import Tooltip from '@mui/material/Tooltip';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -135,6 +134,7 @@ export const EventStatistique = () => {
   const series = [
   {
       type: 'line',
+      curve: 'linear',
       yAxisId: 'value',
       color: '#2ec96d',
       label: labelMap[typeEvent].label,
@@ -143,7 +143,7 @@ export const EventStatistique = () => {
   ]
 
   return (
-    <div className="statistique-container" style={{ borderColor: theme.palette.primary.third, backgroundColor: theme.palette.primary.main }}>
+    <div className="statistique-container" style={{ boxShadow: theme.palette.shadow.main, backgroundColor: theme.palette.primary.main }}>
       <div className='select-stat-container'>  
         <SelectFieldSecondary
             id="period-select"
@@ -226,6 +226,8 @@ export const EventStatistique = () => {
                   },
                 }}
               />
+
+              
 
               <ChartsGrid 
                 horizontal 

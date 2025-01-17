@@ -240,12 +240,14 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
         console.error("Aucun fichier n'a été téléchargé.");
       }
     };
+    
 
-
-
+    
     useEffect(() => {
       // Vérifiez si dataValue existe et si le type est 'image'
       if (dataValue && Object.keys(dataValue).length > 0 && type === 'image') {
+        
+
         // Préparez les données de l'image pour l'état initial de imagesUploaded
         const initialImages = [{
           id_blog_page: dataValue.id_blog_page || id_blog_page, // Utilisez id_blog_page de dataValue ou celui passé en prop
@@ -253,7 +255,7 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
           data: dataValue.data, // Utilisez les données d'image en base64 de dataValue
           name: dataValue.name, // Utilisez le nom de l'image de dataValue
           alt: dataValue.alt, // Utilisez le texte alternatif de l'image de dataValue
-          url: dataValue.data, // Utilisez les données d'image en base64 comme URL
+          url: dataValue.src, // Utilisez les données d'image en base64 comme URL
           size: dataValue.size, // Utilisez la taille de l'image de dataValue
           type: 'images', // Définissez le type comme 'images'
         }];
@@ -486,8 +488,6 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
     useEffect(() => {
       // Vérifiez si dataValue existe et si le type est 'image'
       if (dataValue && Object.keys(dataValue).length > 0 && type === 'video') {
-        
-
         const initialImages = [{
           id_blog_page: dataValue.id_blog_page || id_blog_page, // Utilisez id_blog_page de dataValue ou celui passé en prop
           id_config: dataValue.id_config || id_config, // Utilisez id_config de dataValue ou celui passé en prop
@@ -495,7 +495,7 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
           data: dataValue.data, // Utilisez les données d'image en base64 de dataValue
           name: dataValue.name, // Utilisez le nom de l'image de dataValue
           alt: dataValue.alt, // Utilisez le texte alternatif de l'image de dataValue
-          src: dataValue.src,
+          src: dataValue.data,
           size: dataValue.size,
           type: 'video' ,
         }];

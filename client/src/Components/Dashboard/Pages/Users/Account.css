@@ -91,7 +91,6 @@
     flex-direction: column;
     gap: 2rem;
     width: 100%;
-    border: solid 1px;
     border-radius: 0.5rem;
     position: relative;
     overflow: hidden;
