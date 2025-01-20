@@ -91,6 +91,7 @@ router.get('/getUserAnalytics', async (req, res) => {
     }
     const id_analytic = results[0].id_analytic;
     const dateRange = getDateRange(period);
+    console.log(dateRange);
 
     try {
       const [response] = await analyticsDataClient.runReport({

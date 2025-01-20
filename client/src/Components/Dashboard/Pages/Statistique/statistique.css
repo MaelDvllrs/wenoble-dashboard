@@ -87,3 +87,10 @@
     align-items: center;
     min-height: 300px;
 }
+
+.total-statistique-compare{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
