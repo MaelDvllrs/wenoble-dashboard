@@ -97,6 +97,9 @@ const whitelist =
   'https://www.toppizzaburger.com',  
 
   'https://psc-environnement-preview.webflow.io',
+  'https://psc-environnement.fr',
+
+  'https://wechoose-site.webflow.io',
 ];
 
 
