@@ -382,8 +382,14 @@ router.get('/sendMultiReference', apiKeyMiddleware, (req, res) => {
         return res.status(200).json({ message: 'Aucune référence trouvée' });
       }
   
-      // Parse each reference and flatten the arrays
-      const references = results.flatMap(result => JSON.parse(result.info_ref));
+      // Parse each reference and add id_config to each object
+      const references = results.flatMap(result => {
+        const parsedRefs = JSON.parse(result.info_ref);
+        return parsedRefs.map(ref => ({
+          ...ref,
+          id_config: result.id_config
+        }));
+      });
   
       return res.json({ references });
     });
