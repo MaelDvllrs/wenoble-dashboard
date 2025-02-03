@@ -57,6 +57,8 @@ export const PageStatistique = () => {
     fetchPageStatistique();
   }, [period, typePage, typeUser, token]);
 
+  
+
  
 
   useEffect(() => {
@@ -83,6 +85,8 @@ export const PageStatistique = () => {
     pagePath: { label: 'Page (chemin)', description: 'Nombre d\'utilisateur par page web utilisé sur votre site (chemin)'},
     pageReferrer: { label: 'Page de provenance', description: 'URL de provenance complète, y compris le nom d\'hôte et le chemin d\'accès Cette URL de provenance correspond à l\'URL précédente de l\'utilisateur. Il peut s\'agir du domaine du site Web ou d\'autres domaines.'},
     sessionDefaultChannelGroup: { label: 'Groupe de canaux par défaut pour la session', description: 'Le groupe de canaux par défaut de la session est principalement basé sur la source et le support.'},
+    eventName: { label: 'Nom de l\'événement', description: 'Les événements représentent des interactions spécifiques (comme clics, scroll) enregistrées sur votre site' },
+
   };
 
   const labelUser = {

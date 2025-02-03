@@ -89,8 +89,12 @@ const whitelist =
   'https://emotion-sonore.webflow.io',
 
   'https://neo-interieur.webflow.io',
+<<<<<<< HEAD
   'https://neo-interieur.fr',
   'https://www.neo-interieur.fr',
+=======
+  
+>>>>>>> statistique-branch
 
   'https://top-pizza-bd8e7e.webflow.io',
   'https://toppizzaburger.com',

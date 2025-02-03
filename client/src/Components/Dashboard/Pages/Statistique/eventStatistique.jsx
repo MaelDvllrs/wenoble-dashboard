@@ -9,6 +9,7 @@ import { ChartsYAxis } from '@mui/x-charts/ChartsYAxis';
 import { ChartsGrid } from '@mui/x-charts/ChartsGrid';
 import { axisClasses } from '@mui/x-charts/ChartsAxis';
 import { areaElementClasses, ChartsLegend } from '@mui/x-charts';
+import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
 import Tooltip from '@mui/material/Tooltip';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -24,6 +25,7 @@ import Cookies from 'js-cookie';
 import { getStatistique } from './apiStatistique'; // Assurez-vous d'importer correctement votre fonction API
 import dayjs from 'dayjs';
 import './statistique.css';
+import { color } from 'framer-motion';
 
 export const EventStatistique = () => {
   const token = Cookies.get('token');
@@ -34,7 +36,11 @@ export const EventStatistique = () => {
   const [period, setPeriod] = useState('last14days');
   const [typeEvent, setTypeEvent] = useState('eventCount');
   const [totalValues, setTotalValues] = useState(0);
+  const [totalCompareValues, setTotalCompareValues] = useState(0);
+  const [totalDifferencePercentage, setTotalDifferencePercentage] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [percentageChanges, setPercentageChanges] = useState([]);
+  const [compareValues, setCompareValues] = useState([]);
 
   const handleChange = (event) => {
     setPeriod(event.target.value);
@@ -61,8 +67,9 @@ export const EventStatistique = () => {
 
   useEffect(() => {
     if (eventStatistique) {
-      const dates = [];
-      const values = [];
+      const currentDates = [];
+      const currentValues = [];
+      const previousValues = [];
       let startDate;
       const endDate = dayjs();
 
@@ -76,23 +83,55 @@ export const EventStatistique = () => {
 
       for (let date = startDate; date.isBefore(endDate) || date.isSame(endDate); date = date.add(1, 'day')) {
         const dateString = date.format('YYYYMMDD');
-        const dataPoint = eventStatistique.data.find(d => d.dimensionValues[0].value === dateString);
-        dates.push(date.format('MM-DD'));
-        values.push(dataPoint ? parseInt(dataPoint.metricValues[0].value) : 0);
+        const currentDataPoint = eventStatistique.data.currentPeriod.find(d => d.date === dateString);
+        currentDates.push(date.format('YYYY-MM-DD'));
+        currentValues.push(currentDataPoint ? parseInt(currentDataPoint.value) : 0);
       }
 
-      const sortedData = dates.map((date, index) => ({ date, value: values[index] }))
-        .sort((a, b) => dayjs(a.date).isBefore(dayjs(b.date)) ? -1 : 1);
+      const previousStartDate = startDate.subtract(parseInt(period.replace('last', '').replace('days', '')), 'day');
+      const previousEndDate = endDate.subtract(parseInt(period.replace('last', '').replace('days', '')), 'day');
 
-      setDates(sortedData.map(d => d.date));
-      setValues(sortedData.map(d => d.value));
+      for (let date = previousStartDate; date.isBefore(previousEndDate) || date.isSame(previousEndDate); date = date.add(1, 'day')) {
+        const dateString = date.format('YYYYMMDD');
+        const previousDataPoint = eventStatistique.data.comparePeriod.find(d => d.date === dateString);
+        previousValues.push(previousDataPoint ? parseInt(previousDataPoint.value) : 0);
+      }
 
-      const total = values.reduce((acc, value) => acc + value, 0);
-      setTotalValues(total);
+      const sortedCurrentData = currentDates.map((date, index) => ({ date, value: currentValues[index] }))
+        .sort((a, b) => dayjs(a.date, 'YYYY-MM-DD').isBefore(dayjs(b.date, 'YYYY-MM-DD')) ? -1 : 1);
+
+      const sortedPreviousData = currentDates.map((date, index) => ({ date, value: previousValues[index] }))
+        .sort((a, b) => dayjs(a.date, 'YYYY-MM-DD').isBefore(dayjs(b.date, 'YYYY-MM-DD')) ? -1 : 1);
+
+      setDates(sortedCurrentData.map(d => d.date));
+      setValues(sortedCurrentData.map(d => d.value));
+      setCompareValues(sortedPreviousData.map(d => d.value));
+
+      const percentageChanges = sortedCurrentData.map((current, index) => {
+        const previous = sortedPreviousData[index];
+        if (previous.value === 0) {
+          return 0;
+        }
+        return ((current.value - previous.value) / previous.value) * 100;
+      });
+
+      setPercentageChanges(percentageChanges.map(change => change.toFixed(2)));
+      
+      const totalCurrentValues = currentValues.reduce((acc, value) => acc + value, 0);
+      const totalPreviousValues = previousValues.reduce((acc, value) => acc + value, 0);
+
+      setTotalValues(totalCurrentValues);
+      setTotalCompareValues(totalPreviousValues);
+
+      // Calculer le pourcentage total de différence
+      const totalDifference = totalPreviousValues === 0 ? 0 : ((totalCurrentValues - totalPreviousValues) / totalPreviousValues) * 100;
+      setTotalDifferencePercentage(totalDifference.toFixed(2));
+  
     }
-
   }, [eventStatistique, period]);
 
+
+  
   const labelMap = {
     eventCount: { label: 'Nombre d\'événements', description: 'Le nombre d\'événements représente le total des interactions spécifiques (comme clics, téléchargements ou lectures de vidéos) enregistrées sur un site.' },
     eventCountPerUser: { label: 'Nombre d\'événements par utilisateur', description: 'Nombre moyen d\'événements par utilisateur (nombre d\'événements divisé par le nombre d\'utilisateurs actifs).' },
@@ -110,6 +149,14 @@ export const EventStatistique = () => {
       color: '#2ec96d',
       label: labelMap[typeEvent].label,
       data: values,
+    },
+    {
+      type: 'line',
+      curve: 'linear',
+      yAxisId: 'value',
+      color: '#2ec96d',
+      label: 'Période précédente',
+      data: compareValues,
     },
   ]
 
@@ -132,17 +179,28 @@ export const EventStatistique = () => {
             <InfoOutlinedIcon className='icon-select-stat-container' style={{color: theme.palette.text.secondary}}/>
         </Tooltip>
       </div>
-
-        <p className='info-statistique'>
-          {labelMap[typeEvent]?.unite === 's' ? formatTime(totalValues) : formatNumber(totalValues)}
-        </p>
+        <div className='total-statistique'>
+          <p className='info-statistique'>
+            {labelMap[typeEvent]?.unite === 's' ? formatTime(totalValues) : formatNumber(totalValues)}
+          </p>
+          <div className='total-statistique-compare'>
+            <p style={{color: totalDifferencePercentage < 0 ? "red" : "green", fontSize: "0.7rem"}}><b>{totalDifferencePercentage}%</b></p>
+            <ArrowDropUpIcon 
+              style={{
+                color: totalDifferencePercentage < 0 ? "red" : "green", 
+                height: "2rem",
+                transform: `rotate(${totalDifferencePercentage < 0 ? 180 : 0}deg)`,
+              }}
+            />
+          </div>
+        </div>
         
         {!loading ? (
           <div className='loading-message-stats'>
             <CircularProgress sx={{color:"#2ec96d"}}/>
           </div>
         ) : (
-          eventStatistique && eventStatistique.data.length > 0 ? (
+          eventStatistique  ? (
             <ResponsiveChartContainer
               series={series}
               height={300}
@@ -161,6 +219,18 @@ export const EventStatistique = () => {
               ]}
 
               sx={{
+                "& .MuiChartsLegend-series-auto-generated-id-1 .MuiChartsLegend-mark":{
+                    strokeWidth: "2",
+                    strokeDasharray: "6",
+                    stroke: "#2ec96d",
+                    fill: "none",
+                },
+
+
+                "& .MuiLineElement-series-auto-generated-id-1":{
+                    strokeDasharray: "10 5",
+                    strokeWidth: "1",
+                },
                 // bottomAxis Line Styles
                 "& .MuiChartsAxis-bottom .MuiChartsAxis-line":{
                     stroke:"none",
@@ -173,6 +243,7 @@ export const EventStatistique = () => {
                 "& .MuiChartsAxis-tick":{
                     stroke:"none !important", 
                 },
+                
               }}
             >
 
@@ -209,7 +280,10 @@ export const EventStatistique = () => {
                     },
                     }}  
               />
-              <CustomAxisTooltip  themeColor={theme} type='axes'/>
+              <CustomAxisTooltip  
+                  themeColor={theme} 
+                  type='axes'
+              />
               <LineHighlightPlot />
               <ChartsLegend
                 direction="row"
@@ -218,8 +292,8 @@ export const EventStatistique = () => {
                   vertical: 'top',
                 }}
                 labelStyle={{fontSize: 10}}
-                itemMarkHeight={10}
-                itemMarkWidth={10}
+                itemMarkHeight={2}
+                itemMarkWidth={20}
               />
               
             </ResponsiveChartContainer>

@@ -15,7 +15,7 @@ import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import 'dayjs/locale/fr';
 import React from 'react';
-
+import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
 
 export const CssTextField = styled(TextField)(({ theme }) => ({
 
@@ -151,15 +151,15 @@ export const SelectField = styled(Select)(({ theme }) => ({
     },
   };
           
+
+
+
   
   dayjs.extend(customParseFormat);
   dayjs.locale('fr');
 
   export function CustomAxisTooltip({ themeColor, type, unite }) {
     
-
-
-
     const mousePosition = useMouseTracker();
 
     
@@ -172,6 +172,22 @@ export const SelectField = styled(Select)(({ theme }) => ({
       return null;
     }
 
+    if (items.length === 2) {
+      const value1 = items[0].value;
+      const value2 = items[1].value;
+  
+      // Calculer le pourcentage de différence entre la première et la deuxième valeur
+      const percentageDifference = value2 === 0 ? 0 : ((value1 - value2) / value2) * 100;
+  
+      // Ajouter le pourcentage de différence aux items pour l'afficher dans le tooltip
+      items.push({
+        label: 'Différence en %',
+        value: `${percentageDifference.toFixed(2)}%`,
+      });
+    }
+
+  
+
     if (unite === 'country' && tooltipData.axisFormattedValue) {
       const [id, ...rest] = tooltipData.axisFormattedValue.split(' ');
       const country = rest.join(' ');
@@ -179,7 +195,7 @@ export const SelectField = styled(Select)(({ theme }) => ({
     }
 
 
-      // The pointer type can be used to have different behavior based on pointer type.
+    // The pointer type can be used to have different behavior based on pointer type.
     const isMousePointer = mousePosition?.pointerType === 'mouse';
     // Adapt the tooltip offset to the size of the pointer.
     const yOffset = isMousePointer ? 0 : 40 - mousePosition.height;
@@ -256,17 +272,30 @@ export const SelectField = styled(Select)(({ theme }) => ({
                     {unite === 'country' ? items[0].value.name : formattedDate}
                   </p>
                 </div>
-                {items.map((item) => (
-                  <div key={item.seriesId} style={{ marginTop: "0.8rem", display: 'flex', gap: '0.5rem' }}>
+                
+                  <div key={items[0].seriesId} style={{ marginTop: "0.8rem", display: 'flex', gap: '0.5rem' }}>
                      
                     <p>
-                      {item.formattedLabel} :
+                      {items[0].formattedLabel} :
                     </p>
                     <p>
-                      <b>{unite === 's' ? formatTime(item.formattedValue) : item.formattedValue}</b>
+                      <b>{unite === 's' ? formatTime(items[0].formattedValue) : items[0].formattedValue}</b>
                     </p>
                   </div>
-                ))}
+
+                  {items.length > 1 && (
+                    <div className='total-statistique-compare'>
+                    <p style={{color: items[2]?.value.startsWith('-') ? "red" : "green", fontSize: "0.7rem"}}><b>{items[2].value}</b></p>
+                    <ArrowDropUpIcon 
+                      style={{
+                        color: items[2]?.value.startsWith('-') ? "red" : "green", 
+                        height: "1.5rem",
+                        transform: `rotate(${items[2]?.value.startsWith('-') ? 180 : 0}deg)`,
+                      }}
+                    />
+                  </div>
+                  )}
+                
               </div>
             ) : (
               <div>
