@@ -9,7 +9,7 @@ import { ChartsYAxis } from '@mui/x-charts/ChartsYAxis';
 import { ChartsGrid } from '@mui/x-charts/ChartsGrid';
 import { axisClasses } from '@mui/x-charts/ChartsAxis';
 import { areaElementClasses, ChartsLegend } from '@mui/x-charts';
-import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
 import Tooltip from '@mui/material/Tooltip';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -60,8 +60,6 @@ export const EventStatistique = () => {
     };
     fetchEventStatistique();
   }, [period, typeEvent, token]);
-
-  console.log(eventStatistique);
 
 
  
@@ -132,10 +130,7 @@ export const EventStatistique = () => {
     }
   }, [eventStatistique, period]);
 
-  console.log(values);
-  console.log(dates);
-  console.log(compareValues);
-  console.log(percentageChanges);
+
   
   const labelMap = {
     eventCount: { label: 'Nombre d\'événements', description: 'Le nombre d\'événements représente le total des interactions spécifiques (comme clics, téléchargements ou lectures de vidéos) enregistrées sur un site.' },
@@ -190,10 +185,10 @@ export const EventStatistique = () => {
           </p>
           <div className='total-statistique-compare'>
             <p style={{color: totalDifferencePercentage < 0 ? "red" : "green", fontSize: "0.7rem"}}><b>{totalDifferencePercentage}%</b></p>
-            <ArrowUpwardIcon 
+            <ArrowDropUpIcon 
               style={{
                 color: totalDifferencePercentage < 0 ? "red" : "green", 
-                height: "1rem",
+                height: "2rem",
                 transform: `rotate(${totalDifferencePercentage < 0 ? 180 : 0}deg)`,
               }}
             />
@@ -224,6 +219,14 @@ export const EventStatistique = () => {
               ]}
 
               sx={{
+                "& .MuiChartsLegend-series-auto-generated-id-1 .MuiChartsLegend-mark":{
+                    strokeWidth: "2",
+                    strokeDasharray: "6",
+                    stroke: "#2ec96d",
+                    fill: "none",
+                },
+
+
                 "& .MuiLineElement-series-auto-generated-id-1":{
                     strokeDasharray: "10 5",
                     strokeWidth: "1",
@@ -289,8 +292,8 @@ export const EventStatistique = () => {
                   vertical: 'top',
                 }}
                 labelStyle={{fontSize: 10}}
-                itemMarkHeight={10}
-                itemMarkWidth={10}
+                itemMarkHeight={2}
+                itemMarkWidth={20}
               />
               
             </ResponsiveChartContainer>

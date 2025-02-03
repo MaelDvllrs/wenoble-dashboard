@@ -15,8 +15,7 @@ import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import 'dayjs/locale/fr';
 import React from 'react';
-import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
-
+import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
 
 export const CssTextField = styled(TextField)(({ theme }) => ({
 
@@ -152,15 +151,15 @@ export const SelectField = styled(Select)(({ theme }) => ({
     },
   };
           
+
+
+
   
   dayjs.extend(customParseFormat);
   dayjs.locale('fr');
 
   export function CustomAxisTooltip({ themeColor, type, unite }) {
     
-
-
-
     const mousePosition = useMouseTracker();
 
     
@@ -187,12 +186,7 @@ export const SelectField = styled(Select)(({ theme }) => ({
       });
     }
 
-    if (items[2].value < 0) {
-      console.log(items[2].value);
-    }
-    
-
-
+  
 
     if (unite === 'country' && tooltipData.axisFormattedValue) {
       const [id, ...rest] = tooltipData.axisFormattedValue.split(' ');
@@ -291,12 +285,12 @@ export const SelectField = styled(Select)(({ theme }) => ({
 
                   {items.length > 1 && (
                     <div className='total-statistique-compare'>
-                    <p style={{color: items[2].value < 0 ? "red" : "green", fontSize: "0.7rem"}}><b>{items[2].value}%</b></p>
-                    <ArrowUpwardIcon 
+                    <p style={{color: items[2]?.value.startsWith('-') ? "red" : "green", fontSize: "0.7rem"}}><b>{items[2].value}</b></p>
+                    <ArrowDropUpIcon 
                       style={{
-                        color: items[2].value < 0 ? "red" : "green", 
-                        height: "1rem",
-                        transform: `rotate(${items[2].value < 0 ? 180 : 0}deg)`,
+                        color: items[2]?.value.startsWith('-') ? "red" : "green", 
+                        height: "1.5rem",
+                        transform: `rotate(${items[2]?.value.startsWith('-') ? 180 : 0}deg)`,
                       }}
                     />
                   </div>

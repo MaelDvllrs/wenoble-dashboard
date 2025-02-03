@@ -91,7 +91,6 @@ router.get('/getUserAnalytics', async (req, res) => {
     }
     const id_analytic = results[0].id_analytic;
     const dateRange = getDateRange(period);
-    console.log(dateRange);
 
     try {
       const [response] = await analyticsDataClient.runReport({
@@ -132,10 +131,7 @@ router.get('/getUserAnalytics', async (req, res) => {
         const endDate = dateRange.endDate.replace(/-/g, '');
         const compareStartDate = dateRange.compareStartDate.replace(/-/g, '');
         const compareEndDate = dateRange.compareEndDate.replace(/-/g, '');
-    
-        console.log('date: ' + date);
-        console.log('value: ' + value);
-        console.log('startDate: ' + startDate);
+
     
         if (date >= startDate && date <= endDate && value !== '0') {
             currentPeriodData.push({ date, value });
@@ -145,8 +141,7 @@ router.get('/getUserAnalytics', async (req, res) => {
     });
 
     
-      console.log(currentPeriodData);
-      console.log(comparePeriodData);
+
 
       const formattedData = {
           currentPeriod: currentPeriodData,

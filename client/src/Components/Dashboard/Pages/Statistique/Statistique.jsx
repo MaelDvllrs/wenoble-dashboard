@@ -23,7 +23,7 @@ const Statistique = () => {
             
             <div className="statistique-section">
                 <div  className="grid-line-statistique">
-                        
+                        <UserStatistique />
                         <EventStatistique/>
                 </div>
                 <div  className="grid-line-statistique">
