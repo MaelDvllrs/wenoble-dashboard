@@ -1090,10 +1090,6 @@ router.post('/updateGalleryBlog', uploadUpdateGallery.array('gallery'), (req, re
     const oldGallery = JSON.parse(results[0].gallery);
     const newGallery = galleryArray;
 
-    console.log('oldGallery:', oldGallery);
-
-    console.log('newGallery:', newGallery);
-
 
     // Fonction pour comparer deux objets image
     function isImageEqual(image1, image2) {

@@ -71,14 +71,14 @@ export const AuthorisedRouteEcomm = ({ children }) => (
   <AuthorisedRoute authType="auth_ecom">{children}</AuthorisedRoute>
 );
 
+export const AuthorisedRouteNewsletter = ({ children }) => (
+  <AuthorisedRoute authType="auth_newsletter">{ children}</AuthorisedRoute>
+);
 
-//export const checkAutorisation = (authType) => {
-//    const auth = IsAuthorised(authType);
-//    return auth;
-//}
+
 
 export const checkAutorisation = async (authType) => {
-  const token = Cookies.get('token'); // Assurez-vous que le token est récupéré correctement
+  const token = Cookies.get('token');
 
   try {
     const response = await axios.post(`${apiUrl}/getAuthorisation`, {

@@ -9,7 +9,7 @@ import Admin from './Components/Admin/Admin';
 import AdminHome from './Components/Admin/AdminHome'
 import AdminClient from './Components/Admin/Clients/AdminClients'
 import {IsAuthenticated, IsAuthenticatedAdmin} from './Auth/ProtectedRoutes';
-import { AuthorisedRoutePortfolio, AuthorisedRoutePage, AuthorisedRouteBlog, AuthorisedRouteEcomm } from './Authorisation/Authorisation';
+import { AuthorisedRoutePortfolio, AuthorisedRoutePage, AuthorisedRouteBlog, AuthorisedRouteEcomm, AuthorisedRouteNewsletter } from './Authorisation/Authorisation';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import ModificationHome from './Components/Dashboard/Pages/modification_site/modificationHome'
 import Page from './Components/Dashboard/Pages/modification_site/Page/page'
@@ -35,6 +35,7 @@ import EcommerceOrderPending from './Components/Dashboard/Pages/Ecommerce/Ecomme
 import EcommerceOrderShipping from './Components/Dashboard/Pages/Ecommerce/EcommerceOrder/EcommerceOrderShipping'
 import EcommerceOrderDelivered from './Components/Dashboard/Pages/Ecommerce/EcommerceOrder/EcommerceOrderDelivered'
 import EcommerceOrderAll from './Components/Dashboard/Pages/Ecommerce/EcommerceOrder/EcommerceOrderAll'
+import NewsLetters from './Components/Dashboard/Pages/NewsLetters/Newsletter'
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 
@@ -123,8 +124,11 @@ function App() {
                   <Route path="/dashboard/actu/update/:slug" element={<UpdateTemplate/>}></Route>
                 </Route>
                 <Route path="/dashboard/account" element={<Account/>}>
+                
+                
 
                 </Route>
+                <Route path="/dashboard/newsletter" element={<AuthorisedRouteNewsletter><NewsLetters/></AuthorisedRouteNewsletter>}/>
               </Route>
             </Route>
             <Route path="/dashboard-admin">  

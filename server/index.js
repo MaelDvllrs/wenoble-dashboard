@@ -24,6 +24,8 @@ const orderRouter = require('./ecommerce/order');
 
 const sendEmailRouter = require('./contact/sendEmail');
 const contactRouter = require('./contact/contact');
+const newsletterRouter = require('./newsletter/newsletter');
+const signUpNewsletterRouter = require('./newsletter/signUpNewsletter');  
 
 
 const { notificationRouter, notificationServer } = require('./users/notification');
@@ -124,19 +126,16 @@ app.use(bodyParser.json({ limit: '500mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
 app.use('/api', apiRouter);
-
-
-
-
+app.use(signUpNewsletterRouter);
+app.use(sendEmailRouter);
 
 
 app.use(authRoutes);
 app.use(authorisationRouter);
 
-app.use(sendEmailRouter);
+
+
 app.use(notificationRouter);
-
-
 
 
 //Static files
@@ -149,8 +148,6 @@ app.use('/media/profile', express.static(path.join(__dirname, 'images', 'profile
 
 
 app.use(videoRouter);
-
-
 
 app.use(authenticateToken);
 
@@ -165,9 +162,7 @@ app.use(clientRouter);
 app.use(sitemapRouter);
 app.use(articleRouter);
 app.use(analyticsRouter);
-
-
-
+app.use(newsletterRouter);
 
 
 

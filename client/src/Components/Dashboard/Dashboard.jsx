@@ -6,9 +6,8 @@ import './Dashboard.css';
 import { Outlet, Link, NavLink, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion'
 import { BsChevronCompactDown } from "react-icons/bs";
-import { PiLockBold, PiUserBold, PiGearSixBold, PiPowerBold, PiHouseBold, PiChartBarBold, PiPencilSimpleBold, PiNewspaperBold, PiFunnelSimpleBold, PiShoppingCartSimpleBold, PiQuestionBold, PiChatCircleDotsBold,PiBellBold} from "react-icons/pi";
+import { PiLockBold, PiUserBold, PiGearSixBold, PiPowerBold, PiHouseBold, PiChartBarBold, PiPencilSimpleBold, PiNewspaperBold, PiFunnelSimpleBold, PiShoppingCartSimpleBold, PiQuestionBold, PiChatCircleDotsBold, PiBellBold, PiNewspaperClippingBold } from "react-icons/pi";
 import { LuMoon, LuSun } from "react-icons/lu";
-import { fetchImages } from "./apiImage";
 import Logo from "../../assets/icon/logo.svg?react"; 
 import config from '../../config';
 import { SkeletonProfile } from '../skeleton/skeleton';
@@ -28,6 +27,7 @@ import { fr } from 'date-fns/locale';
 
 import { checkAutorisation } from '../../Authorisation/Authorisation';
 
+
 import {fetchUserInfo} from './Pages/Users/apiAccount';
 
 
@@ -44,15 +44,20 @@ const Dashboard = () => {
     const apiUrlNotif = config.apiNotifServer;
 
     const [ecommAuth, setEcommAuth] = useState(false);
+    const [newsAuth, setNewsAuth] = useState(false);
 
     useEffect(() => {
-      const fetchEcommAuth = async () => {
-        const isAuthorized = await checkAutorisation('auth_ecom');
-        setEcommAuth(isAuthorized);
+      const fetchAuth = async () => {
+        const isAuthorizedEcom = await checkAutorisation('auth_ecom');
+        setEcommAuth(isAuthorizedEcom);
+        const isAuthorisedNews = await checkAutorisation('auth_newsletter');
+        setNewsAuth(isAuthorisedNews);
       };
 
-      fetchEcommAuth();
+      fetchAuth();
     }, []);
+
+
 
 
 
@@ -280,7 +285,7 @@ const Dashboard = () => {
                             <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.primary}}>
                                 <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><PiChartBarBold/></motion.div>
                                 <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Statistiques</motion.span>
-                                <div className='new-section'>{open_menu && 'New'}</div>
+                                
                                 <div className='menu_link_active_curs'></div>
                             </motion.div>
                         </AnimatePresence>
@@ -293,6 +298,21 @@ const Dashboard = () => {
                                 <div className='menu_link_active_curs'></div>
                             </motion.div>
                         </AnimatePresence>
+                    </NavLink>
+                    <NavLink key="newsletter" to={newsAuth === 1 ? '/dashboard/newsletter' : '#'} className={({ isActive }) => (isActive && newsAuth === 1 ? 'menuActive' : '')}>
+                        <AnimatePresence initial={false}>
+                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.primary}}>
+                                <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><PiNewspaperClippingBold/></motion.div>
+                                <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Newsletter</motion.span>
+                                <div className='menu_link_active_curs'></div>
+                                {
+                                    newsAuth === 1 ? (
+                                        null
+                                    ) : <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem", marginLeft: open_menu ? "1rem" : "0.5rem"}} style={{color: theme.palette.text.secondary}} className='icon_navigation icon_lock'><PiLockBold /></motion.div>
+                                }
+                            </motion.div>
+                        </AnimatePresence>
+
                     </NavLink>
                     <div className='menu_title'><p className='menu_title_text' style={{color: theme.palette.text.primary}}><b>Wenoble</b></p></div>
                     <NavLink key="actu" to='/dashboard/actu/' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
