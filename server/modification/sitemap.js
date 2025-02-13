@@ -4,6 +4,11 @@ const fs = require('fs');
 const cors = require('cors')
 const db = require('../db')
 const xml2js = require('xml2js');
+const dayjs = require('dayjs'); 
+const utc = require('dayjs/plugin/utc'); 
+const customParseFormat = require('dayjs/plugin/customParseFormat');
+dayjs.extend(utc);
+dayjs.extend(customParseFormat);
 
 
 
@@ -51,8 +56,8 @@ router.post('/addRouteBlogSitemap', async (req, res) => {
   const idUser = req.body.params.idUser;
   const idBlog = req.body.params.idBlog;
   const slug = req.body.params.slug;
-  const date = req.body.params.date;
-
+  const date = dayjs().utc().format('YYYY-MM-DDTHH:mm:ss+00:00');
+  console.log(date);
 
 
   try {
