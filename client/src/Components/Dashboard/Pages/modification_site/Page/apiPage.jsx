@@ -26,6 +26,7 @@ export const fetchImagesPage = async (pageId, token) => {
 export const saveImagePage = async (fields, token) => {
   try {
     if (fields.data) {
+      console.log(fields);
       const formData = new FormData();
       formData.append('image', fields.data, fields.src);
       formData.append('id_photo', fields.id);

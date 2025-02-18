@@ -7,7 +7,6 @@ import Field from "../Fields/fields";
 import '../Blog/createPageBlog.css';
 import './EditPage.css';
 import { DefaultButton, SecondaryButton, Popup } from '../../../../../Theme/element';
-import SaveIcon from '@mui/icons-material/Save';
 import { updateImagePage, updateTextPage, updateRichTextPage } from './apiPage';
 import { useTheme } from '@mui/material/styles';
 import { convertToRaw } from 'draft-js';

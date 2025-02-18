@@ -50,7 +50,7 @@ const ImageUpload = ({ id_blog_page, type, id_config, onChange, dataValue, theme
     };
     useEffect(() => {
       // Vérifiez si dataValue existe et si le type est 'image'
-      if (dataValue && Object.keys(dataValue).length > 0 && type === 'image') {
+      if (dataValue && Object.keys(dataValue).length > 0 && type === 'image' && dataValue.src !== 'default.jpg' ) {
         // Préparez les données de l'image pour l'état initial de imagesUploaded
         const initialImages = [{
           id_blog_page: dataValue.id_blog_page || id_blog_page, // Utilisez id_blog_page de dataValue ou celui passé en prop
@@ -79,7 +79,7 @@ const ImageUpload = ({ id_blog_page, type, id_config, onChange, dataValue, theme
 
     return (
       <div className='image_blog' style={{ backgroundColor: theme.palette.primary.main, color: theme.palette.text.primary, borderColor: theme.palette.primary.main }}>
-        {imagesUploaded.length > 0 ? (
+        {imagesUploaded.length > 0 && imagesUploaded.some(image => image.url) ? (
           imagesUploaded.map((image) => (
             <div key={image.id_config} className="ImageUploaded_contain">
               <img className='Image_uploaded' src={image.url} alt={image.alt} />
