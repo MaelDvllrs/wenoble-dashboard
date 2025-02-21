@@ -1,5 +1,5 @@
 (async function () {
-    const apiUrl = "http://api-wenoble.wenoble.fr";
+    const apiUrl = "https://api-wenoble.wenoble.fr";
     const scriptTag = document.currentScript;
     const blogId = scriptTag.getAttribute("data-blog-id");
     const userKey = scriptTag.getAttribute("data-user-id");
