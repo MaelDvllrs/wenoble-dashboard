@@ -7,6 +7,7 @@ const { stateToHTML } = require('draft-js-export-html');
 const { convertFromRaw } = require('draft-js');
 
 const db = require('../db');
+const { ca } = require('date-fns/locale/ca');
 
 
 const apiKeyMiddleware = (req, res, next) => {
@@ -89,6 +90,13 @@ router.get('/sendPhotoPortfolio',apiKeyMiddleware, (req, res) => {
 
 
 
+
+//------------------- API pour les blogs -------------------//
+
+
+
+// Récupérer toutes les pages de blogs
+
 router.get('/sendBlog',apiKeyMiddleware, (req, res) => {
     const ids = req.ids; // IDs des blogs passés en paramètre de requête
     const order = req.query.order || 'ASC'; // Par défaut, l'ordre est croissant
@@ -99,7 +107,6 @@ router.get('/sendBlog',apiKeyMiddleware, (req, res) => {
 
     let SQL;
     let Values;
-
 
     if (ids) {
         const idArray = ids.split(',').map(id => parseInt(id, 10)); // Convertir les IDs en tableau de nombres
@@ -144,7 +151,7 @@ router.get('/sendBlog',apiKeyMiddleware, (req, res) => {
 });
 
 
-
+// Récupérer les informations de chaque blog avec l'ID de la page de blog
 router.get('/sendBlogInfo',apiKeyMiddleware, (req, res) => {
     const id_blog_page = req.id_data;
 
@@ -165,9 +172,12 @@ router.get('/sendBlogInfo',apiKeyMiddleware, (req, res) => {
 });
 
 
+
+// Récupérer les informations de chaque blog avec le slug de la page de blog
 router.get('/sendBlogInfoSlug',apiKeyMiddleware, (req, res) => {
     const slug = req.headers.slug;
     let id_blog = req.headers.id_blog;
+
 
     // Vérifiez si id_blog contient plusieurs identifiants séparés par des virgules
     if (typeof id_blog === 'string' && id_blog.includes(',')) {
@@ -176,6 +186,7 @@ router.get('/sendBlogInfoSlug',apiKeyMiddleware, (req, res) => {
         id_blog = [id_blog];
     }
 
+
     const SQL = `SELECT * FROM blog_page WHERE page_blog_slug = ? AND id_blog IN (?) AND status = 1`;
     const Values = [slug, id_blog];
 
@@ -183,6 +194,7 @@ router.get('/sendBlogInfoSlug',apiKeyMiddleware, (req, res) => {
         if (err) {
             res.status(500).send({ error: err });
         }
+
         if (results.length === 0) {
             return res.status(403).json({ message: 'Aucun blog trouvé' });
         }
@@ -193,6 +205,8 @@ router.get('/sendBlogInfoSlug',apiKeyMiddleware, (req, res) => {
 
 
 
+
+// Récupérer les richTexts d'une page de blog avec l'ID de la page de blog
 router.get('/sendBlogRichText',apiKeyMiddleware, (req, res) => {
     const id_blog_page = req.id_data;
 
@@ -219,6 +233,7 @@ router.get('/sendBlogRichText',apiKeyMiddleware, (req, res) => {
 });
 
 
+// Récupérer les textes d'une page de blog avec l'ID de la page de blog 
 router.get('/sendBlogText',apiKeyMiddleware, (req, res) => {
     const id_blog_page = req.id_data;
 
@@ -238,6 +253,8 @@ router.get('/sendBlogText',apiKeyMiddleware, (req, res) => {
     });
 });
 
+
+// Récupérer les images d'une page de blog avec l'ID de la page de blog
 router.get('/sendBlogImage',apiKeyMiddleware, (req, res) => {
     const id_blog_page = req.id_data;
 
@@ -264,6 +281,8 @@ router.get('/sendBlogImage',apiKeyMiddleware, (req, res) => {
 });
 
 
+
+// Récupérer les informations des images d'une page de blog avec l'ID de la page de blog 
 router.get('/sendBlogInfoImage',apiKeyMiddleware, (req, res) => {
     const id_blog_page = req.id_data;
 
@@ -282,6 +301,7 @@ router.get('/sendBlogInfoImage',apiKeyMiddleware, (req, res) => {
 });
 
 
+// Récupérer les informations des gallery d'une page de blog avec l'ID de la page de blog
 router.get('/sendBlogInfoGallery', apiKeyMiddleware, (req, res) =>{
     const id_blog_page = req.id_data;
 
@@ -302,7 +322,7 @@ router.get('/sendBlogInfoGallery', apiKeyMiddleware, (req, res) =>{
 
 
 
-
+// Récupérer les informations des videos d'une page de blog avec l'ID de la page de blog 
 router.get('/sendBlogVideo',apiKeyMiddleware, (req, res) => {
     const id_blog_page = req.id_data;
 
@@ -394,6 +414,113 @@ router.get('/sendMultiReference', apiKeyMiddleware, (req, res) => {
       return res.json({ references });
     });
   });
+
+
+
+
+  router.get('/sendBlogContent', apiKeyMiddleware, async (req, res) => {
+    const id_blog_page = req.headers.id_blog_page;
+    const id_blog = req.headers.id_blog;
+
+    const SQL = 'SELECT * FROM blog_config WHERE id_blog = ?';
+    const Values = [id_blog];
+
+    try {
+        const configResults = await new Promise((resolve, reject) => {
+            db.query(SQL, Values, (err, results) => {
+                if (err) return reject(err);
+                resolve(results);
+            });
+        });
+
+
+
+        if (configResults.length === 0) {
+            return res.status(200).json({ message: 'Aucun contenu trouvé' });
+        }
+
+
+        const contentPromises = configResults.map(result => {
+            switch (result.tab_field) {
+                case 'text':
+                    const SQLText = 'SELECT id_config, text FROM blog_field_text WHERE id_blog_page = ?';
+                    return new Promise((resolve, reject) => {
+                        db.query(SQLText, [id_blog_page], (err, results) => {
+                            if (err) return reject(err);
+                            resolve({ type: 'text', data: results });
+                        });
+                    });
+                case 'richText':
+                    const SQLRichText = 'SELECT id_config, text_json FROM blog_field_richText WHERE id_blog_page = ?';
+                    return new Promise((resolve, reject) => {
+                        db.query(SQLRichText, [id_blog_page], (err, results) => {
+                            if (err) return reject(err);
+                            const convertedResults = results.map(result => {
+                                const contentState = convertFromRaw(JSON.parse(result.text_json));
+                                const html = stateToHTML(contentState);
+                                return { id_config: result.id_config, text_html: html };
+                            });
+                            resolve({ type: 'richText', data: convertedResults });
+                        });
+                    });
+                case 'image':
+                    const SQLImage = 'SELECT id_config, src_image, alt_image FROM blog_field_image WHERE id_blog_page = ?';
+                    return new Promise((resolve, reject) => {
+                        db.query(SQLImage, [id_blog_page], (err, results) => {
+                            if (err) return reject(err);
+                            resolve({ type: 'image', data: results });
+                        });
+                    });
+                case 'video':
+                    const SQLVideo = 'SELECT id_config, src_video FROM blog_field_video WHERE id_blog_page = ?';
+                    return new Promise((resolve, reject) => {
+                        db.query(SQLVideo, [id_blog_page], (err, results) => {
+                            if (err) return reject(err);
+                            resolve({ type: 'video', data: results });
+                        });
+                    });
+                case 'gallery':
+                    const SQLGallery = 'SELECT id_config, gallery FROM blog_field_gallery WHERE id_blog_page = ?';
+                    return new Promise((resolve, reject) => {
+                        db.query(SQLGallery, [id_blog_page], (err, results) => {
+                            if (err) return reject(err);
+
+                            resolve({ type: 'gallery', data: results });
+                        });
+                    });
+                case 'multiReference':
+                    const SQLMultiReference = 'SELECT id_config, info_ref FROM blog_field_multiReference WHERE id_blog_page = ?';
+                    return new Promise((resolve, reject) => {
+                        db.query(SQLMultiReference, [id_blog_page], (err, results) => {
+                            if (err) return reject(err);
+                            const references = results.flatMap(result => {
+                                const parsedRefs = JSON.parse(result.info_ref);
+                                return parsedRefs.map(ref => ({
+                                    ...ref,
+                                    id_config: result.id_config
+                                }));
+                            });
+                            resolve({ type: 'multiReference', data: references });
+                        });
+                    });
+                default:
+                    return Promise.resolve({ type: 'unknown', data: [] });
+            }
+        });
+
+        const contentResults = await Promise.all(contentPromises);
+
+        const combinedResults = contentResults.reduce((acc, result) => {
+            acc[result.type] = result.data;
+            return acc;
+        }, {});
+
+        return res.json({ content : combinedResults });
+    } catch (err) {
+        console.log(err);
+        return res.status(500).send({ error: err });
+    }
+});
 
 
 

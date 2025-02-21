@@ -33,6 +33,8 @@ const { notificationRouter, notificationServer } = require('./users/notification
 
 
 
+
+
 const clientRouter = require('./admin/client');
 
 
@@ -42,6 +44,7 @@ const whitelist =
   'https://testwenoble.fr',
   'http://localhost:5173', 
   'https://dashboard.wenoble.fr', 
+  'http://127.0.0.1:5500',
 
   
   'https://kristina-photogrphy.webflow.io',
@@ -126,6 +129,12 @@ app.use(bodyParser.json({ limit: '500mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
 app.use('/api', apiRouter);
+app.use(express.static('public'));
+app.get('/blog-template-loader.js', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'blog-loader.js'));
+});
+
+
 app.use(signUpNewsletterRouter);
 app.use(sendEmailRouter);
 
