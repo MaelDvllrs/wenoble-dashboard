@@ -198,6 +198,16 @@
                         }
                     }
 
+                    if (el.hasAttribute("wn-gallery-modal")) {
+                        const key = el.getAttribute("wn-gallery-modal");
+                        const galleryData = data.content.gallery.find(gallery => gallery.id_config == key);
+                        if (galleryData) {
+                            const galleryItems = JSON.parse(galleryData.gallery);
+                            el.innerHTML = galleryItems.map(img => `<div class="slides"><img src="${apiUrl}/media/blogGallery/${img.src_photo}" alt="${img.alt}"></div>`).join("");
+                        }
+                    }
+
+
                     if (el.hasAttribute("wn-multiReference-wrapper")) {
                         const key = el.getAttribute("wn-multiReference-wrapper");
                         const multiReferenceInfos = data.content.multiReference.filter(multiReference => multiReference.id_config == key);
