@@ -114,7 +114,7 @@ const whitelist =
 // Configuration de CORS
 const corsOptions = {
   origin: function (origin, callback) {
-    if (whitelist.indexOf(origin) !== -1 || !origin) {
+    if (whitelist.indexOf(origin) !== -1 || !origin || origin === 'null') { 
       console.log(`CORS allowed: ${origin}`);
       callback(null, true);
     } else {
