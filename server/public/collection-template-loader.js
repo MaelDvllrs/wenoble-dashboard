@@ -190,7 +190,16 @@
                 const galleryData = data.content.gallery.find(gallery => gallery.id_config == key);
                 if (galleryData) {
                     const galleryItems = JSON.parse(galleryData.gallery);
-                    el.innerHTML = galleryItems.map(img => `<div class="slides"><img src="${apiUrl}/media/blogGallery/${img.src_photo}" alt="${img.alt}"></div>`).join("");
+                    galleryItems.forEach(img => {
+                        const slideDiv = document.createElement("div");
+                        slideDiv.classList.add("slides");
+                        const imgElement = document.createElement("img");
+                        imgElement.src = `${apiUrl}/media/blogGallery/${img.src_photo}`;
+                        imgElement.alt = img.alt;
+                        imgElement.classList.add("slide-image");
+                        slideDiv.appendChild(imgElement);
+                        el.appendChild(slideDiv);
+                    });
                 }
             }
 
