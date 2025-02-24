@@ -110,7 +110,7 @@
 
 
         // Parcours tous les éléments qui ont un attribut `wn-*`
-        document.querySelectorAll("[wn-title], [wn-date-published], [wn-image], [wn-title], [wn-richtext], [wn-text], [wn-gallery], [wn-gallery-index], [wn-video], [wn-multiReference-wrapper]").forEach(async el => {
+        document.querySelectorAll("[wn-title], [wn-date-published], [wn-image], [wn-title], [wn-richtext], [wn-text], [wn-gallery], [wn-gallery-index], [wn-gallery-modal], [wn-video], [wn-multiReference-wrapper]").forEach(async el => {
             if (el.hasAttribute("wn-title")) {
                 el.textContent = info.blog[0].page_blog_name;
             }
@@ -182,6 +182,15 @@
                         el.src = `${apiUrl}/media/blogGallery/${img.src_photo}`;
                         el.alt = img.alt;
                     }
+                }
+            }
+
+            if (el.hasAttribute("wn-gallery-modal")) {
+                const key = el.getAttribute("wn-gallery-modal");
+                const galleryData = data.content.gallery.find(gallery => gallery.id_config == key);
+                if (galleryData) {
+                    const galleryItems = JSON.parse(galleryData.gallery);
+                    el.innerHTML = galleryItems.map(img => `<div class="slides"><img src="${apiUrl}/media/blogGallery/${img.src_photo}" alt="${img.alt}"></div>`).join("");
                 }
             }
 
