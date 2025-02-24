@@ -233,7 +233,7 @@
                             if (refContent) {
                                 const clone = template.cloneNode(true);
                                 clone.removeAttribute("wn-multiReference-box");
-        
+
                                 // Parcours tous les éléments qui ont un attribut `wn-*` dans le clone
                                 clone.querySelectorAll("[wn-multiReference-title], [wn-multiReference-image], [wn-multiReference-text]").forEach(el => {
                                     if (el.hasAttribute("wn-multiReference-title")) {
@@ -264,7 +264,8 @@
                     }
 
                 });
-
+                
+                clone.classList.add("ssr-wn-collection-box");
                 el.appendChild(clone);
             }
 
