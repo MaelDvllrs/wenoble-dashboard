@@ -7,14 +7,19 @@
     const metaTags = scriptTag.getAttribute("meta-tag");
     const metaTagsImage = scriptTag.getAttribute("meta-tag-image");
 
-
+    let slug = null;
 
     function isWebflowPreview() {
         return window.location.hostname.includes("webflow.io");
     }
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const slug = urlParams.get('slug');
+    if (isWebflowPreview()) {
+        const urlParams = new URLSearchParams(window.location.search);
+        slug = urlParams.get('slug');
+    } else {
+        slug = window.ARTICLE_SLUG;
+    }
+
 
     if (!blogId) {
         console.error("Blog ID ou Page ID manquant !");
