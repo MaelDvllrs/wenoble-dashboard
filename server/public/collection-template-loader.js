@@ -20,6 +20,8 @@
         slug = window.ARTICLE_SLUG;
     }
 
+    console.log("Slug :", slug);
+
 
     if (!blogId) {
         console.error("Blog ID ou Page ID manquant !");
