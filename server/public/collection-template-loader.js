@@ -7,23 +7,25 @@
     const metaTags = scriptTag.getAttribute("meta-tag");
     const metaTagsImage = scriptTag.getAttribute("meta-tag-image");
 
+    const markerSSR = document.querySelector(".ssr-wn-collection-template")
+    if (markerSSR) {
+        console.log('WeNoble content already loaded');
+        return;
+    }
+
     let slug = null;
 
     function isWebflowPreview() {
-        console.log(window.location.hostname);
         return window.location.hostname.includes("webflow.io");
     }
 
     if (isWebflowPreview()) {
-        console.log("Webflow preview mode");
         const urlParams = new URLSearchParams(window.location.search);
         slug = urlParams.get('slug');
     } else {
-        console.log("Production mode");
         slug = window.ARTICLE_SLUG;
     }
 
-    console.log("Slug :", slug);
 
 
     if (!blogId) {
@@ -89,15 +91,13 @@
             return options;
         }
         
-        console.log(data);
         document.title = info.blog[0].page_blog_name;
         const ogTitle = document.querySelector("meta[property='og:title']");
         const ogDescription = document.querySelector("meta[property='og:description']");
         const ogImage = document.querySelector("meta[property='og:image']");
 
         if (ogTitle) {
-            console.log(data.content.text);
-            console.log(titleTag);
+
             const titleText = data.content.text.find(text => text.id_config == titleTag);
             if (titleText) {
                 ogTitle.setAttribute("content", titleText.text);
@@ -276,9 +276,6 @@
         readyMarker.style.display = 'none';
         document.body.appendChild(readyMarker);
         
-                
-        console.log('WeNoble content fully loaded and rendered');
-
     } catch (error) {
         console.error("Erreur lors de la récupération des données :", error);
     }
