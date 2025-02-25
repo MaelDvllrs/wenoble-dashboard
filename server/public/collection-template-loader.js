@@ -267,7 +267,7 @@
         });
 
         const readyMarker = document.createElement('div');
-        readyMarker.classList.add = 'ssr-wn-collection-template';
+        readyMarker.className = 'ssr-wn-collection-template';
         readyMarker.style.display = 'none';
         document.body.appendChild(readyMarker);
         
