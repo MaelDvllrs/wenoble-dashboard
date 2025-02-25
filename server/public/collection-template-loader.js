@@ -268,6 +268,11 @@
 
         const readyMarker = document.createElement('div');
         readyMarker.classList.add = 'ssr-wn-collection-template';
+        readyMarker.style.display = 'none';
+        document.body.appendChild(readyMarker);
+        
+                
+        console.log('WeNoble content fully loaded and rendered');
 
     } catch (error) {
         console.error("Erreur lors de la récupération des données :", error);
