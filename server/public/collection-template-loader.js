@@ -10,13 +10,16 @@
     let slug = null;
 
     function isWebflowPreview() {
+        console.log(window.location.hostname);
         return window.location.hostname.includes("webflow.io");
     }
 
     if (isWebflowPreview()) {
+        console.log("Webflow preview mode");
         const urlParams = new URLSearchParams(window.location.search);
         slug = urlParams.get('slug');
     } else {
+        console.log("Production mode");
         slug = window.ARTICLE_SLUG;
     }
 
