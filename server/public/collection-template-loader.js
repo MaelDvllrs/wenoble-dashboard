@@ -257,13 +257,17 @@
                         });
 
                         el.appendChild(clone);
-                    }
-                }
+                        
+                    
+                    }}
 
                 template.remove();
             }
 
         });
+
+        const readyMarker = document.createElement('div');
+        readyMarker.classList.add = 'ssr-wn-collection-template';
 
     } catch (error) {
         console.error("Erreur lors de la récupération des données :", error);
