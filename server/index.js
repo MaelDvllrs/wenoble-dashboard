@@ -39,7 +39,7 @@ const clientRouter = require('./admin/client');
 const whitelist = 
 [ 
   'http://77.37.51.201',
-  'https://testwenoble.fr',
+  'http://testwenoble.fr',
   'http://localhost:5173', 
   'https://dashboard.wenoble.fr', 
   'http://127.0.0.1:5500',
