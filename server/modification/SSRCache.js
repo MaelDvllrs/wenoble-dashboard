@@ -45,7 +45,7 @@ router.post('/updateCache', async (req, res) => {
                 const responseCollection = await axios.post(`${baseUrl}/api/cache/update/${collectionKey}`);
                 
                 // Invalidation du cache du template
-                const responseTemplate = await axios.post(`${baseUrl}/api/cache/update/${key}`);
+                const responseTemplate = await axios.post(`${baseUrl}/api/cache/update/test-${key}`);
                 
                 return res.send({
                     success: true,
