@@ -563,6 +563,13 @@ const EditPageBlog = () => {
                     console.error('Erreur lors de la mise à jour du cache :', error);
                     return;
                 }
+            } else {
+                try {
+                    await updateCache(mainText[1].value, idBlog, token, true);
+                } catch (error) {
+                    console.error('Erreur lors de la mise à jour du cache :', error);
+                    return;
+                }
             }
 
             navigate(`/dashboard/modification/blog/${idBlog}`);
@@ -603,7 +610,7 @@ const EditPageBlog = () => {
             });
 
             try{
-                await updateCache(slug, idBlog, token);
+                await updateCache(slug, idBlog, token, true);
             } catch (error) {
                 console.error('Erreur lors de la mise à jour du cache :', error);
                 return;

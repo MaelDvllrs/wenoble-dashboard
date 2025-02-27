@@ -448,12 +448,13 @@ export const updateGalleryBlog = async (id, gallery, token) => {
 };
 
 
-export const updateCache = async (key, id_blog, token) => {
+export const updateCache = async (key, id_blog, token, isDelete) => {
     try {
         const response = await Axios.post(`${apiUrl}/updateCache`, {
             params: {
                 key: key,
-                id_blog: id_blog
+                id_blog: id_blog,
+                isDelete: isDelete
             }
         }, {
             headers: {
