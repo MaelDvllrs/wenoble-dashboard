@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const db = require('../db');
 const axios = require('axios');
+const { is } = require('date-fns/locale/is');
 
 const router = express.Router();
 
@@ -11,7 +12,7 @@ router.use(express.json());
 require('dotenv').config();
 
 router.post('/updateCache', async (req, res) => {
-    const { key, id_blog } = req.body.params;
+    const { key, id_blog, isDelete } = req.body.params;
 
     if (!id_blog) {
         return res.status(400).send({ error: 'Les paramètres key et id_blog sont requis.' });
@@ -38,21 +39,26 @@ router.post('/updateCache', async (req, res) => {
                 const baseUrl = urlObj.origin;
                 const pathParts = urlObj.pathname.split('/').filter(Boolean);
                 const collectionKey = pathParts.length > 0 ? pathParts[0] : '';
-
-                
-
-                // Invalidation du cache de la collection
-                const responseCollection = await axios.post(`${baseUrl}/api/cache/update/${collectionKey}`);
-                
-                // Invalidation du cache du template
-                const responseTemplate = await axios.post(`${baseUrl}/api/cache/update/test-${key}`);
-                
+            
+                let responseTemplate = null; // Initialisation
+            
+                // Invalidation du cache de la collection si collectionKey existe
+                let responseCollection = null;
+                if (collectionKey) {
+                    responseCollection = await axios.post(`${baseUrl}/api/cache/update/${collectionKey}`);
+                }
+            
+                // Invalidation du cache du template si isDelete est faux
+                if (!isDelete) {
+                    responseTemplate = await axios.post(`${baseUrl}/api/cache/update/test-${key}`);
+                }
+            
                 return res.send({
                     success: true,
-                    templateCache: responseTemplate.data,
-                    collectionCache: responseCollection.data
+                    templateCache: responseTemplate ? responseTemplate.data : null,
+                    collectionCache: responseCollection ? responseCollection.data : null
                 });
-
+            
             } catch (axiosError) {
                 console.error('Erreur lors de l\'invalidation du cache:', axiosError.message);
                 return res.status(500).send({
