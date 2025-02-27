@@ -10,7 +10,7 @@ import {DefaultButton, RedButton, SecondaryButton, Popup} from '../../../../../T
 import SaveIcon from '@mui/icons-material/Save';
 import PublishIcon from '@mui/icons-material/Publish';
 
-import { updateImageBlog, updateBlogPage, updateTextBlog, updateRichTextBlog, updateVideoBlog, updateMultiReferenceBlog, updateGalleryBlog } from './apiBlog';
+import { updateImageBlog, updateBlogPage, updateTextBlog, updateRichTextBlog, updateVideoBlog, updateMultiReferenceBlog, updateGalleryBlog, updateCache } from './apiBlog';
 import { useTheme } from '@mui/material/styles';
 import { convertToRaw, ContentState, convertFromRaw } from 'draft-js';
 import UnpublishedIcon from '@mui/icons-material/Unpublished';
@@ -289,9 +289,6 @@ const EditPageBlog = () => {
     }, [blogDataConfig, idBlogPage]);
 
     
-
-    console.log(InfoBlogPage);
-
     useEffect(() => {
 
         Axios.get(`${apiUrl}/getBlogPage`, {
@@ -558,6 +555,16 @@ const EditPageBlog = () => {
                 }
             }
 
+            // Mettre à jour le cache
+            if (status === 1) {
+                try {
+                    await updateCache(mainText[1].value, idBlog, token);
+                } catch (error) {
+                    console.error('Erreur lors de la mise à jour du cache :', error);
+                    return;
+                }
+            }
+
             navigate(`/dashboard/modification/blog/${idBlog}`);
 
         } catch (error) {
@@ -594,6 +601,13 @@ const EditPageBlog = () => {
                   'Content-Type': 'application/json'
                 }
             });
+
+            try{
+                await updateCache(slug, idBlog, token);
+            } catch (error) {
+                console.error('Erreur lors de la mise à jour du cache :', error);
+                return;
+            }
             
             navigate(`/dashboard/modification/blog/${idBlog}`);
         } catch (error) {

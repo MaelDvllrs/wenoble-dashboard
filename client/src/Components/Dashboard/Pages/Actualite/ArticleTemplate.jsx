@@ -46,7 +46,7 @@ const ArticleTemplate = () => {
       ) : null
     }
 
-    <p className='ArticleTemplateBottom' style={{color : theme.palette.text.secondary}}>© 2024 wenoble</p>
+    <p className='ArticleTemplateBottom' style={{color : theme.palette.text.secondary}}>© 2025 wenoble</p>
 
     </div>
   );

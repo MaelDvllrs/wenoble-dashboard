@@ -102,6 +102,7 @@ export const createBlogPage = async (id, mainText, date, status, idUser, token) 
                     'Content-Type': 'application/json'
                 }
             });
+
         }
         return createBlogResponse.data;
     } catch (error) {
@@ -445,3 +446,29 @@ export const updateGalleryBlog = async (id, gallery, token) => {
         throw error;
     }
 };
+
+
+export const updateCache = async (key, id_blog, token) => {
+    try {
+        const response = await Axios.post(`${apiUrl}/updateCache`, {
+            params: {
+                key: key,
+                id_blog: id_blog
+            }
+        }, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.log('Tentative d\'update du cache échouée:', error.message);
+        // Retourne un objet avec un statut d'échec au lieu de propager l'erreur
+        return {
+            success: false,
+            error: "Cache invalidation failed but continuing execution",
+            details: error.message
+        };
+    }  
+}

@@ -8,7 +8,7 @@ import './createPageBlog.css'
 import {DefaultButton, SecondaryButton, Popup} from '../../../../../Theme/element';
 import SaveIcon from '@mui/icons-material/Save';
 import PublishIcon from '@mui/icons-material/Publish';
-import { createImageBlog, createBlogPage, createTextBlog, createRichTextBlog, createVideoBlog, createMultiReferenceBlog, createGalleryBlog } from './apiBlog';
+import { createImageBlog, createBlogPage, createTextBlog, createRichTextBlog, createVideoBlog, createMultiReferenceBlog, createGalleryBlog, updateCache } from './apiBlog';
 import { useTheme } from '@mui/material/styles';
 import { convertToRaw } from 'draft-js';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -263,6 +263,17 @@ const CreatePageBlog = () => {
             } catch (error) {
                 console.error(error);
                 return;
+            }
+
+
+            // Mettre à jour le cache
+            if (status === 1) {
+                try{
+                    await updateCache(mainText[1].value, idBlog, token);
+                } catch (error) {
+                    console.error('Erreur lors de la mise à jour du cache :', error);
+                    return;
+                }
             }
 
             navigate(`/dashboard/modification/blog/${idBlog}`);
