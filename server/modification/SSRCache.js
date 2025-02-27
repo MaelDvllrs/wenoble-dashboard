@@ -40,7 +40,7 @@ router.post('/updateCache', async (req, res) => {
                 const collectionKey = pathParts.length > 0 ? pathParts[0] : '';
 
                 // Invalidation du cache du template
-                const responseTemplate = await axios.post(`${baseUrl}/api/cache/update/${key}`);
+                //const responseTemplate = await axios.post(`${baseUrl}/api/cache/update/${key}`);
 
                 // Invalidation du cache de la collection
                 const responseCollection = await axios.post(`${baseUrl}/api/cache/update/${collectionKey}`);
