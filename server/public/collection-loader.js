@@ -129,13 +129,32 @@
                     }
 
                     if (el.hasAttribute("wn-link")) {
-                        const prelink = el.getAttribute("wn-link");
+                        const prelinkAttr = el.getAttribute("wn-link");
                         const linkData = blog.page_blog_slug;
+                        
                         if (linkData) {
-                            if (isWebflowPreview()) {
-                                el.href = `/template?slug=${linkData}`;
+                            // Vérifier si l'attribut contient une virgule (format: "normal,webflow")
+                            if (prelinkAttr.includes(',')) {
+                                // Séparation des deux parties
+                                const [normalPrelink, webflowPrelink] = prelinkAttr.split(',', 2).map(p => p.trim());
+                                
+                                if (isWebflowPreview()) {
+                                    // En mode prévisualisation Webflow, utiliser la partie après la virgule
+                                    const webflowPath = webflowPrelink || 'template';
+                                    el.href = `/${webflowPath}?slug=${linkData}`;
+                                } else {
+                                    // En mode normal, utiliser la partie avant la virgule
+                                    el.href = `/${normalPrelink}/${linkData}`;
+                                }
                             } else {
-                                el.href = `/${prelink}/${linkData}`;
+                                // Pas de virgule, format simple
+                                if (isWebflowPreview()) {
+                                    // Utiliser "template" par défaut pour Webflow
+                                    el.href = `/template?slug=${linkData}`;
+                                } else {
+                                    // Utiliser le prelink fourni
+                                    el.href = `/${prelinkAttr}/${linkData}`;
+                                }
                             }
                         }
                     }
