@@ -58,7 +58,7 @@
                 console.log('WeNoble content already loaded for this collection wrapper');
                 return;
             }
-            
+
             try {
             const encodedData = el.getAttribute("wn-collection-wrapper");
             const decodedData = decodeBase64(encodedData);
@@ -135,7 +135,7 @@
                             if (isWebflowPreview()) {
                                 el.href = `/template?slug=${linkData}`;
                             } else {
-                                el.href = `${prelink}/${linkData}`;
+                                el.href = `/${prelink}/${linkData}`;
                             }
                         }
                     }
