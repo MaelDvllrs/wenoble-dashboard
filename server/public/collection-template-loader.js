@@ -121,12 +121,12 @@
 
         // Parcours tous les éléments qui ont un attribut `wn-*` mais pas ceux dans wn-collection-wrapper
         const allElements = document.querySelectorAll("[wn-title], [wn-date-published], [wn-image], [wn-title], [wn-richtext], [wn-text], [wn-gallery], [wn-gallery-index], [wn-gallery-modal], [wn-video], [wn-multiReference-wrapper]");
-            
+
         // Filtrer les éléments pour exclure ceux qui sont dans un wn-collection-wrapper
         const elementsToProcess = Array.from(allElements).filter(el => {
             return !el.closest('[wn-collection-wrapper]');
         });
-        
+
         // Parcourir uniquement les éléments filtrés
         elementsToProcess.forEach(async el => {
             if (el.hasAttribute("wn-title")) {
@@ -181,11 +181,34 @@
             }
 
             if (el.hasAttribute("wn-gallery")) {
-                const key = el.getAttribute("wn-gallery");
-                const galleryData = data.content.gallery.find(gallery => gallery.id_config == key);
+                const attrValue = el.getAttribute("wn-gallery");
+                let idConfig, extraClasses = '';
+                        
+                // Vérifier si l'attribut contient une virgule
+                if (attrValue.includes(',')) {
+                    // Séparer la clé et les classes
+                    const [configPart, classesPart] = attrValue.split(',', 2);
+                    idConfig = configPart.trim();
+                    extraClasses = classesPart.trim();
+                } else {
+                    // Cas simple, pas de classes supplémentaires
+                    idConfig = attrValue.trim();
+                }
+                
+                const galleryData = data.content.gallery.find(gallery => gallery.id_config == idConfig);
                 if (galleryData) {
                     const galleryItems = JSON.parse(galleryData.gallery);
-                    el.innerHTML = galleryItems.map(img => `<img src="${apiUrl}/media/blogGallery/${img.src_photo}" alt="${img.alt}">`).join("");
+                    
+                    // Création des images avec les classes supplémentaires si présentes
+                    if (extraClasses) {
+                        el.innerHTML = galleryItems.map(img => 
+                            `<img src="${apiUrl}/media/blogGallery/${img.src_photo}" alt="${img.alt}" class="${extraClasses}">`
+                        ).join("");
+                    } else {
+                        el.innerHTML = galleryItems.map(img => 
+                            `<img src="${apiUrl}/media/blogGallery/${img.src_photo}" alt="${img.alt}">`
+                        ).join("");
+                    }
                 }
             }
 
