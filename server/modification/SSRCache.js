@@ -50,7 +50,7 @@ router.post('/updateCache', async (req, res) => {
             
                 // Invalidation du cache du template si isDelete est faux
                 if (!isDelete) {
-                    responseTemplate = await axios.post(`${baseUrl}/api/cache/update/test-${key}`);
+                    responseTemplate = await axios.post(`${baseUrl}/api/cache/update/template-${key}`);
                 }
             
                 return res.send({
