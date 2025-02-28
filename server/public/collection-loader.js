@@ -3,6 +3,8 @@
     const scriptTag = document.currentScript;
     const userKey = scriptTag.getAttribute("data-user-id");
 
+    
+
     if (!userKey) {
         console.error("User Key manquant !");
         return;
@@ -11,6 +13,10 @@
     function decodeBase64(encodedData) {
         return JSON.parse(atob(encodedData));
     }
+
+    
+
+    
 
     function getDateFormatOptions(formatString) {
         const options = {};
@@ -47,7 +53,13 @@
     }
 
     document.querySelectorAll("[wn-collection-wrapper]").forEach(async el => {
-        try {
+            
+            if (el.querySelector(".ssr-wn-collection-box")) {
+                console.log('WeNoble content already loaded for this collection wrapper');
+                return;
+            }
+            
+            try {
             const encodedData = el.getAttribute("wn-collection-wrapper");
             const decodedData = decodeBase64(encodedData);
 

@@ -67,6 +67,9 @@ a{
 .principal{
     height: calc(100% - 3rem);
     padding-top: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .secondaire{
@@ -111,6 +114,7 @@ a{
     grid-template-rows: 2.5rem  100%;
     height: 100%;
     width: 100%;
+    max-width: 1500px;
 
 }
 
