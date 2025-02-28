@@ -183,7 +183,7 @@
             if (el.hasAttribute("wn-gallery")) {
                 const attrValue = el.getAttribute("wn-gallery");
                 let idConfig, extraClasses = '';
-                        
+                            
                 // Vérifier si l'attribut contient une virgule
                 if (attrValue.includes(',')) {
                     // Séparer la clé et les classes
@@ -199,16 +199,22 @@
                 if (galleryData) {
                     const galleryItems = JSON.parse(galleryData.gallery);
                     
-                    // Création des images avec les classes supplémentaires si présentes
-                    if (extraClasses) {
-                        el.innerHTML = galleryItems.map(img => 
-                            `<img src="${apiUrl}/media/blogGallery/${img.src_photo}" alt="${img.alt}" class="${extraClasses}">`
-                        ).join("");
-                    } else {
-                        el.innerHTML = galleryItems.map(img => 
-                            `<img src="${apiUrl}/media/blogGallery/${img.src_photo}" alt="${img.alt}">`
-                        ).join("");
-                    }
+                    // Création des images et ajout sans supprimer le contenu existant
+                    galleryItems.forEach(img => {
+                        const imgElement = document.createElement('img');
+                        imgElement.src = `${apiUrl}/media/blogGallery/${img.src_photo}`;
+                        imgElement.alt = img.alt;
+                        
+                        if (extraClasses) {
+                            // Ajouter les classes supplémentaires
+                            extraClasses.split(' ').forEach(className => {
+                                if (className) imgElement.classList.add(className);
+                            });
+                        }
+                        
+                        // Ajouter l'image au conteneur sans supprimer le contenu existant
+                        el.appendChild(imgElement);
+                    });
                 }
             }
 
