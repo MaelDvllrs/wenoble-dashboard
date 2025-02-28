@@ -119,8 +119,16 @@
         }
 
 
-        // Parcours tous les éléments qui ont un attribut `wn-*`
-        document.querySelectorAll("[wn-title], [wn-date-published], [wn-image], [wn-title], [wn-richtext], [wn-text], [wn-gallery], [wn-gallery-index], [wn-gallery-modal], [wn-video], [wn-multiReference-wrapper]").forEach(async el => {
+        // Parcours tous les éléments qui ont un attribut `wn-*` mais pas ceux dans wn-collection-wrapper
+        const allElements = document.querySelectorAll("[wn-title], [wn-date-published], [wn-image], [wn-title], [wn-richtext], [wn-text], [wn-gallery], [wn-gallery-index], [wn-gallery-modal], [wn-video], [wn-multiReference-wrapper]");
+            
+        // Filtrer les éléments pour exclure ceux qui sont dans un wn-collection-wrapper
+        const elementsToProcess = Array.from(allElements).filter(el => {
+            return !el.closest('[wn-collection-wrapper]');
+        });
+        
+        // Parcourir uniquement les éléments filtrés
+        elementsToProcess.forEach(async el => {
             if (el.hasAttribute("wn-title")) {
                 el.textContent = info.blog[0].page_blog_name;
             }
