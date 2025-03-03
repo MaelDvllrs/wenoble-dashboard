@@ -199,10 +199,19 @@
                 if (galleryData) {
                     const galleryItems = JSON.parse(galleryData.gallery);
                     
-                    // Création des images et ajout sans supprimer le contenu existant
+                    // Création des images avec lazy loading
                     galleryItems.forEach(img => {
                         const imgElement = document.createElement('img');
-                        imgElement.src = `${apiUrl}/media/blogGallery/${img.src_photo}`;
+                        
+                        // Utiliser loading="lazy" pour le chargement paresseux natif
+                        imgElement.loading = "lazy";
+                        
+                        // Stocker l'URL réelle dans data-src
+                        imgElement.dataset.src = `${apiUrl}/media/blogGallery/${img.src_photo}`;
+                        
+                        // Mettre une image de remplacement très légère
+                        imgElement.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E";
+                        
                         imgElement.alt = img.alt;
                         
                         if (extraClasses) {
@@ -212,8 +221,45 @@
                             });
                         }
                         
+                        // Ajouter une classe pour identifier les images à charger
+                        imgElement.classList.add("lazyload-img");
+                        
                         // Ajouter l'image au conteneur sans supprimer le contenu existant
                         el.appendChild(imgElement);
+                    });
+                    
+                    // Configurer l'Intersection Observer pour charger les images
+                    setupLazyLoading();
+                }
+            }
+            
+            // Fonction pour configurer le lazy loading des images
+            function setupLazyLoading() {
+                // Vérifier si l'API IntersectionObserver est disponible
+                if ('IntersectionObserver' in window) {
+                    const imageObserver = new IntersectionObserver((entries, observer) => {
+                        entries.forEach(entry => {
+                            if (entry.isIntersecting) {
+                                const img = entry.target;
+                                if (img.dataset.src) {
+                                    img.src = img.dataset.src;
+                                    img.removeAttribute('data-src');
+                                    imageObserver.unobserve(img);
+                                }
+                            }
+                        });
+                    });
+                    
+                    // Observer toutes les images avec la classe lazyload-img
+                    document.querySelectorAll('.lazyload-img').forEach(img => {
+                        imageObserver.observe(img);
+                    });
+                } else {
+                    // Fallback pour les navigateurs qui ne supportent pas IntersectionObserver
+                    document.querySelectorAll('.lazyload-img').forEach(img => {
+                        if (img.dataset.src) {
+                            img.src = img.dataset.src;
+                        }
                     });
                 }
             }
