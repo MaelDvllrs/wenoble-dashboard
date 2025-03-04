@@ -289,6 +289,15 @@
                                     if (el.hasAttribute("wn-multiReference-title")) {
                                         el.textContent = multiReferenceInfo.label;
                                     }
+
+                                    if (el.hasAttribute("wn-multiReference-id")) {
+                                        const key = el.getAttribute("wn-multiReference-id");
+                                        if(key) {
+                                            el.id = `${key}_${blog.id_page_blog}`
+                                        } else {
+                                            el.id = `${blog.id_page_blog}`;
+                                        }
+                                    }
                                     if (el.hasAttribute("wn-multiReference-image")) {
                                         const key = el.getAttribute("wn-multiReference-image");
                                         const imageData = refContent.content.image.find(img => img.id_config == key);
