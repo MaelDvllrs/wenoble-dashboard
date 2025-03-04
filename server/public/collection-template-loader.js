@@ -133,15 +133,6 @@
                 el.textContent = info.blog[0].page_blog_name;
             }
 
-            if (el.hasAttribute("wn-id")) {
-                const key = el.getAttribute("wn-id");
-                if(key) {
-                    el.id = `${key}_${info.blog[0].id_page_blog}`
-                } else {
-                    el.id = `${info.blog[0].id_page_blog}`;
-                }
-            }
-
 
             if (el.hasAttribute("wn-date-published")) {
                 const format = el.getAttribute("wn-date-published");

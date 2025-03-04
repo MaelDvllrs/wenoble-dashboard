@@ -122,7 +122,7 @@
                 }
 
                 // Parcours tous les éléments qui ont un attribut `wn-*` dans le clone
-                clone.querySelectorAll("[wn-title], [wn-link], [wn-date-published], [wn-image], [wn-richtext], [wn-text], [wn-gallery], [wn-gallery-index],[wn-gallery-modal], [wn-video], [wn-multiReference-wrapper]").forEach(async el => {
+                clone.querySelectorAll("[wn-title], [wn-link], [wn-id], [wn-for] [wn-date-published], [wn-image], [wn-richtext], [wn-text], [wn-gallery], [wn-gallery-index],[wn-gallery-modal], [wn-video], [wn-multiReference-wrapper]").forEach(async el => {
                     
                     if (el.hasAttribute("wn-title")) {
                         el.textContent = blog.page_blog_name;
@@ -156,6 +156,25 @@
                                     el.href = `/${prelinkAttr}/${linkData}`;
                                 }
                             }
+                        }
+                    }
+
+
+                    if (el.hasAttribute("wn-id")) {
+                        const key = el.getAttribute("wn-id");
+                        if(key) {
+                            el.id = `${key}_${info.blog[0].id_page_blog}`
+                        } else {
+                            el.id = `${info.blog[0].id_page_blog}`;
+                        }
+                    }
+        
+                    if (el.hasAttribute("wn-for")) {
+                        const key = el.getAttribute("wn-for");
+                        if(key) {
+                            el.for = `${key}_${info.blog[0].id_page_blog}`
+                        } else {
+                            el.for = `${info.blog[0].id_page_blog}`;
                         }
                     }
         
