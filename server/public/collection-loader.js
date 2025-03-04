@@ -163,18 +163,18 @@
                     if (el.hasAttribute("wn-id")) {
                         const key = el.getAttribute("wn-id");
                         if(key) {
-                            el.id = `${key}_${info.blog[0].id_page_blog}`
+                            el.id = `${key}_${blog.id_page_blog}`
                         } else {
-                            el.id = `${info.blog[0].id_page_blog}`;
+                            el.id = `${blog.id_page_blog}`;
                         }
                     }
         
                     if (el.hasAttribute("wn-for")) {
                         const key = el.getAttribute("wn-for");
                         if(key) {
-                            el.for = `${key}_${info.blog[0].id_page_blog}`
+                            el.for = `${key}_${blog.id_page_blog}`
                         } else {
-                            el.for = `${info.blog[0].id_page_blog}`;
+                            el.for = `${blog.id_page_blog}`;
                         }
                     }
         
