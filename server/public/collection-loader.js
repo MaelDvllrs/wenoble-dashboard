@@ -279,7 +279,7 @@
                             });
         
                             const refContent = await referenceContent.json();
-                            console.log(refContent);
+                            
                             if (refContent) {
                                 const clone = template.cloneNode(true);
                                 clone.removeAttribute("wn-multiReference-box");
@@ -293,9 +293,9 @@
                                     if (el.hasAttribute("wn-multiReference-id")) {
                                         const key = el.getAttribute("wn-multiReference-id");
                                         if(key) {
-                                            el.id = `${key}_${multiReferenceInfo.id_page_blog}`
+                                            el.id = `${key}_${multiReferenceInfo.value}`
                                         } else {
-                                            el.id = `${multiReferenceInfo.id_page_blog}`;
+                                            el.id = `${multiReferenceInfo.value}`;
                                         }
                                     }
                                     if (el.hasAttribute("wn-multiReference-image")) {
