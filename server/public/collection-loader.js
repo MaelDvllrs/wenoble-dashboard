@@ -293,9 +293,9 @@
                                     if (el.hasAttribute("wn-multiReference-id")) {
                                         const key = el.getAttribute("wn-multiReference-id");
                                         if(key) {
-                                            el.id = `${key}_${blog.id_page_blog}`
+                                            el.id = `${key}_${multiReferenceInfo.id_page_blog}`
                                         } else {
-                                            el.id = `${blog.id_page_blog}`;
+                                            el.id = `${multiReferenceInfo.id_page_blog}`;
                                         }
                                     }
                                     if (el.hasAttribute("wn-multiReference-image")) {
