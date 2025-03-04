@@ -172,9 +172,9 @@
                     if (el.hasAttribute("wn-for")) {
                         const key = el.getAttribute("wn-for");
                         if(key) {
-                            el.for = `${key}_${blog.id_page_blog}`
+                            el.htmlFor = `${key}_${blog.id_page_blog}`
                         } else {
-                            el.for = `${blog.id_page_blog}`;
+                            el.htmlFor = `${blog.id_page_blog}`;
                         }
                     }
         
