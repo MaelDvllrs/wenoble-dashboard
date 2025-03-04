@@ -133,6 +133,15 @@
                 el.textContent = info.blog[0].page_blog_name;
             }
 
+            if (el.hasAttribute("wn-id")) {
+                const key = el.getAttribute("wn-id");
+                if(key) {
+                    el.id = `${key}_${info.blog[0].id_page_blog}`
+                } else {
+                    el.id = `${info.blog[0].id_page_blog}`;
+                }
+            }
+
 
             if (el.hasAttribute("wn-date-published")) {
                 const format = el.getAttribute("wn-date-published");
@@ -233,36 +242,6 @@
                 }
             }
             
-            // Fonction pour configurer le lazy loading des images
-            function setupLazyLoading() {
-                // Vérifier si l'API IntersectionObserver est disponible
-                if ('IntersectionObserver' in window) {
-                    const imageObserver = new IntersectionObserver((entries, observer) => {
-                        entries.forEach(entry => {
-                            if (entry.isIntersecting) {
-                                const img = entry.target;
-                                if (img.dataset.src) {
-                                    img.src = img.dataset.src;
-                                    img.removeAttribute('data-src');
-                                    imageObserver.unobserve(img);
-                                }
-                            }
-                        });
-                    });
-                    
-                    // Observer toutes les images avec la classe lazyload-img
-                    document.querySelectorAll('.lazyload-img').forEach(img => {
-                        imageObserver.observe(img);
-                    });
-                } else {
-                    // Fallback pour les navigateurs qui ne supportent pas IntersectionObserver
-                    document.querySelectorAll('.lazyload-img').forEach(img => {
-                        if (img.dataset.src) {
-                            img.src = img.dataset.src;
-                        }
-                    });
-                }
-            }
 
             if (el.hasAttribute("wn-gallery-index")) {
                 const key = el.getAttribute("wn-gallery-index");
