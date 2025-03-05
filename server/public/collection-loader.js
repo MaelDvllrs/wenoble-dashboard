@@ -277,9 +277,11 @@
                                 }
                             });
 
-                            console.log(referenceContent);
+                            
         
                             const refContent = await referenceContent.json();
+
+                            console.log(refContent);
                             
                             if (refContent) {
                                 const clone = template.cloneNode(true);
