@@ -299,7 +299,7 @@
                                 clone.removeAttribute("wn-multiReference-box");
 
                                 // Parcours tous les éléments qui ont un attribut `wn-*` dans le clone
-                                clone.querySelectorAll("[wn-multiReference-title], [wn-multiReference-image], [wn-multiReference-text]").forEach(el => {
+                                clone.querySelectorAll("[wn-multiReference-title], [wn-multiReference-link], [wn-multiReference-image], [wn-multiReference-text]").forEach(el => {
                                     if (el.hasAttribute("wn-multiReference-title")) {
                                         el.textContent = multiReferenceInfo.label;
                                     }
@@ -312,6 +312,38 @@
                                             el.id = `${multiReferenceInfo.value}`;
                                         }
                                     }
+
+                                    if (el.hasAttribute("wn-multiReference-link")) {
+                                        const prelinkAttr = el.getAttribute("wn-multiReference-link");
+                                        const linkData = refInfo.blog[0].page_blog_slug;
+                                        
+                                        if (linkData) {
+                                            // Vérifier si l'attribut contient une virgule (format: "normal,webflow")
+                                            if (prelinkAttr.includes(',')) {
+                                                // Séparation des deux parties
+                                                const [normalPrelink, webflowPrelink] = prelinkAttr.split(',', 2).map(p => p.trim());
+                                                
+                                                if (isWebflowPreview()) {
+                                                    // En mode prévisualisation Webflow, utiliser la partie après la virgule
+                                                    const webflowPath = webflowPrelink || 'template';
+                                                    el.href = `/${webflowPath}?slug=${linkData}`;
+                                                } else {
+                                                    // En mode normal, utiliser la partie avant la virgule
+                                                    el.href = `/${normalPrelink}/${linkData}`;
+                                                }
+                                            } else {
+                                                // Pas de virgule, format simple
+                                                if (isWebflowPreview()) {
+                                                    // Utiliser "template" par défaut pour Webflow
+                                                    el.href = `/template?slug=${linkData}`;
+                                                } else {
+                                                    // Utiliser le prelink fourni
+                                                    el.href = `/${prelinkAttr}/${linkData}`;
+                                                }
+                                            }
+                                        }
+                                    }
+
                                     if (el.hasAttribute("wn-multiReference-image")) {
                                         const key = el.getAttribute("wn-multiReference-image");
                                         const imageData = refContent.content.image.find(img => img.id_config == key);
