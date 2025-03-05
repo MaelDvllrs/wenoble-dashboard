@@ -104,6 +104,8 @@ const whitelist =
   'https://psc-environnement.fr',
 
   'https://wechoose-site.webflow.io',
+
+  'https://thibault-laupretre-wenoble.webflow.io'
 ];
 
 
