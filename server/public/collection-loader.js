@@ -122,7 +122,7 @@
                 }
 
                 // Parcours tous les éléments qui ont un attribut `wn-*` dans le clone
-                clone.querySelectorAll("[wn-title], [wn-link], [wn-id], [wn-for] [wn-date-published], [wn-image], [wn-richtext], [wn-text], [wn-gallery], [wn-gallery-index],[wn-gallery-modal], [wn-video], [wn-multiReference-wrapper]").forEach(async el => {
+                clone.querySelectorAll("[wn-title], [wn-link], [wn-id], [wn-for], [wn-date-published], [wn-image], [wn-richtext], [wn-text], [wn-gallery], [wn-gallery-index],[wn-gallery-modal], [wn-video], [wn-multiReference-wrapper]").forEach(async el => {
                     
                     if (el.hasAttribute("wn-title")) {
                         el.textContent = blog.page_blog_name;
