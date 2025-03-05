@@ -268,6 +268,17 @@
                         }
                         
                         for (const multiReferenceInfo of multiReferenceInfos) {
+
+                            const referenceInfo = await fetch(`${apiUrl}/api/sendBlogInfo`, {    
+                                method: "GET",
+                                headers: {
+                                    'api_key': userKey,
+                                    'id_data': multiReferenceInfo.value,
+                                }
+                            });
+
+                            const refInfo = await referenceInfo.json();
+
                             const referenceContent = await fetch(`${apiUrl}/api/sendBlogContent`, {
                                 method: "GET",
                                 headers: {
@@ -281,7 +292,7 @@
         
                             const refContent = await referenceContent.json();
 
-                            console.log(multiReferenceInfo);
+                            console.log(refInfo);
                             
                             if (refContent) {
                                 const clone = template.cloneNode(true);
