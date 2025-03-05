@@ -281,7 +281,7 @@
         
                             const refContent = await referenceContent.json();
 
-                            console.log(refContent);
+                            console.log(multiReferenceInfo);
                             
                             if (refContent) {
                                 const clone = template.cloneNode(true);
