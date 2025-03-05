@@ -93,7 +93,6 @@
                 return;
             }
 
-            console.log(dataBlog);
 
             const template = el.querySelector("[wn-collection-box]");
             if (!template) {
@@ -277,6 +276,8 @@
                                     'id_blog_page': multiReferenceInfo.value,
                                 }
                             });
+
+                            console.log(referenceContent);
         
                             const refContent = await referenceContent.json();
                             
