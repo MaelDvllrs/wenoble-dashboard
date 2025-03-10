@@ -64,7 +64,7 @@ const ListeBlog = () => {
             <div className="Item_menu">
               <p style={{color: theme.palette.text.secondary}} className="Item_portfolio_element order_element">Ordre</p>
               <p style={{color: theme.palette.text.secondary}} className="Item_portfolio_element blog_name_element">Titre du blog</p>
-              <p style={{color: theme.palette.text.secondary}} className="Item_portfolio_element blog_status">Satus</p>
+              <p style={{color: theme.palette.text.secondary}} className="Item_portfolio_element blog_status">Status</p>
               <p style={{color: theme.palette.text.secondary}} className="Item_portfolio_element blog_date_element">Date de création</p>
               <p style={{color: theme.palette.text.secondary}} className="Item_portfolio_element blog_date_element">Date de modification</p>
               <p style={{color: theme.palette.text.secondary}} className="Item_portfolio_element blog_date_element">Date de Publication</p>

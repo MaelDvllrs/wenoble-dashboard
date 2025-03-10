@@ -99,7 +99,7 @@ router.get('/sendPhotoPortfolio',apiKeyMiddleware, (req, res) => {
 
 router.get('/sendBlog',apiKeyMiddleware, (req, res) => {
     const ids = req.ids; // IDs des blogs passés en paramètre de requête
-    const order = req.query.order || 'ASC'; // Par défaut, l'ordre est croissant
+    const order = req.query.order || 'DESC'; // Par défaut, l'ordre est decroissant
     const limit = req.query.limit ? parseInt(req.query.limit, 10) : null;
     const colone = req.query.colone || 'page_blog_publish_date'; // Par défaut, on trie par date de publication
     const joinTable = req.query.joinTable || 'blog_page'; // Par défaut, on joint la table blog_page
