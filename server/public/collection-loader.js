@@ -369,9 +369,16 @@
 
                 });
                 
-                clone.classList.add("ssr-wn-collection-box");
                 el.appendChild(clone);
             }
+
+            const collectionMarker = document.createElement('div');
+            collectionMarker.className = 'ssr-wn-collection-box';
+            collectionMarker.style.display = 'none';
+            collectionMarker.setAttribute('data-collection-processed', 'true');
+            collectionMarker.setAttribute('data-items-count', dataBlog.blog.length);
+            collectionMarker.setAttribute('data-processed-time', new Date().toISOString());
+            el.appendChild(collectionMarker);
 
             template.remove();
 
