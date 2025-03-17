@@ -372,6 +372,8 @@
                 el.appendChild(clone);
             }
 
+            template.remove();
+
             const collectionMarker = document.createElement('div');
             collectionMarker.className = 'ssr-wn-collection-box';
             collectionMarker.style.display = 'none';
@@ -380,7 +382,7 @@
             collectionMarker.setAttribute('data-processed-time', new Date().toISOString());
             el.appendChild(collectionMarker);
 
-            template.remove();
+            
 
         } catch (error) {
             console.error("Erreur lors de la récupération des données :", error);
