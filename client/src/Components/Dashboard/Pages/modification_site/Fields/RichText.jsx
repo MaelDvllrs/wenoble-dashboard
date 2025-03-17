@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Editor, EditorState, RichUtils, CompositeDecorator, convertFromRaw, AtomicBlockUtils, convertToRaw } from 'draft-js';
+import { Editor, EditorState, RichUtils, CompositeDecorator, convertFromRaw, AtomicBlockUtils, convertToRaw, getVisibleSelectionRect } from 'draft-js';
 import 'draft-js/dist/Draft.css';
 import { FaBold, FaItalic, FaLink, FaListUl, FaListOl, FaImage, FaTrash } from "react-icons/fa";
 import { compressImage } from '../../../apiImage'; // Importer la fonction compressImage
 import './Field.css';
 import {SecondaryButton} from '../../../../../Theme/element';
 
+
+// Composant Link pour les liens
 
 const Link = (props) => {
   console.log('props', props.entityKey);
@@ -14,6 +16,89 @@ const Link = (props) => {
     <a href={url} style={{ color: 'blue', textDecoration: 'underline' }}>
       {props.children}
     </a>
+  );
+};
+
+
+const LinkTooltip = ({ position, onSubmit, onCancel }) => {
+  const [urlValue, setUrlValue] = useState('');
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    // Focus automatiquement sur l'input quand le tooltip apparaît
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, []);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit(urlValue);
+  };
+
+  return (
+    <div 
+      className="link-tooltip"
+      style={{
+        position: 'absolute',
+        left: position ? `${position.left}px` : 0,
+        top: position ? `${position.bottom + 5}px` : 0,
+        zIndex: 1000,
+        backgroundColor: '#fff',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
+        padding: '10px',
+        borderRadius: '4px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px'
+      }}
+    >
+      <form onSubmit={handleSubmit}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <input
+            ref={inputRef}
+            type="url"
+            placeholder="https://example.com"
+            value={urlValue}
+            onChange={(e) => setUrlValue(e.target.value)}
+            style={{ 
+              padding: '5px 8px', 
+              borderRadius: '4px', 
+              border: '1px solid #ccc',
+              flexGrow: 1
+            }}
+          />
+          <button 
+            type="button" 
+            onClick={handleSubmit}
+            style={{ 
+              backgroundColor: '#4CAF50', 
+              border: 'none',
+              color: 'white',
+              padding: '5px',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            <FaCheck />
+          </button>
+          <button 
+            type="button" 
+            onClick={onCancel}
+            style={{ 
+              backgroundColor: '#f44336', 
+              border: 'none',
+              color: 'white',
+              padding: '5px',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            <FaTimes />
+          </button>
+        </div>
+      </form>
+    </div>
   );
 };
 
@@ -90,6 +175,9 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
   const [createBoolRichText, setCreateBoolRichText] = useState('');
   const fileInputRef = useRef(null);
 
+  const [showLinkTooltip, setShowLinkTooltip] = useState(false);
+  const [tooltipPosition, setTooltipPosition] = useState(null);
+
   const handleEditorChange = (newState) => {
     setEditorState(newState);
 
@@ -135,13 +223,45 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
     setEditorState(RichUtils.toggleBlockType(editorState, 'ordered-list-item'));
   };
 
+
+
+  // --------LINK---------
+
   const handleLinkClick = () => {
-    const url = prompt('Enter a URL');
+    const selection = editorState.getSelection();
+    
+    // Vérifier si du texte est sélectionné
+    if (selection.isCollapsed()) {
+      alert("Veuillez d'abord sélectionner du texte pour ajouter un lien.");
+      return;
+    }
+
+    // Obtenir la position de la sélection
+    const selectionRect = getVisibleSelectionRect(window);
+    if (selectionRect) {
+      setTooltipPosition(selectionRect);
+      setShowLinkTooltip(true);
+    }
+  };
+
+  const handleLinkSubmit = (url) => {
+    // Vérifier si l'URL est valide
+    if (!url || url.trim() === '') {
+      setShowLinkTooltip(false);
+      return;
+    }
+
+    // Formater l'URL si nécessaire
+    let formattedUrl = url;
+    if (!/^https?:\/\//i.test(url)) {
+      formattedUrl = 'https://' + url;
+    }
+
     const contentState = editorState.getCurrentContent();
     const contentStateWithEntity = contentState.createEntity(
       'LINK',
       'MUTABLE',
-      { url }
+      { url: formattedUrl }
     );
     const entityKey = contentStateWithEntity.getLastCreatedEntityKey();
     const newEditorState = EditorState.set(
@@ -154,7 +274,19 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
       newEditorState.getSelection(),
       entityKey
     ));
+    
+    setShowLinkTooltip(false);
   };
+
+  // Fonction pour annuler l'insertion du lien
+  const handleLinkCancel = () => {
+    setShowLinkTooltip(false);
+  };
+
+
+
+  //--------------------IMAGE---------------------
+
 
   const handleImageClick = () => {
     fileInputRef.current.click();
@@ -226,11 +358,17 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
     onChange({ data: updatedData });
   };
 
+
+
+
+
   const handleReturn = (e) => {
     const contentState = editorState.getCurrentContent();
     const selectionState = editorState.getSelection();
     const blockKey = selectionState.getStartKey();
     const block = contentState.getBlockForKey(blockKey);
+
+    
 
     if (block.getType() === 'atomic') {
       const newContentState = Modifier.insertText(
@@ -260,6 +398,9 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
     }
     return null;
   };
+
+
+
 
   useEffect(() => {
     if (dataValue && Object.keys(dataValue).length > 0 && type === 'richText') {
@@ -312,6 +453,14 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
         blockRendererFn={blockRendererFn} 
         className="editor"
       />
+
+      {showLinkTooltip && tooltipPosition && (
+        <LinkTooltip 
+          position={tooltipPosition}
+          onSubmit={handleLinkSubmit}
+          onCancel={handleLinkCancel}
+        />
+      )}
     </div>
   );
 };
