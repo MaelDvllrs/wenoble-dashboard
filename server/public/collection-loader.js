@@ -54,12 +54,12 @@
 
     document.querySelectorAll("[wn-collection-wrapper]").forEach(async el => {
             
-            if (el.querySelector(".ssr-wn-collection-box")) {
-                console.log('WeNoble content already loaded for this collection wrapper');
-                return;
-            }
+        if (el.querySelector(".ssr-wn-collection-box")) {
+            console.log('WeNoble content already loaded for this collection wrapper');
+            return;
+        }
 
-            try {
+        try {
             const encodedData = el.getAttribute("wn-collection-wrapper");
             const decodedData = decodeBase64(encodedData);
 
@@ -100,25 +100,28 @@
                 return;
             }
 
+            const blogPromises = [];
+
             for (const blog of dataBlog.blog) {
-                const clone = template.cloneNode(true);
-                clone.removeAttribute("wn-collection-box");
+                const blogPromise = (async () => {
+                    const clone = template.cloneNode(true);
+                    clone.removeAttribute("wn-collection-box");
 
-                const response = await fetch(`${apiUrl}/api/sendBlogContent`, {
-                    method: "GET",
-                    headers: {
-                        'api_key': userKey,
-                        'id_blog': blog.id_blog,
-                        'id_blog_page': blog.id_page_blog,
+                    const response = await fetch(`${apiUrl}/api/sendBlogContent`, {
+                        method: "GET",
+                        headers: {
+                            'api_key': userKey,
+                            'id_blog': blog.id_blog,
+                            'id_blog_page': blog.id_page_blog,
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (!data) {
+                        console.error("Aucune donnée trouvée pour cette page.");
+                        return null;
                     }
-                });
-
-                const data = await response.json();
-
-                if (!data) {
-                    console.error("Aucune donnée trouvée pour cette page.");
-                    return;
-                }
 
                 // Parcours tous les éléments qui ont un attribut `wn-*` dans le clone
                 clone.querySelectorAll("[wn-title], [wn-link], [wn-id], [wn-for], [wn-date-published], [wn-image], [wn-richtext], [wn-text], [wn-gallery], [wn-gallery-index],[wn-gallery-modal], [wn-video], [wn-multiReference-wrapper]").forEach(async el => {
@@ -361,6 +364,7 @@
                                 });
         
                                 el.appendChild(clone);
+                                
                             }
                         }
         
@@ -370,7 +374,13 @@
                 });
                 
                 el.appendChild(clone);
+                return clone;   
+            })();
+
+            blogPromises.push(blogPromise);
             }
+
+            await Promise.all(blogPromises);  
 
             template.remove();
 
