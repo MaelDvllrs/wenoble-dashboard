@@ -105,7 +105,8 @@ const whitelist =
 
   'https://wechoose-site.webflow.io',
 
-  'https://thibault-laupretre-wenoble.webflow.io'
+  'https://thibault-laupretre-wenoble.webflow.io',
+  'https://thibault-laupretre.com',  
 ];
 
 
