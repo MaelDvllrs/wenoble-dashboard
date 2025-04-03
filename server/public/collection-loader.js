@@ -205,6 +205,7 @@
                                 el.alt = imageData.alt_image;
                             } else {
                                 el.style.display = "none"; 
+                            }
                         }
                     }
 
