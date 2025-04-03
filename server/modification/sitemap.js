@@ -49,6 +49,30 @@ const writeSitemap = (sitemap, sitemapPath) => {
     });
   });
 };
+
+
+const findSitemapPath = async (folder) => {
+  // Premier chemin à essayer
+  const primaryPath = path.join(__dirname, `../../../client/${folder}/static/sitemap.xml`);
+  
+  // Vérification si le fichier existe au chemin principal
+  try {
+    await fs.promises.access(primaryPath, fs.constants.F_OK);
+    return primaryPath;
+  } catch (error) {
+    // Si le fichier n'existe pas, essayer le chemin alternatif
+    const alternativePath = path.join(__dirname, `../../../client-generation/${folder}/static/sitemap.xml`);
+    try {
+      await fs.promises.access(alternativePath, fs.constants.F_OK);
+      return alternativePath;
+    } catch (altError) {
+      // Si aucun fichier n'existe, créer le répertoire et retourner le chemin principal
+      const dir = path.dirname(primaryPath);
+      await fs.promises.mkdir(dir, { recursive: true });
+      return primaryPath;
+    }
+  }
+};
   
 // Route pour ajouter un nouvel article de blog
 router.post('/addRouteBlogSitemap', async (req, res) => {
@@ -93,7 +117,7 @@ router.post('/addRouteBlogSitemap', async (req, res) => {
     const slug_blog = blogResult[0].slug_blog;
     const url = `${slug_blog}${slug}`;
 
-    const sitemapPath = path.join(__dirname, `../../../client/${folder}/static/sitemap.xml`);
+    const sitemapPath = await findSitemapPath(folder);
 
     // Lire le fichier sitemap existant
     const sitemap = await readSitemap(sitemapPath);
@@ -173,7 +197,7 @@ router.post('/deleteRouteBlogSitemap', async (req, res) => {
 
 
 
-    const sitemapPath = path.join(__dirname, `../../../client/${folder}/static/sitemap.xml`);
+    const sitemapPath = await findSitemapPath(folder);
 
     // Lire le fichier sitemap existant
     const sitemap = await readSitemap(sitemapPath);
@@ -244,7 +268,9 @@ router.post('/updateRouteBlogSitemap', async (req, res) => {
     const slug_old = page_blog_slug[0].page_blog_slug;
     const url_old = `${slug_blog}${slug_old}`; 
 
-    const sitemapPath = path.join(__dirname, `../../../client/${folder}/static/sitemap.xml`);
+    const sitemapPath = await findSitemapPath(folder);
+
+
 
     // Lire le fichier sitemap existant
     const sitemap = await readSitemap(sitemapPath);
