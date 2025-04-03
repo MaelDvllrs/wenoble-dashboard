@@ -75,7 +75,7 @@ router.post('/generateSite', (req, res) => {
     }
 
     // 2. Récupérer les blogs de l'utilisateur
-    const SQL_BLOGS = 'SELECT id_blog, slug_blog FROM blog WHERE id_user = ?';
+    const SQL_BLOGS = 'SELECT id_blog, slug_blog FROM blog WHERE id_user = ? AND slug_blog IS NOT NULL';
     const Values_BLOGS = [id_user];
 
     db.query(SQL_BLOGS, Values_BLOGS, (err, blogResults) => {
