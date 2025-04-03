@@ -21,6 +21,7 @@ function extractTemplateType(slug) {
     try {
       // Gestion des URL complètes (avec https:// etc.)
       let pathSegments;
+      console.log('slug', slug)
     
       if (slug.startsWith('http://') || slug.startsWith('https://')) {
         // Pour les URLs complètes, utiliser l'objet URL
