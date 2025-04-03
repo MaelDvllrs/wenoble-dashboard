@@ -7,14 +7,17 @@ import {jwtDecode} from 'jwt-decode';
 import './createPageBlog.css'
 import {DefaultButton, SecondaryButton, Popup} from '../../../../../Theme/element';
 import SaveIcon from '@mui/icons-material/Save';
-import PublishIcon from '@mui/icons-material/Publish';
-import { createImageBlog, createBlogPage, createTextBlog, createRichTextBlog, createVideoBlog, createMultiReferenceBlog, createGalleryBlog, updateCache } from './apiBlog';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import PendingIcon from '@mui/icons-material/Pending';
+import { createImageBlog, createBlogPage, createTextBlog, createRichTextBlog, createVideoBlog, createMultiReferenceBlog, createGalleryBlog, generateStaticSite } from './apiBlog';
 import { useTheme } from '@mui/material/styles';
 import { convertToRaw } from 'draft-js';
 import CircularProgress from '@mui/material/CircularProgress';
 import Tooltip from '@mui/material/Tooltip';
 import Field from "../Fields/fields";
 import Cookies from 'js-cookie';
+
+import { Snackbar, Paper, Box } from '@mui/material';
 
 
 
@@ -34,7 +37,17 @@ const CreatePageBlog = () => {
     const [slugValue, setSlugValue] = useState('');
 
     const [savingPage, setSavingPage] = useState(false);
+    
+    const [dataRetrievalStatus, setDataRetrievalStatus] = useState(false);
+    const [pageGenerationStatus, setPageGenerationStatus] = useState(false);
+    const [sitePublishingStatus, setSitePublishingStatus] = useState(false);
 
+
+    const [dataLoading, setDataLoading] = useState(false);
+    const [dataSaved, setDataSaved] = useState(false);
+
+
+    
     const [titleFieldMissed , setTitleFieldMissed] = useState(false);
     const [slugFieldMissed , setSlugFieldMissed] = useState(false);
 
@@ -131,7 +144,11 @@ const CreatePageBlog = () => {
 
     const handleSave = async (status) => {
 
-        setSavingPage(true);
+        if (status === 1) {
+            setSavingPage(true);
+        } else {
+            setDataLoading(true);
+        }
 
         let titleMissed = false;
         let slugMissed = false;
@@ -266,14 +283,58 @@ const CreatePageBlog = () => {
             }
 
 
-            // Mettre à jour le cache
+            // Générer le site
             if (status === 1) {
-                try{
-                    await updateCache(mainText[1].value, idBlog, token);
+                // Commence par la récupération des données (déjà faite dans handleSave)
+                setDataRetrievalStatus(true);
+
+                try {
+                    // La récupération des données est terminée, passe à la génération des pages
+                    setTimeout(() => {
+                        setPageGenerationStatus(true);
+                    }, 1000); // Délai pour visualiser la transition
+
+                    // Appel à l'API de génération du site
+                    await generateStaticSite(token);
+
+                    // La génération est terminée, passe à la publication
+                    setTimeout(() => {
+                        setSitePublishingStatus(true);
+                    }, 1000); // Délai pour visualiser la transition
+
+                    // Simule le temps nécessaire pour publier
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+
+                    // Réinitialise tous les états
+                    setDataRetrievalStatus(false);
+                    setPageGenerationStatus(false);
+                    setSitePublishingStatus(false);
+                    setSavingPage(false);
                 } catch (error) {
-                    console.error('Erreur lors de la mise à jour du cache :', error);
+                    console.error('Erreur lors de la generation static :', error);
+                    // Réinitialise tous les états en cas d'erreur
+                    setDataRetrievalStatus(false);
+                    setPageGenerationStatus(false);
+                    setSitePublishingStatus(false);
+                    setSavingPage(false);
                     return;
                 }
+            } else{
+
+                // Toutes vos opérations de sauvegarde ici...
+
+                // Après toutes les opérations, montrer la confirmation
+                // avant de fermer la snackbar
+                setTimeout(() => {
+                    setDataSaved(true); // Activez l'icône de validation
+
+                    // Puis fermez la snackbar après un délai supplémentaire
+                    setTimeout(() => {
+                        setDataLoading(false);
+                        setDataSaved(false); // Réinitialiser pour la prochaine utilisation
+                    }, 1000);
+                }, 1500);
+
             }
 
             navigate(`/dashboard/modification/blog/${idBlog}`);
@@ -328,12 +389,147 @@ const CreatePageBlog = () => {
                   </div>
                 ))}
             </div>
-            {savingPage && (   
-                <Popup theme={theme}>
-                    <CircularProgress sx={{color:"#2ec96d"}}/>
-                </Popup>
-            )}
             
+            <Snackbar
+                open={savingPage}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                sx={{ bottom: 24 }}
+            >
+                <Paper 
+                    elevation={6}
+                    sx={{
+                        p: 2,
+                        minWidth: 300,
+                        maxWidth: 400,
+                        backgroundColor: theme.palette.background.default,
+                        borderRadius: 2
+                    }}
+                >
+                    <Box sx={{ mb: 2 }}>
+                        <h3 style={{margin: 0, color: theme.palette.text.primary}}>Publication du site</h3>
+                    </Box>
+                
+                    {/* Étape 1: Récupération des données */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                        {!dataRetrievalStatus ? (
+                            // État 1: En attente
+                            <>
+                                <PendingIcon sx={{ color: theme.palette.text.secondary, width: 16, height: 16 }} />
+                                <Box sx={{ color: theme.palette.text.secondary }}>Récupération des données</Box>
+                            </>
+                        ) : pageGenerationStatus ? (
+                            // État 3: Terminé
+                            <>
+                                <CheckCircleIcon sx={{ color: "#2ec96d", width: 16, height: 16 }} />
+                                <Box sx={{ color: theme.palette.text.secondary }}>
+                                    Récupération des données
+                                </Box>
+                            </>
+                        ) : (
+                            // État 2: En cours
+                            <>
+                                <CircularProgress size={16} sx={{color: "#2ec96d"}}/>
+                                <Box sx={{ color: theme.palette.text.primary }}>
+                                    Récupération des données...
+                                </Box>
+                            </>
+                        )}
+                    </Box>
+                    
+                    {/* Étape 2: Génération des pages */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                        {!pageGenerationStatus ? (
+                            // État 1: En attente
+                            <>
+                                <PendingIcon sx={{ color: theme.palette.text.secondary, width: 16, height: 16 }} />
+                                <Box sx={{ color: theme.palette.text.secondary }}>Génération des pages</Box>
+                            </>
+                        ) : sitePublishingStatus ? (
+                            // État 3: Terminé
+                            <>
+                                <CheckCircleIcon sx={{ color: "#2ec96d", width: 16, height: 16 }} />
+                                <Box sx={{ color: theme.palette.text.secondary }}>
+                                    Génération des pages
+                                </Box>
+                            </>
+                        ) : (
+                            // État 2: En cours
+                            <>
+                                <CircularProgress size={16} sx={{color: "#2ec96d"}}/>
+                                <Box sx={{ color: theme.palette.text.primary }}>
+                                    Génération des pages...
+                                </Box>
+                            </>
+                        )}
+                    </Box>
+                    
+                    {/* Étape 3: Publication du site */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        {!sitePublishingStatus ? (
+                            // État 1: En attente
+                            <>
+                                <PendingIcon sx={{ color: theme.palette.text.secondary, width: 16, height: 16 }} />
+                                <Box sx={{ color: theme.palette.text.secondary }}>Publication du site</Box>
+                            </>
+                        ) : false ? ( // Remplacer 'false' par une variable d'état si vous avez une étape après celle-ci
+                            // État 3: Terminé - Exemple laissé si vous ajoutez une étape finale
+                            <>
+                                <CheckCircleIcon sx={{ color: "#2ec96d", width: 16, height: 16 }} />
+                                <Box sx={{ color: theme.palette.text.secondary }}>
+                                    Publication du site ✓
+                                </Box>
+                            </>
+                        ) : (
+                            // État 2: En cours
+                            <>
+                                <CircularProgress size={16} sx={{color: "#2ec96d"}}/>
+                                <Box sx={{ color: theme.palette.text.primary }}>
+                                    Publication du site...
+                                </Box>
+                            </>
+                        )}
+                    </Box>
+                </Paper>
+            </Snackbar>
+
+            <Snackbar
+                open={dataLoading}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                sx={{ bottom: 24 }}
+            >
+                <Paper
+                    elevation={6}
+                    sx={{
+                        p: 2,
+                        minWidth: 250,
+                        maxWidth: 350,
+                        backgroundColor: theme.palette.background.default,
+                        borderRadius: 2,
+                    }}
+                >
+                    <Box sx={{ mb: 1 }}>
+                        <h3 style={{ margin: 0, color: theme.palette.text.primary }}>Enregistrement de la page</h3>
+                    </Box>
+                
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        {dataSaved ? (
+                            <>
+                                <CheckCircleIcon sx={{ color: "#2ec96d", width: 16, height: 16 }} />
+                                <Box sx={{ color: theme.palette.text.secondary }}>
+                                    Sauvegarde des données
+                                </Box>
+                            </>
+                        ) : (
+                            <>
+                                <CircularProgress size={16} sx={{ color: "#2ec96d" }} />
+                                <Box sx={{ color: theme.palette.text.primary }}>
+                                    Sauvegarde des données...
+                                </Box>
+                            </>
+                        )}
+                    </Box>
+                </Paper>
+            </Snackbar>
         </div>
 
     )

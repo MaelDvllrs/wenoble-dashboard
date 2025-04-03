@@ -93,7 +93,7 @@ router.post('/addRouteBlogSitemap', async (req, res) => {
     const slug_blog = blogResult[0].slug_blog;
     const url = `${slug_blog}${slug}`;
 
-    const sitemapPath = path.join(__dirname, `../../../client/${folder}/sitemap.xml`);
+    const sitemapPath = path.join(__dirname, `../../../client/${folder}/static/sitemap.xml`);
 
     // Lire le fichier sitemap existant
     const sitemap = await readSitemap(sitemapPath);
@@ -173,7 +173,7 @@ router.post('/deleteRouteBlogSitemap', async (req, res) => {
 
 
 
-    const sitemapPath = path.join(__dirname, `../../../client/${folder}/sitemap.xml`);
+    const sitemapPath = path.join(__dirname, `../../../client/${folder}/static/sitemap.xml`);
 
     // Lire le fichier sitemap existant
     const sitemap = await readSitemap(sitemapPath);
@@ -244,7 +244,7 @@ router.post('/updateRouteBlogSitemap', async (req, res) => {
     const slug_old = page_blog_slug[0].page_blog_slug;
     const url_old = `${slug_blog}${slug_old}`; 
 
-    const sitemapPath = path.join(__dirname, `../../../client/${folder}/sitemap.xml`);
+    const sitemapPath = path.join(__dirname, `../../../client/${folder}/static/sitemap.xml`);
 
     // Lire le fichier sitemap existant
     const sitemap = await readSitemap(sitemapPath);

@@ -448,15 +448,9 @@ export const updateGalleryBlog = async (id, gallery, token) => {
 };
 
 
-export const updateCache = async (key, id_blog, token, isDelete) => {
+export const generateStaticSite = async (token) => {
     try {
-        const response = await Axios.post(`${apiUrl}/updateCache`, {
-            params: {
-                key: key,
-                id_blog: id_blog,
-                isDelete: isDelete
-            }
-        }, {
+        const response = await Axios.post(`${apiUrl}/generateSite`, {}, {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
@@ -464,11 +458,11 @@ export const updateCache = async (key, id_blog, token, isDelete) => {
         });
         return response.data;
     } catch (error) {
-        console.log('Tentative d\'update du cache échouée:', error.message);
+        console.log('Tentative de génération du site échouée:', error.message);
         // Retourne un objet avec un statut d'échec au lieu de propager l'erreur
         return {
             success: false,
-            error: "Cache invalidation failed but continuing execution",
+            error: "Static site generation failed but continuing execution",
             details: error.message
         };
     }  

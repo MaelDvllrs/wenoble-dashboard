@@ -10,16 +10,18 @@ import {DefaultButton, RedButton, SecondaryButton, Popup} from '../../../../../T
 import SaveIcon from '@mui/icons-material/Save';
 import PublishIcon from '@mui/icons-material/Publish';
 
-import { updateImageBlog, updateBlogPage, updateTextBlog, updateRichTextBlog, updateVideoBlog, updateMultiReferenceBlog, updateGalleryBlog, updateCache } from './apiBlog';
+import { updateImageBlog, updateBlogPage, updateTextBlog, updateRichTextBlog, updateVideoBlog, updateMultiReferenceBlog, updateGalleryBlog, generateStaticSite } from './apiBlog';
 import { useTheme } from '@mui/material/styles';
 import { convertToRaw, ContentState, convertFromRaw } from 'draft-js';
 import UnpublishedIcon from '@mui/icons-material/Unpublished';
 import CircularProgress from '@mui/material/CircularProgress';
 import Tooltip from '@mui/material/Tooltip';
 import Cookies from 'js-cookie';
-
-
-
+import Snackbar from '@mui/material/Snackbar';
+import Paper from '@mui/material/Paper';
+import Box from '@mui/material/Box';
+import PendingIcon from '@mui/icons-material/Pending';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 
 
@@ -49,6 +51,23 @@ const EditPageBlog = () => {
     const [deletedItems, setDeletedItems] = useState([]);
 
     const [savingPage, setSavingPage] = useState(false);
+
+    const [dataRetrievalStatus, setDataRetrievalStatus] = useState(false);
+    const [pageGenerationStatus, setPageGenerationStatus] = useState(false);
+    const [sitePublishingStatus, setSitePublishingStatus] = useState(false);
+
+
+    const [dataLoading, setDataLoading] = useState(false);
+    const [dataSaved, setDataSaved] = useState(false);
+
+
+    const [deletingPublishedPage, setDeletingPublishedPage] = useState(false);
+    const [deletingDraftPage, setDeletingDraftPage] = useState(false);
+    const [deletionCompleted, setDeletionCompleted] = useState(false);
+
+    const [deleteDataStatus, setDeleteDataStatus] = useState(false);
+    const [regenerateSiteStatus, setRegenerateSiteStatus] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
 
 
@@ -83,6 +102,367 @@ const EditPageBlog = () => {
     const apiUrl = config.apiUrl;
     const { idBlogPage } = useParams();
     const { idBlog } = useParams();
+
+
+
+    const handleSave = async (status, setpublishDate) => {
+
+        // CREER LA PAGE
+
+
+
+        if (status === 1 || status !== DecodeBlog.blogPage[0].status) {
+            setSavingPage(true);
+        } else {
+            setDataLoading(true);
+        }
+
+
+        const date = new Date();
+
+        const adjustedTime = new Date(date.getTime() + 3600000);
+
+
+
+        const localISOTime = adjustedTime.toISOString().slice(0, 19).replace('T', ' ');
+
+
+        const mainText = [];
+        const otherText = [];
+
+        blogData.text.forEach(text => {
+            if (text.id_config === 'title' || text.id_config === 'slug') {
+                mainText.push(text);                
+            } else {
+                otherText.push(text);
+            }
+        });
+
+        try {        
+
+
+            const response = await updateBlogPage(idBlogPage, mainText, localISOTime, status, setpublishDate, DecodeBlog.blogPage[0].status, idUser, idBlog, token);
+        
+            // ENREGISTRER LES TEXTES
+
+            if (otherText.length > 0) {
+
+                try {
+                    const response = await updateTextBlog(idBlogPage, otherText, token);
+
+                } catch (error) {
+                    console.error('Erreur lors de la création des textes :', error);
+                    return;
+                }
+
+            }
+
+
+            // ENREGISTRER LES RICHTEXT
+
+            if (blogData.richText.length > 0) {
+                const infoRichText = [];
+                blogData.richText.forEach(richText => {
+                  const contentRichText = richText.value;
+          
+                  // Vérifiez que contentRichText est un objet ContentState valide
+                  let contentState;
+                  if (typeof contentRichText === 'object' && contentRichText.blocks) {
+                    // Si contentRichText est déjà au format brut (raw) JSON, convertissez-le en ContentState
+                    contentState = convertFromRaw(contentRichText);
+                  } else if (contentRichText instanceof ContentState) {
+                    contentState = contentRichText;
+                  } else {
+                    console.error('contentRichText is not a valid ContentState object or raw JSON');
+                    return;
+                  }
+          
+                  const richTextJS = convertToRaw(contentState);
+                  const richTextJSON = JSON.stringify(richTextJS);
+                  infoRichText.push({ richText: richTextJSON, id_config: richText.id_config, create: richText.create });
+                });
+          
+                try {
+                  const response = await updateRichTextBlog(idBlogPage, infoRichText, token);
+                } catch (error) {
+                  console.error('Erreur lors de la création des richtextes :', error);
+                  return;
+                }
+              }
+
+
+            
+
+            // ENREGISTRER LES IMAGE*
+            if(blogData.images.length > 0){
+                try {
+                    // Utiliser Promise.all pour attendre que toutes les images soient sauvegardées
+                    await Promise.all(blogData.images.map(async (image) => {
+                        await updateImageBlog(image, idBlogPage, token);
+                    }));
+
+                } catch (error) {
+                    console.error(error);
+                    return;
+                }
+            }
+
+            //ENREGISTRER LES VIDEO
+
+            if(blogData.video.length > 0){
+                try {
+                    await Promise.all(blogData.video.map(async (video) => {
+                        await updateVideoBlog(video, idBlogPage, token);
+                    }));
+                } catch (error) {
+                    console.error(error);
+                    return;
+                }
+            }
+
+            //ENREGISTRER LES MULTIREFERENCE
+            if(blogData.multiReference.length > 0){
+                try {
+                    await Promise.all(blogData.multiReference.map(async (multiReference) => {
+                        await updateMultiReferenceBlog(idBlogPage, multiReference, token);
+                    }));
+                } catch (error) {
+                    console.error(error);
+                    return;
+                }
+            }
+
+            //ENREGISTRER LES GALLERIES
+
+            if(blogData.gallery.length > 0){
+                try {
+                    await Promise.all(blogData.gallery.map(async (gallery) => {
+                        await updateGalleryBlog(idBlogPage, gallery, token);
+                    }));
+                } catch (error) {
+                    console.error(error);
+                    return;
+                }
+            }
+
+
+            // Supprimer les éléments supprimés
+            if (deletedItems.length > 0) {
+                try {
+                    await Axios.delete(`${apiUrl}/deleteBlogData`, {
+                        data: {
+                            data: deletedItems,
+                            id_blog_page : idBlogPage
+                        },
+                        headers: {
+                          'Authorization': `Bearer ${token}`,
+                          'Content-Type': 'application/json'
+                        }
+                    });
+                } catch (error) {
+                    console.error('Erreur lors de la suppression des éléments :', error);
+                    return;
+                }
+            }
+
+            // Mettre à jour le site si le statut est 1 ou si le statut a changé
+            if (status === 1 || status !== DecodeBlog.blogPage[0].status) {
+                setDataRetrievalStatus(true);
+
+                try {
+                    setTimeout(() => {
+                      setPageGenerationStatus(true);
+                    }, 1000);
+            
+                    await generateStaticSite(token);
+            
+                    setTimeout(() => {
+                      setSitePublishingStatus(true);
+                    }, 1000);
+            
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+            
+                    setDataRetrievalStatus(false);
+                    setPageGenerationStatus(false);
+                    setSitePublishingStatus(false);
+                    setSavingPage(false);
+                  } catch (error) {
+                    console.error('Erreur lors de la generation static :', error);
+                    setDataRetrievalStatus(false);
+                    setPageGenerationStatus(false);
+                    setSitePublishingStatus(false);
+                    setSavingPage(false);
+                    return;
+                  }
+            } else{
+
+                // Toutes vos opérations de sauvegarde ici...
+
+                // Après toutes les opérations, montrer la confirmation
+                // avant de fermer la snackbar
+                setTimeout(() => {
+                    setDataSaved(true); // Activez l'icône de validation
+
+                    // Puis fermez la snackbar après un délai supplémentaire
+                    setTimeout(() => {
+                        setDataLoading(false);
+                        setDataSaved(false); // Réinitialiser pour la prochaine utilisation
+                    }, 1000);
+                }, 1500);
+
+            }
+
+
+
+        } catch (error) {
+            // Gérer l'erreur ici
+            console.error('Erreur lors de la création de la page :',error);
+            setSavingPage(false);
+            return;
+        }
+
+    };
+
+
+
+
+
+    const handleBlogDataChange = (data, isDelete = false) => {
+
+
+        setBlogData(prevData => {
+          const newData = { ...prevData };
+
+          const config = data.data.id_config;
+
+          if (config === 'title') {
+            const normalizeText = (text) => {
+                return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            };
+              
+            setSlugValue(normalizeText(data.data.value).toLowerCase().replace(/[^\w\s]|_/g, '').replace(/\s+/g, '-'));         
+          }
+      
+          const type = data.data.type;
+      
+          if (isDelete) {
+            // Filtrer pour supprimer l'élément
+            const exists = deletedItems.some(item => item.id_config === data.data.id_config);
+            if (!exists) {
+                setDeletedItems(prevItems => [...prevItems, data.data]);
+            }
+
+            newData[type] = newData[type].filter(item => item.id_config !== data.data.id_config);
+            
+
+          } else {
+            let itemModified = false; // Flag pour vérifier si un item a été modifié
+      
+            for (let i = 0; i < newData[type].length; i++) {
+                if (newData[type][i].id_config === data.data.id_config) {
+                  newData[type][i] = data.data; // Modifier directement l'élément dans le tableau
+                  itemModified = true; // Marquer qu'un item a été modifié
+                  break; // Sortir de la boucle
+                }
+            }
+      
+            // Si aucun item n'a été modifié, ajouter le nouvel item
+            if (!itemModified) {
+              newData[type].push(data.data);
+            }
+          }
+      
+          return newData;
+        });
+    };
+
+
+
+    const handleDeletePage = async (slug) => {
+        // Indiquer que la page est en cours de suppression  
+        setIsDeleting(true);
+        closePopup();
+    
+        // Vérifier le statut de la page
+        const isPublished = DecodeBlog.blogPage[0].status === 1;
+        
+        // Afficher la Snackbar appropriée
+        if (isPublished) {
+            setDeletingPublishedPage(true);
+        } else {
+            setDeletingDraftPage(true);
+        }
+    
+        try {
+            // ÉTAPE 1: Activer l'indicateur de suppression des données
+            setDeleteDataStatus(true);
+            
+            // Supprimer les routes du sitemap
+            await Axios.post(`${apiUrl}/deleteRouteBlogSitemap`, {
+                params: {
+                    idUser: idUser,
+                    idBlog: idBlog,
+                    slug: slug,
+                    idBlogPage: idBlogPage
+                }
+            }, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            // Supprimer la page
+            await Axios.delete(`${apiUrl}/deleteBlogPage`, {
+                params: {
+                    IdBlogPage: idBlogPage,
+                    Id: idBlog
+                },
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            // Pour les brouillons, marquer la suppression comme terminée
+            if (!isPublished) {
+                setDeletionCompleted(true);
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            } 
+            // Pour les pages publiées, passer à la régénération du site
+            else {
+                // ÉTAPE 2: Activer l'indicateur de régénération du site
+                setRegenerateSiteStatus(true);
+                
+                // Générer le site
+                await generateStaticSite(token);
+                
+                // Attendre un peu pour montrer l'état complété
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            
+            // Réinitialiser les états et naviguer
+            setTimeout(() => {
+                setDeletingPublishedPage(false);
+                setDeletingDraftPage(false);
+                setDeleteDataStatus(false);
+                setRegenerateSiteStatus(false);
+                setDeletionCompleted(false);
+                navigate(`/dashboard/modification/blog/${idBlog}`);
+            }, 1500);
+        } catch (error) {
+            console.error('Erreur lors de la suppression de la page :', error);
+            setIsDeleting(false); 
+            setDeletingPublishedPage(false);
+            setDeletingDraftPage(false);
+            setDeleteDataStatus(false);
+            setRegenerateSiteStatus(false);
+        }
+    };
+
+
+
+
 
 
     useEffect(() => {    
@@ -304,7 +684,7 @@ const EditPageBlog = () => {
         }).catch((error) => {
             console.error('Erreur lors de la récupération de la page du Blog :', error);
         });
-    }, [idBlogPage]);
+    }, [idBlogPage, handleSave]);
 
 
     useEffect(() => {
@@ -320,7 +700,7 @@ const EditPageBlog = () => {
 
     useEffect(() => {
 
-        if (DecodeBlog.length !== 0) {
+        if (DecodeBlog.length !== 0 && !isDeleting) {
             const createDate = new Date(DecodeBlog.blogPage[0].page_blog_create_date);
             const formattedCreateDate = new Intl.DateTimeFormat('fr-FR', {
                 year: 'numeric', month: '2-digit', day: '2-digit',
@@ -353,286 +733,23 @@ const EditPageBlog = () => {
 
 
 
-    const handleBlogDataChange = (data, isDelete = false) => {
 
+    
 
-        setBlogData(prevData => {
-          const newData = { ...prevData };
-
-          const config = data.data.id_config;
-
-          if (config === 'title') {
-            const normalizeText = (text) => {
-                return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-            };
-              
-            setSlugValue(normalizeText(data.data.value).toLowerCase().replace(/[^\w\s]|_/g, '').replace(/\s+/g, '-'));         
-          }
-      
-          const type = data.data.type;
-      
-          if (isDelete) {
-            // Filtrer pour supprimer l'élément
-            const exists = deletedItems.some(item => item.id_config === data.data.id_config);
-            if (!exists) {
-                setDeletedItems(prevItems => [...prevItems, data.data]);
-            }
-
-            newData[type] = newData[type].filter(item => item.id_config !== data.data.id_config);
-            
-
-          } else {
-            let itemModified = false; // Flag pour vérifier si un item a été modifié
-      
-            for (let i = 0; i < newData[type].length; i++) {
-                if (newData[type][i].id_config === data.data.id_config) {
-                  newData[type][i] = data.data; // Modifier directement l'élément dans le tableau
-                  itemModified = true; // Marquer qu'un item a été modifié
-                  break; // Sortir de la boucle
-                }
-            }
-      
-            // Si aucun item n'a été modifié, ajouter le nouvel item
-            if (!itemModified) {
-              newData[type].push(data.data);
-            }
-          }
-      
-          return newData;
-        });
-    };
-
-    const handleSave = async (status, setpublishDate) => {
-
-        // CREER LA PAGE
-        setSavingPage(true);
-
-
-        const date = new Date();
-
-        const adjustedTime = new Date(date.getTime() + 3600000);
-
-
-
-        const localISOTime = adjustedTime.toISOString().slice(0, 19).replace('T', ' ');
-
-
-        const mainText = [];
-        const otherText = [];
-
-        blogData.text.forEach(text => {
-            if (text.id_config === 'title' || text.id_config === 'slug') {
-                mainText.push(text);                
-            } else {
-                otherText.push(text);
-            }
-        });
-
-        try {        
-
-
-            const response = await updateBlogPage(idBlogPage, mainText, localISOTime, status, setpublishDate, DecodeBlog.blogPage[0].status, idUser, idBlog, token);
-        
-            // ENREGISTRER LES TEXTES
-
-            if (otherText.length > 0) {
-
-                try {
-                    const response = await updateTextBlog(idBlogPage, otherText, token);
-
-                } catch (error) {
-                    console.error('Erreur lors de la création des textes :', error);
-                    return;
-                }
-
-            }
-
-
-            // ENREGISTRER LES RICHTEXT
-
-            if (blogData.richText.length > 0) {
-                const infoRichText = [];
-                blogData.richText.forEach(richText => {
-                  const contentRichText = richText.value;
-          
-                  // Vérifiez que contentRichText est un objet ContentState valide
-                  let contentState;
-                  if (typeof contentRichText === 'object' && contentRichText.blocks) {
-                    // Si contentRichText est déjà au format brut (raw) JSON, convertissez-le en ContentState
-                    contentState = convertFromRaw(contentRichText);
-                  } else if (contentRichText instanceof ContentState) {
-                    contentState = contentRichText;
-                  } else {
-                    console.error('contentRichText is not a valid ContentState object or raw JSON');
-                    return;
-                  }
-          
-                  const richTextJS = convertToRaw(contentState);
-                  const richTextJSON = JSON.stringify(richTextJS);
-                  infoRichText.push({ richText: richTextJSON, id_config: richText.id_config, create: richText.create });
-                });
-          
-                try {
-                  const response = await updateRichTextBlog(idBlogPage, infoRichText, token);
-                } catch (error) {
-                  console.error('Erreur lors de la création des richtextes :', error);
-                  return;
-                }
-              }
-
-
-            
-
-            // ENREGISTRER LES IMAGE*
-            if(blogData.images.length > 0){
-                try {
-                    // Utiliser Promise.all pour attendre que toutes les images soient sauvegardées
-                    await Promise.all(blogData.images.map(async (image) => {
-                        await updateImageBlog(image, idBlogPage, token);
-                    }));
-
-                } catch (error) {
-                    console.error(error);
-                    return;
-                }
-            }
-
-            //ENREGISTRER LES VIDEO
-
-            if(blogData.video.length > 0){
-                try {
-                    await Promise.all(blogData.video.map(async (video) => {
-                        await updateVideoBlog(video, idBlogPage, token);
-                    }));
-                } catch (error) {
-                    console.error(error);
-                    return;
-                }
-            }
-
-            //ENREGISTRER LES MULTIREFERENCE
-            if(blogData.multiReference.length > 0){
-                try {
-                    await Promise.all(blogData.multiReference.map(async (multiReference) => {
-                        await updateMultiReferenceBlog(idBlogPage, multiReference, token);
-                    }));
-                } catch (error) {
-                    console.error(error);
-                    return;
-                }
-            }
-
-            //ENREGISTRER LES GALLERIES
-
-            if(blogData.gallery.length > 0){
-                try {
-                    await Promise.all(blogData.gallery.map(async (gallery) => {
-                        await updateGalleryBlog(idBlogPage, gallery, token);
-                    }));
-                } catch (error) {
-                    console.error(error);
-                    return;
-                }
-            }
-
-
-            // Supprimer les éléments supprimés
-            if (deletedItems.length > 0) {
-                try {
-                    await Axios.delete(`${apiUrl}/deleteBlogData`, {
-                        data: {
-                            data: deletedItems,
-                            id_blog_page : idBlogPage
-                        },
-                        headers: {
-                          'Authorization': `Bearer ${token}`,
-                          'Content-Type': 'application/json'
-                        }
-                    });
-                } catch (error) {
-                    console.error('Erreur lors de la suppression des éléments :', error);
-                    return;
-                }
-            }
-
-            // Mettre à jour le cache
-            if (status === 1) {
-                try {
-                    await updateCache(mainText[1].value, idBlog, token);
-                } catch (error) {
-                    console.error('Erreur lors de la mise à jour du cache :', error);
-                    return;
-                }
-            } else {
-                try {
-                    await updateCache(mainText[1].value, idBlog, token, true);
-                } catch (error) {
-                    console.error('Erreur lors de la mise à jour du cache :', error);
-                    return;
-                }
-            }
-
-            navigate(`/dashboard/modification/blog/${idBlog}`);
-
-        } catch (error) {
-            // Gérer l'erreur ici
-            console.error('Erreur lors de la création de la page :',error);
-            return;
-        }
-
-    };
-
-    const handleDeletePage = async (slug) => {
-        try {
-            await Axios.post(`${apiUrl}/deleteRouteBlogSitemap`, {
-                params: {
-                  idUser: idUser,
-                  idBlog: idBlog,
-                  slug: slug,
-                  idBlogPage: idBlogPage
-                }
-              }, {
-                headers: {
-                  'Authorization': `Bearer ${token}`,
-                  'Content-Type': 'application/json'
-                }
-            });
-            await Axios.delete(`${apiUrl}/deleteBlogPage`, {
-                params: {
-                    IdBlogPage: idBlogPage,
-                    Id: idBlog
-
-                },
-                headers: {
-                  'Authorization': `Bearer ${token}`,
-                  'Content-Type': 'application/json'
-                }
-            });
-
-            try{
-                await updateCache(slug, idBlog, token, true);
-            } catch (error) {
-                console.error('Erreur lors de la mise à jour du cache :', error);
-                return;
-            }
-            
-            navigate(`/dashboard/modification/blog/${idBlog}`);
-        } catch (error) {
-            console.error('Erreur lors de la suppression de la page :', error);
-    }
-};
 
     return(
         <div className="Blog_creation_Page">
             {
-            DecodeBlog.blogPage ? (
+            DecodeBlog.blogPage && !isDeleting ? (
                 <div className="Blog_creation_Page">
                   <div className="header_modification">
                     <h3 className="titlePage">Modification de : {DecodeBlog.blogPage[0].page_blog_name}</h3>
                     <div className="button_save_contain">
                         <p style={{color: theme.palette.text.secondary, whiteSpace:"nowrap"}}>Status :</p>
                         {
-                            DecodeBlog.blogPage[0].status === 1 ? (
+                            savingPage ? (
+                                <p className="Item_portfolio_element blog_status pending_status">En attente...</p>
+                            ) : DecodeBlog.blogPage[0].status === 1 ? (
                                 <p className="Item_portfolio_element blog_status publish_status">Publié</p>    
                             ) : (
                                 <p className="Item_portfolio_element blog_status draft_status">Brouillon</p>
@@ -722,11 +839,213 @@ const EditPageBlog = () => {
                 </div>
               ) : null
             }
-            {savingPage && (   
-                <Popup theme={theme}>
-                    <CircularProgress sx={{color:"#2ec96d"}}/>
-                </Popup>
-            )}
+            <Snackbar
+                open={savingPage}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                sx={{ bottom: 24 }}
+            >
+                <Paper
+                elevation={6}
+                sx={{
+                    p: 2,
+                    minWidth: 300,
+                    maxWidth: 400,
+                    backgroundColor: theme.palette.background.default,
+                    borderRadius: 2,
+                }}
+                >
+                <Box sx={{ mb: 2 }}>
+                    <h3 style={{ margin: 0, color: theme.palette.text.primary }}>Mise à jour du site</h3>
+                </Box>
+                {/* Étape 1: Récupération des données */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                    {!dataRetrievalStatus ? (
+                    <>
+                        <PendingIcon sx={{ color: theme.palette.text.secondary, width: 16, height: 16 }} />
+                        <Box sx={{ color: theme.palette.text.secondary }}>Récupération des données</Box>
+                    </>
+                    ) : pageGenerationStatus ? (
+                    <>
+                        <CheckCircleIcon sx={{ color: "#2ec96d", width: 16, height: 16 }} />
+                        <Box sx={{ color: theme.palette.text.secondary }}>Récupération des données</Box>
+                    </>
+                    ) : (
+                    <>
+                        <CircularProgress size={16} sx={{ color: "#2ec96d" }} />
+                        <Box sx={{ color: theme.palette.text.primary }}>Récupération des données...</Box>
+                    </>
+                    )}
+                </Box>
+                {/* Étape 2: Génération des pages */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                    {!pageGenerationStatus ? (
+                    <>
+                        <PendingIcon sx={{ color: theme.palette.text.secondary, width: 16, height: 16 }} />
+                        <Box sx={{ color: theme.palette.text.secondary }}>Génération des pages</Box>
+                    </>
+                    ) : sitePublishingStatus ? (
+                    <>
+                        <CheckCircleIcon sx={{ color: "#2ec96d", width: 16, height: 16 }} />
+                        <Box sx={{ color: theme.palette.text.secondary }}>Génération des pages</Box>
+                    </>
+                    ) : (
+                    <>
+                        <CircularProgress size={16} sx={{ color: "#2ec96d" }} />
+                        <Box sx={{ color: theme.palette.text.primary }}>Génération des pages...</Box>
+                    </>
+                    )}
+                </Box>
+                {/* Étape 3: Publication du site */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    {!sitePublishingStatus ? (
+                    <>
+                        <PendingIcon sx={{ color: theme.palette.text.secondary, width: 16, height: 16 }} />
+                        <Box sx={{ color: theme.palette.text.secondary }}>Publication du site</Box>
+                    </>
+                    ) : (
+                    <>
+                        <CheckCircleIcon sx={{ color: "#2ec96d", width: 16, height: 16 }} />
+                        <Box sx={{ color: theme.palette.text.secondary }}>Publication du site</Box>
+                    </>
+                    )}
+                </Box>
+                </Paper>
+            </Snackbar>
+                
+            <Snackbar
+                open={dataLoading}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                sx={{ bottom: 24 }}
+            >
+                <Paper
+                    elevation={6}
+                    sx={{
+                        p: 2,
+                        minWidth: 250,
+                        maxWidth: 350,
+                        backgroundColor: theme.palette.background.default,
+                        borderRadius: 2,
+                    }}
+                >
+                    <Box sx={{ mb: 1 }}>
+                        <h3 style={{ margin: 0, color: theme.palette.text.primary }}>Enregistrement de la page</h3>
+                    </Box>
+                
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        {dataSaved ? (
+                            <>
+                                <CheckCircleIcon sx={{ color: "#2ec96d", width: 16, height: 16 }} />
+                                <Box sx={{ color: theme.palette.text.secondary }}>
+                                    Sauvegarde des données
+                                </Box>
+                            </>
+                        ) : (
+                            <>
+                                <CircularProgress size={16} sx={{ color: "#2ec96d" }} />
+                                <Box sx={{ color: theme.palette.text.primary }}>
+                                    Sauvegarde des données...
+                                </Box>
+                            </>
+                        )}
+                    </Box>
+                </Paper>
+            </Snackbar>
+
+            <Snackbar
+                open={deletingPublishedPage}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                sx={{ bottom: 24 }}
+            >
+                <Paper
+                    elevation={6}
+                    sx={{
+                        p: 2,
+                        minWidth: 300,
+                        maxWidth: 400,
+                        backgroundColor: theme.palette.background.default,
+                        borderRadius: 2,
+                    }}
+                >
+                    <Box sx={{ mb: 2 }}>
+                        <h3 style={{ margin: 0, color: theme.palette.text.primary }}>Suppression de la page</h3>
+                    </Box>
+
+                    {/* Étape 1: Suppression des données */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                        {!deleteDataStatus ? (
+                            <>
+                                <PendingIcon sx={{ color: theme.palette.text.secondary, width: 16, height: 16 }} />
+                                <Box sx={{ color: theme.palette.text.secondary }}>Suppression des données</Box>
+                            </>
+                        ) : regenerateSiteStatus ? (
+                            <>
+                                <CheckCircleIcon sx={{ color: "#2ec96d", width: 16, height: 16 }} />
+                                <Box sx={{ color: theme.palette.text.secondary }}>Données supprimées</Box>
+                            </>
+                        ) : (
+                            <>
+                                <CircularProgress size={16} sx={{ color: "#2ec96d" }} />
+                                <Box sx={{ color: theme.palette.text.primary }}>Suppression des données...</Box>
+                            </>
+                        )}
+                    </Box>
+                    
+                    {/* Étape 2: Régénération du site */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        {!regenerateSiteStatus ? (
+                            <>
+                                <PendingIcon sx={{ color: theme.palette.text.secondary, width: 16, height: 16 }} />
+                                <Box sx={{ color: theme.palette.text.secondary }}>Mise à jour du site</Box>
+                            </>
+                        ) : (
+                            <>
+                                <CircularProgress size={16} sx={{ color: "#2ec96d" }} />
+                                <Box sx={{ color: theme.palette.text.primary }}>Mise à jour du site...</Box>
+                            </>
+                        )}
+                    </Box>
+                </Paper>
+            </Snackbar>
+                    
+            <Snackbar
+                open={deletingDraftPage}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                sx={{ bottom: 24 }}
+            >
+                <Paper
+                    elevation={6}
+                    sx={{
+                        p: 2,
+                        minWidth: 250,
+                        maxWidth: 350,
+                        backgroundColor: theme.palette.background.default,
+                        borderRadius: 2,
+                    }}
+                >
+                    <Box sx={{ mb: 1 }}>
+                        <h3 style={{ margin: 0, color: theme.palette.text.primary }}>Suppression de la page</h3>
+                    </Box>
+
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        {deletionCompleted ? (
+                            <>
+                                <CheckCircleIcon sx={{ color: "#2ec96d", width: 16, height: 16 }} />
+                                <Box sx={{ color: theme.palette.text.secondary }}>
+                                    Page supprimée
+                                </Box>
+                            </>
+                        ) : (
+                            <>
+                                <CircularProgress size={16} sx={{ color: "#2ec96d" }} />
+                                <Box sx={{ color: theme.palette.text.primary }}>
+                                    Suppression en cours...
+                                </Box>
+                            </>
+                        )}
+                    </Box>
+                </Paper>
+            </Snackbar>
+            
         </div>
 
     )
