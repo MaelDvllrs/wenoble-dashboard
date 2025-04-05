@@ -200,7 +200,9 @@
                         const key = el.getAttribute("wn-image");
                         const imageData = data.content.image.find(img => img.id_config == key);
                         if (imageData) {
+                            console.log(key)
                             console.log(imageData.src_image)
+                            
                             if (imageData.src_image) {
                                 el.src = `${apiUrl}/media/blog/${imageData.src_image}`;
                                 el.alt = imageData.alt_image;
