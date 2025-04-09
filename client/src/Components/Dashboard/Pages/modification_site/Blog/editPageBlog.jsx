@@ -385,6 +385,7 @@ const EditPageBlog = () => {
     
         // Vérifier le statut de la page
         const isPublished = DecodeBlog.blogPage[0].status === 1;
+        console.log('isPublished', isPublished);
         
         // Afficher la Snackbar appropriée
         if (isPublished) {

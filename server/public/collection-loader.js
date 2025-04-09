@@ -90,6 +90,12 @@
 
             if (!dataBlog) {
                 console.error("Aucune donnée trouvée pour cette page.");
+                const comingSoonMessage = document.createElement('div');
+                comingSoonMessage.textContent = "Coming Soon";
+                comingSoonMessage.style.textAlign = "center";
+                comingSoonMessage.style.fontSize = "1.5rem";
+                comingSoonMessage.style.color = "#555";
+                el.appendChild(comingSoonMessage);
                 return;
             }
 

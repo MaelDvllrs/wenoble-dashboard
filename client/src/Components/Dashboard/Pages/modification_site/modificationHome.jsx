@@ -9,6 +9,7 @@ import { FaElementor } from "react-icons/fa";
 import { MdArticle } from "react-icons/md";
 import gridBlog from "../../../../assets/background/grid_blog.svg";
 import sphere_page from "../../../../assets/background/sphere_page.svg";
+import { SkeletonTotalSize } from "../../../skeleton/skeleton";
 
 
 import ImageIcon from '@mui/icons-material/Image';
@@ -298,19 +299,28 @@ return(
     <div className="outlet">
         <div className="breadCrumbs"><NavLink style={{color: theme.palette.text.primary}} className={"breadCrumbsLink"} to={'/dashboard/home'}>Dashboard</NavLink> &gt; Modification</div>
         <div className="modification_contain">
-          {
-            authPortfolio === 1 || authPage === 1 || authBlog === 1 ? (
+          
+            
               <div className="dashboard_case_empty limit_size_contain" style={{backgroundColor : theme.palette.primary.secondary, boxShadow: theme.palette.shadow.main}}>
                 <h3 className="title_contain">Espace utilisé</h3>
-                <div className="limit_size_text">{sizeTotal} / {threshold} Go</div>
-                <div className="limit_size_bar" style={{backgroundColor:theme.palette.secondary.secondary}}>
-                  <div 
-                    className="limit_size_bar_fill"
-                    style={{ width: `${(sizeTotal / (threshold)) * 100}%` }}
-                  />      
+                <div className="limit_size_info_contain">
+                  {
+                    authPortfolio === 1 || authPage === 1 || authBlog === 1 ? (
+                      <div>
+                        <div className="limit_size_text">{sizeTotal} / {threshold} Go</div>
+                        <div className="limit_size_bar" style={{backgroundColor:theme.palette.secondary.secondary}}>
+                          <div 
+                            className="limit_size_bar_fill"
+                            style={{ width: `${(sizeTotal / (threshold)) * 100}%` }}
+                          />      
+                        </div>
+                      </div>
+                    ) : (
+                      <SkeletonTotalSize />
+                    )
+                  }
                 </div>
-              </div> ) : null
-          }
+              </div> 
           
           <div className="modification_page_contain">
               <div ref={containerRef} className="modification_link_contain">
