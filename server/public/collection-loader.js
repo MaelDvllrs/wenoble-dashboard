@@ -88,9 +88,8 @@
 
             const dataBlog = await blogPageResponse.json();
 
-            console.log("Data blog", dataBlog);
 
-            if (!dataBlog) {
+            if (!dataBlog.blog || dataBlog.blog.length === 0) {
                 console.error("Aucune donnée trouvée pour cette page.");
                 const comingSoonMessage = document.createElement('div');
                 comingSoonMessage.textContent = "Coming Soon";
