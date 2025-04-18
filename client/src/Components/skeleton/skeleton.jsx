@@ -227,8 +227,8 @@ export const SkeletonTotalSize = () => {
 
     return (
         <div>
-            <Skeleton animation="wave" variant="text" className="limit_size_text"/>
-            <Skeleton className="limit_size_bar" animation="wave" variant="text"/> 
+            <Skeleton animation="wave" variant="text" />
+            <Skeleton animation="wave" variant="text"/> 
         </div>
     );
 }
