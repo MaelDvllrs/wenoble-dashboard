@@ -36,6 +36,8 @@ import EcommerceOrderShipping from './Components/Dashboard/Pages/Ecommerce/Ecomm
 import EcommerceOrderDelivered from './Components/Dashboard/Pages/Ecommerce/EcommerceOrder/EcommerceOrderDelivered'
 import EcommerceOrderAll from './Components/Dashboard/Pages/Ecommerce/EcommerceOrder/EcommerceOrderAll'
 import NewsLetters from './Components/Dashboard/Pages/NewsLetters/Newsletter'
+import Academy from './Components/Dashboard/Pages/Academy/Academy'
+
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 
@@ -124,11 +126,10 @@ function App() {
                   <Route path="/dashboard/actu/update/:slug" element={<UpdateTemplate/>}></Route>
                 </Route>
                 <Route path="/dashboard/account" element={<Account/>}>
-                
-                
-
                 </Route>
                 <Route path="/dashboard/newsletter" element={<AuthorisedRouteNewsletter><NewsLetters/></AuthorisedRouteNewsletter>}/>
+                <Route path="/dashboard/academy" element={<Academy/>}/>
+              
               </Route>
             </Route>
             <Route path="/dashboard-admin">  

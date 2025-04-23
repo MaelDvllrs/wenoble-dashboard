@@ -45,8 +45,6 @@ router.post ('/signUpNewsletter', apiKeyMiddleware, async (req, res) => {
         }
         const idUser = results[0].id_user;
 
-        console.log('Mail:', mail, 'ID User:', idUser);
-
         const verifySQL = 'SELECT * FROM newsletter_website WHERE mail = ? AND id_user = ?';
         const verifyValues = [mail, idUser];
 
