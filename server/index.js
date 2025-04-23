@@ -109,7 +109,9 @@ const whitelist =
   'https://thibault-laupretre-wenoble.webflow.io',
   'https://thibault-laupretre.com',  
 
-  'https://salon-marco-d950f4.webflow.io'
+  'https://salon-marco-d950f4.webflow.io',
+
+  'https://kimberley-architecture.webflow.io'
 ];
 
 
