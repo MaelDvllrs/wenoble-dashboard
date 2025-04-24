@@ -53,7 +53,7 @@ const writeSitemap = (sitemap, sitemapPath) => {
 
 const findSitemapPath = async (folder) => {
   // Premier chemin à essayer
-  const primaryPath = path.join(__dirname, `../../../client/${folder}/static/sitemap.xml`);
+  const primaryPath = path.join(__dirname, `../../../client/${folder}/sitemap.xml`);
   
   // Vérification si le fichier existe au chemin principal
   try {
