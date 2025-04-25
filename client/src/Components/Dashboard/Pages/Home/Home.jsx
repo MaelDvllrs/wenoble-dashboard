@@ -34,7 +34,7 @@ const Home = () => {
             </div>
             <div className="gridHome">
                 <div className="welcomeMessage" style={{ gridColumn: '1 / span 3', gridRow: '1'}}>
-                    <p className="home-title">Bonjour,</p>
+                    <UserStatistique/>
                 </div>
 
                 <div className="articleBox trendingBox" style={{ backgroundColor: theme.palette.primary.main, boxShadow : theme.palette.shadow.main, }}>

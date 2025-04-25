@@ -8,6 +8,16 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { BsChevronCompactDown } from "react-icons/bs";
 import { PiLockBold, PiUserBold, PiGearSixBold, PiPowerBold, PiHouseBold, PiChartBarBold, PiPencilSimpleBold, PiNewspaperBold, PiFunnelSimpleBold, PiShoppingCartSimpleBold, PiQuestionBold, PiChatCircleDotsBold, PiBellBold, PiNewspaperClippingBold } from "react-icons/pi";
 import { LuMoon, LuSun } from "react-icons/lu";
+import { HiOutlineAcademicCap } from "react-icons/hi";
+import CreateOutlinedIcon from '@mui/icons-material/CreateOutlined';
+import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined';
+import EqualizerOutlinedIcon from '@mui/icons-material/EqualizerOutlined';
+import NewspaperOutlinedIcon from '@mui/icons-material/NewspaperOutlined';
+import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
+import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined';
+import HelpOutlineOutlinedIcon from '@mui/icons-material/HelpOutlineOutlined';
+import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
+
 import Logo from "../../assets/icon/logo.svg?react"; 
 import config from '../../config';
 import { SkeletonProfile } from '../skeleton/skeleton';
@@ -206,7 +216,28 @@ const Dashboard = () => {
 
     
     return (
-        <div className='dashboard'>
+        <div className='dashboard'
+            style={{
+                '--color-primary-main': theme.palette.primary.main,
+                '--color-primary-secondary': theme.palette.primary.secondary,
+                '--color-primary-third': theme.palette.primary.third,
+
+                '--color-secondary-main': theme.palette.secondary.main,
+                '--color-secondary-secondary': theme.palette.secondary.secondary,
+                '--color-secondary-third': theme.palette.secondary.third,
+
+                '--color-shadow-main': theme.palette.shadow.main,
+                '--color-shadow-secondary': theme.palette.shadow.secondary,
+
+                '--color-globe-dark': theme.palette.globe.dark,
+
+                '--color-background-default': theme.palette.background.default,
+                '--color-background-secondary': theme.palette.background.secondary,
+
+                '--color-text-primary': theme.palette.text.primary,
+                '--color-text-secondary': theme.palette.text.secondary,
+            }}
+        >
         <AnimatePresence initial={false}>
             <motion.div className="menu_dashboard" animate={{width: open_menu ? "18rem" : "5rem"}} style={{backgroundColor: theme.palette.primary.main, boxShadow : theme.palette.shadow.main}}>
                 <AnimatePresence initial={false}>
@@ -249,29 +280,26 @@ const Dashboard = () => {
                 <div className='navigation'>
                     <NavLink key="home" to='/dashboard/home' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
                         <AnimatePresence initial={false}>
-                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.primary}}>
-                                <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><PiHouseBold /></motion.div>
+                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
+                                <motion.div animate={{marginRight: open_menu ? "0.5rem" : "0rem"}} className='icon_navigation'><HomeOutlinedIcon fontSize='small'/></motion.div>
                                 <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Accueil</motion.span>
-                                <div className='menu_link_active_curs'></div>
                             </motion.div>
                         </AnimatePresence>
                     </NavLink>
-                    <div className='menu_title'><p className='menu_title_text' style={{color: theme.palette.text.primary}}><b>Gérer mon site</b></p></div>
+                    <div className='menu_title'><p className='menu_title_text' style={{color: theme.palette.text.primary}}>GÉRER MON SITE</p></div>
                     <NavLink key="modification" to='/dashboard/modification' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
                         <AnimatePresence initial={false}>
-                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.primary}}>
-                                <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><PiPencilSimpleBold/></motion.div>
+                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
+                                <motion.div animate={{marginRight: open_menu ? "0.5rem" : "0rem"}} className='icon_navigation'><CreateOutlinedIcon fontSize='small'/></motion.div>
                                 <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Modifications</motion.span>
-                                <div className='menu_link_active_curs'></div>
                             </motion.div>
                         </AnimatePresence>
                     </NavLink>
                     <NavLink key="ecommerce" to={ecommAuth === 1 ? '/dashboard/ecommerce' : '#'} className={({ isActive, ecommAuth }) => (isActive, ecommAuth ? 'menuActive' : '')}>
                         <AnimatePresence initial={false}>
-                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.primary}}>
-                                <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><PiShoppingCartSimpleBold/></motion.div>
+                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
+                                <motion.div animate={{marginRight: open_menu ? "0.5rem" : "0rem"}} className='icon_navigation'><ShoppingCartOutlinedIcon fontSize='small'/></motion.div>
                                 <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>E-commerce</motion.span>
-                                <div className='menu_link_active_curs'></div>
                                 {
                                     ecommAuth === 1 ? (
                                         null
@@ -282,29 +310,25 @@ const Dashboard = () => {
                     </NavLink>
                     <NavLink key="stats" to='/dashboard/stats' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
                         <AnimatePresence initial={false}>
-                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.primary}}>
-                                <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><PiChartBarBold/></motion.div>
+                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
+                                <motion.div animate={{marginRight: open_menu ? "0.5rem" : "0rem"}} className='icon_navigation'><EqualizerOutlinedIcon fontSize='small'/></motion.div>
                                 <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Statistiques</motion.span>
-                                
-                                <div className='menu_link_active_curs'></div>
                             </motion.div>
                         </AnimatePresence>
                     </NavLink>
                     <NavLink key="contact" to='/dashboard/contact' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
                         <AnimatePresence initial={false}>
-                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.primary}}>
-                                <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><PiChatCircleDotsBold  /></motion.div>
+                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
+                                <motion.div animate={{marginRight: open_menu ? "0.5rem" : "0rem"}} className='icon_navigation'><PiChatCircleDotsBold  /></motion.div>
                                 <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Contacts</motion.span>
-                                <div className='menu_link_active_curs'></div>
                             </motion.div>
                         </AnimatePresence>
                     </NavLink>
                     <NavLink key="newsletter" to={newsAuth === 1 ? '/dashboard/newsletter' : '#'} className={({ isActive }) => (isActive && newsAuth === 1 ? 'menuActive' : '')}>
                         <AnimatePresence initial={false}>
-                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.primary}}>
-                                <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><PiNewspaperClippingBold/></motion.div>
+                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
+                                <motion.div animate={{marginRight: open_menu ? "0.5rem" : "0rem"}} className='icon_navigation'><NewspaperOutlinedIcon fontSize='small'/></motion.div>
                                 <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Newsletter</motion.span>
-                                <div className='menu_link_active_curs'></div>
                                 {
                                     newsAuth === 1 ? (
                                         null
@@ -314,25 +338,32 @@ const Dashboard = () => {
                         </AnimatePresence>
 
                     </NavLink>
-                    <div className='menu_title'><p className='menu_title_text' style={{color: theme.palette.text.primary}}><b>Wenoble</b></p></div>
+                    <div className='menu_title'><p className='menu_title_text' style={{color: theme.palette.text.primary}}>WENOBLE</p></div>
                     <NavLink key="actu" to='/dashboard/actu/' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
                         <AnimatePresence initial={false}>
-                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.primary}}>
-                                <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><PiNewspaperBold/></motion.div>
+                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
+                                <motion.div animate={{marginRight: open_menu ? "0.5rem" : "0rem"}} className='icon_navigation'><ArticleOutlinedIcon fontSize='small'/></motion.div>
                                 <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Actualités</motion.span>
-                                <div className='menu_link_active_curs'></div>
+                            </motion.div>
+                        </AnimatePresence>
+                    </NavLink>
+                    <NavLink key="academy" to='/dashboard/academy' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
+                        <AnimatePresence initial={false}>
+                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
+                                <motion.div animate={{marginRight: open_menu ? "0.5rem" : "0rem"}} className='icon_navigation'><SchoolOutlinedIcon fontSize='small'/></motion.div>
+                                <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Academy</motion.span>
                             </motion.div>
                         </AnimatePresence>
                     </NavLink>
                     <NavLink key="probleme" to='/dashboard/problem' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
                         <AnimatePresence initial={false}>
-                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.primary}}>
-                                <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><PiQuestionBold /></motion.div>
+                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
+                                <motion.div animate={{marginRight: open_menu ? "0.5rem" : "0rem"}} className='icon_navigation'><HelpOutlineOutlinedIcon fontSize='small'/></motion.div>
                                 <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Un problème ?</motion.span>
-                                <div className='menu_link_active_curs'></div>
                             </motion.div>
                         </AnimatePresence>
                     </NavLink>
+                    
                 </div>
             </motion.div>
         </AnimatePresence>
