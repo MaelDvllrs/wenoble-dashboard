@@ -24,11 +24,12 @@ const secretKey = process.env.SECRET_KEY;
 
 // Fonction pour lire et parser le fichier sitemap
 const readSitemap = (sitemapPath) => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
+    if (!sitemapPath) return resolve(null); // Si le chemin est null, retourner null
     fs.readFile(sitemapPath, (err, data) => {
-      if (err) return reject(err);
+      if (err) return resolve(null); // Si erreur, retourner null
       xml2js.parseString(data, (err, result) => {
-        if (err) return reject(err);
+        if (err) return resolve(null); // Si erreur, retourner null
         resolve(result);
       });
     });
@@ -37,13 +38,14 @@ const readSitemap = (sitemapPath) => {
   
   // Fonction pour écrire dans le fichier sitemap
 const writeSitemap = (sitemap, sitemapPath) => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
+    if (!sitemap || !sitemapPath) return resolve(); // Si sitemap ou chemin est null, ne rien faire
     const builder = new xml2js.Builder();
     const xml = builder.buildObject(sitemap);
     fs.writeFile(sitemapPath, xml, (err) => {
       if (err) {
         console.log(err);
-        return reject(err);
+        return resolve(); // Continuer même en cas d'erreur
       }
       resolve();
     });
@@ -66,10 +68,9 @@ const findSitemapPath = async (folder) => {
       await fs.promises.access(alternativePath, fs.constants.F_OK);
       return alternativePath;
     } catch (altError) {
-      // Si aucun fichier n'existe, créer le répertoire et retourner le chemin principal
-      const dir = path.dirname(primaryPath);
-      await fs.promises.mkdir(dir, { recursive: true });
-      return primaryPath;
+      // Si aucun fichier n'existe, retourner un message sans erreur
+      console.log('Sitemap non trouvé');
+      return null;
     }
   }
 };
@@ -121,6 +122,10 @@ router.post('/addRouteBlogSitemap', async (req, res) => {
 
     // Lire le fichier sitemap existant
     const sitemap = await readSitemap(sitemapPath);
+
+    if (!sitemap) {
+      return res.status(200).json({ message: 'Sitemap non trouvé' });
+    }
 
     // Ajouter une nouvelle entrée pour l'article de blog
     const newEntry = {
@@ -202,6 +207,10 @@ router.post('/deleteRouteBlogSitemap', async (req, res) => {
     // Lire le fichier sitemap existant
     const sitemap = await readSitemap(sitemapPath);
 
+    if (!sitemap) {
+      return res.status(200).json({ message: 'Sitemap non trouvé' });
+    }
+
     // Trouver et supprimer l'entrée correspondante dans le sitemap
     sitemap.urlset.url = sitemap.urlset.url.filter(entry => !entry.loc[0].includes(url));
 
@@ -274,6 +283,10 @@ router.post('/updateRouteBlogSitemap', async (req, res) => {
 
     // Lire le fichier sitemap existant
     const sitemap = await readSitemap(sitemapPath);
+
+    if (!sitemap) {
+      return res.status(200).json({ message: 'Sitemap non trouvé' });
+    }
 
     // Trouver et mettre à jour l'entrée correspondante dans le sitemap
     sitemap.urlset.url = sitemap.urlset.url.map(entry => {

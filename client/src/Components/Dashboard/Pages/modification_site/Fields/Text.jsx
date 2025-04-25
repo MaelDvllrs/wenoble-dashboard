@@ -16,11 +16,9 @@ const TextUpload = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVa
 
     useEffect(() => {
       // Mise à jour de slugValueChange lorsque fieldValue change
+      if (fieldValue && id_config) {
 
-      if(fieldValue && id_config){
-
-        if(id_config === 'title'){
-
+        if (id_config === 'title' && slugValueChange === '') {
           setSlugValueChange(fieldValue.page_blog_name || "");
 
           const data = {
@@ -30,8 +28,7 @@ const TextUpload = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVa
           };
           onChange({ data });
 
-        } else if (id_config === 'slug') {
-
+        } else if (id_config === 'slug' && slugValueChange === '') {
           setSlugValueChange(fieldValue.page_blog_slug || "");
 
           const data = {
@@ -40,11 +37,8 @@ const TextUpload = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVa
             type: 'text'
           };
           onChange({ data });
-
         }
       }
-    
-
     }, [fieldValue]); 
 
     const handleTextChange = (event) => {
