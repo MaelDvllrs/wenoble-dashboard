@@ -216,7 +216,28 @@ const Dashboard = () => {
 
     
     return (
-        <div className='dashboard'>
+        <div className='dashboard'
+            style={{
+                '--color-primary-main': theme.palette.primary.main,
+                '--color-primary-secondary': theme.palette.primary.secondary,
+                '--color-primary-third': theme.palette.primary.third,
+
+                '--color-secondary-main': theme.palette.secondary.main,
+                '--color-secondary-secondary': theme.palette.secondary.secondary,
+                '--color-secondary-third': theme.palette.secondary.third,
+
+                '--color-shadow-main': theme.palette.shadow.main,
+                '--color-shadow-secondary': theme.palette.shadow.secondary,
+
+                '--color-globe-dark': theme.palette.globe.dark,
+
+                '--color-background-default': theme.palette.background.default,
+                '--color-background-secondary': theme.palette.background.secondary,
+
+                '--color-text-primary': theme.palette.text.primary,
+                '--color-text-secondary': theme.palette.text.secondary,
+            }}
+        >
         <AnimatePresence initial={false}>
             <motion.div className="menu_dashboard" animate={{width: open_menu ? "18rem" : "5rem"}} style={{backgroundColor: theme.palette.primary.main, boxShadow : theme.palette.shadow.main}}>
                 <AnimatePresence initial={false}>

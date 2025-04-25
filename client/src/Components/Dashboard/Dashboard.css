@@ -178,19 +178,19 @@
 }
 
 .menu_link:hover{
-    color: var(--primary-color) !important;
-    background-color: rgba(var(--primary-color-rgb), 0.2);
+    color: var(--color-text-primary) !important;
+    background-color: var(--color-secondary-third);
 
 }
 
 .menuActive > .menu_link{
-    background-color: rgba(var(--primary-color-rgb), 0.2);
-    color: var(--primary-color) !important;
+    background-color: var(--color-secondary-third);
+    color: var(--color-text-primary) !important;
 
 }
 
 .menuActive > .menu_link > .menu_link_active_curs{
-    background-color: var(--primary-color);
+    background-color: var(--color-text-primary);
 
 }
 
