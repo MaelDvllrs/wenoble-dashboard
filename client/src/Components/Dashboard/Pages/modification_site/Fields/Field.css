@@ -3,6 +3,7 @@
     border-radius: 0.5rem;
     min-height: 10rem;
     overflow: hidden;
+    position: relative;
 }
 
 .DraftEditor-root{
@@ -44,6 +45,50 @@
     align-items: center;
     cursor: pointer;
 
+}
+
+.editor_button:hover{
+    background-color: var(--button-hover-color);
+}
+
+
+
+.link-tooltip{
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 0.3rem;
+    overflow: hidden;
+    box-shadow: 0px 3px 10px #00000034;
+
+}
+
+
+.link-tooltip-button{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    background-color: transparent;
+    border: none;
+    padding: 0.2rem;
+}
+
+.link-tooltip-button:hover{
+    background-color: var(--button-hover-color);
+}   
+
+
+
+.link-tooltip-input{
+    padding: 0.3rem;
+    background-color: transparent;
+    border: none;
+}
+
+.link-tooltip-input:focus{
+    outline: none;
 }
 
 
@@ -217,3 +262,7 @@
     align-items: start;
     width: 100%;
 }
+
+
+
+
