@@ -25,7 +25,5 @@
 }
 
 .welcomeMessage{
-    background-color: var(--primary-color);
     border-radius: 1rem;
-    padding: 1rem;
 }

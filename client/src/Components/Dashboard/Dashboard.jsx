@@ -259,29 +259,26 @@ const Dashboard = () => {
                 <div className='navigation'>
                     <NavLink key="home" to='/dashboard/home' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
                         <AnimatePresence initial={false}>
-                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.primary}}>
-                                <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><HomeOutlinedIcon fontSize='small'/></motion.div>
+                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
+                                <motion.div animate={{marginRight: open_menu ? "0.5rem" : "0rem"}} className='icon_navigation'><HomeOutlinedIcon fontSize='small'/></motion.div>
                                 <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Accueil</motion.span>
-                                <div className='menu_link_active_curs'></div>
                             </motion.div>
                         </AnimatePresence>
                     </NavLink>
-                    <div className='menu_title'><p className='menu_title_text' style={{color: theme.palette.text.primary}}><b>Gérer mon site</b></p></div>
+                    <div className='menu_title'><p className='menu_title_text' style={{color: theme.palette.text.primary}}>GÉRER MON SITE</p></div>
                     <NavLink key="modification" to='/dashboard/modification' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
                         <AnimatePresence initial={false}>
-                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.primary}}>
-                                <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><CreateOutlinedIcon fontSize='small'/></motion.div>
+                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
+                                <motion.div animate={{marginRight: open_menu ? "0.5rem" : "0rem"}} className='icon_navigation'><CreateOutlinedIcon fontSize='small'/></motion.div>
                                 <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Modifications</motion.span>
-                                <div className='menu_link_active_curs'></div>
                             </motion.div>
                         </AnimatePresence>
                     </NavLink>
                     <NavLink key="ecommerce" to={ecommAuth === 1 ? '/dashboard/ecommerce' : '#'} className={({ isActive, ecommAuth }) => (isActive, ecommAuth ? 'menuActive' : '')}>
                         <AnimatePresence initial={false}>
-                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.primary}}>
-                                <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><ShoppingCartOutlinedIcon fontSize='small'/></motion.div>
+                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
+                                <motion.div animate={{marginRight: open_menu ? "0.5rem" : "0rem"}} className='icon_navigation'><ShoppingCartOutlinedIcon fontSize='small'/></motion.div>
                                 <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>E-commerce</motion.span>
-                                <div className='menu_link_active_curs'></div>
                                 {
                                     ecommAuth === 1 ? (
                                         null
@@ -292,29 +289,25 @@ const Dashboard = () => {
                     </NavLink>
                     <NavLink key="stats" to='/dashboard/stats' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
                         <AnimatePresence initial={false}>
-                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.primary}}>
-                                <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><EqualizerOutlinedIcon fontSize='small'/></motion.div>
+                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
+                                <motion.div animate={{marginRight: open_menu ? "0.5rem" : "0rem"}} className='icon_navigation'><EqualizerOutlinedIcon fontSize='small'/></motion.div>
                                 <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Statistiques</motion.span>
-                                
-                                <div className='menu_link_active_curs'></div>
                             </motion.div>
                         </AnimatePresence>
                     </NavLink>
                     <NavLink key="contact" to='/dashboard/contact' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
                         <AnimatePresence initial={false}>
-                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.primary}}>
-                                <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><PiChatCircleDotsBold  /></motion.div>
+                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
+                                <motion.div animate={{marginRight: open_menu ? "0.5rem" : "0rem"}} className='icon_navigation'><PiChatCircleDotsBold  /></motion.div>
                                 <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Contacts</motion.span>
-                                <div className='menu_link_active_curs'></div>
                             </motion.div>
                         </AnimatePresence>
                     </NavLink>
                     <NavLink key="newsletter" to={newsAuth === 1 ? '/dashboard/newsletter' : '#'} className={({ isActive }) => (isActive && newsAuth === 1 ? 'menuActive' : '')}>
                         <AnimatePresence initial={false}>
-                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.primary}}>
-                                <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><NewspaperOutlinedIcon fontSize='small'/></motion.div>
+                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
+                                <motion.div animate={{marginRight: open_menu ? "0.5rem" : "0rem"}} className='icon_navigation'><NewspaperOutlinedIcon fontSize='small'/></motion.div>
                                 <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Newsletter</motion.span>
-                                <div className='menu_link_active_curs'></div>
                                 {
                                     newsAuth === 1 ? (
                                         null
@@ -324,31 +317,28 @@ const Dashboard = () => {
                         </AnimatePresence>
 
                     </NavLink>
-                    <div className='menu_title'><p className='menu_title_text' style={{color: theme.palette.text.primary}}><b>Wenoble</b></p></div>
+                    <div className='menu_title'><p className='menu_title_text' style={{color: theme.palette.text.primary}}>WENOBLE</p></div>
                     <NavLink key="actu" to='/dashboard/actu/' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
                         <AnimatePresence initial={false}>
-                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.primary}}>
-                                <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><ArticleOutlinedIcon fontSize='small'/></motion.div>
+                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
+                                <motion.div animate={{marginRight: open_menu ? "0.5rem" : "0rem"}} className='icon_navigation'><ArticleOutlinedIcon fontSize='small'/></motion.div>
                                 <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Actualités</motion.span>
-                                <div className='menu_link_active_curs'></div>
                             </motion.div>
                         </AnimatePresence>
                     </NavLink>
                     <NavLink key="academy" to='/dashboard/academy' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
                         <AnimatePresence initial={false}>
-                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.primary}}>
-                                <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><SchoolOutlinedIcon fontSize='small'/></motion.div>
+                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
+                                <motion.div animate={{marginRight: open_menu ? "0.5rem" : "0rem"}} className='icon_navigation'><SchoolOutlinedIcon fontSize='small'/></motion.div>
                                 <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Academy</motion.span>
-                                <div className='menu_link_active_curs'></div>
                             </motion.div>
                         </AnimatePresence>
                     </NavLink>
                     <NavLink key="probleme" to='/dashboard/problem' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
                         <AnimatePresence initial={false}>
-                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.primary}}>
-                                <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem"}} className='icon_navigation'><HelpOutlineOutlinedIcon fontSize='small'/></motion.div>
+                            <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
+                                <motion.div animate={{marginRight: open_menu ? "0.5rem" : "0rem"}} className='icon_navigation'><HelpOutlineOutlinedIcon fontSize='small'/></motion.div>
                                 <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Un problème ?</motion.span>
-                                <div className='menu_link_active_curs'></div>
                             </motion.div>
                         </AnimatePresence>
                     </NavLink>

@@ -65,7 +65,6 @@
 
 .articleBox:hover{
     background-color: var(--primary-hover-background-color);
-    transform: scale(1.02); /* Légère mise en avant au survol */
 }
 
 .trendingBox{
