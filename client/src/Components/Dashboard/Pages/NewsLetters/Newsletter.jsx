@@ -9,7 +9,7 @@ import '../modification_site/Portfolio/portfolio.css';
 import './newsletter.css';
 import config from "../../../../config";
 import { SkeletonBlog } from "../../../skeleton/skeleton";
-import { formatDate } from "../../utils/dateUtils";
+import { formatDate } from "../../../../utils/dateUtils";
 import { SnackbarProvider, enqueueSnackbar } from 'notistack'
 import { SecondaryButton } from '../../../../Theme/element';
 

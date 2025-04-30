@@ -4,7 +4,7 @@ import config from '../../../../config';
 import {useUpdates} from './useUpdate'
 import { NavLink } from 'react-router-dom';
 import './Actualite.css'
-import {formatDistanceWithoutApprox} from '../../utils/dateUtils'
+import {formatDistanceWithoutApprox} from '../../../../utils/dateUtils'
 
 const Update = () => {
   const theme = useTheme();

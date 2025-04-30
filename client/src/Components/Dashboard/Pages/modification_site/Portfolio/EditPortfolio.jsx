@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import "./EditPortfolio.css";
-import { compressImage } from "../../../apiImage";
+import { compressImage } from "../../../../../utils/imageUtils";
 import {fetchImagesPortfolio, saveImagesPortfolio, orderportfolio, deleteImagePortfolio } from "./apiPortfolio";
 
 import { SkeletonPortfolio } from "../../../../skeleton/skeleton";

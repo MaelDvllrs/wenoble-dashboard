@@ -4,7 +4,7 @@ import { useTheme } from '@mui/material/styles';
 import config from '../../../../config';
 import {useArticles} from './useArticle'
 import { NavLink } from 'react-router-dom';
-import {formatDistanceWithoutApprox} from '../../utils/dateUtils'
+import {formatDistanceWithoutApprox} from '../../../../utils/dateUtils'
 
 const Article = () => {
   const theme = useTheme();

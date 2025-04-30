@@ -7,7 +7,6 @@ import { MdImportContacts, MdArrowForwardIos } from "react-icons/md";
 import { PiLockBold } from "react-icons/pi";  
 import { FaElementor } from "react-icons/fa";
 import { MdArticle } from "react-icons/md";
-import gridBlog from "../../../../assets/background/grid_blog.svg";
 import sphere_page from "../../../../assets/background/sphere_page.svg";
 import { SkeletonTotalSize } from "../../../skeleton/skeleton";
 
@@ -22,7 +21,7 @@ import { BsCursor } from "react-icons/bs";
 import Cookies from 'js-cookie';
 import config from "../../../../config";
 
-import { checkAutorisation } from "../../../../Authorisation/Authorisation";
+import { checkAuthorization } from "../../../../Authorisation/Authorisation";
 
 
 
@@ -38,7 +37,7 @@ const [threshold, setThreshold] = useState(1);
 const [authPortfolio, setauthPortfolio] = useState(0);
 useEffect(() => {
   const fetchPortAuth = async () => {
-    const isAuthorized = await checkAutorisation('auth_portfolio');
+    const isAuthorized = await checkAuthorization('auth_portfolio');
     setauthPortfolio(isAuthorized);
   };
   fetchPortAuth();
@@ -48,7 +47,7 @@ useEffect(() => {
 const [authPage, setauthPage] = useState(0);
 useEffect(() => {
   const fetchPortAuth = async () => {
-    const isAuthorized = await checkAutorisation('auth_page');
+    const isAuthorized = await checkAuthorization('auth_page');
     setauthPage(isAuthorized);
   };
   fetchPortAuth();
@@ -58,7 +57,7 @@ useEffect(() => {
 const [authBlog, setauthBlog] = useState(0);
 useEffect(() => {
   const fetchPortAuth = async () => {
-    const isAuthorized = await checkAutorisation('auth_blog');
+    const isAuthorized = await checkAuthorization('auth_blog');
     setauthBlog(isAuthorized);
   };
   fetchPortAuth();

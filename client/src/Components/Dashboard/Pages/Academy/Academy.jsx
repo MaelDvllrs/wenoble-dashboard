@@ -1,102 +1,144 @@
-import React, { useState, useEffect } from "react";
-import { NavLink } from 'react-router-dom';
-import { useTheme } from '@mui/material/styles';
-import './Academy.css';
-import config from '../../../../config';
-import { LoginTextField } from '../../../../Theme/element';
+import React from "react";
+import { NavLink } from "react-router-dom";
+import { useTheme } from "@mui/material/styles";
+import { motion, AnimatePresence } from "framer-motion"; // <-- AJOUT FRAMER MOTION
+import "./Academy.css";
+import { SearchField } from "../../../../Theme/element";
+import { useAcademy } from "./useAcademy";
+import config from "../../../../config";
 
 const Academy = () => {
     const theme = useTheme();
-    const [searchTerm, setSearchTerm] = useState("");
+    const {
 
-    useEffect(() => {
-        const apiUrl = config.apiUrl;
-        const script = document.createElement('script');
-        script.src = apiUrl + '/collection-loader.js';
-        script.setAttribute('data-user-id', 'APICLIENT');
-        script.async = true;
-        document.body.appendChild(script);
+        academies,
+        availableFilters,
+        selectedFilters,
+        searchTerm,
+        handleSearch,
+        handleFilterChange,
+        resetFilters,
+    } = useAcademy();
 
-        return () => {
-            document.body.removeChild(script);
-        };
-    }, []);
 
-    const handleSearch = (e) => {
-        const value = e.target.value.toLowerCase();
-        setSearchTerm(value);
-        console.log(value);
-        document.querySelectorAll(".academy_box").forEach(box => {
-            const title = box.querySelector("[wn-title]")?.textContent.toLowerCase() || "";
-            if (value === "" || title.includes(value)) {
-                box.style.transition = "opacity 0.2s ease-in-out, transform 0.2s ease-in-out";
-                box.style.opacity = "1";
-                box.style.transform = "scale(1)";
-                box.style.display = "block";
-            } else {
-                box.style.transition = "opacity 0.2s ease-in-out, transform 0.2s ease-in-out";
-                box.style.opacity = "0";
-                box.style.transform = "scale(0.95)";
-                setTimeout(() => {
-                    box.style.display = "none";
-                }, 200); // Correspond à la durée de la transition
-            }
-        });
-    };
+
 
     return (
         <div className="outlet">
             <div className="title_section">
                 <div className="breadCrumbs">
-                    <NavLink style={{ color: theme.palette.text.primary }} className={"breadCrumbsLink"} to={'/dashboard/home'}>Dashboard</NavLink> &gt; Academy
+                    <NavLink
+                        style={{ color: theme.palette.text.primary }}
+                        className="breadCrumbsLink"
+                        to="/dashboard/home"
+                    >
+                        Dashboard
+                    </NavLink>
+                    ‎ &gt; Academy
                 </div>
             </div>
+
             <div className="academy_section">
                 <div className="academy_contain">
                     <h1 className="academy_title">Academy</h1>
+
                     <div className="academy_grid">
+                        {/* Search Field */}
                         <div className="academy_search">
-                            <LoginTextField 
-                                placeholder="Rechercher un cours"
+                            <SearchField
+                                label="Rechercher une formation"
                                 variant="outlined"
-                                theme={theme} 
+                                theme={theme}
                                 type="text"
                                 value={searchTerm}
                                 onChange={handleSearch}
-                                style={{width: '100%'}}
+                                style={{ width: "100%" }}
                                 InputProps={{
-                                    style: {
-                                        color: theme.palette.text.primary,
-                                    },
+                                    style: { color: theme.palette.text.primary },
                                 }}
                             />
                         </div>
-                        <div className="academy_wrapper">
-                            <div className="academy_list" wn-collection-wrapper='eyJibG9nSWQiOiAiMjIiLCAibGltaXQiOiAiIiwgIm9yZGVyIjogIiIsICJjb2xvbmUiOiAiIiwgImpvaW5UYWJsZSI6ICIiLCAiY29uZmlnIjogIiJ9'>
-                                <div wn-collection-box="" className="academy_box" style={{boxShadow: theme.palette.shadow.main}}>
-                                    <img wn-image="130" alt="Blog Image" />
-                                    <div className="academy_info_box">
-                                        <p wn-title="" className="academy_title_list" ></p>
-                                        <p wn-text="135" style={{color: theme.palette.text.secondary}}></p>
-                                        <p wn-text="131"></p>
-                                        <div wn-multireference-wrapper="132">
-                                            <div wn-multireference-box="">
-                                                <p wn-multireference-title="" wn-multireference-id="filtre"></p>
-                                            </div>
-                                        </div>
+
+                        {/* Filters */}
+                        <div className="academy_filter">
+                            <p className="academy_filter_title">Filtres</p>
+                            <button
+                                className="reset_filters_button"
+                                onClick={resetFilters}
+                            >
+                                Effacer
+                            </button>
+                            <div className="academy_filter_wrapper">
+                                {availableFilters.map((filter) => (
+                                    <div key={filter} className="academy_filter_box">
+                                        <input
+                                            type="checkbox"
+                                            value={filter}
+                                            checked={selectedFilters.includes(filter)}
+                                            onChange={handleFilterChange}
+                                            className="academy_filter_checkbox"
+                                        />
+                                        <p className="academy_filter_checkbox_label">{filter}</p>
                                     </div>
-                                    
-                                </div>
+                                ))}
                             </div>
                         </div>
-                        <div className="academy_filter">
-                            <p className="academy_filter_title">Filtre</p>
-                            <div wn-collection-wrapper="eyJibG9nSWQiOiAiMjMiLCAibGltaXQiOiAiIiwgIm9yZGVyIjogIiIsICJjb2xvbmUiOiAiIiwgImpvaW5UYWJsZSI6ICIiLCAiY29uZmlnIjogIiJ9">
-                                <div wn-collection-box="">
-                                    <input wn-input="133" type="checkbox" />
-                                    <p wn-title=""></p>
-                                </div>
-                            </div>
+
+                        <div className="academy_wrapper">
+                          <div className="academy_list">
+                            <AnimatePresence mode="popLayout">
+                              {academies.length === 0 ? (
+                                <motion.div
+                                  key="no-results"
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  exit={{ opacity: 0 }}
+                                  className="no-results"
+                                >
+                                  Aucune formation
+                                </motion.div>
+                              ) : (
+                                academies.map((academy) => (
+                                  <motion.div
+                                    key={academy.id_page_blog}
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.95 }}
+                                    transition={{ duration: 0.3 }}
+                                    className="academy_box"
+                                    style={{ boxShadow: theme.palette.shadow.main }}
+                                  >
+                                    <NavLink
+                                      to={`/dashboard/academy/${academy.page_blog_slug}`}
+                                      className="academy_link"
+                                    >
+                                      <img
+                                        src={`${config.apiUrl}/media/blog/${academy.content.image?.[0]?.src_image}`}
+                                        alt={academy.content.image?.[0]?.alt_image || "Formation"}
+                                        className="academy_box_image"
+                                      />
+                                      <div className="academy_info_box">
+                                        <p className="academy_title_list">{academy.page_blog_name}</p>
+                                        <p style={{ color: theme.palette.text.secondary }}>
+                                          {academy.content.text?.find(text => text.id_config === parseInt(config.idConfigAcademyResume))?.text}
+                                        </p>
+                                        <div className="academy_info_plus_box">
+                                          {academy.content.multiReference?.map((ref) => (
+                                            <p key={ref.value} className="academy_categories">
+                                              {ref.label}
+                                            </p>
+                                          ))}
+                                          <p className="academy_time_list">
+                                            {academy.content.text?.find(text => text.id_config === parseInt(config.idConfigAcademyTime))?.text}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </NavLink>
+                                  </motion.div>
+                                ))
+                              )}
+                            </AnimatePresence>
+                          </div>
                         </div>
                     </div>
                 </div>

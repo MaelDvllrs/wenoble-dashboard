@@ -1,4 +1,4 @@
-import React from "react"
+import React from "react";
 import Axios from 'axios';
 import { useState, useEffect } from "react";
 import Cookies from 'js-cookie';
@@ -8,8 +8,6 @@ import '../../Dashboard/Pages/modification_site/Portfolio/portfolio.css';
 import './AdminClients.css';
 import config from "../../../config";
 import { useTheme } from '@mui/material/styles';
-import { fetchImages } from "../../Dashboard/apiImage"
-
 
 const AdminClient = () => {
 
@@ -30,15 +28,7 @@ const AdminClient = () => {
                     IdUser: decodedUser.user[0].id_user,
                 }
             }).then((response) => {
-                const clients = response.data;
-                const promises = clients.map(client => fetchImages(client.username));
-                Promise.all(promises).then(imagesData => {
-                    const clientsWithImages = clients.map((client, index) => ({
-                        ...client,
-                        profileImage: imagesData[index]
-                    }));
-                    setInfoClient(clientsWithImages);
-                });
+                setInfoClient(response.data);
             }).catch((error) => {
                 console.error('Erreur lors de la récupération de la page :', error);
             });
@@ -46,11 +36,6 @@ const AdminClient = () => {
     }, []);
 
     console.log(InfoClient);
-
-
-
-
-
 
     return(
         <div className="outlet">
@@ -64,7 +49,7 @@ const AdminClient = () => {
                     {InfoClient && InfoClient.map((clientItem) => (
                         <NavLink to={'/dashboard/modification/page/' + clientItem.id_user} className="client_liste_item" key={clientItem.id_user}>
                             <img 
-                              src={clientItem.profileImage && clientItem.profileImage[0] ? `data:image/jpeg;base64,${clientItem.profileImage[0].data}` : 'default-image-url'} 
+                              src={'default-image-url'} 
                               alt="profile" 
                               className="client_liste_item_image"
                             />                            <p style={{color: theme.palette.text.primary}}>{clientItem.username}</p>

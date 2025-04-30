@@ -58,12 +58,40 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    border-radius: 0.3rem;
+    border-radius: 0.5rem;
     overflow: hidden;
     box-shadow: 0px 3px 10px #00000034;
+    padding: 0.2rem;
 
 }
 
+.link-tooltip-form{
+    display: flex;
+    gap: 0.5rem;
+
+    justify-content: center;
+    align-items: center;
+
+}
+
+.link-tooltip-select{
+    border-radius: 0.3rem !important;
+    font-size: 0.8rem !important;
+}
+
+.link-tooltip-select:hover{
+    background-color: var(--button-hover-color);
+
+}
+
+.link-tooltip-menu-item{
+    font-size: 0.9rem !important;
+}
+
+.link-tooltip-menu-icon{
+    margin-right: 0.3rem;
+    color: var(--color-text-secondary) !important;
+}
 
 .link-tooltip-button{
     display: flex;
@@ -73,6 +101,7 @@
     background-color: transparent;
     border: none;
     padding: 0.2rem;
+    border-radius: 0.3rem;
 }
 
 .link-tooltip-button:hover{

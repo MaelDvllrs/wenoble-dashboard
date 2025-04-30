@@ -17,7 +17,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import { PiSmileyMeltingFill } from "react-icons/pi";
 
-import { formatNumber, formatTime } from '../../utils/numberFormatted';
+import { formatNumber, formatTime } from '../../../../utils/numberFormatted';
 
 import Cookies from 'js-cookie';
 

@@ -1,14 +1,19 @@
-import React, { useState, useEffect, useContext, useRef  } from 'react';
+// External libraries
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import Axios from 'axios';
-import {jwtDecode} from 'jwt-decode'; 
+import { jwtDecode } from 'jwt-decode';
 import Cookies from 'js-cookie';
-import './Dashboard.css';
 import { Outlet, Link, NavLink, useNavigate } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion';
+import { Checkbox, Avatar, Badge, Popper, ClickAwayListener, Grow, IconButton } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+import { formatDistance } from 'date-fns';
+import { fr } from 'date-fns/locale';
+
+// Icons
 import { BsChevronCompactDown } from "react-icons/bs";
-import { PiLockBold, PiUserBold, PiGearSixBold, PiPowerBold, PiHouseBold, PiChartBarBold, PiPencilSimpleBold, PiNewspaperBold, PiFunnelSimpleBold, PiShoppingCartSimpleBold, PiQuestionBold, PiChatCircleDotsBold, PiBellBold, PiNewspaperClippingBold } from "react-icons/pi";
+import { PiLockBold, PiUserBold, PiGearSixBold, PiPowerBold, PiChatCircleDotsBold, PiBellBold, PiFunnelSimpleBold  } from "react-icons/pi";
 import { LuMoon, LuSun } from "react-icons/lu";
-import { HiOutlineAcademicCap } from "react-icons/hi";
 import CreateOutlinedIcon from '@mui/icons-material/CreateOutlined';
 import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined';
 import EqualizerOutlinedIcon from '@mui/icons-material/EqualizerOutlined';
@@ -18,94 +23,54 @@ import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined';
 import HelpOutlineOutlinedIcon from '@mui/icons-material/HelpOutlineOutlined';
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 
-import Logo from "../../assets/icon/logo.svg?react"; 
+// Internal imports
+import './Dashboard.css';
+import Logo from '../../assets/icon/logo.svg?react';
 import config from '../../config';
 import { SkeletonProfile } from '../skeleton/skeleton';
 import ThemeContext from '../../Theme/themeContext';
-import { useTheme } from '@mui/material/styles';
-import Checkbox from '@mui/material/Checkbox';
-import Avatar from '@mui/material/Avatar';
-import Badge from '@mui/material/Badge';
-import Popper  from '@mui/material/Popper';
-import ClickAwayListener from '@mui/material/ClickAwayListener';
-import Grow from '@mui/material/Grow';
-import IconButton from '@mui/material/IconButton';
-//import io from 'socket.io-client';
 import { notificationTitle, notificationLink } from '../../Theme/element';
-import { formatDistance, set} from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { checkAuthorization } from '../../Authorisation/Authorisation';
+import { fetchUserInfo } from './Pages/Users/apiAccount';
 
-import { checkAutorisation } from '../../Authorisation/Authorisation';
-
-
-import {fetchUserInfo} from './Pages/Users/apiAccount';
-
-
-
-
-
+// Component definition
 const Dashboard = () => {
-
     const theme = useTheme();
+    
+    const navigateTo = useNavigate();
 
-    const apiUrl = config.apiUrl; 
+    // Constants
+    const apiUrl = config.apiUrl;
     const token = Cookies.get('token');
-
     const apiUrlNotif = config.apiNotifServer;
 
+    // State variables
     const [ecommAuth, setEcommAuth] = useState(false);
     const [newsAuth, setNewsAuth] = useState(false);
-
-    useEffect(() => {
-      const fetchAuth = async () => {
-        const isAuthorizedEcom = await checkAutorisation('auth_ecom');
-        setEcommAuth(isAuthorizedEcom);
-        const isAuthorisedNews = await checkAutorisation('auth_newsletter');
-        setNewsAuth(isAuthorisedNews);
-      };
-
-      fetchAuth();
-    }, []);
-
-
-
-
-
-
-
-
-    //const socket = io(apiUrlNotif);
-
-    const { isDark, toggleTheme } = useContext(ThemeContext);
-
-
     const [LoadingProfile, setLoadingProfile] = useState(true);
-
     const [infoUser, setInfoUser] = useState(null);
-
     const [openNotif, setOpenNotif] = useState(false);
     const [notifications, setNotifications] = useState([]);
     const [notifRead, setNotifRead] = useState(false);
+    const [open_user, setopen_user] = useState(true);
+    const [open_menu, setopen_menu] = useState(true);
 
+    // Context
+    const { isDark, toggleTheme } = useContext(ThemeContext);
+
+    // Refs
     const anchorRef = useRef(null);
 
-    
-
-   //useEffect(() => {
-   //    // Écouter les notifications en temps réel
-   //    const userId = jwtDecode(Cookies.get('token')).idUser;
-   //    socket.emit('join', { idUser: userId });
-//
-   //    socket.on('notification', (data) => {
-   //        console.log(data);
-   //        setNotifRead(true);
-   //    });
-//
-   //    return () => {
-   //        socket.off('notification');
-   //    };
-   //}, []);
-
+    // Effects
+    useEffect(() => {
+        const fetchAuth = async () => {
+            const isAuthorizedEcom = await checkAuthorization('auth_ecom');
+            setEcommAuth(isAuthorizedEcom);
+            const isAuthorisedNews = await checkAuthorization('auth_newsletter');
+            setNewsAuth(isAuthorisedNews);
+        };
+        fetchAuth();
+    }, []);
 
     useEffect(() => {
         const fetchNotifications = async () => {
@@ -127,26 +92,33 @@ const Dashboard = () => {
         fetchNotifications();
     }, [openNotif, notifRead, notifications]);
 
-
-    const handleReadNotif = (event) => {
-        const notificationId = event.currentTarget.id;
-        Axios.post(`${apiUrl}/readNotification`, {
-            IdNotif: notificationId,
-          }, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-        }).then((response) => {
-            setNotifRead(false);
-            console.log(response.data);
-        });
-    };
-
     useEffect(() => {
         setNotifRead(notifications.some(notification => !notification.is_read));
     }, [notifications]);
 
+    useEffect(() => {
+        const fetchUserInfoLocal = async (token) => {
+            const response = await fetchUserInfo(token);
+            setInfoUser(jwtDecode(response));
+        };
+        fetchUserInfoLocal(token);
+        setLoadingProfile(false);
+    }, [token]);
+
+    // Handlers
+    const handleReadNotif = (event) => {
+        const notificationId = event.currentTarget.id;
+        Axios.post(`${apiUrl}/readNotification`, {
+            IdNotif: notificationId,
+        }, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        }).then(() => {
+            setNotifRead(false);
+        });
+    };
 
     const handleOpenNotif = (event) => {
         event.stopPropagation();
@@ -162,42 +134,19 @@ const Dashboard = () => {
         handleClickAway(event);
     };
 
-
-
-
-    useEffect(() => {
-            const fetchUserInfoLocal = async (token) => {
-                const response = await fetchUserInfo(token);
-                setInfoUser(jwtDecode(response));
-            };
-            fetchUserInfoLocal(token);
-            setLoadingProfile(false);
-    }, [token]);
-
-
-
-
-    const navigateTo = useNavigate()
-
     const logoutUser = () => {
         Cookies.remove('token');
         navigateTo('/');
-    }
+    };
 
-    
-   
-    const [open_user, setopen_user] = useState(true);
-    const [open_menu, setopen_menu] = useState(true);
-    
-    function toggle_user() { 
+    const toggle_user = () => {
         setopen_user(!open_user);
-    }
+    };
 
-    function toggle_menu() {
+    const toggle_menu = () => {
         setopen_menu(!open_menu);
         setopen_user(true);
-    }
-
+    };
 
     const formatDistanceWithoutApprox = (date) => {
         return formatDistance(date, new Date(), {
@@ -212,9 +161,7 @@ const Dashboard = () => {
         });
     };
 
-
-
-    
+    // JSX
     return (
         <div className='dashboard'
             style={{

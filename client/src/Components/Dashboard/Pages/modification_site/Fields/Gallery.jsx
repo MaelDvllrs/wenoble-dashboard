@@ -3,7 +3,7 @@ import config from '../../../../../config';
 import { FileUploader } from "react-drag-drop-files";
 import { Reorder } from 'framer-motion';
 import { useFieldArray, useForm } from 'react-hook-form';
-import { compressImage } from "../../../apiImage";
+import { compressImage } from "../../../../../utils/imageUtils";
 import { SecondaryButton } from '../../../../../Theme/element';
 import DeleteIcon from '@mui/icons-material/Delete';
 import OpenInNewOutlinedIcon from '@mui/icons-material/OpenInNewOutlined';

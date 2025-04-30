@@ -9,7 +9,7 @@ import { DefaultButton, SecondaryButton, LoginTextField } from '../../../../Them
 import './Account.css';
 import Avatar from '@mui/material/Avatar';
 import config from '../../../../config';
-import { compressImage } from '../../apiImage';
+import { compressImage } from '../../../../utils/imageUtils';
 import { SnackbarProvider, enqueueSnackbar } from 'notistack'
 
 

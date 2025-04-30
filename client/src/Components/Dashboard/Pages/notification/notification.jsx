@@ -8,7 +8,7 @@ import { jwtDecode } from 'jwt-decode';
 import { notificationLink } from '../../../../Theme/element';
 import { notificationTitle } from '../../../../Theme/element';
 import { useTheme } from '@mui/material';
-import { formatDistanceWithoutApprox } from '../../utils/dateUtils';
+import { formatDistanceWithoutApprox } from '../../../../utils/dateUtils';
 
 
 export const Notification = () => {

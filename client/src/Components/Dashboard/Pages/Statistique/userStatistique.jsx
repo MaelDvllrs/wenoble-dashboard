@@ -16,7 +16,7 @@ import Tooltip from '@mui/material/Tooltip';
 import { PiSmileyMeltingFill } from "react-icons/pi";
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { formatNumber, formatTime } from '../../utils/numberFormatted';
+import { formatNumber, formatTime } from '../../../../utils/numberFormatted';
 import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
 
 import Cookies from 'js-cookie';

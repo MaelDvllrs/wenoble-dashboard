@@ -2,13 +2,16 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Editor, EditorState, RichUtils, CompositeDecorator, convertFromRaw, AtomicBlockUtils, convertToRaw, getVisibleSelectionRect } from 'draft-js';
 import 'draft-js/dist/Draft.css';
 import { FaBold, FaItalic, FaLink, FaListUl, FaListOl, FaImage, FaTrash, FaCheck, FaTimes } from "react-icons/fa";
-import { compressImage } from '../../../apiImage'; // Importer la fonction compressImage
+import { compressImage } from '../../../../../utils/imageUtils'; 
 import './Field.css';
 import {SecondaryButton} from '../../../../../Theme/element';
-import { th } from 'date-fns/locale';
 import CheckIcon from '@mui/icons-material/Check';
 import ClearIcon from '@mui/icons-material/Clear';
 import CallIcon from '@mui/icons-material/Call';
+import { MenuItem, Select } from '@mui/material';
+import LinkIcon from '@mui/icons-material/Link';
+import EmailIcon from '@mui/icons-material/Email';
+
 
 
 // Composant Link pour les liens
@@ -20,7 +23,7 @@ const Link = (props) => {
   return (
     <a
       href={url}
-      style={{ color: '#2ec96d', textDecoration: 'underline' }}
+      style={{ color: '#2ec96d' }}
       target="_blank"
       rel="noopener noreferrer"
     >
@@ -43,7 +46,8 @@ const LinkTooltip = ({ position, onSubmit, onCancel, theme, urlValue }) => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (tooltipRef.current && !tooltipRef.current.contains(event.target)) {
+      if (tooltipRef.current && !tooltipRef.current.contains(event.target) && !event.target.closest('.MuiMenu-root')) {
+        console.log('click outside'); 
         onCancel();
       }
     };
@@ -60,17 +64,55 @@ const LinkTooltip = ({ position, onSubmit, onCancel, theme, urlValue }) => {
     }, 0);
   }, []);
 
+
+  useEffect(() => {
+    if (urlValue) {
+      if (urlValue.startsWith('mailto:')) {
+        setLinkType('email');
+        console.log('URL:', urlValue);
+        setUrlInput(urlValue.replace(/^mailto:/, '')); // Supprime "mailto:"
+      } else if (urlValue.startsWith('tel:')) {
+        setLinkType('phone');
+        setUrlInput(urlValue.replace(/^tel:/, '')); // Supprime "tel:"
+      } else {
+        setLinkType('default');
+        setUrlInput(urlValue); // Garde l'URL telle quelle pour les liens normaux
+      }
+    } else {
+      setLinkType('default');
+      setUrlInput(''); // Réinitialise l'input si aucun lien n'est fourni
+    }
+  }, [urlValue]);
+
+  const getPlaceholder = () => {
+    if (linkType === 'email') {
+      return 'exemple@domaine.com';
+    } else if (linkType === 'phone') {
+      return '+123456789';
+    } else {
+      return 'https://example.com';
+    }
+  };
+
+  const getTypeLink = () => {
+    if (linkType === 'email') {
+      return 'email';
+    } else if (linkType === 'phone') {
+      return 'tel';
+    } else {
+      return 'url';  
+    }
+  };
+
+  const handleUrlInputChange = (e) => {
+    setUrlInput(e.target.value);
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    let formattedUrl = urlInput.trim();
-    if (linkType === 'email') {
-      formattedUrl = `mailto:${formattedUrl}`;
-    } else if (linkType === 'phone') {
-      formattedUrl = `tel:${formattedUrl}`;
-    }
-
-    onSubmit(formattedUrl);
+  
+    const url = urlInput.trim();
+    onSubmit(url, linkType);
   };
 
   return (
@@ -81,37 +123,102 @@ const LinkTooltip = ({ position, onSubmit, onCancel, theme, urlValue }) => {
         left: position ? `${position.left}px` : 0,
         top: position ? `${position.bottom + 5}px` : 0,
         backgroundColor: theme.palette.primary.secondary,
+        boxShadow: theme.palette.shadow.main,
       }}
     >
-      <form onSubmit={handleSubmit}>
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
-          <select
+      <form onSubmit={handleSubmit} className='link-tooltip-form'>
+          <Select
+            className="link-tooltip-select"
             value={linkType}
             onChange={(e) => setLinkType(e.target.value)}
+            onClick={(e) => e.stopPropagation()} 
             style={{
-              marginRight: '0.5rem',
-              padding: '0.25rem',
               color: theme.palette.text.primary,
-              backgroundColor: theme.palette.primary.main,
+            }}
+
+            MenuProps={{
+              PaperProps: {
+                style: {
+                  backgroundColor: theme.palette.primary.secondary,
+                  marginTop: '0.5rem',
+                  boxShadow: theme.palette.shadow.main,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 'auto',
+                  
+                },
+                sx: {
+                  '& .MuiList-root': {
+                    padding: '0.3rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'stretch',
+                    gap: '0.2rem',
+                  },
+
+                  '& .MuiMenuItem-root': {
+                    display: 'flex',
+                    borderRadius: '0.3rem',
+                    padding: '0.2rem',
+                    width: 'auto',
+                  },
+                  '& .MuiMenuItem-root:hover': {
+                    backgroundColor: theme.palette.primary.third,
+                  },
+                  '& .MuiMenuItem-root.Mui-selected': {
+                    backgroundColor: theme.palette.primary.third,
+                  },
+                },
+              },
+            }}
+            sx={{
+              '& .MuiSelect-icon': {
+                color: theme.palette.text.primary,
+              },
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'transparent',
+              },
+              '&:hover .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'transparent',
+                
+              },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'transparent',
+              },
+              '& .MuiSelect-select': {
+                paddingLeft: '0.5rem',
+                paddingTop: '0.2rem',
+                paddingBottom: '0.2rem',
+                display: 'flex',
+                alignItems: 'center',
+                backgroundColor: 'transparent',
+              },
+
+              
             }}
           >
-            <option value="default"></option>
-            <option value="email"></option>
-            <option value="phone"><CallIcon fontSize='small²'/></option>
-          </select>
+            <MenuItem value="default" className='link-tooltip-menu-item'>
+              <LinkIcon fontSize='small' className='link-tooltip-menu-icon'/> Url
+            </MenuItem>
+            <MenuItem value="email" className='link-tooltip-menu-item'>
+              <EmailIcon fontSize='small' className='link-tooltip-menu-icon'/> Email
+            </MenuItem>
+            <MenuItem value="phone" className='link-tooltip-menu-item'> 
+              <CallIcon fontSize="small" className='link-tooltip-menu-icon'/> Téléphone
+            </MenuItem>
+          </Select>
           <input
             ref={inputRef}
-            type="url"
-            placeholder="https://example.com"
+            type={getTypeLink()}
+            placeholder={getPlaceholder()}
             value={urlInput}
-            onChange={(e) => setUrlInput(e.target.value)}
+            onChange={handleUrlInputChange}
             className="link-tooltip-input"
             style={{
               color: theme.palette.text.primary,
             }}
           />
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
           <button
             type="button"
             className="link-tooltip-button"
@@ -132,7 +239,6 @@ const LinkTooltip = ({ position, onSubmit, onCancel, theme, urlValue }) => {
           >
             <ClearIcon fontSize="small" />
           </button>
-        </div>
       </form>
     </div>
   );
@@ -241,7 +347,7 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
     // Si sélection active, on ferme le tooltip
     if (!selection.isCollapsed()) {
       linkHoverMode.current = false;
-      console.log('Selection active, fermeture du tooltip');
+      console.log('close 2');
       setShowLinkTooltip(false);
       setTooltipPosition(null);
       return;
@@ -253,7 +359,6 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
   
     if (!block) {
       linkHoverMode.current = false;
-      console.log('Aucun bloc trouvé, fermeture du tooltip');
       setShowLinkTooltip(false);
       setTooltipPosition(null);
       return;
@@ -264,8 +369,9 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
     if (entityKey) {
       const entity = content.getEntity(entityKey);
       if (entity.getType() === 'LINK') {
+
         const { url } = entity.getData();
-  
+        
         const rect = document.querySelector('.editor-container')?.getBoundingClientRect();
         const selectionRect = getVisibleSelectionRect(window);
   
@@ -311,11 +417,19 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
     
         // ❌ sinon, on ferme
         linkHoverMode.current = false;
-        console.log('Fermeture du tooltip après vérification');
         setShowLinkTooltip(false);
         setTooltipPosition(null);
       }, 150);
     }
+
+    const data = {
+      id_config: id_config,
+      type: 'richText',
+      value: newState.getCurrentContent(),
+      create: createBoolRichText
+    };
+
+    onChange({ data });
   };
 
   const handleBoldClick = () => {
@@ -409,15 +523,23 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
   };
   
 
-  const handleLinkSubmit = (url) => {
+  const handleLinkSubmit = (url, linkType) => {
     if (!url || url.trim() === '') {
       handleLinkCancel();
       return;
     }
+
+    console.log('URL:', url);
+    console.log('Link Type:', linkType);
   
     let formattedUrl = url;
-    if (!/^https?:\/\//i.test(url)) {
-      formattedUrl = 'https://' + url;
+    if (linkType === 'email') {
+      formattedUrl = `mailto:${formattedUrl}`;
+    } else if (linkType === 'phone') {
+      formattedUrl = `tel:${formattedUrl}`;
+    } else if (!/^https?:\/\//i.test(formattedUrl)) {
+      // Ajoute https:// uniquement pour les liens de type URL
+      formattedUrl = 'https://' + formattedUrl;
     }
   
     const contentState = editorState.getCurrentContent();
@@ -466,6 +588,7 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
       setEditorState(EditorState.forceSelection(newEditorState, selection));
       linkSelectionRef.current = null;
       setLinkEditMode(false);
+      console.log('close 5');
       setShowLinkTooltip(false);
       setTooltipPosition(null);
     } else {
@@ -488,7 +611,9 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
   
     skipNextTooltip.current = true; // ✅ ignorer l’ouverture suivante
     setLinkEditMode(false);
+    console.log('close 1');
     setShowLinkTooltip(false);
+
     setTooltipPosition(null);
     linkSelectionRef.current = null;
   };
@@ -609,8 +734,7 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
     return null;
   };
 
-  console.log('ShowLinkTooltip', showLinkTooltip);
-  console.log('TooltipPosition', tooltipPosition);
+
 
 
 

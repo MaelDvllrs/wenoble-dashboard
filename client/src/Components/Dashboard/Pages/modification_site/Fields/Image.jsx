@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FileUploader } from "react-drag-drop-files";
-import { compressImage } from "../../../apiImage";
+import { compressImage } from "../../../../../utils/imageUtils";
 import { SecondaryButton } from '../../../../../Theme/element';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AutorenewIcon from '@mui/icons-material/Autorenew';

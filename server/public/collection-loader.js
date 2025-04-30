@@ -1,5 +1,5 @@
 (async function () {
-    const apiUrl = "http://localhost:3002"; // Remplacez par l'URL de votre API
+    const apiUrl = "https://api-wenoble.wenoble.fr";
     const scriptTag = document.currentScript;
     const userKey = scriptTag.getAttribute("data-user-id");
 

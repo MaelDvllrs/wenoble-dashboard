@@ -177,6 +177,7 @@ router.get('/sendBlogInfo',apiKeyMiddleware, (req, res) => {
 router.get('/sendBlogInfoSlug',apiKeyMiddleware, (req, res) => {
     const slug = req.headers.slug;
     let id_blog = req.headers.id_blog;
+    
 
 
     // Vérifiez si id_blog contient plusieurs identifiants séparés par des virgules

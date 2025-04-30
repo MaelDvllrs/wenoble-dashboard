@@ -3,7 +3,7 @@ import { useTheme } from '@mui/material/styles';
 import config from '../../../../config';
 import {useArticlesTemplates} from './useArticleTemplate'
 import { NavLink, useParams } from 'react-router-dom';
-import {formatDate} from '../../utils/dateUtils'
+import {formatDate} from '../../../../utils/dateUtils'
 import ArrowLeftIcon from '@mui/icons-material/ArrowLeft';
 
 const ArticleTemplate = () => {

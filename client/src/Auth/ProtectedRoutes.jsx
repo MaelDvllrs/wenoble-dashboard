@@ -1,81 +1,60 @@
+import { useState, useEffect } from 'react';
 import axios from 'axios';
-import React, { useState, useEffect } from 'react';
-import Cookies from 'js-cookie'
+import Cookies from 'js-cookie';
 import config from '../config';
 
+// Constants
+const apiUrl = config.apiUrl;
 
-const apiUrl = config.apiUrl; 
-
-
-const IsAuthenticated = () => {
-  const [verifyAuth, setVerifyAuth] = useState(false);
-  const [isAuthenticating, setIsAuthenticating] = useState(false);
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
+// Helper function for authentication
+const checkAuthentication = async (setVerify, setAuthenticating, isAdminCheck = false) => {
+    try {
         const token = Cookies.get('token');
         if (!token) {
-          setVerifyAuth(true);
-          throw new Error('Token not found');
+            setVerify(true);
+            throw new Error('Token not found');
         }
 
         const response = await axios.post(`${apiUrl}/auth/verify`, { token });
 
-        if (response.data.success && !response.data.user.isAdmin) {
-          setIsAuthenticating(true);
+        if (response.data.success && (isAdminCheck ? response.data.user.isAdmin : !response.data.user.isAdmin)) {
+            setAuthenticating(true);
         }
-        setVerifyAuth(true)
-      } catch (error) {
+        setVerify(true);
+    } catch (error) {
         return error;
-      }
-    };
-
-    checkAuth();
-  }, []);
-
-  return {isAuthenticating, verifyAuth}
+    }
 };
 
+// Hook for client authentication
+const IsAuthenticated = () => {
+    const [verifyAuth, setVerifyAuth] = useState(false);
+    const [isAuthenticating, setIsAuthenticating] = useState(false);
+
+    useEffect(() => {
+        checkAuthentication(setVerifyAuth, setIsAuthenticating, false);
+    }, []);
+
+    return { isAuthenticating, verifyAuth };
+};
+
+// Hook for admin authentication
 const IsAuthenticatedAdmin = () => {
-  const [verifyAdm, setverifyAdm] = useState(false);
-  const [isAuthenticating, setIsAuthenticating] = useState(false);
+    const [verifyAdm, setVerifyAdm] = useState(false);
+    const [isAuthenticating, setIsAuthenticating] = useState(false);
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const token = Cookies.get('token');
-        if (!token){ 
-          setverifyAdm(true);
-          throw new Error('Token not found');
-        }
+    useEffect(() => {
+        checkAuthentication(setVerifyAdm, setIsAuthenticating, true);
+    }, []);
 
-        const response = await axios.post(`${apiUrl}/auth/verify`, { token });
-
-        if (response.data.success && response.data.user.isAdmin) {
-          setIsAuthenticating(true);
-        }
-        setverifyAdm(true)
-      } catch (error) {
-        return error;
-        
-      }
-    };
-
-    checkAuth();
-  }, []);
-
-  return {isAuthenticating, verifyAdm}
-
+    return { isAuthenticating, verifyAdm };
 };
 
-
-
-export { IsAuthenticatedAdmin, IsAuthenticated};
-
-
+// Exports
+export { IsAuthenticatedAdmin, IsAuthenticated };
 
 
 
 
-  
+
+

@@ -103,6 +103,8 @@ const EditPageBlog = () => {
     const { idBlogPage } = useParams();
     const { idBlog } = useParams();
 
+    
+
 
 
     const handleSave = async (status, setpublishDate) => {
@@ -159,7 +161,6 @@ const EditPageBlog = () => {
 
 
             // ENREGISTRER LES RICHTEXT
-
             if (blogData.richText.length > 0) {
                 const infoRichText = [];
                 blogData.richText.forEach(richText => {
@@ -193,7 +194,7 @@ const EditPageBlog = () => {
 
             
 
-            // ENREGISTRER LES IMAGE*
+            // ENREGISTRER LES IMAGE
             if(blogData.images.length > 0){
                 try {
                     // Utiliser Promise.all pour attendre que toutes les images soient sauvegardées
@@ -208,7 +209,6 @@ const EditPageBlog = () => {
             }
 
             //ENREGISTRER LES VIDEO
-
             if(blogData.video.length > 0){
                 try {
                     await Promise.all(blogData.video.map(async (video) => {
@@ -233,7 +233,6 @@ const EditPageBlog = () => {
             }
 
             //ENREGISTRER LES GALLERIES
-
             if(blogData.gallery.length > 0){
                 try {
                     await Promise.all(blogData.gallery.map(async (gallery) => {
@@ -329,7 +328,7 @@ const EditPageBlog = () => {
 
     const handleBlogDataChange = (data, isDelete = false) => {
 
-
+        
         setBlogData(prevData => {
           const newData = { ...prevData };
 
@@ -371,10 +370,11 @@ const EditPageBlog = () => {
               newData[type].push(data.data);
             }
           }
-      
           return newData;
         });
     };
+
+    
 
 
 
@@ -385,7 +385,6 @@ const EditPageBlog = () => {
     
         // Vérifier le statut de la page
         const isPublished = DecodeBlog.blogPage[0].status === 1;
-        console.log('isPublished', isPublished);
         
         // Afficher la Snackbar appropriée
         if (isPublished) {
