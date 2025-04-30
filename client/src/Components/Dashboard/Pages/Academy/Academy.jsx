@@ -95,7 +95,7 @@ const Academy = () => {
                                   exit={{ opacity: 0 }}
                                   className="no-results"
                                 >
-                                  Aucune formation
+                                  Formation à venir prochainement
                                 </motion.div>
                               ) : (
                                 academies.map((academy) => (
