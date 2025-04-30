@@ -47,7 +47,6 @@ const LinkTooltip = ({ position, onSubmit, onCancel, theme, urlValue }) => {
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (tooltipRef.current && !tooltipRef.current.contains(event.target) && !event.target.closest('.MuiMenu-root')) {
-        console.log('click outside'); 
         onCancel();
       }
     };
@@ -69,7 +68,6 @@ const LinkTooltip = ({ position, onSubmit, onCancel, theme, urlValue }) => {
     if (urlValue) {
       if (urlValue.startsWith('mailto:')) {
         setLinkType('email');
-        console.log('URL:', urlValue);
         setUrlInput(urlValue.replace(/^mailto:/, '')); // Supprime "mailto:"
       } else if (urlValue.startsWith('tel:')) {
         setLinkType('phone');
@@ -347,7 +345,6 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
     // Si sélection active, on ferme le tooltip
     if (!selection.isCollapsed()) {
       linkHoverMode.current = false;
-      console.log('close 2');
       setShowLinkTooltip(false);
       setTooltipPosition(null);
       return;
@@ -376,8 +373,6 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
         const selectionRect = getVisibleSelectionRect(window);
   
         if (selectionRect && rect) {
-          console.log('Rect:', rect);
-          console.log('Selection Rect:', selectionRect);
           setTooltipPosition({
             left: selectionRect.left - rect.left,
             bottom: selectionRect.bottom - rect.top,
@@ -529,8 +524,7 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
       return;
     }
 
-    console.log('URL:', url);
-    console.log('Link Type:', linkType);
+
   
     let formattedUrl = url;
     if (linkType === 'email') {
@@ -575,7 +569,6 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
       }
     }
 
-    console.log('Entity Key:', entityKey);
   
     if (entityKey) {
       const updatedContentState = contentState.mergeEntityData(entityKey, {
@@ -588,7 +581,6 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
       setEditorState(EditorState.forceSelection(newEditorState, selection));
       linkSelectionRef.current = null;
       setLinkEditMode(false);
-      console.log('close 5');
       setShowLinkTooltip(false);
       setTooltipPosition(null);
     } else {
@@ -611,7 +603,6 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
   
     skipNextTooltip.current = true; // ✅ ignorer l’ouverture suivante
     setLinkEditMode(false);
-    console.log('close 1');
     setShowLinkTooltip(false);
 
     setTooltipPosition(null);
@@ -650,7 +641,6 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
             console.error('Erreur : entityKey non défini');
             return;
           }
-          console.log('Entity Key créé:', entityKey);
   
           // Insérer un bloc atomique avec l'entité image
           const newEditorState = EditorState.set(
