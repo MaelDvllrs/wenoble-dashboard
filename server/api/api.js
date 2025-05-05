@@ -379,6 +379,7 @@ router.get('/streamVideo/:videoName',apiKeyMiddleware, (req, res) => {
         const head = {
           'Content-Length': fileSize,
           'Content-Type': 'video/mp4',
+          'Accept-Ranges': 'bytes',
         };
         res.writeHead(200, head);
         fs.createReadStream(videoPath).pipe(res);
