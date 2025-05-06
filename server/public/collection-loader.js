@@ -116,7 +116,7 @@
                     clone.removeAttribute("wn-collection-box");
                     
                     // Ajout de l'attribut wn-collection-element à chaque élément cloné
-                    clone.setAttribute("wn-collection-element");
+                    clone.setAttribute("wn-collection-element", "true");
 
                     const response = await fetch(`${apiUrl}/api/sendBlogContent`, {
                         method: "GET",
