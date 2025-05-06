@@ -151,19 +151,19 @@
                                 if (isWebflowPreview()) {
                                     // En mode prévisualisation Webflow, utiliser la partie après la virgule
                                     const webflowPath = webflowPrelink || 'template';
-                                    el.href = `/${webflowPath}?slug=${linkData}`;
+                                    el.href = `./${webflowPath}?slug=${linkData}`;
                                 } else {
                                     // En mode normal, utiliser la partie avant la virgule
-                                    el.href = `/${normalPrelink}/${linkData}`;
+                                    el.href = `./${normalPrelink}/${linkData}`;
                                 }
                             } else {
                                 // Pas de virgule, format simple
                                 if (isWebflowPreview()) {
                                     // Utiliser "template" par défaut pour Webflow
-                                    el.href = `/template?slug=${linkData}`;
+                                    el.href = `./template?slug=${linkData}`;
                                 } else {
                                     // Utiliser le prelink fourni
-                                    el.href = `/${prelinkAttr}/${linkData}`;
+                                    el.href = `./${prelinkAttr}/${linkData}`;
                                 }
                             }
                         }
