@@ -1,4 +1,4 @@
-// Fonction asynchrone pour gérer les filtres des collections
+// Modification de la fonction pour gérer les filtres avec deux wn-filter-field
 async function handleCollectionFilters() {
     // Parcourir la page pour trouver la collection à filtrer
     const collection = document.querySelector('[wn-filter="list"]');
@@ -7,10 +7,8 @@ async function handleCollectionFilters() {
         return;
     }
 
-    // Récupérer les éléments enfants directs sauf ceux avec la classe "ssr-wn-collection-box"
-    const itemsToFilter = Array.from(collection.children).filter(
-        (child) => !child.classList.contains('ssr-wn-collection-box')
-    );
+    // Récupérer les éléments enfants avec l'attribut wn-filter-field
+    const itemsToFilter = Array.from(collection.querySelectorAll('[wn-filter-field]'));
 
     // Chercher le formulaire de filtre
     const filterForm = document.querySelector('[wn-filter="filter"]');
@@ -22,9 +20,9 @@ async function handleCollectionFilters() {
     // Ajouter un événement pour chaque champ de filtre
     const filterFields = filterForm.querySelectorAll('[wn-filter-field]');
     filterFields.forEach((field) => {
-        const input = field.closest('input[type="checkbox"], input[type="radio"], input[type="text"]');
+        const input = field.closest('input[type="checkbox"], input[type="radio"]');
         if (input) {
-            input.addEventListener('input', () => applyFilters(itemsToFilter, filterFields));
+            input.addEventListener('change', () => applyFilters(itemsToFilter, filterFields));
         }
     });
 
@@ -35,20 +33,15 @@ async function handleCollectionFilters() {
 
             fields.forEach((field) => {
                 const identifier = field.getAttribute('wn-filter-field');
-                const input = field.closest('input[type="checkbox"], input[type="radio"], input[type="text"]');
+                const input = field.closest('input[type="checkbox"], input[type="radio"]');
 
-                if (input) {
-                    const value = input.type === 'text' ? input.value.toLowerCase() : input.checked;
-                    const itemField = item.querySelector(`[wn-filter-field="${identifier}"]`);
+                if (input && input.checked) {
+                    const filterText = field.textContent.trim().toLowerCase();
+                    const itemField = item.getAttribute('wn-filter-field');
+                    const itemText = item.textContent.trim().toLowerCase();
 
-                    if (itemField) {
-                        const itemValue = itemField.textContent.toLowerCase();
-
-                        if (input.type === 'text') {
-                            if (!itemValue.includes(value)) {
-                                isVisible = false;
-                            }
-                        } else if (!value) {
+                    if (itemField === identifier) {
+                        if (itemText !== filterText) {
                             isVisible = false;
                         }
                     }
