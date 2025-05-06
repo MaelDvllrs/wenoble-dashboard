@@ -154,7 +154,7 @@
                                     el.href = `./${webflowPath}?slug=${linkData}`;
                                 } else {
                                     // En mode normal, utiliser la partie avant la virgule
-                                    el.href = `./${normalPrelink}/${linkData}`;
+                                    el.href = `/${normalPrelink}/${linkData}`;
                                 }
                             } else {
                                 // Pas de virgule, format simple
@@ -163,7 +163,7 @@
                                     el.href = `./template?slug=${linkData}`;
                                 } else {
                                     // Utiliser le prelink fourni
-                                    el.href = `./${prelinkAttr}/${linkData}`;
+                                    el.href = `/${prelinkAttr}/${linkData}`;
                                 }
                             }
                         }
