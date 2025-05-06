@@ -111,7 +111,9 @@ const whitelist =
 
   'https://salon-marco-d950f4.webflow.io',
 
-  'https://kimberley-architecture.webflow.io'
+  'https://kimberley-architecture.webflow.io',
+
+  'https://billel-aissa-photography.webflow.io'
 ];
 
 
