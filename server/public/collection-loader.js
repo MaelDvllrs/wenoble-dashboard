@@ -114,6 +114,9 @@
                 const blogPromise = (async () => {
                     const clone = template.cloneNode(true);
                     clone.removeAttribute("wn-collection-box");
+                    
+                    // Ajout de l'attribut wn-collection-element à chaque élément cloné
+                    clone.setAttribute("wn-collection-element");
 
                     const response = await fetch(`${apiUrl}/api/sendBlogContent`, {
                         method: "GET",
