@@ -24,7 +24,7 @@ async function handleCollectionFilters() {
   const style = document.createElement('style');
   style.textContent = ` 
     [wn-collection-element] {
-      transition: opacity 0.25s ease, transform 0.25s ease;
+      transition: opacity 0.2s ease, transform 0.2s ease;
     }
     .wn-hidden {
       opacity: 0;
@@ -131,7 +131,7 @@ function applyFilters(items, filterForms) {
         collectionElement.classList.add('wn-fully-hidden');
       }
     });
-  }, 250); // Attendre la fin de la disparition initiale avant de filtrer
+  }, 200); // Attendre la fin de la disparition initiale avant de filtrer
 }
 
 function clearFilters(items, filterForms) {
