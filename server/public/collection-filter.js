@@ -1,3 +1,23 @@
+// Modification pour attendre la création de la div .ssr-wn-collection-box si l'URL contient webflow.io
+async function waitForCollectionBox(collection) {
+    return new Promise((resolve) => {
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.addedNodes) {
+                    mutation.addedNodes.forEach((node) => {
+                        if (node.classList && node.classList.contains('ssr-wn-collection-box')) {
+                            observer.disconnect();
+                            resolve();
+                        }
+                    });
+                }
+            });
+        });
+
+        observer.observe(collection, { childList: true, subtree: true });
+    });
+}
+
 // Modification de la fonction pour gérer les filtres avec deux wn-filter-field
 async function handleCollectionFilters() {
     // Parcourir la page pour trouver la collection à filtrer
@@ -5,6 +25,11 @@ async function handleCollectionFilters() {
     if (!collection) {
         console.warn('Aucune collection avec l\'attribut wn-filter="list" trouvée.');
         return;
+    }
+
+    if (window.location.hostname.includes('webflow.io')) {
+        console.log('Attente de la création de .ssr-wn-collection-box...');
+        await waitForCollectionBox(collection);
     }
 
     // Récupérer les éléments enfants avec l'attribut wn-filter-field
