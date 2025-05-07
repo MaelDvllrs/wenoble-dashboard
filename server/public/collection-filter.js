@@ -9,9 +9,11 @@ async function handleCollectionFilters() {
 
     // Récupérer les éléments enfants avec l'attribut wn-filter-field
     const itemsToFilter = Array.from(collection.querySelectorAll('[wn-filter-field]'));
+    console.log('Items à filtrer:', itemsToFilter);
 
     // Chercher le formulaire de filtre
     const filterForm = document.querySelector('[wn-filter="filter"]');
+    console.log('Formulaire de filtre trouvé:', filterForm);
     if (!filterForm) {
         console.warn('Aucun formulaire de filtre avec l\'attribut wn-filter="filter" trouvé.');
         return;
