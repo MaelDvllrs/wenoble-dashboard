@@ -110,6 +110,14 @@
         }
         document.head.appendChild(ogDescription);
 
+        // Ajout de la balise name="description"
+        const metaDescription = document.querySelector("meta[name='description']") || document.createElement('meta');
+        metaDescription.setAttribute('name', 'description');
+        if (descriptionText) {
+            metaDescription.setAttribute('content', descriptionText.text);
+        }
+        document.head.appendChild(metaDescription);
+
         const ogImage = document.querySelector("meta[property='og:image']") || document.createElement('meta');
         ogImage.setAttribute('property', 'og:image');
         const image = data.content.image.find(img => img.id_config == metaTagsImage);
