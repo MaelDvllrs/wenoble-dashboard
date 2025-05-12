@@ -113,7 +113,9 @@ const whitelist =
 
   'https://kimberley-architecture.webflow.io',
 
-  'https://billel-aissa-photography.webflow.io'
+  'https://billel-aissa-photography.webflow.io',
+  
+  'https://artesia-66566b.webflow.io'
 ];
 
 
