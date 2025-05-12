@@ -53,7 +53,12 @@ const AcademyTemplate = () => {
   const categories = content.multiReference?.map(ref => ref.label) || [];
   const videoSource = content.video?.[0]?.src_video;
   const thumbnail = content.image?.[0]?.src_image;
-  const description = content.text?.[0]?.text || "";
+
+  // Modification pour récupérer le texte en fonction de l'id_config spécifique
+  const timeConfigId = parseInt(config.idConfigAcademyTime); 
+  const timeData = content.text?.find(text => text.id_config === timeConfigId);
+  const time = timeData?.text || "";
+
   const richTextContent = content.richText?.[0]?.text_html || "";
 
   return (
@@ -88,7 +93,7 @@ const AcademyTemplate = () => {
             ))}
             <div className="academy_template_time">
               <AccessTimeRoundedIcon className="academy_template_time_icon" fontSize="tiny" />
-              <span className="academy_template_time_value">{description}</span>
+              <span className="academy_template_time_value">{time}</span>
             </div>
           </div>
 

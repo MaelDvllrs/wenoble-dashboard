@@ -92,32 +92,67 @@
         }
         
         document.title = info.blog[0].page_blog_name;
-        const ogTitle = document.querySelector("meta[property='og:title']");
-        const ogDescription = document.querySelector("meta[property='og:description']");
-        const ogImage = document.querySelector("meta[property='og:image']");
 
-        if (ogTitle) {
-
-            const titleText = data.content.text.find(text => text.id_config == titleTag);
-            if (titleText) {
-                ogTitle.setAttribute("content", titleText.text);
-            }
+        // Ajout de toutes les balises SEO
+        const ogTitle = document.querySelector("meta[property='og:title']") || document.createElement('meta');
+        ogTitle.setAttribute('property', 'og:title');
+        const titleText = data.content.text.find(text => text.id_config == titleTag);
+        if (titleText) {
+            ogTitle.setAttribute('content', titleText.text);
         }
+        document.head.appendChild(ogTitle);
 
-        if (ogDescription) {
-            const descriptionText = data.content.text.find(text => text.id_config == metaTags);
-            if (descriptionText) {
-                ogDescription.setAttribute("content", descriptionText.text);
-            }
+        const ogDescription = document.querySelector("meta[property='og:description']") || document.createElement('meta');
+        ogDescription.setAttribute('property', 'og:description');
+        const descriptionText = data.content.text.find(text => text.id_config == metaTags);
+        if (descriptionText) {
+            ogDescription.setAttribute('content', descriptionText.text);
         }
+        document.head.appendChild(ogDescription);
 
-        if (ogImage) {
-            const image = data.content.image.find(img => img.id_config == metaTagsImage);
-            if (image) {
-                ogImage.setAttribute("content", `${apiUrl}/media/blog/${image.src_image}`);
-            }
+        const ogImage = document.querySelector("meta[property='og:image']") || document.createElement('meta');
+        ogImage.setAttribute('property', 'og:image');
+        const image = data.content.image.find(img => img.id_config == metaTagsImage);
+        if (image) {
+            ogImage.setAttribute('content', `${apiUrl}/media/blog/${image.src_image}`);
         }
+        document.head.appendChild(ogImage);
 
+        const ogUrl = document.querySelector("meta[property='og:url']") || document.createElement('meta');
+        ogUrl.setAttribute('property', 'og:url');
+        ogUrl.setAttribute('content', window.location.href);
+        document.head.appendChild(ogUrl);
+
+        const ogType = document.querySelector("meta[property='og:type']") || document.createElement('meta');
+        ogType.setAttribute('property', 'og:type');
+        ogType.setAttribute('content', 'article');
+        document.head.appendChild(ogType);
+
+        const twitterCard = document.querySelector("meta[name='twitter:card']") || document.createElement('meta');
+        twitterCard.setAttribute('name', 'twitter:card');
+        twitterCard.setAttribute('content', 'summary_large_image');
+        document.head.appendChild(twitterCard);
+
+        const twitterTitle = document.querySelector("meta[name='twitter:title']") || document.createElement('meta');
+        twitterTitle.setAttribute('name', 'twitter:title');
+        if (titleText) {
+            twitterTitle.setAttribute('content', titleText.text);
+        }
+        document.head.appendChild(twitterTitle);
+
+        const twitterDescription = document.querySelector("meta[name='twitter:description']") || document.createElement('meta');
+        twitterDescription.setAttribute('name', 'twitter:description');
+        if (descriptionText) {
+            twitterDescription.setAttribute('content', descriptionText.text);
+        }
+        document.head.appendChild(twitterDescription);
+
+        const twitterImage = document.querySelector("meta[name='twitter:image']") || document.createElement('meta');
+        twitterImage.setAttribute('name', 'twitter:image');
+        if (image) {
+            twitterImage.setAttribute('content', `${apiUrl}/media/blog/${image.src_image}`);
+        }
+        document.head.appendChild(twitterImage);
 
         // Parcours tous les éléments qui ont un attribut `wn-*` mais pas ceux dans wn-collection-wrapper
         const allElements = document.querySelectorAll("[wn-title], [wn-date-published], [wn-image], [wn-title], [wn-richtext], [wn-text], [wn-gallery], [wn-gallery-index], [wn-gallery-modal], [wn-video], [wn-multiReference-wrapper]");
