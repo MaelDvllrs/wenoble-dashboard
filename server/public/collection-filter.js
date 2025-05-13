@@ -10,7 +10,7 @@ async function waitForCollectionBox(container) {
             node.classList.contains('ssr-wn-collection-box')
           ) {
             observer.disconnect();
-            setTimeout(resolve, 200); // attendre encore un peu pour que les vrais items soient là
+            setTimeout(resolve, 200);
           }
         });
       });
@@ -22,131 +22,143 @@ async function waitForCollectionBox(container) {
 async function handleCollectionFilters() {
   // Injecter les styles nécessaires
   const style = document.createElement('style');
-  style.textContent = ` 
+  style.textContent = `
     [wn-collection-element] {
-      transition: opacity 0.2s ease, transform 0.2s ease;
+      opacity: 1;
+      transform: scale(1);
+      pointer-events: auto;
     }
+
+    [wn-collection-element].wn-animate {
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+
     .wn-hidden {
       opacity: 0;
       transform: scale(0.95);
       pointer-events: none;
     }
+
     .wn-fully-hidden {
       display: none !important;
+    }
+
+    .wn-no-animation {
+      transition: none !important;
     }
   `;
   document.head.appendChild(style);
 
   const collection = document.querySelector('[wn-filter="list"]');
-  if (!collection) {
-    console.warn('Aucune collection avec wn-filter="list" trouvée.');
-    return;
-  }
+  if (!collection) return;
 
   if (window.location.hostname.includes('webflow.io')) {
-    console.log('Attente de .ssr-wn-collection-box...');
     await waitForCollectionBox(collection);
   }
 
   const itemsToFilter = Array.from(
     collection.querySelectorAll('[wn-filter-field]')
   );
-  console.log('Items à filtrer:', itemsToFilter);
 
-  // Sélectionner tous les formulaires de filtres
   const filterForms = document.querySelectorAll('[wn-filter="filter"]');
-  if (!filterForms.length) {
-    console.warn('Aucun formulaire de filtre trouvé.');
-    return;
-  }
+  if (!filterForms.length) return;
 
-  // Appliquer un événement à chaque formulaire de filtre
-  filterForms.forEach((filterForm) => {
-    const filterFields = filterForm.querySelectorAll('[wn-filter-field]');
-    filterFields.forEach((field) => {
+  // Désactiver temporairement les animations au démarrage
+  document
+    .querySelectorAll('[wn-collection-element]')
+    .forEach((el) => el.classList.add('wn-no-animation'));
+
+  // Attacher les événements de filtre
+  filterForms.forEach((form) => {
+    const fields = form.querySelectorAll('[wn-filter-field]');
+    fields.forEach((field) => {
       const parent = field.closest('label') || field.parentElement;
       const input = parent.querySelector('input[type="checkbox"], input[type="radio"]');
       if (input) {
-        input.addEventListener('change', () => applyFilters(itemsToFilter, filterForms));
+        input.addEventListener('change', () =>
+          applyFilters(itemsToFilter, filterForms)
+        );
       }
     });
   });
 
-  // Appliquer les filtres dès le départ
-  applyFilters(itemsToFilter, filterForms);
+  // Appliquer les filtres au démarrage (sans animation)
+  applyFilters(itemsToFilter, filterForms, true);
 
-  // Gestion du bouton/lien ou case à cocher de réinitialisation des filtres
-  const clearFilterButton = document.querySelector('[wn-filter="clear"]');
-  if (clearFilterButton) {
-    clearFilterButton.addEventListener('click', () => clearFilters(itemsToFilter, filterForms));
+  // Activer les animations après initialisation
+  setTimeout(() => {
+    document
+      .querySelectorAll('[wn-collection-element]')
+      .forEach((el) => {
+        el.classList.remove('wn-no-animation');
+        el.classList.add('wn-animate');
+      });
+  }, 50);
+
+  // Bouton ou lien pour réinitialiser les filtres
+  const clearButton = document.querySelector('[wn-filter="clear"]');
+  if (clearButton) {
+    clearButton.addEventListener('click', () => clearFilters(itemsToFilter, filterForms));
   }
 }
 
-function applyFilters(items, filterForms) {
-  // Masquer tous les éléments en jouant uniquement sur l'opacité et la transformation
-  items.forEach((item) => {
-    const collectionElement = item.closest('[wn-collection-element]');
-    if (collectionElement) {
-      collectionElement.classList.add('wn-hidden');  // Animation de disparition
-    }
-  });
+function applyFilters(items, filterForms, initial = false) {
+  // Masquer tout sauf si chargement initial
+  if (!initial) {
+    items.forEach((item) => {
+      const el = item.closest('[wn-collection-element]');
+      if (el) el.classList.add('wn-hidden');
+    });
+  }
 
-  // Attendre la fin de l'animation avant de procéder aux filtres
   setTimeout(() => {
     items.forEach((item) => {
-      let isVisible = true;
+      let visible = true;
 
-      // Appliquer chaque filtre sur chaque item
-      filterForms.forEach((filterForm) => {
-        const filterFields = filterForm.querySelectorAll('[wn-filter-field]');
-        
-        filterFields.forEach((field) => {
+      filterForms.forEach((form) => {
+        const fields = form.querySelectorAll('[wn-filter-field]');
+        fields.forEach((field) => {
           const identifier = field.getAttribute('wn-filter-field');
           const parent = field.closest('label') || field.parentElement;
           const input = parent.querySelector('input[type="checkbox"], input[type="radio"]');
 
           if (input && input.checked) {
             const filterValue = field.textContent.trim().toLowerCase();
+            const itemValue = item.textContent.trim().toLowerCase();
             const itemField = item.getAttribute('wn-filter-field');
-            const itemText = item.textContent.trim().toLowerCase();
 
-            // Vérifier si l'élément correspond au filtre appliqué
-            if (itemField === identifier && itemText !== filterValue) {
-              isVisible = false; // Si non, masquer cet item
+            if (itemField === identifier && itemValue !== filterValue) {
+              visible = false;
             }
           }
         });
       });
 
-      const collectionElement = item.closest('[wn-collection-element]');
-      if (!collectionElement) return;
+      const el = item.closest('[wn-collection-element]');
+      if (!el) return;
 
-      if (isVisible) {
-        // Appliquer display: block et réinitialiser l'animation d'entrée
-        collectionElement.classList.remove('wn-fully-hidden');
-        void collectionElement.offsetWidth; // Reflow pour forcer le rechargement de l'élément
-        collectionElement.classList.remove('wn-hidden');
+      if (visible) {
+        el.classList.remove('wn-fully-hidden');
+        if (!initial) {
+          void el.offsetWidth; // force reflow
+        }
+        el.classList.remove('wn-hidden');
       } else {
-        // Cacher complètement l'élément si il ne correspond pas au filtre
-        collectionElement.classList.add('wn-fully-hidden');
+        el.classList.add('wn-fully-hidden');
       }
     });
-  }, 200); // Attendre la fin de la disparition initiale avant de filtrer
+  }, initial ? 0 : 250);
 }
 
 function clearFilters(items, filterForms) {
-  // Réinitialiser tous les champs de filtre (checkboxes, radios)
-  filterForms.forEach((filterForm) => {
-    const filterFields = filterForm.querySelectorAll('[wn-filter-field]');
-    filterFields.forEach((field) => {
+  filterForms.forEach((form) => {
+    const fields = form.querySelectorAll('[wn-filter-field]');
+    fields.forEach((field) => {
       const parent = field.closest('label') || field.parentElement;
       const input = parent.querySelector('input[type="checkbox"], input[type="radio"]');
-      if (input) {
-        input.checked = false; // Décocher tous les champs
-      }
+      if (input) input.checked = false;
     });
   });
 
-  // Appliquer de nouveau les filtres (mais sans aucun filtre actif, donc tout sera visible)
   applyFilters(items, filterForms);
 }
