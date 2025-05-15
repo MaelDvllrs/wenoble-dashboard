@@ -654,6 +654,15 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
       }, 150);
     }
 
+    const data = {
+      id_config: id_config,
+      type: 'richText',
+      value: newState.getCurrentContent(),
+      create: createBoolRichText
+    };
+
+    onChange({ data });
+
     
   };
 

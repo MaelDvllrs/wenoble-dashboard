@@ -111,8 +111,6 @@ const EditPageBlog = () => {
 
         // MODIFIER LA PAGE
 
-        console.log('blogData', blogData);
-
         if (status === 1 || status !== DecodeBlog.blogPage[0].status) {
             setSavingPage(true);
         } else {
