@@ -7,17 +7,20 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
 import OpenInNewOutlinedIcon from '@mui/icons-material/OpenInNewOutlined';
 import VideocamIcon from '@mui/icons-material/Videocam';
+import CircularProgress from '@mui/material/CircularProgress';
 import './Field.css';
 
-const VideoUpload = ({ id_blog_page,type, id_config, onChange, slugValue, fieldValue, dataValue, id_collection_ref, theme }) => {
+const VideoUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fieldValue, dataValue, id_collection_ref, theme }) => {
     const videoTypes = ["MP4"];
     const apiUrl = config.apiUrl;
 
     const [videoUploaded, setVideoUploaded] = useState([]);
-    const [createBoolVideo, setCreateBoolVideo] = useState('')
-    const handleVideoChange = async (file, idToReplace) => {
+    const [createBoolVideo, setCreateBoolVideo] = useState('');
+    const [isLoading, setIsLoading] = useState(false); // Loading state
 
+    const handleVideoChange = async (file, idToReplace) => {
       if (file instanceof File) {
+        setIsLoading(true); // Start loading
 
         const data = {
           id_blog_page: id_blog_page,
@@ -43,10 +46,13 @@ const VideoUpload = ({ id_blog_page,type, id_config, onChange, slugValue, fieldV
             return [...prevVideoq, data];
           }
         });
+
+        setIsLoading(false); // End loading
       } else {
         console.error("Aucun fichier n'a été téléchargé.");
       }
     };
+
     useEffect(() => {
       // Vérifiez si dataValue existe et si le type est 'image'
       if (dataValue && Object.keys(dataValue).length > 0 && type === 'video') {
@@ -68,17 +74,23 @@ const VideoUpload = ({ id_blog_page,type, id_config, onChange, slugValue, fieldV
         setCreateBoolVideo(dataValue.create);
       }
     }, [dataValue, type, id_blog_page, id_config]);
+
     function handleDeleteVideo(idToDelete) {
-      setVideoUploaded(imagesUploaded.filter(video => video.id_config !== idToDelete));
+      setVideoUploaded((prevVideos) => prevVideos.filter((video) => video.id_config !== idToDelete));
       const data = {
         id_config: id_config,
-        type: 'video'
-      }
+        type: 'video',
+      };
       onChange({ data }, true);
     }
 
     return (
         <div className='image_blog' style={{backgroundColor : theme.palette.primary.main, color : theme.palette.text.primary, borderColor : theme.palette.primary.main}}>
+        {isLoading && (
+          <div className='loading_field'>
+            <CircularProgress sx={{ color: "#2ec96d" }} />
+          </div>
+        )}
         {videoUploaded.length > 0 ? (
           videoUploaded.map((video) => ( // Map over the images array
             <div key={video.id_config} className="ImageUploaded_contain">

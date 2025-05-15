@@ -5,6 +5,21 @@
     margin-top: 2rem;
 }
 
+.blogField_name{
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.blogField_description{
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: var(--color-text-secondary);
+}
+
+.blogField_field{
+    margin-top: 0.3rem;
+}
+
 .missed_field{
     border-bottom: solid 1px red;
     border-radius: 0.2rem;
@@ -17,11 +32,18 @@
     padding: 0.2rem;
 }
 
+.blogDate{
+    color: var(--color-text-secondary);
+    font-weight: 500;
+}
+
 .Blog_creation_Page{
     height: 100%;
 }
 
 .Blog_creation_field_contain{
+    padding-left: 1px;
+    padding-right: 1px;
     overflow-y: auto;
     scrollbar-gutter: stable;
     scrollbar-color: #272a31 transparent; 

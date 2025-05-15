@@ -210,6 +210,8 @@
     scrollbar-gutter: stable;
     scrollbar-color: #272a31 transparent; 
     scrollbar-width: thin;
+    padding-left: 1px;
+    padding-right: 1px;
   }
 
 

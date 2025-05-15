@@ -109,9 +109,9 @@ const EditPageBlog = () => {
 
     const handleSave = async (status, setpublishDate) => {
 
-        // CREER LA PAGE
+        // MODIFIER LA PAGE
 
-
+        console.log('blogData', blogData);
 
         if (status === 1 || status !== DecodeBlog.blogPage[0].status) {
             setSavingPage(true);
@@ -781,11 +781,11 @@ const EditPageBlog = () => {
                   <div className="Blog_creation_field_contain">
                     
                     <div className="blogField_contain">
-                      <p style={{color: theme.palette.text.secondary}}>Titre principal *</p>
+                      <p className="blogField_name">Titre principal *</p>
                       <Field fieldValue={DecodeBlog.blogPage[0]} type='text' id_config="title" onChange={handleBlogDataChange}/>
                     </div>
                     <div className="blogField_contain">
-                      <p style={{color: theme.palette.text.secondary}}>Slug *</p>
+                      <p className="blogField_name">Slug *</p>
                       <Field fieldValue={DecodeBlog.blogPage[0]} type='text' id_config="slug" onChange={handleBlogDataChange} slugValue={slugValue}/>
                     </div>
                     <div className="line_horizontal" style={{backgroundColor: theme.palette.text.secondary}}></div>
@@ -795,32 +795,36 @@ const EditPageBlog = () => {
 
                         return (
                             <div key={blogItem.id_config} className="blogField_contain">
-                                <p style={{color: theme.palette.text.secondary}}>{blogItem.name_field}</p>
-                                <Field 
-                                    id_blog_page={idBlogPage} 
-                                    type={blogItem.tab_field} 
-                                    id_config={blogItem.id_config} 
-                                    onChange={handleBlogDataChange} 
-                                    dataValue={correspondingData || {}}
-                                    id_collection_ref={blogItem.id_collection_ref}
-                                    imagefunction={true}
-                                    imageDirectory={"/media/blog/"}
-                                />
+                                <p className="blogField_name">{blogItem.name_field}</p>
+                                <p className="blogField_description">{blogItem.description_field}</p>
+                                <div className="blogField_field">
+                                    <Field 
+                                        id_blog_page={idBlogPage} 
+                                        type={blogItem.tab_field} 
+                                        id_config={blogItem.id_config} 
+                                        onChange={handleBlogDataChange} 
+                                        dataValue={correspondingData || {}}
+                                        id_collection_ref={blogItem.id_collection_ref}
+                                        imagefunction={true}
+                                        imageDirectory={"/media/blog/"}
+                                        multiline_text={blogItem.multiline_text}
+                                    />
+                                </div>
                             </div>
                         );
                     })}
                     <div className="line_horizontal" style={{backgroundColor: theme.palette.text.secondary}}></div>
                     <div className="blogField_contain">
-                      <p style={{color: theme.palette.text.secondary}}>Date de création :</p>
-                      <p>{formattedCreateDate}</p>
+                      <p className="blogField_name">Date de création :</p>
+                      <p className="blogDate">{formattedCreateDate}</p>
                     </div>
                     <div className="blogField_contain">
-                      <p style={{color: theme.palette.text.secondary}}>Date de modificaction :</p>
-                      <p>{formattedUpdatedDate}</p>
+                      <p className="blogField_name">Date de modificaction :</p>
+                      <p className="blogDate">{formattedUpdatedDate}</p>
                     </div>
                     <div className="blogField_contain">
-                      <p style={{color: theme.palette.text.secondary}}>Date de Publication :</p>
-                      <p>{formattedPublishedDate}</p>
+                      <p className="blogField_name">Date de Publication :</p>
+                      <p className="blogDate">{formattedPublishedDate}</p>
                     </div>
                     <div className="line_horizontal" style={{backgroundColor: theme.palette.text.secondary}}></div>
                     <RedButton className="delete_button_blog" variant="contained" theme={theme} onClick={openPopup}>Supprimer</RedButton>

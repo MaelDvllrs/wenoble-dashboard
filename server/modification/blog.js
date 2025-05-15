@@ -122,7 +122,7 @@ router.get('/getListeBlog', (req, res) => {
 router.get('/getConfigBlog', (req, res) => {
   const sentIdBlog = req.query.IdBlog
   
-  const SQL = 'SELECT tab_field, name_field, id_config, id_collection_ref FROM blog_config WHERE id_blog = ?'
+  const SQL = 'SELECT tab_field, name_field, description_field, id_config, id_collection_ref, multiline_text FROM blog_config WHERE id_blog = ?'
   const Values = [sentIdBlog]
 
   db.query(SQL, Values, (err, results) => {

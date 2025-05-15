@@ -8,9 +8,10 @@ import { SecondaryButton } from '../../../../../Theme/element';
 import DeleteIcon from '@mui/icons-material/Delete';
 import OpenInNewOutlinedIcon from '@mui/icons-material/OpenInNewOutlined';
 import CollectionsIcon from '@mui/icons-material/Collections';
+import CircularProgress from '@mui/material/CircularProgress';
 import './Field.css';
 
-const GalleryUpload = ({ id_blog_page,type, id_config, onChange, slugValue, fieldValue, dataValue, id_collection_ref, theme }) => {
+const GalleryUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fieldValue, dataValue, id_collection_ref, theme }) => {
     const { control } = useForm();
     const { fields, append, remove, move } = useFieldArray({
       control,
@@ -18,42 +19,40 @@ const GalleryUpload = ({ id_blog_page,type, id_config, onChange, slugValue, fiel
     });
 
     const [active, setActive] = useState(0);
+    const [isLoading, setIsLoading] = useState(false); // Loading state
     const fileTypes = ["JPG", "PNG"];
     const apiUrl = config.apiUrl; 
 
-    
-    
-    
     const handleGalleryChange = async (file, addImage = true) => {
+      if (addImage) {
+        setIsLoading(true); // Start loading only when adding images
+      }
 
       const files = Array.from(file);
 
-
-      const newImages = await Promise.all(files.map(async (file) => {
-
-        if(!file.create) {
-          if (file instanceof File) {
-            const fileCompress = await compressImage(file);
-            return {
-              data: fileCompress,
-              name: file.name,
-              alt: file.name,
-              url: URL.createObjectURL(file),
-              size: (fileCompress.size / 1024).toFixed(0),
-            };
+      const newImages = await Promise.all(
+        files.map(async (file) => {
+          if (!file.create) {
+            if (file instanceof File) {
+              const fileCompress = await compressImage(file);
+              return {
+                data: fileCompress,
+                name: file.name,
+                alt: file.name,
+                url: URL.createObjectURL(file),
+                size: (fileCompress.size / 1024).toFixed(0),
+              };
+            } else {
+              console.error("Aucun fichier n'a été téléchargé.");
+              return null;
+            }
           } else {
-            console.error("Aucun fichier n'a été téléchargé.");
-            return null;
+            return file;
           }
-        } else {
-          return file;
-        }
-        
-      }));
+        })
+      );
 
-      // Filtrez les images nulles
-
-      const validNewImages = newImages.filter(image => image !== null);
+      const validNewImages = newImages.filter((image) => image !== null);
 
       let createBoolGallery = false;
       if (dataValue) {
@@ -62,29 +61,20 @@ const GalleryUpload = ({ id_blog_page,type, id_config, onChange, slugValue, fiel
         }
       }
 
-
-
       if (addImage) {
-
         const combinedImages = [...fields, ...validNewImages];
-
-        const data = { gallery:combinedImages, id_config: id_config, type: 'gallery', create : createBoolGallery };
-
+        const data = { gallery: combinedImages, id_config: id_config, type: 'gallery', create: createBoolGallery };
         onChange({ data: data });
-
-        validNewImages.forEach(data => append(data));
-      } else {  
-        const data = { gallery:validNewImages, id_config: id_config, type: 'gallery', create : createBoolGallery};
+        validNewImages.forEach((data) => append(data));
+      } else {
+        const data = { gallery: validNewImages, id_config: id_config, type: 'gallery', create: createBoolGallery };
         onChange({ data: data });
       }
+
+      if (addImage) {
+        setIsLoading(false); // End loading only when adding images
+      }
     };
-
-
-
-
-
-
-
 
     const [imagesAdded, setImagesAdded] = useState(false);
 
@@ -113,9 +103,6 @@ const GalleryUpload = ({ id_blog_page,type, id_config, onChange, slugValue, fiel
       }
     }, [dataValue, type, imagesAdded, append]);
 
-    
-
-
     function handleDeleteGallery(indexToDelete) {
       // Supprimer l'image à l'index spécifié
       remove(indexToDelete);
@@ -129,7 +116,6 @@ const GalleryUpload = ({ id_blog_page,type, id_config, onChange, slugValue, fiel
         return new File([item.data], item.name, { type: item.data.type });
       });
 
-      
       // Appeler handleGalleryChange avec les fichiers restants et un indicateur de suppression
       handleGalleryChange(remainingFiles, false);
     }
@@ -158,19 +144,14 @@ const GalleryUpload = ({ id_blog_page,type, id_config, onChange, slugValue, fiel
 
   return (
     <div className='image_blog gallery_blog' style={{backgroundColor : theme.palette.primary.main, color : theme.palette.text.primary, borderColor : theme.palette.primary.main}}>
+        {isLoading && 
+          <div className='loading_field'>
+            <CircularProgress sx={{ color: "#2ec96d" }} />
+          </div>
+        }
         {fields.length > 0 ? (
           <div>
-            <div className='ImageUploaded_contain gallery_add_contain'>
-              <FileUploader handleChange={handleGalleryChange} name="file" types={fileTypes} multiple={true}>
-                <div className="DragAndDrop DragAndDropGallery" >
-                  <span className="logoUploadImage">
-                    <CollectionsIcon />
-                  </span>
-                  Télécharger ou glisser des photos ici (jpeg, png)
-                </div>
-              </FileUploader>
-            </div>
-            <Reorder.Group values={fields} onReorder={handleReorderGallery} className='gallery_contain' style={{borderColor: theme.palette.primary.third}}>
+            <Reorder.Group values={fields} onReorder={handleReorderGallery} className='gallery_contain'>
               {fields.map((image, index) => (
                 <Reorder.Item
                   value={image}
@@ -195,6 +176,16 @@ const GalleryUpload = ({ id_blog_page,type, id_config, onChange, slugValue, fiel
                 </Reorder.Item>
               ))}
             </Reorder.Group>
+            <div className='ImageUploaded_contain gallery_add_contain'>
+              <FileUploader handleChange={handleGalleryChange} name="file" types={fileTypes} multiple={true}>
+                <div className="DragAndDrop DragAndDropGallery" >
+                  <span className="logoUploadImage">
+                    <CollectionsIcon />
+                  </span>
+                  Télécharger ou glisser des photos ici (jpeg, png)
+                </div>
+              </FileUploader>
+            </div>
           </div>
         ) : (
           <FileUploader handleChange={handleGalleryChange} name="file" types={fileTypes} multiple={true}>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const TextUpload = ({ id_blog_page,type, id_config, onChange, slugValue, fieldValue, dataValue, id_collection_ref, theme }) => {
+const TextUpload = ({ id_blog_page,type, id_config, onChange, slugValue, fieldValue, dataValue, id_collection_ref, theme, multiline_text }) => {
     const [slugValueChange, setSlugValueChange] = useState(slugValue || "");
     const [createBool, setCreateBool] = useState('')
   
@@ -71,7 +71,21 @@ const TextUpload = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVa
 
   return (
     <div>
-        <input className='input_text_blog' type='text' style={{backgroundColor : theme.palette.primary.main, color : theme.palette.text.primary, borderColor : theme.palette.primary.main}} onChange={handleTextChange} value={slugValueChange}/>                               
+      {multiline_text ? (
+        <textarea
+          className="input_text_blog"
+          onChange={handleTextChange}
+          value={slugValueChange}
+          rows={4} // Nombre de lignes par défaut
+        />
+      ) : (
+        <input
+          className="input_text_blog"
+          type="text"
+          onChange={handleTextChange}
+          value={slugValueChange}
+        />
+      )}
     </div>
   );
 };

@@ -199,7 +199,7 @@ const CreatePageBlog = () => {
 
 
         try {        
-            // Appeler la fonction saveBlogPage
+            // Appeler la fonction createBlogPage
             const response = await createBlogPage(idBlog, mainText, localISOTime, status, idUser, token);
             
             // Gérer la réponse ici
@@ -361,14 +361,14 @@ const CreatePageBlog = () => {
             </div>
             <div className="Blog_creation_field_contain">
                 <div className={titleFieldMissed ? "blogField_contain missed_field" : "blogField_contain"}>
-                    <p style={{color: theme.palette.text.secondary}}>Titre principal *</p>
+                    <p className="blogField_name">Titre principal *</p>
                     <Field type='text' id_config="title" onChange={handleBlogDataChange}/>
                 </div>
                 {titleFieldMissed && (   
                     <p className="missed_field_text">Champs obligatoires</p>
                 )}
                 <div className={slugFieldMissed ? "blogField_contain missed_field" : "blogField_contain"}>
-                    <p style={{color: theme.palette.text.secondary}}>Slug *</p>
+                    <p className="blogField_name">Slug *</p>
                     <Field type='text' id_config="slug" onChange={handleBlogDataChange} slugValue={slugValue}/>
                 </div>
                 {slugFieldMissed && (   
@@ -377,15 +377,19 @@ const CreatePageBlog = () => {
                 <div className="line_horizontal" style={{backgroundColor: theme.palette.text.secondary}}></div>
                 {DecodeConfigblog.blogConfig && DecodeConfigblog.blogConfig.map((blogItem) => (
                   <div key={blogItem.id_config} className="blogField_contain">
-                    <p style={{ color: theme.palette.text.secondary }}>{blogItem.name_field}</p>
-                    <Field
-                      id_blog_page={idBlog}
-                      type={blogItem.tab_field}
-                      id_config={blogItem.id_config}
-                      id_collection_ref={blogItem.id_collection_ref}
-                      onChange={handleBlogDataChange}
-                      imagefunction={true}
-                    />
+                    <p className="blogField_name">{blogItem.name_field}</p>
+                    <p className="blogField_description">{blogItem.description_field}</p>
+                    <div className="blogField_field">
+                        <Field
+                          id_blog_page={idBlog}
+                          type={blogItem.tab_field}
+                          id_config={blogItem.id_config}
+                          id_collection_ref={blogItem.id_collection_ref}
+                          onChange={handleBlogDataChange}
+                          imagefunction={true}
+                          multiline_text={blogItem.multiline_text}
+                        />
+                    </div>
                   </div>
                 ))}
             </div>

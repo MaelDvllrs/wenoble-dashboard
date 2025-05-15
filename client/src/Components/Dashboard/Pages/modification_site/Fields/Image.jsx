@@ -48,6 +48,15 @@ const ImageUpload = ({ id_blog_page, type, id_config, onChange, dataValue, theme
         console.error("Aucun fichier n'a été téléchargé.");
       }
     };
+
+    const handleAltChange = (idToUpdate, newAlt) => {
+      setImagesUploaded(prevImages => 
+        prevImages.map(image => 
+          image.id_config === idToUpdate ? { ...image, alt: newAlt } : image
+        )
+      );
+    };
+
     useEffect(() => {
       // Vérifiez si dataValue existe et si le type est 'image'
       if (dataValue && Object.keys(dataValue).length > 0 && type === 'image' && dataValue.src !== 'default.jpg' ) {

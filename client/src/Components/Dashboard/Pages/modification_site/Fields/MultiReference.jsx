@@ -68,14 +68,18 @@ const MultiReference = ({ id_blog_page,type, id_config, onChange, slugValue, fie
         onChange={(selectedOption) => handleChangeMultiRef(selectedOption.map(option => ({ value: option.value, label: option.label })))}                              
         options={optionMultiRef}
         isMulti
+        className='select_multiRef'
         value={optionDefault}
         styles={{
           control: (provided) => ({
             ...provided,
             backgroundColor: theme.palette.primary.main,
-            color: "#",
             borderColor: theme.palette.primary.main,
             boxShadow: 'none',
+            borderRadius: '0.5rem',
+            "&:hover": {
+              borderColor: theme.palette.primary.secondary, // Couleur de bordure lors du survol
+            },
           }),
           input: (provided) => ({
             ...provided,
