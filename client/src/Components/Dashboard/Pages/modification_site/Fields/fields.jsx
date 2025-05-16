@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTheme } from '@mui/material/styles';
-import RichTextUpload from './RichText';
+import RichTextUpload from './RichText/RichText';
 import ImageUpload from './Image';
 import GalleryUpload from './Gallery';
 import TextUpload from './Text';
