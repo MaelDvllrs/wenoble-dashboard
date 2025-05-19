@@ -22,6 +22,14 @@ const Link = (props) => {
   );
 };
 
+
+const blockStyleFn = (block) => {
+  if (block.getType() === 'code-block') {
+    return 'code-block';
+  }
+  return '';
+};
+
 function findLinkEntities(contentBlock, callback, contentState) {
   contentBlock.findEntityRanges(
     (character) => {
@@ -305,6 +313,7 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
   const handleULClick = () => setEditorState(RichUtils.toggleBlockType(editorState, 'unordered-list-item'));
   const handleOLClick = () => setEditorState(RichUtils.toggleBlockType(editorState, 'ordered-list-item'));
   const handleBlockquoteClick = () => setEditorState(RichUtils.toggleBlockType(editorState, 'blockquote'));
+  const handleCodeBlockClick = () => setEditorState(RichUtils.toggleBlockType(editorState, 'code-block'));
 
 
   // ---------- LINK SECTION ---------------
@@ -535,6 +544,7 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
         onChange={handleEditorChange}
         handleReturn={handleReturn}
         blockRendererFn={blockRendererFn}
+        blockStyleFn={blockStyleFn}
         className="editor"
         ref={editorContainerRef}
       />
@@ -573,6 +583,7 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
           onOL={handleOLClick}
           onBlockquote={handleBlockquoteClick}
           onImage={handleImageClick}
+          onCode={handleCodeBlockClick}
           theme={theme}
           activeStyles={activeStyles}
           activeBlockType={activeBlockType}

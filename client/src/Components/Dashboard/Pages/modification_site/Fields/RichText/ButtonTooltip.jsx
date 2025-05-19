@@ -1,3 +1,4 @@
+
 import React, { forwardRef } from 'react';
 import LinkIcon from '@mui/icons-material/Link';
 import FormatBoldIcon from '@mui/icons-material/FormatBold';
@@ -5,9 +6,11 @@ import FormatItalicIcon from '@mui/icons-material/FormatItalic';
 import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
 import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
 import FormatQuoteIcon from '@mui/icons-material/FormatQuote';
+import CodeIcon from '@mui/icons-material/Code';
+
 // ...other icon imports as needed
 
-const ButtonTooltip = forwardRef(({ position, onBold, onItalic, onH1, onH2, onH3, onH4, onH5, onH6, onLink, onUL, onOL, onBlockquote, theme, activeStyles, activeBlockType }, ref) => {
+const ButtonTooltip = forwardRef(({ position, onBold, onItalic, onH1, onH2, onH3, onH4, onH5, onH6, onLink, onUL, onOL, onBlockquote, onCode, theme, activeStyles, activeBlockType }, ref) => {
   const isActive = (style) => activeStyles?.includes(style) || activeBlockType === style;
   const colorActive = getComputedStyle(document.documentElement).getPropertyValue('--primary-color');
 
@@ -34,6 +37,7 @@ const ButtonTooltip = forwardRef(({ position, onBold, onItalic, onH1, onH2, onH3
       <button style={{ color: isActive('unordered-list-item') ? colorActive : theme.palette.text.primary }} className='editor_button' onClick={onUL}><FormatListBulletedIcon fontSize='small' /></button>
       <button style={{ color: isActive('ordered-list-item') ? colorActive : theme.palette.text.primary }} className='editor_button' onClick={onOL}><FormatListNumberedIcon fontSize='small' /></button>
       <button style={{ color: isActive('blockquote') ? colorActive : theme.palette.text.primary }} className='editor_button' onClick={onBlockquote}><FormatQuoteIcon fontSize='small'/></button>
+      <button style={{ color: isActive('code-block') ? colorActive : theme.palette.text.primary }} className='editor_button' onClick={onCode}><CodeIcon fontSize="small" /></button>
     </div>
   );
 });

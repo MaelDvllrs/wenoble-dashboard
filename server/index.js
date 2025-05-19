@@ -115,7 +115,9 @@ const whitelist =
 
   'https://billel-aissa-photography.webflow.io',
   
-  'https://artesia-66566b.webflow.io'
+  'https://artesia-66566b.webflow.io',
+
+  'https://oceane-colasseau.webflow.io'
 ];
 
 
