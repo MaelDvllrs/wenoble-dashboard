@@ -1,6 +1,11 @@
-function initContactForm(apiEndpoint, apiKey, formElement, submitButtonSelector = '#contact_submit_button', triggerButtonSelector = '#contact_button', successElementId = 'success', errorElementId = 'error') {
-    // Fonction modifiée pour accepter un élément DOM au lieu d'un sélecteur
+function initContactForm(apiEndpoint, apiKey, formElement, submitButtonSelector = '#contact_submit_button', triggerButtonSelector = '#contact_button') {
+    // Fonction modifiée pour utiliser les éléments frères avec attributs wn-success-form et wn-error-form
     async function sendEmail(emailSender, subject, html) {
+        // Trouver les éléments de succès et d'erreur (frères du formulaire)
+        const parentElement = formElement.parentNode;
+        const successElement = parentElement.querySelector('[wn-success-form]');
+        const errorElement = parentElement.querySelector('[wn-error-form]');
+        
         // Trouver tous les boutons de soumission et de déclenchement
         const submitButton = formElement.querySelector('[wn-submit-form]');
         const faceButtons = document.querySelectorAll(`[wn-submit-face-form][wn-target-form="${formElement.id}"], [wn-submit-face-form]`);
@@ -43,16 +48,16 @@ function initContactForm(apiEndpoint, apiKey, formElement, submitButtonSelector 
             const data = await response.json();
     
             if (response.ok) {
-                document.getElementById(successElementId).style.display = 'block';
-                document.getElementById(errorElementId).style.display = 'none';
+                if (successElement) successElement.style.display = 'block';
+                if (errorElement) errorElement.style.display = 'none';
             } else {
-                document.getElementById(successElementId).style.display = 'none';
-                document.getElementById(errorElementId).style.display = 'block';
+                if (successElement) successElement.style.display = 'none';
+                if (errorElement) errorElement.style.display = 'block';
             }
         } catch (error) {
             console.error('Error:', error);
-            document.getElementById(successElementId).style.display = 'none';
-            document.getElementById(errorElementId).style.display = 'block';
+            if (successElement) successElement.style.display = 'none';
+            if (errorElement) errorElement.style.display = 'block';
         } finally {
             // Réactiver les boutons et restaurer leur texte original
             if (submitButton) {
@@ -106,14 +111,6 @@ function initContactForm(apiEndpoint, apiKey, formElement, submitButtonSelector 
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>Nouveau message de contact</title>
                 <style>
-                    body {
-                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                        line-height: 1.6;
-                        color: #333;
-                        margin: 0;
-                        padding: 0;
-                        background-color: #f5f5f5;
-                    }
                     .container {
                         max-width: 600px;
                         margin: 0 auto;
@@ -121,9 +118,12 @@ function initContactForm(apiEndpoint, apiKey, formElement, submitButtonSelector 
                         border-radius: 8px;
                         overflow: hidden;
                         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                        line-height: 1.6;
+                        color: #333;
                     }
                     .header {
-                        background-color: #4a6cf7;
+                        background-color: #2ec96d; /* Changement de la couleur d'accent en vert */
                         color: #ffffff;
                         padding: 25px;
                         text-align: center;
@@ -163,7 +163,7 @@ function initContactForm(apiEndpoint, apiKey, formElement, submitButtonSelector 
                     }
                 </style>
             </head>
-            <body>
+            <body style="margin: 0; padding: 0; background-color: #f5f5f5;">
                 <div class="container">
                     <div class="header">
                         <h1>Nouveau message de contact</h1>
@@ -227,19 +227,29 @@ document.addEventListener('DOMContentLoaded', () => {
         // Récupérer les sélecteurs relatifs à ce formulaire
         const submitButtonSelector = form.getAttribute('data-submit-button') || 'button[type="submit"]';
         const triggerButtonSelector = form.getAttribute('data-trigger-button') || '#contact_button';
-        const successElementId = form.getAttribute('data-success-element') || 'success';
-        const errorElementId = form.getAttribute('data-error-element') || 'error';
         
         // Initialiser le formulaire avec une référence directe à l'élément form
+        // Les éléments de succès et d'erreur sont désormais détectés automatiquement
         initContactForm(
             apiEndpoint,
             finalApiKey,
-            form, // Passer l'élément directement au lieu d'un sélecteur
+            form,
             submitButtonSelector,
-            triggerButtonSelector,
-            successElementId,
-            errorElementId
+            triggerButtonSelector
         );
+        
+        // Vérifier si les éléments de feedback sont présents
+        const parentElement = form.parentNode;
+        const successElement = parentElement.querySelector('[wn-success-form]');
+        const errorElement = parentElement.querySelector('[wn-error-form]');
+        
+        if (!successElement) {
+            console.warn('Aucun élément avec attribut wn-success-form trouvé pour afficher le message de succès.');
+        }
+        
+        if (!errorElement) {
+            console.warn('Aucun élément avec attribut wn-error-form trouvé pour afficher le message d\'erreur.');
+        }
     });
     
     // Configurer les boutons face formulaire qui déclenchent les boutons de soumission
@@ -288,8 +298,8 @@ Comment utiliser ce script:
    - Bouton déclencheur alternatif: wn-submit-face-form
    
 4. Optionnel: pour les messages de succès/erreur:
-   - data-success-element="ID_element_success" 
-   - data-error-element="ID_element_error"
+   - wn-success-form pour l'élément de succès
+   - wn-error-form pour l'élément d'erreur
 
 5. Style pour l'indicateur de chargement (à ajouter à votre CSS):
    .loader {
@@ -320,6 +330,6 @@ Exemple HTML complet:
 <button wn-submit-face-form wn-target-form="formulaire-contact">Envoyer le message</button>
 
 <!-- Messages de résultat -->
-<div id="success" style="display: none">Message envoyé avec succès!</div>
-<div id="error" style="display: none">Erreur lors de l'envoi du message.</div>
+<div wn-success-form style="display: none">Message envoyé avec succès!</div>
+<div wn-error-form style="display: none">Erreur lors de l'envoi du message.</div>
 */

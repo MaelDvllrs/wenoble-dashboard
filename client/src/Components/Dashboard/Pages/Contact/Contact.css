@@ -56,12 +56,12 @@
     overflow-y: auto;
     scrollbar-color: #272a31 transparent; 
     scrollbar-width: thin;
+    height: calc(100% - 9rem);
 }
 
 .message_content{
     padding: 1rem;
     border-radius: 0.5rem;
-    border: solid 1px;
 }
 
 .message_date{

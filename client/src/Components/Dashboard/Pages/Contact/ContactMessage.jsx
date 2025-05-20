@@ -68,7 +68,7 @@ const ContactMessage = () => {
                         </div>
                         <h2>{message.subject}</h2>
                         <div className="message_contain">
-                            <div className="message_content" style={{backgroundColor : theme.palette.text.primary, color : theme.palette.primary.main}}>
+                            <div className="message_content" style={{backgroundColor : theme.palette.primary.main, color : theme.palette.text.primary}}>
                                 <div dangerouslySetInnerHTML={{ __html: message.html }} />
                             </div>
                             <div className="message_date">
