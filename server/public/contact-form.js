@@ -50,14 +50,20 @@ function initContactForm(apiEndpoint, apiKey, formElement, submitButtonSelector 
             if (response.ok) {
                 if (successElement) successElement.style.display = 'block';
                 if (errorElement) errorElement.style.display = 'none';
+                // Masquer le formulaire après une soumission réussie
+                formElement.style.display = 'none';
             } else {
                 if (successElement) successElement.style.display = 'none';
                 if (errorElement) errorElement.style.display = 'block';
+                // Masquer le formulaire même en cas d'erreur
+                formElement.style.display = 'none';
             }
         } catch (error) {
             console.error('Error:', error);
             if (successElement) successElement.style.display = 'none';
             if (errorElement) errorElement.style.display = 'block';
+            // Masquer le formulaire en cas d'erreur de connexion
+            formElement.style.display = 'none';
         } finally {
             // Réactiver les boutons et restaurer leur texte original
             if (submitButton) {
