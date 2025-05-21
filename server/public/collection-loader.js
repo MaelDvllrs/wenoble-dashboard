@@ -243,11 +243,17 @@
                     }
 
                     if (el.hasAttribute("wn-gallery")) {
-                        const key = el.getAttribute("wn-gallery");
-                        const galleryData = data.content.gallery.find(gallery => gallery.id_config == key);
+                        const attrValue = el.getAttribute("wn-gallery");
+                        // Séparer l'ID et la classe éventuelle
+                        const [idConfig, className] = attrValue.split(',').map(part => part.trim());
+                                        
+                        const galleryData = data.content.gallery.find(gallery => gallery.id_config == idConfig);
                         if (galleryData) {
                             const galleryItems = JSON.parse(galleryData.gallery);
-                            el.innerHTML = galleryItems.map(img => `<img src="${apiUrl}/media/blogGallery/${img.src_photo}" alt="${img.alt}">`).join("");
+                            // Ajouter la classe si elle existe
+                            el.innerHTML = galleryItems.map(img => 
+                                `<img src="${apiUrl}/media/blogGallery/${img.src_photo}" alt="${img.alt}"${className ? ` class="${className}"` : ''}>`
+                            ).join("");
                         }
                     }
 
