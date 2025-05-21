@@ -117,7 +117,9 @@ const whitelist =
   
   'https://artesia-66566b.webflow.io',
 
-  'https://oceane-colasseau.webflow.io'
+  'https://oceane-colasseau.webflow.io',
+
+  'https://maison-astucieuse-emma-lamarqu-388c45.webflow.io',
 ];
 
 
