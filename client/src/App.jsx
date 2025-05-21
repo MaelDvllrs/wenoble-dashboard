@@ -13,6 +13,7 @@ import './App.css';
 
 // Authentication
 import Login from './Auth/Login';
+import Register from './Auth/Register';
 import { IsAuthenticated, IsAuthenticatedAdmin } from './Auth/ProtectedRoutes';
 
 // Authorization
@@ -94,6 +95,7 @@ function App() {
                         {/* Authentication routes */}
                         <Route path="/" element={<Login />} />
                         <Route path="/login" element={<Login />} />
+                        <Route path="/register" element={<Register />} />
 
                         {/* Dashboard routes */}
                         <Route path="/dashboard">

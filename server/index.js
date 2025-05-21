@@ -6,35 +6,35 @@ const path = require('path');
 
 
 // Client router
-const authenticateToken = require('./middleware/authToken'); 
-const apiRouter = require('./api/api');
-const videoRouter = require('./modification/video');
+//const authenticateToken = require('./middleware/authToken'); 
+//const apiRouter = require('./api/api');
+//const videoRouter = require('./modification/video');
 const authRoutes = require('./users/auth');
-const authorisationRouter = require('./users/authorisation');
-const infoUserRouter = require('./users/infoUser');
-const portfolioRouter = require('./modification/portfolio');
-const pageRouter = require('./modification/page');
-const blogRouter = require('./modification/blog');
-const limitSizeRouter = require('./modification/limitSize');
-const sitemapRouter = require('./modification/sitemap');
-const updateCacheRouter = require('./modification/SSRCache');
-const generationStaticRouter = require('./modification/generationStatic');
-const articleRouter = require('./actualite/article');
-const analyticsRouter = require('./analytics/googleAnalytics');
+//const authorisationRouter = require('./users/authorisation');
+//const infoUserRouter = require('./users/infoUser');
+//const portfolioRouter = require('./modification/portfolio');
+//const pageRouter = require('./modification/page');
+//const blogRouter = require('./modification/blog');
+//const limitSizeRouter = require('./modification/limitSize');
+//const sitemapRouter = require('./modification/sitemap');
+//const updateCacheRouter = require('./modification/SSRCache');
+//const generationStaticRouter = require('./modification/generationStatic');
+//const articleRouter = require('./actualite/article');
+//const analyticsRouter = require('./analytics/googleAnalytics');
+//
+//const orderRouter = require('./ecommerce/order');
+//
+//const sendEmailRouter = require('./contact/sendEmail');
+//const contactRouter = require('./contact/contact');
+//const newsletterRouter = require('./newsletter/newsletter');
+//const signUpNewsletterRouter = require('./newsletter/signUpNewsletter');  
+//
+//
+//const { notificationRouter, notificationServer } = require('./users/notification');
 
-const orderRouter = require('./ecommerce/order');
-
-const sendEmailRouter = require('./contact/sendEmail');
-const contactRouter = require('./contact/contact');
-const newsletterRouter = require('./newsletter/newsletter');
-const signUpNewsletterRouter = require('./newsletter/signUpNewsletter');  
 
 
-const { notificationRouter, notificationServer } = require('./users/notification');
-
-
-
-const clientRouter = require('./admin/client');
+//const clientRouter = require('./admin/client');
 
 
 const whitelist = 
@@ -141,53 +141,53 @@ app.use(express.json({ limit: '500mb' }));
 
 app.use(bodyParser.json({ limit: '500mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
-
-app.use('/api', apiRouter);
+//
+//app.use('/api', apiRouter);
 app.use(express.static('public'));
 app.get('/blog-template-loader.js', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'blog-loader.js'));
+ res.sendFile(path.join(__dirname, 'public', 'blog-loader.js'));
 });
-
-
-app.use(signUpNewsletterRouter);
-app.use(sendEmailRouter);
-
-
+//
+//
+//app.use(signUpNewsletterRouter);
+//app.use(sendEmailRouter);
+//
+//
 app.use(authRoutes);
-app.use(authorisationRouter);
-
-
-
-app.use(notificationRouter);
-
-
-//Static files
-app.use('/media/blog', express.static(path.join(__dirname, 'images', 'blog_image')));
-app.use('/media/portfolio', express.static(path.join(__dirname, 'images', 'portfolio_image')));
-app.use('/media/page', express.static(path.join(__dirname, 'images', 'page_image')));
-app.use('/media/blogGallery', express.static(path.join(__dirname, 'images', 'blog_gallery')));
-app.use('/media/blog/richText', express.static(path.join(__dirname, 'images', 'richtext_blog_images')));
-app.use('/media/profile', express.static(path.join(__dirname, 'images', 'profile_image')));
-
-
-app.use(videoRouter);
-
-app.use(authenticateToken);
-
-app.use(infoUserRouter);
-app.use(portfolioRouter);
-app.use(pageRouter);
-app.use(blogRouter);
-app.use(limitSizeRouter);
-app.use(orderRouter);
-app.use(contactRouter);
-app.use(clientRouter);
-app.use(sitemapRouter);
-app.use(articleRouter);
-app.use(analyticsRouter);
-app.use(newsletterRouter);
-app.use(updateCacheRouter);
-app.use(generationStaticRouter);
+//app.use(authorisationRouter);
+//
+//
+//
+//app.use(notificationRouter);
+//
+//
+////Static files
+//app.use('/media/blog', express.static(path.join(__dirname, 'images', 'blog_image')));
+//app.use('/media/portfolio', express.static(path.join(__dirname, 'images', 'portfolio_image')));
+//app.use('/media/page', express.static(path.join(__dirname, 'images', 'page_image')));
+//app.use('/media/blogGallery', express.static(path.join(__dirname, 'images', 'blog_gallery')));
+//app.use('/media/blog/richText', express.static(path.join(__dirname, 'images', 'richtext_blog_images')));
+//app.use('/media/profile', express.static(path.join(__dirname, 'images', 'profile_image')));
+//
+//
+//app.use(videoRouter);
+//
+//app.use(authenticateToken);
+//
+//app.use(infoUserRouter);
+//app.use(portfolioRouter);
+//app.use(pageRouter);
+//app.use(blogRouter);
+//app.use(limitSizeRouter);
+//app.use(orderRouter);
+//app.use(contactRouter);
+//app.use(clientRouter);
+//app.use(sitemapRouter);
+//app.use(articleRouter);
+//app.use(analyticsRouter);
+//app.use(newsletterRouter);
+//app.use(updateCacheRouter);
+//app.use(generationStaticRouter);
 
 
 
@@ -196,7 +196,7 @@ app.listen(3002, ()=>{
   console.log('Server is running on port 3002')
 })
 
-notificationServer.listen(3004, () => {
-  console.log('Server is running on port 3004');
-});
+//notificationServer.listen(3004, () => {
+//  console.log('Server is running on port 3004');
+//});
 

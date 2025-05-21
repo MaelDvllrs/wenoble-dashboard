@@ -23,7 +23,7 @@ const Login = () => {
     const apiUrl = config.apiUrl;
 
     // State variables
-    const [loginUserName, setLoginUserName] = useState('');
+    const [loginEmail, setLoginEmail] = useState('');
     const [loginPassword, setLoginPassword] = useState('');
     const [statusHolder, setStatusHolder] = useState('message');
     const [stayConnected, setStayConnected] = useState(false);
@@ -49,21 +49,12 @@ const Login = () => {
         e.preventDefault();
         setLoading(true);
 
-        const presalt = CryptoJS.lib.WordArray.random(128 / 8);
-        const salt = presalt.toString(CryptoJS.enc.Base64);
-        const key = CryptoJS.PBKDF2(loginUserName, salt, { keySize: 256 / 32, iterations: 1000 });
-        const keyString = key.toString(CryptoJS.enc.Base64);
-
-        const encryptedPassword = CryptoJS.AES.encrypt(loginPassword, keyString, {
-            mode: CryptoJS.mode.ECB,
-            padding: CryptoJS.pad.Pkcs7
-        }).toString();
+        
 
         try {
             const response = await Axios.post(`${apiUrl}/login`, {
-                LoginUserName: loginUserName,
-                LoginPassword: encryptedPassword,
-                salt: salt,
+                loginEmail: loginEmail,
+                loginPassword: loginPassword,
             });
 
             if (response.data.message) {
@@ -106,7 +97,7 @@ const Login = () => {
                 <div className="loginBox">
                     <div className="SignUpContain">
                         <span className="SignUpText" style={{ color: theme.palette.text.secondary }}>Vous n'avez pas de compte ?</span>
-                        <SecondaryButton theme={theme} className="SignUpButton" href="https://www.wenoble.fr/contact">Contact</SecondaryButton>
+                        <SecondaryButton theme={theme} className="SignUpButton" onClick={() => navigateTo('/register')}>S'inscrire</SecondaryButton>
                     </div>
                     <div className="loginTextContain">
                         <p className="loginTitle">Se Connecter à <span className="blueText">Wenoble Dashboard</span></p>
@@ -115,18 +106,18 @@ const Login = () => {
                     <form className="loginForm">
                         <div className="inputContain">
                             <LoginTextField
-                                autoComplete="username"
+                                autoComplete="email"
                                 className="loginInput"
                                 theme={theme}
-                                label="Utilisateur"
-                                type="text"
+                                label="Email"
+                                type="email"
                                 InputProps={{
                                     style: {
                                         color: theme.palette.text.primary,
                                     },
                                 }}
                                 onChange={(event) => {
-                                    setLoginUserName(event.target.value);
+                                    setLoginEmail(event.target.value);
                                 }}
                             />
                             <div>
