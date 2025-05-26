@@ -1,11 +1,12 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const db = require('../db'); // Assurez-vous que le chemin est correct
 const cors = require('cors')
 const multer  = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
+const { supabaseServer } = require('../supabase');
+const { authenticateToken } = require('../middleware/authToken');
 
 
 
@@ -21,56 +22,71 @@ const secretKey = process.env.SECRET_KEY;
 
 
 
-router.get('/getUserInfoBasic', (req, res)=>{
+// Route avec authentification
+router.get('/getUserInfoBasic', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.idUser;
+    
+    // 1. Récupérer les informations de base de l'utilisateur depuis auth.users
+    const { data: authUser, error: authError } = await supabaseServer.auth
+      .admin.getUserById(userId);
+    
+    if (authError) throw authError;
+    
+    // 2. Récupérer les informations complémentaires depuis public.users
+    const { data: userData, error: userError } = await supabaseServer
+      .from('users')
+      .select('username, website, api_key')
+      .eq('id', userId)
+      .single();
+    
+    if (userError) throw userError;
+    
+    // 3. Récupérer l'image de profil (si stockée dans une table séparée)
+    const { data: imageData, error: imageError } = await supabaseServer
+      .from('profile_images')
+      .select('src_profile_image')
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    // Combiner toutes les informations
+
+    const user = [{
+      email: authUser.user.email,
+      username: userData.username,
+      id_user: userId,
+      website: userData.website || ''
+    }];
+    
+    const image = imageData ? [{ src_profile_image: imageData.src_profile_image }] : [];
+    
+    // Chiffrer la réponse avec JWT comme dans l'ancien code
+    const userCrypt = jwt.sign({
+      user: user,
+      image: image
+    }, secretKey);
+    
+    res.send(userCrypt);
+  } catch (error) {
+    console.error('Erreur lors de la récupération des infos utilisateur:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 
-    const id_user = req.user.idUser 
-
-    const SQL = 'SELECT email, username, id_user, website FROM users WHERE id_user = ?'
-
-    const Values = [id_user]
-
-    db.query(SQL, Values, (err, results)=>{
-        if(err){
-            res.send({error: err})
-        }
-
-        const SQL_image = 'SELECT src_profile_image FROM users_info WHERE id_user = ?'
-        const Values_image = [id_user]
-
-        db.query(SQL_image, Values_image, (err, results_image)=>{
-            if(err){
-                res.send({error: err})
-            }
-
-            const user = results
-            const image = results_image
-
-            const userCrypt = jwt.sign({
-              user : user,
-              image : image
-            }, secretKey);
-
-
-            res.send(userCrypt)
-        })
-      }) 
-  });
-
-
-  router.get('/getUserInfo', (req, res)=>{
-
-    const id_user = req.user.idUser 
-
-    const SQL = 'SELECT website FROM users_info WHERE id_user = ?'
-    const Values = [id_user]
-    db.query(SQL,Values, (err, results)=>{
-        if(err){
-            res.send({error: err})
-        }
-        res.send(results)
-    })
-  });
+  //router.get('/getUserInfo', (req, res)=>{
+//
+  //  const id_user = req.user.idUser 
+//
+  //  const SQL = 'SELECT website FROM users_info WHERE id_user = ?'
+  //  const Values = [id_user]
+  //  db.query(SQL,Values, (err, results)=>{
+  //      if(err){
+  //          res.send({error: err})
+  //      }
+  //      res.send(results)
+  //  })
+  //});
 
 
   const uploadProfile = multer({ dest: '../images/uploads/' });

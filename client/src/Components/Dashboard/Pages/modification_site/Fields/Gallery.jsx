@@ -90,7 +90,7 @@ const GalleryUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fie
             name: image.name,
             size: image.size,
             src: image.src_photo,
-            url: apiUrl + '/media/blogGallery/' + image.src_photo,
+            url: 'https://oeigawgmmhrlpjpgicww.supabase.co/storage/v1/object/public/collection-gallery/' + image.src_photo,
             type: 'gallery',
             create: true
           };

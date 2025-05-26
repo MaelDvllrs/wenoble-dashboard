@@ -323,12 +323,12 @@ return(
           
           <div className="modification_page_contain">
               <div ref={containerRef} className="modification_link_contain">
-                  <NavLink to={authPortfolio === 1 ? '/dashboard/modification/portfolio' : '#'}  className="modification_box" ref={portfolioContainerRef} style={{backgroundColor : theme.palette.primary.secondary, boxShadow: theme.palette.shadow.main}}>
+                  <NavLink to={authPortfolio === true ? '/dashboard/modification/portfolio' : '#'}  className="modification_box" ref={portfolioContainerRef} style={{backgroundColor : theme.palette.primary.secondary, boxShadow: theme.palette.shadow.main}}>
                       <div className="modification_title_box" style={{color: theme.palette.text.primary}}>
                           <div className="modification_title"><MdImportContacts  className="icon_modifiaction_title"/>
                             <b>Portfolio</b>
                             {
-                              authPortfolio === 1 ? (
+                              authPortfolio === true ? (
                                 null
                               ) : <div style={{color: "var(--primary-color)", marginLeft:"1rem"}} className='icon_navigation icon_lock'><PiLockBold /></div>
                             }
@@ -407,12 +407,12 @@ return(
                           </div>
                       </div>
                   </NavLink>
-                  <NavLink to={authPage === 1 ? '/dashboard/modification/page' : '#'} className="modification_box" ref={pageContainerRef} style={{backgroundColor : theme.palette.primary.secondary, boxShadow: theme.palette.shadow.main}}>
+                  <NavLink to={authPage === true ? '/dashboard/modification/page' : '#'} className="modification_box" ref={pageContainerRef} style={{backgroundColor : theme.palette.primary.secondary, boxShadow: theme.palette.shadow.main}}>
                       <div className="modification_title_box" style={{color: theme.palette.text.primary}}>
                         <div className="modification_title"><FaElementor  className="icon_modifiaction_title"/>
                           <b>Page</b>
                           {
-                            authPage === 1 ? (
+                            authPage === true ? (
                                 null
                             ) : <div style={{color: "var(--primary-color)", marginLeft:"1rem"}} className='icon_navigation icon_lock'><PiLockBold /></div>
                           }
@@ -431,11 +431,11 @@ return(
                         <img src={sphere_page} alt="shere page" className="shere_page" />                          
                       </div>
                   </NavLink>
-                  <NavLink to={authBlog === 1 ? '/dashboard/modification/blog' : '#'} className="modification_box box_blog" ref={iconContainerRef} style={{backgroundColor : theme.palette.primary.secondary, boxShadow: theme.palette.shadow.main}}>
+                  <NavLink to={authBlog === true ? '/dashboard/modification/collection' : '#'} className="modification_box box_blog" ref={iconContainerRef} style={{backgroundColor : theme.palette.primary.secondary, boxShadow: theme.palette.shadow.main}}>
                       <div className="modification_title_box" style={{color: theme.palette.text.primary}}>
                         <div className="modification_title"><MdArticle className="icon_modifiaction_title"/><b>Blog</b>
                         {
-                          authBlog === 1 ? (
+                          authBlog === true ? (
                               null
                           ) : <div style={{color: "var(--primary-color)", marginLeft:"1rem"}} className='icon_navigation icon_lock'><PiLockBold /></div>
                         }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axios from '../service/AxiosConfig';
 import Cookies from 'js-cookie';
 import { Navigate } from 'react-router-dom';
 import config from '../config';
@@ -87,7 +87,6 @@ export const checkAuthorization = async (authType) => {
                 'Content-Type': 'application/json'
             }
         });
-
         return response.data.authorisation;
     } catch (error) {
         console.error('Error during authorization check:', error);

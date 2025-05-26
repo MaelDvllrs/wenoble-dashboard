@@ -8,6 +8,7 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 
+
 // Global styles
 import './App.css';
 
@@ -28,10 +29,10 @@ import Portfolio from './Components/Dashboard/Pages/modification_site/Portfolio/
 import EditPortfolio from './Components/Dashboard/Pages/modification_site/Portfolio/EditPortfolio';
 import Page from './Components/Dashboard/Pages/modification_site/Page/page';
 import EditPage from './Components/Dashboard/Pages/modification_site/Page/EditPage';
-import Blog from './Components/Dashboard/Pages/modification_site/Blog/blog';
-import ListeBlog from './Components/Dashboard/Pages/modification_site/Blog/listeBlog';
-import CreatePageBlog from './Components/Dashboard/Pages/modification_site/Blog/createPageBlog';
-import EditPageBlog from './Components/Dashboard/Pages/modification_site/Blog/editPageBlog';
+import Collection from './Components/Dashboard/Pages/modification_site/Collection/collection';
+import ListeCollection from './Components/Dashboard/Pages/modification_site/Collection/listeCollection';
+import CreateElementCollection from './Components/Dashboard/Pages/modification_site/Collection/createElementCollection';
+import EditElementCollection from './Components/Dashboard/Pages/modification_site/Collection/editElementCollection';
 import Statistique from './Components/Dashboard/Pages/Statistique/Statistique';
 import Actualite from './Components/Dashboard/Pages/Actualite/Actualite';
 import Article from './Components/Dashboard/Pages/Actualite/Article';
@@ -87,6 +88,10 @@ function App() {
         }
     };
 
+
+
+    
+
     return (
         <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="fr">
             <div>
@@ -109,10 +114,10 @@ function App() {
                                 <Route path="/dashboard/modification/page" element={<AuthorisedRoutePage><Page /></AuthorisedRoutePage>}>
                                     <Route path="/dashboard/modification/page/:idPage" element={<EditPage />} />
                                 </Route>
-                                <Route path="/dashboard/modification/blog" element={<AuthorisedRouteBlog><Blog /></AuthorisedRouteBlog>}>
-                                    <Route path="/dashboard/modification/blog/:idBlog" element={<ListeBlog />} />
-                                    <Route path="/dashboard/modification/blog/:idBlog/createPage" element={<CreatePageBlog />} />
-                                    <Route path="/dashboard/modification/blog/:idBlog/editPage/:idBlogPage" element={<EditPageBlog />} />
+                                <Route path="/dashboard/modification/collection" element={<AuthorisedRouteBlog><Collection /></AuthorisedRouteBlog>}>
+                                    <Route path="/dashboard/modification/collection/:idCollection" element={<ListeCollection />} />
+                                    <Route path="/dashboard/modification/collection/:idCollection/createPage" element={<CreateElementCollection />} />
+                                    <Route path="/dashboard/modification/collection/:idCollection/editPage/:idCollectionElement" element={<EditElementCollection />} />
                                 </Route>
                                 <Route path="/dashboard/stats" element={<Statistique />} />
                                 <Route path="/dashboard/contact" element={<ContactList />} />

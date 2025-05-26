@@ -30,6 +30,8 @@ const Account = () => {
 
   const [newFieldValue, setNewFieldValue] = useState('');
 
+  console.log(userInfo);
+
 
   useEffect(() => {
     const fetchData = async () => {

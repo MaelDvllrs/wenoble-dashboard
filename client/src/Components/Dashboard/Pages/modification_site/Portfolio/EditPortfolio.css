@@ -68,6 +68,8 @@
 }
 
 .Item_portfolio_element{
+    font-size: 0.87rem;
+    font-weight: 500;
     margin-left: 1rem;
     margin-right: 1rem;
     white-space: nowrap;

@@ -1,11 +1,13 @@
 // Organize imports: external libraries first, then internal modules
 import React, { useState } from "react";
 import { useNavigate } from 'react-router-dom';
-import Axios from 'axios';
+import Axios from '../service/AxiosConfig';
 import { jwtDecode } from 'jwt-decode';
 import Cookies from 'js-cookie';
 import CryptoJS from 'crypto-js';
 import { useTheme } from '@mui/material/styles';
+
+import { signInWithEmail } from '../service/supabaseAuth';
 
 // Internal imports
 import './Login.css';
@@ -48,41 +50,56 @@ const Login = () => {
     const loginUser = async (e) => {
         e.preventDefault();
         setLoading(true);
-
-        
+        setStatusHolder('message');
 
         try {
-            const response = await Axios.post(`${apiUrl}/login`, {
-                loginEmail: loginEmail,
-                loginPassword: loginPassword,
-            });
-
-            if (response.data.message) {
+            // Utilisation de signInWithEmail de supabaseAuth
+            const authData = await signInWithEmail(
+                loginEmail, 
+                loginPassword,
+                stayConnected
+            );
+            
+            // Vérification si l'authentification a réussi
+            if (!authData || !authData.session) {
                 navigateTo('/');
                 setStatusHolder('showMessage');
                 setLoading(false);
-            } else {
-                const token = response.data.token;
-                const cookieOptions = {
-                    expires: stayConnected ? 365 : undefined,
-                    secure: true,
-                    sameSite: 'Strict',
-                    path: '/',
-                };
-                Cookies.set('token', token, cookieOptions);
-
-                const decodedToken = jwtDecode(token);
-                const isAdmin = decodedToken.isAdmin;
-
+                return;
+            }
+            
+            // Récupération du token depuis la session Supabase
+            const token = authData.session.access_token;
+            
+            // Vérifier le rôle de l'utilisateur (admin ou non)
+            // Note: Nous devons déterminer si l'utilisateur est admin
+            // Soit via les métadonnées utilisateur, soit via une API
+            
+            try {
+                // Option 1: Métadonnées utilisateur
+                let isAdmin = authData.user?.user_metadata?.isAdmin;
+                
+                // Option 2: Décodage du token JWT si les métadonnées contiennent cette info
+                if (isAdmin === undefined) {
+                    const decodedToken = jwtDecode(token);
+                    isAdmin = decodedToken.isAdmin;
+                }
+                
+                // Redirection basée sur le rôle
                 if (isAdmin) {
                     navigateTo('/dashboard-admin/home');
                 } else {
                     navigateTo('/dashboard/home');
                 }
+            } catch (roleError) {
+                console.error("Erreur lors de la vérification du rôle:", roleError);
+                // Redirection par défaut en cas d'erreur
+                navigateTo('/dashboard/home');
             }
         } catch (error) {
+            console.error("Erreur lors de la connexion:", error);
+            setStatusHolder('showMessage');
             setLoading(false);
-            return error;
         }
     };
 

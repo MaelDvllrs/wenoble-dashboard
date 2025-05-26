@@ -73,7 +73,7 @@ function findLinkEntities(contentBlock, callback, contentState) {
 
 
 
-const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldValue, dataValue, id_collection_ref }) => {
+const CollectionField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldValue, dataValue, id_collection_ref }) => {
 
 
   const theme = useTheme();
@@ -1057,4 +1057,4 @@ const BlogField = ({ id_blog_page,type, id_config, onChange, slugValue, fieldVal
         </div>
     )
 }
-export default BlogField;
+export default CollectionField;

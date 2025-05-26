@@ -13,6 +13,7 @@ const MultiReference = ({ id_blog_page,type, id_config, onChange, slugValue, fie
     const [createBoolMultiRef, setCreateBoolMultiRef] = useState('')
 
 
+
    useEffect(() => {
      if (id_collection_ref) { 
        Axios.get(`${apiUrl}/getCollectionRef`, {
@@ -33,8 +34,8 @@ const MultiReference = ({ id_blog_page,type, id_config, onChange, slugValue, fie
    }, [id_collection_ref]);
 
    const optionMultiRef = CollectionRef.map(item => ({
-     value: item.id_page_blog,
-     label: item.page_blog_name
+     value: item.id,
+     label: item.collection_element_name
    }));
 
    const handleChangeMultiRef = (selectedOption) => {

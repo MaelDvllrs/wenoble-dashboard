@@ -1,5 +1,6 @@
-import Axios from 'axios';
+import Axios from '../../../../../service/AxiosConfig';
 import config from '../../../../../config';
+ 
 
 const apiUrl = config.apiUrl; 
 
@@ -13,7 +14,7 @@ export const createImageBlog = async (fields, blogPageId, token) => {
         formData.append('name', fields.name);
         formData.append('size', fields.size);
 
-        await Axios.post(`${apiUrl}/createImagesBlog`, formData, {
+        await Axios.post(`${apiUrl}/createImagesCollection`, formData, {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'multipart/form-data'
@@ -36,7 +37,7 @@ export const createGalleryBlog = async (fields, blogPageId, token) => {
         formData.append('id_config', fields.id_config);
         formData.append('type', fields.type);
 
-        await Axios.post(`${apiUrl}/createGalleryBlog`, formData, {
+        await Axios.post(`${apiUrl}/createGalleryCollection`, formData, {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'multipart/form-data'
@@ -60,7 +61,7 @@ export const createVideoBlog = async (fields, blogPageId, token) => {
         formData.append('name', fields.name);
         formData.append('size', fields.size);
 
-        await Axios.post(`${apiUrl}/createVideoBlog`, formData, {
+        await Axios.post(`${apiUrl}/createVideoCollection`, formData, {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'multipart/form-data'
@@ -75,7 +76,7 @@ export const createVideoBlog = async (fields, blogPageId, token) => {
 export const createBlogPage = async (id, mainText, date, status, idUser, token) => {
 
     try {
-        const createBlogResponse = await Axios.post(`${apiUrl}/createBlogPage`, {
+        const createBlogResponse = await Axios.post(`${apiUrl}/createCollectionElement`, {
             params: {
                 id: id,
                 mainText: mainText,
@@ -113,7 +114,7 @@ export const createBlogPage = async (id, mainText, date, status, idUser, token) 
 
 export const createTextBlog = async (id, otherText, token) => {
     try {
-        await Axios.post(`${apiUrl}/createTextBlog`, {
+        await Axios.post(`${apiUrl}/createTextCollection`, {
             params: {
                 id: id,
                 otherText: otherText,
@@ -132,7 +133,7 @@ export const createTextBlog = async (id, otherText, token) => {
 
 export const createRichTextBlog = async (id, infoRichText, token) => {
     try {
-        await Axios.post(`${apiUrl}/createRichTextBlog`, {
+        await Axios.post(`${apiUrl}/createRichTextCollection`, {
             params: {
                 id: id,
                 infoRichText: infoRichText,
@@ -151,7 +152,7 @@ export const createRichTextBlog = async (id, infoRichText, token) => {
 
 export const createMultiReferenceBlog = async (id, multiReference, token) => {
     try {
-        await Axios.post(`${apiUrl}/createMultiReferenceBlog`, {
+        await Axios.post(`${apiUrl}/createMultiReferenceCollection`, {
             params: {
                 id: id,
                 multiReference: multiReference,
@@ -235,6 +236,11 @@ export const updateBlogPage = async (idBlogPage, mainText, date, status, setpubl
         throw error;
     }
 };
+
+
+
+
+
 
 export const updateTextBlog = async (id, otherText, token) => {
     try {

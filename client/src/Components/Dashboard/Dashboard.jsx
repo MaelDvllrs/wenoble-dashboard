@@ -1,6 +1,6 @@
 // External libraries
 import React, { useState, useEffect, useContext, useRef } from 'react';
-import Axios from 'axios';
+import Axios from '../../service/AxiosConfig';
 import { jwtDecode } from 'jwt-decode';
 import Cookies from 'js-cookie';
 import { Outlet, Link, NavLink, useNavigate } from 'react-router-dom';
@@ -9,6 +9,8 @@ import { Checkbox, Avatar, Badge, Popper, ClickAwayListener, Grow, IconButton } 
 import { useTheme } from '@mui/material/styles';
 import { formatDistance } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { createClient } from '@supabase/supabase-js';
+
 
 // Icons
 import { BsChevronCompactDown } from "react-icons/bs";
@@ -104,6 +106,44 @@ const Dashboard = () => {
         fetchUserInfoLocal(token);
         setLoadingProfile(false);
     }, [token]);
+
+
+    useEffect(() => {
+      const supabase = createClient(config.supabaseUrl, config.supabaseAnonKey);
+        
+      // Vérifier si une session est active
+      const checkAndRefreshSession = async () => {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) {
+            console.log("Pas de session active");
+            return;
+          }
+          
+          const { data, error } = await supabase.auth.refreshSession();
+          
+          if (error) throw error;
+          
+          if (data && data.session) {
+            Cookies.set('token', data.session.access_token, {
+              expires: 7,
+              secure: process.env.NODE_ENV === 'production',
+              sameSite: 'Lax'
+            });
+          }
+        } catch (e) {
+          console.error("Erreur lors du rafraîchissement périodique:", e);
+        }
+      };
+      
+      // Rafraîchir immédiatement au chargement
+      checkAndRefreshSession();
+      
+      // Puis toutes les 45 minutes
+      const refreshInterval = setInterval(checkAndRefreshSession, 45 * 60 * 1000);
+      
+      return () => clearInterval(refreshInterval);
+    }, []);
 
     // Handlers
     const handleReadNotif = (event) => {
@@ -242,13 +282,13 @@ const Dashboard = () => {
                             </motion.div>
                         </AnimatePresence>
                     </NavLink>
-                    <NavLink key="ecommerce" to={ecommAuth === 1 ? '/dashboard/ecommerce' : '#'} className={({ isActive, ecommAuth }) => (isActive, ecommAuth ? 'menuActive' : '')}>
+                    <NavLink key="ecommerce" to={ecommAuth === true ? '/dashboard/ecommerce' : '#'} className={({ isActive, ecommAuth }) => (isActive, ecommAuth ? 'menuActive' : '')}>
                         <AnimatePresence initial={false}>
                             <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
                                 <motion.div animate={{marginRight: open_menu ? "0.5rem" : "0rem"}} className='icon_navigation'><ShoppingCartOutlinedIcon fontSize='small'/></motion.div>
                                 <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>E-commerce</motion.span>
                                 {
-                                    ecommAuth === 1 ? (
+                                    ecommAuth === true ? (
                                         null
                                     ) : <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem", marginLeft: open_menu ? "1rem" : "0.5rem"}} style={{color: theme.palette.text.secondary}} className='icon_navigation icon_lock'><PiLockBold /></motion.div>
                                 }
@@ -271,13 +311,13 @@ const Dashboard = () => {
                             </motion.div>
                         </AnimatePresence>
                     </NavLink>
-                    <NavLink key="newsletter" to={newsAuth === 1 ? '/dashboard/newsletter' : '#'} className={({ isActive }) => (isActive && newsAuth === 1 ? 'menuActive' : '')}>
+                    <NavLink key="newsletter" to={newsAuth === true ? '/dashboard/newsletter' : '#'} className={({ isActive }) => (isActive && newsAuth === 1 ? 'menuActive' : '')}>
                         <AnimatePresence initial={false}>
                             <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
                                 <motion.div animate={{marginRight: open_menu ? "0.5rem" : "0rem"}} className='icon_navigation'><NewspaperOutlinedIcon fontSize='small'/></motion.div>
                                 <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Newsletter</motion.span>
                                 {
-                                    newsAuth === 1 ? (
+                                    newsAuth === true ? (
                                         null
                                     ) : <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem", marginLeft: open_menu ? "1rem" : "0.5rem"}} style={{color: theme.palette.text.secondary}} className='icon_navigation icon_lock'><PiLockBold /></motion.div>
                                 }

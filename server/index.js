@@ -6,15 +6,15 @@ const path = require('path');
 
 
 // Client router
-//const authenticateToken = require('./middleware/authToken'); 
 //const apiRouter = require('./api/api');
-//const videoRouter = require('./modification/video');
+
 const authRoutes = require('./users/auth');
-//const authorisationRouter = require('./users/authorisation');
-//const infoUserRouter = require('./users/infoUser');
+const authorisationRouter = require('./users/authorisation');
+const infoUserRouter = require('./users/infoUser');
 //const portfolioRouter = require('./modification/portfolio');
 //const pageRouter = require('./modification/page');
-//const blogRouter = require('./modification/blog');
+const collectionRouter = require('./modification/collection');
+//const videoRouter = require('./modification/video');
 //const limitSizeRouter = require('./modification/limitSize');
 //const sitemapRouter = require('./modification/sitemap');
 //const updateCacheRouter = require('./modification/SSRCache');
@@ -154,7 +154,7 @@ app.get('/blog-template-loader.js', (req, res) => {
 //
 //
 app.use(authRoutes);
-//app.use(authorisationRouter);
+app.use(authorisationRouter);
 //
 //
 //
@@ -172,12 +172,12 @@ app.use(authRoutes);
 //
 //app.use(videoRouter);
 //
-//app.use(authenticateToken);
+
 //
-//app.use(infoUserRouter);
+app.use(infoUserRouter);
 //app.use(portfolioRouter);
 //app.use(pageRouter);
-//app.use(blogRouter);
+app.use(collectionRouter);
 //app.use(limitSizeRouter);
 //app.use(orderRouter);
 //app.use(contactRouter);

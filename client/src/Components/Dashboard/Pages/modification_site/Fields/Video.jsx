@@ -84,6 +84,7 @@ const VideoUpload = ({ id_blog_page, type, id_config, onChange, slugValue, field
       onChange({ data }, true);
     }
 
+
     return (
         <div className='image_blog' style={{backgroundColor : theme.palette.primary.main, color : theme.palette.text.primary, borderColor : theme.palette.primary.main}}>
         {isLoading && (
@@ -96,7 +97,7 @@ const VideoUpload = ({ id_blog_page, type, id_config, onChange, slugValue, field
             <div key={video.id_config} className="ImageUploaded_contain">
               <video
                   className='Image_uploaded'
-                  src={video.url || `${apiUrl}/streamVideo/${video.src}`}
+                  src= { video.url || `https://oeigawgmmhrlpjpgicww.supabase.co/storage/v1/object/public/collection-video/${video.src}`}
                   controls
                   alt={video.alt}
               />
@@ -107,7 +108,7 @@ const VideoUpload = ({ id_blog_page, type, id_config, onChange, slugValue, field
                 </div>
                 <div className='flex_contain flex_image'>
                   <p style={{color: theme.palette.text.secondary}}>{(video.size / 1024).toFixed(2)} Mo</p>
-                  <a href={video.url ? video.url : `${apiUrl}/streamVideo/${video.src}`} target="_blank">
+                  <a href={video.url || `https://oeigawgmmhrlpjpgicww.supabase.co/storage/v1/object/public/collection-video/${video.src}`} target="_blank">
                     <OpenInNewOutlinedIcon style={{color: theme.palette.text.primary}}/>
                   </a>                                  
                 </div>

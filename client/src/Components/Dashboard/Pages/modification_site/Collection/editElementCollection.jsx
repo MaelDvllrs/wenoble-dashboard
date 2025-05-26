@@ -1,16 +1,16 @@
 import React from "react"
-import Axios from 'axios';
+import Axios from '../../../../../service/AxiosConfig';
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import config from "../../../../../config";
 import {jwtDecode} from 'jwt-decode'; 
 import Field from "../Fields/fields";
-import './createPageBlog.css'
+import './collection.css'
 import {DefaultButton, RedButton, SecondaryButton, Popup} from '../../../../../Theme/element';
 import SaveIcon from '@mui/icons-material/Save';
 import PublishIcon from '@mui/icons-material/Publish';
 
-import { updateImageBlog, updateBlogPage, updateTextBlog, updateRichTextBlog, updateVideoBlog, updateMultiReferenceBlog, updateGalleryBlog, generateStaticSite } from './apiBlog';
+import { updateImageBlog, updateBlogPage, updateTextBlog, updateRichTextBlog, updateVideoBlog, updateMultiReferenceBlog, updateGalleryBlog, generateStaticSite } from './apiCollection';
 import { useTheme } from '@mui/material/styles';
 import { convertToRaw, ContentState, convertFromRaw } from 'draft-js';
 import UnpublishedIcon from '@mui/icons-material/Unpublished';
@@ -26,7 +26,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 
 
-const EditPageBlog = () => {
+const EditElementCollection = () => {
 
     const theme = useTheme();
 
@@ -100,8 +100,8 @@ const EditPageBlog = () => {
     });
 
     const apiUrl = config.apiUrl;
-    const { idBlogPage } = useParams();
-    const { idBlog } = useParams();
+    const { idCollectionElement } = useParams();
+    const { idCollection } = useParams();
 
     
 
@@ -141,14 +141,14 @@ const EditPageBlog = () => {
         try {        
 
 
-            const response = await updateBlogPage(idBlogPage, mainText, localISOTime, status, setpublishDate, DecodeBlog.blogPage[0].status, idUser, idBlog, token);
+            const response = await updateBlogPage(idCollectionElement, mainText, localISOTime, status, setpublishDate, DecodeBlog.blogPage[0].status, idUser, idCollection, token);
         
             // ENREGISTRER LES TEXTES
 
             if (otherText.length > 0) {
 
                 try {
-                    const response = await updateTextBlog(idBlogPage, otherText, token);
+                    const response = await updateTextBlog(idCollectionElement, otherText, token);
 
                 } catch (error) {
                     console.error('Erreur lors de la création des textes :', error);
@@ -182,7 +182,7 @@ const EditPageBlog = () => {
                 });
           
                 try {
-                  const response = await updateRichTextBlog(idBlogPage, infoRichText, token);
+                  const response = await updateRichTextBlog(idCollectionElement, infoRichText, token);
                 } catch (error) {
                   console.error('Erreur lors de la création des richtextes :', error);
                   return;
@@ -197,7 +197,7 @@ const EditPageBlog = () => {
                 try {
                     // Utiliser Promise.all pour attendre que toutes les images soient sauvegardées
                     await Promise.all(blogData.images.map(async (image) => {
-                        await updateImageBlog(image, idBlogPage, token);
+                        await updateImageBlog(image, idCollectionElement, token);
                     }));
 
                 } catch (error) {
@@ -210,7 +210,7 @@ const EditPageBlog = () => {
             if(blogData.video.length > 0){
                 try {
                     await Promise.all(blogData.video.map(async (video) => {
-                        await updateVideoBlog(video, idBlogPage, token);
+                        await updateVideoBlog(video, idCollectionElement, token);
                     }));
                 } catch (error) {
                     console.error(error);
@@ -222,7 +222,7 @@ const EditPageBlog = () => {
             if(blogData.multiReference.length > 0){
                 try {
                     await Promise.all(blogData.multiReference.map(async (multiReference) => {
-                        await updateMultiReferenceBlog(idBlogPage, multiReference, token);
+                        await updateMultiReferenceBlog(idCollectionElement, multiReference, token);
                     }));
                 } catch (error) {
                     console.error(error);
@@ -234,7 +234,7 @@ const EditPageBlog = () => {
             if(blogData.gallery.length > 0){
                 try {
                     await Promise.all(blogData.gallery.map(async (gallery) => {
-                        await updateGalleryBlog(idBlogPage, gallery, token);
+                        await updateGalleryBlog(idCollectionElement, gallery, token);
                     }));
                 } catch (error) {
                     console.error(error);
@@ -249,7 +249,7 @@ const EditPageBlog = () => {
                     await Axios.delete(`${apiUrl}/deleteBlogData`, {
                         data: {
                             data: deletedItems,
-                            id_blog_page : idBlogPage
+                            id_blog_page : idCollectionElement
                         },
                         headers: {
                           'Authorization': `Bearer ${token}`,
@@ -399,9 +399,9 @@ const EditPageBlog = () => {
             await Axios.post(`${apiUrl}/deleteRouteBlogSitemap`, {
                 params: {
                     idUser: idUser,
-                    idBlog: idBlog,
+                    idBlog: idCollection,
                     slug: slug,
-                    idBlogPage: idBlogPage
+                    idBlogPage: idCollectionElement
                 }
             }, {
                 headers: {
@@ -413,8 +413,8 @@ const EditPageBlog = () => {
             // Supprimer la page
             await Axios.delete(`${apiUrl}/deleteBlogPage`, {
                 params: {
-                    IdBlogPage: idBlogPage,
-                    Id: idBlog
+                    IdBlogPage: idCollectionElement,
+                    Id: idCollection
                 },
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -446,7 +446,7 @@ const EditPageBlog = () => {
                 setDeleteDataStatus(false);
                 setRegenerateSiteStatus(false);
                 setDeletionCompleted(false);
-                navigate(`/dashboard/modification/blog/${idBlog}`);
+                navigate(`/dashboard/modification/blog/${idCollection}`);
             }, 1500);
         } catch (error) {
             console.error('Erreur lors de la suppression de la page :', error);
@@ -465,9 +465,9 @@ const EditPageBlog = () => {
 
     useEffect(() => {    
     
-        Axios.get(`${apiUrl}/getConfigBlog`, {
+        Axios.get(`${apiUrl}/getConfigCollection`, {
             params: {
-                IdBlog: idBlog,
+                IdBlog: idCollection,
             },
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -495,37 +495,40 @@ const EditPageBlog = () => {
             if (blogItem.tab_field === 'image') {
                 setBlogDataConfig(prevData => ({
                     ...prevData,
-                    images: [...prevData.images, {id_config: blogItem.id_config}]
+                    images: [...prevData.images, {id_config: blogItem.id}]
                 }));
             } else if (blogItem.tab_field === 'text') {
+                console.log('blogItem', blogItem);
                 setBlogDataConfig(prevData => ({
                     ...prevData,
-                    text: [...prevData.text, {id_config: blogItem.id_config}]
+                    text: [...prevData.text, {id_config: blogItem.id}]
                 }));
             } else if (blogItem.tab_field === 'richText') {
                 setBlogDataConfig(prevData => ({
                     ...prevData,
-                    richText: [...prevData.richText, {id_config: blogItem.id_config}]
+                    richText: [...prevData.richText, {id_config: blogItem.id}]
                 }));
             } else if (blogItem.tab_field === 'video') {
                 setBlogDataConfig(prevData => ({
                     ...prevData,
-                    video: [...prevData.video, {id_config: blogItem.id_config}]
+                    video: [...prevData.video, {id_config: blogItem.id}]
                 }));
             } else if (blogItem.tab_field === 'multiReference') {
                 setBlogDataConfig(prevData => ({
                     ...prevData,
-                    multiReference: [...prevData.multiReference, {id_config: blogItem.id_config}]
+                    multiReference: [...prevData.multiReference, {id_config: blogItem.id}]
                 }));
             } else if (blogItem.tab_field === 'gallery') {
                 setBlogDataConfig(prevData => ({
                     ...prevData,
-                    gallery: [...prevData.gallery, {id_config: blogItem.id_config}]
+                    gallery: [...prevData.gallery, {id_config: blogItem.id}]
                 }));
             }
 
         });
     }, [DecodeConfigblog]);
+
+
 
 
     useEffect(() => {
@@ -536,9 +539,9 @@ const EditPageBlog = () => {
             
             for (const text of blogDataConfig.text) {
                 try {
-                    const response = await Axios.get(`${apiUrl}/getTextBlog`, {
+                    const response = await Axios.get(`${apiUrl}/getTextCollection`, {
                         params: {
-                            IdBlogPage: idBlogPage,
+                            IdBlogPage: idCollectionElement,
                             IdConfig: text.id_config
                         },
                         headers: {
@@ -556,9 +559,9 @@ const EditPageBlog = () => {
 
             for (const images of blogDataConfig.images) {
                 try{
-                    const response = await Axios.get(`${apiUrl}/getImageBlog`, {
+                    const response = await Axios.get(`${apiUrl}/getImageCollection`, {
                         params: {
-                            IdBlogPage: idBlogPage,
+                            IdBlogPage: idCollectionElement,
                             IdConfig: images.id_config
                         },
                         headers: {
@@ -576,9 +579,9 @@ const EditPageBlog = () => {
             }
             for (const video of blogDataConfig.video) {
                 try{
-                    const response = await Axios.get(`${apiUrl}/getVideoBlog`, {
+                    const response = await Axios.get(`${apiUrl}/getVideoCollection`, {
                         params: {
-                            IdBlogPage: idBlogPage,
+                            IdBlogPage: idCollectionElement,
                             IdConfig: video.id_config
                         },
                         headers: {
@@ -598,9 +601,9 @@ const EditPageBlog = () => {
 
             for (const richText of blogDataConfig.richText) {
                 try{
-                    const response = await Axios.get(`${apiUrl}/getRichTextBlog`, {
+                    const response = await Axios.get(`${apiUrl}/getRichTextCollection`, {
                         params: {
-                            IdBlogPage: idBlogPage,
+                            IdBlogPage: idCollectionElement,
                             IdConfig: richText.id_config
                         },
                         headers: {
@@ -619,9 +622,9 @@ const EditPageBlog = () => {
 
             for (const multiReference of blogDataConfig.multiReference) {
                 try{
-                    const response = await Axios.get(`${apiUrl}/getMultiReferenceBlog`, {
+                    const response = await Axios.get(`${apiUrl}/getMultiReferenceCollection`, {
                         params: {
-                            IdBlogPage: idBlogPage,
+                            IdBlogPage: idCollectionElement,
                             IdConfig: multiReference.id_config
                         },
                         headers: {
@@ -640,9 +643,9 @@ const EditPageBlog = () => {
 
             for (const gallery of blogDataConfig.gallery) {
                 try{
-                    const response = await Axios.get(`${apiUrl}/getGalleryBlog`, {
+                    const response = await Axios.get(`${apiUrl}/getGalleryCollection`, {
                         params: {
-                            IdBlogPage: idBlogPage,
+                            IdBlogPage: idCollectionElement,
                             IdConfig: gallery.id_config
                         },
                         headers: {
@@ -664,14 +667,14 @@ const EditPageBlog = () => {
         
         fetchData(); 
 
-    }, [blogDataConfig, idBlogPage]);
+    }, [blogDataConfig, idCollectionElement]);
 
     
     useEffect(() => {
 
-        Axios.get(`${apiUrl}/getBlogPage`, {
+        Axios.get(`${apiUrl}/getCollectionElement`, {
             params: {
-                IdBlogPage: idBlogPage,
+                IdBlogPage: idCollectionElement,
             },
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -682,7 +685,7 @@ const EditPageBlog = () => {
         }).catch((error) => {
             console.error('Erreur lors de la récupération de la page du Blog :', error);
         });
-    }, [idBlogPage, handleSave]);
+    }, [idCollectionElement, handleSave]);
 
 
     useEffect(() => {
@@ -731,7 +734,6 @@ const EditPageBlog = () => {
 
 
 
-
     
 
 
@@ -764,7 +766,7 @@ const EditPageBlog = () => {
                                 </Tooltip>
                             )
                         }
-                        <SecondaryButton variant="contained" theme={theme} onClick={() => navigate(`/dashboard/modification/blog/${idBlog}`)}>Annuler</SecondaryButton>
+                        <SecondaryButton variant="contained" theme={theme} onClick={() => navigate(`/dashboard/modification/collection/${idCollection}`)}>Annuler</SecondaryButton>
                         {
                             DecodeBlog.blogPage[0].status === 1 ? (
                                 <DefaultButton type="submit" variant="contained" onClick={async () => { await handleSave(1,0) }}>Enregistrer</DefaultButton>  
@@ -789,7 +791,12 @@ const EditPageBlog = () => {
                     <div className="line_horizontal" style={{backgroundColor: theme.palette.text.secondary}}></div>
                     {DecodeConfigblog.blogConfig && DecodeConfigblog.blogConfig.map((blogItem) => {
                         // Trouver les données correspondantes dans InfoBlogPage.data, s'il y en a
-                        const correspondingData = InfoBlogPage.data.find(data => data.id_config === blogItem.id_config);
+                        console.log('blogItem', blogItem);
+                        console.log('InfoBlogPage.data', InfoBlogPage.data);
+
+                        console.log('id_config', blogItem.id_config);
+
+                        const correspondingData = InfoBlogPage.data.find(data => data.id_config === blogItem.id);
 
                         return (
                             <div key={blogItem.id_config} className="blogField_contain">
@@ -797,9 +804,9 @@ const EditPageBlog = () => {
                                 <p className="blogField_description">{blogItem.description_field}</p>
                                 <div className="blogField_field">
                                     <Field 
-                                        id_blog_page={idBlogPage} 
+                                        id_blog_page={idCollectionElement} 
                                         type={blogItem.tab_field} 
-                                        id_config={blogItem.id_config} 
+                                        id_config={blogItem.id} 
                                         onChange={handleBlogDataChange} 
                                         dataValue={correspondingData || {}}
                                         id_collection_ref={blogItem.id_collection_ref}
@@ -812,6 +819,10 @@ const EditPageBlog = () => {
                         );
                     })}
                     <div className="line_horizontal" style={{backgroundColor: theme.palette.text.secondary}}></div>
+                    <div className="blogField_contain">
+                      <p className="blogField_name">Item ID :</p>
+                      <p className="blogDate">{idCollectionElement}</p>
+                    </div>
                     <div className="blogField_contain">
                       <p className="blogField_name">Date de création :</p>
                       <p className="blogDate">{formattedCreateDate}</p>
@@ -1053,4 +1064,4 @@ const EditPageBlog = () => {
     )
 }
 
-export default EditPageBlog
+export default EditElementCollection

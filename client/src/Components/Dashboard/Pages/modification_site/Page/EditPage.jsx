@@ -4,7 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import config from "../../../../../config";
 import { jwtDecode } from 'jwt-decode'; 
 import Field from "../Fields/fields";
-import '../Blog/createPageBlog.css';
+import '../Collection/collection.css';
 import './EditPage.css';
 import { DefaultButton, SecondaryButton, Popup } from '../../../../../Theme/element';
 import { updateImagePage, updateTextPage, updateRichTextPage } from './apiPage';

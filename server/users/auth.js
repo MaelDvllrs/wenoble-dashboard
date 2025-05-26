@@ -59,6 +59,7 @@ router.post('/login', async (req, res) => {
   
   const { loginEmail, loginPassword } = req.body;
 
+
   if (!loginEmail || !loginPassword) {
     return res.status(400).send({ message: 'Email and password are required' });
   }
@@ -83,6 +84,7 @@ router.post('/login', async (req, res) => {
 router.post('/auth/verify', async (req, res) => {
   const token = req.body.token;
 
+
   if (!token) {
     return res.status(401).json({ success: false, message: 'No token provided' });
   }
@@ -97,14 +99,14 @@ router.post('/auth/verify', async (req, res) => {
   // Add user role data if needed
   const { data: userData } = await supabase
     .from('users')
-    .select('id_user, username, is_admin')
-    .eq('id_user', data.user.id)
+    .select('id, username, is_admin')
+    .eq('id', data.user.id)
     .single();
 
   return res.status(200).json({ 
     success: true, 
     user: {
-      idUser: data.user.id,
+      id: data.user.id,
       username: userData?.username || data.user.email,
       isAdmin: userData?.is_admin || false
     }
@@ -139,14 +141,15 @@ router.post('/register', async (req, res) => {
 
     console.log('User created in Supabase Auth:', authData);
     // Create user profile record in 'users' table
-    const { error: profileError } = await supabase
+    const { data: profileData, error: profileError } = await supabase
       .from('users')
       .insert({
-        id_user: authData.user.id,
+        id: authData.user.id,
         username: req.body.username || email.split('@')[0],
         is_admin: false,
-        api_key: 'API' + Date.now() + req.body.username || email.split('@')[0],
-    });
+        api_key: 'API' + Date.now() + (req.body.username || email.split('@')[0]),
+      })
+      .select();
     
     if (profileError) {
       console.error('Error creating user profile:', profileError);

@@ -6,7 +6,7 @@ import {jwtDecode} from 'jwt-decode';
 import { Outlet, NavLink, useNavigate, useParams } from 'react-router-dom';
 import { CssTextField, DefaultSwitch, DefaultButton} from '../../../../../Theme/element';
 import { useTheme } from '@mui/material/styles';
-import './listeBlog.css'
+import './listeCollection.css'
 import '../Portfolio/portfolio.css';
 import config from "../../../../../config";
 import AddIcon from '@mui/icons-material/Add';
@@ -15,14 +15,14 @@ import { formatDate } from "../../../../../utils/dateUtils";
 import { PiSmileyMeltingFill } from "react-icons/pi";
 
 
-const ListeBlog = () => {
+const ListeCollection = () => {
 
     const theme = useTheme();
     const token = Cookies.get('token')
 
     const [InfoListeblog, setInfoblog] = useState([]);
     const apiUrl = config.apiUrl;
-    const { idBlog } = useParams();
+    const { idCollection } = useParams();
 
     const [LoadingBlog, setLoadingBlog] = useState(true);
 
@@ -32,9 +32,9 @@ const ListeBlog = () => {
             const user = Cookies.get('token');
             const decodedUser = jwtDecode(user);
     
-            Axios.get(`${apiUrl}/getListeBlog`, {
+            Axios.get(`${apiUrl}/getListeCollection`, {
                 params: {
-                    IdBlog: idBlog,
+                    IdBlog: idCollection,
                     idUser: decodedUser.idUser,
                 },
                 headers: {
@@ -48,7 +48,7 @@ const ListeBlog = () => {
                 console.error('Erreur lors de la récupération de la du Blog :', error);
             });
             
-    }, [idBlog]);
+    }, [idCollection]);
 
 
 
@@ -82,20 +82,20 @@ const ListeBlog = () => {
                   ) : (
                     InfoListeblog && Array.isArray(InfoListeblog.blogList) ? (
                       InfoListeblog.blogList.map((blogpage, index) => {
-                        const formattedCreateDate = formatDate(blogpage.page_blog_create_date);
-                        const formattedUpdateDate = formatDate(blogpage.page_blog_update_date);
-                        const formattedPublishDate = formatDate(blogpage.page_blog_publish_date);
+                        const formattedCreateDate = formatDate(blogpage.collection_element_create_date);
+                        const formattedUpdateDate = formatDate(blogpage.collection_element_update_date);
+                        const formattedPublishDate = formatDate(blogpage.collection_element_publish_date);
 
                         return (
                           <NavLink
-                            to={'editPage/' + blogpage.id_page_blog}
+                            to={'editPage/' + blogpage.id}
                             key={index}
                             className="Item_Portfolio Item_Blog"
                             style={{ '--hover-background-color': theme.palette.secondary.secondary, color: theme.palette.text.primary }}
                           >
                             <p className="Item_portfolio_element order_element">{index}</p>
-                            <p className="Item_portfolio_element blog_name_element">{blogpage.page_blog_name}</p>
-                            {blogpage.status === 1 ? (
+                            <p className="Item_portfolio_element blog_name_element">{blogpage.collection_element_name}</p>
+                            {blogpage.collection_element_status === true ? (
                               <p className="Item_portfolio_element blog_status publish_status">Publié</p>
                             ) : (
                               <p className="Item_portfolio_element blog_status draft_status">Brouillon</p>
@@ -116,4 +116,4 @@ const ListeBlog = () => {
     )
 }
 
-export default ListeBlog
+export default ListeCollection

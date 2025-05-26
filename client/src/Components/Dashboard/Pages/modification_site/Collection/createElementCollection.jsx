@@ -4,12 +4,12 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import config from "../../../../../config";
 import {jwtDecode} from 'jwt-decode'; 
-import './createPageBlog.css'
+import './collection.css'
 import {DefaultButton, SecondaryButton, Popup} from '../../../../../Theme/element';
 import SaveIcon from '@mui/icons-material/Save';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import PendingIcon from '@mui/icons-material/Pending';
-import { createImageBlog, createBlogPage, createTextBlog, createRichTextBlog, createVideoBlog, createMultiReferenceBlog, createGalleryBlog, generateStaticSite } from './apiBlog';
+import { createImageBlog, createBlogPage, createTextBlog, createRichTextBlog, createVideoBlog, createMultiReferenceBlog, createGalleryBlog, generateStaticSite } from './apiCollection';
 import { useTheme } from '@mui/material/styles';
 import { convertToRaw } from 'draft-js';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -19,11 +19,14 @@ import Cookies from 'js-cookie';
 
 import { Snackbar, Paper, Box } from '@mui/material';
 
+import { getCurrentUTCDate, adjustDateForStorage } from '../../../../../utils/dateUtils';
 
 
 
 
-const CreatePageBlog = () => {
+
+
+const CreateElementCollection = () => {
 
     const theme = useTheme();
 
@@ -66,13 +69,13 @@ const CreatePageBlog = () => {
     });
 
     const apiUrl = config.apiUrl;
-    const { idBlog } = useParams();
+    const { idCollection } = useParams();
 
     useEffect(() => {    
     
-        Axios.get(`${apiUrl}/getConfigBlog`, {
+        Axios.get(`${apiUrl}/getConfigCollection`, {
             params: {
-                IdBlog: idBlog,
+                IdBlog: idCollection,
             },
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -179,12 +182,7 @@ const CreatePageBlog = () => {
 
         // CREER LA PAGE
 
-        const date = new Date();
-
-        const adjustedTime = new Date(date.getTime() + 3600000);
-
-
-        const localISOTime = adjustedTime.toISOString().slice(0, 19).replace('T', ' ');
+        const date = getCurrentUTCDate();
 
         const mainText = [];
         const otherText = [];
@@ -200,7 +198,7 @@ const CreatePageBlog = () => {
 
         try {        
             // Appeler la fonction createBlogPage
-            const response = await createBlogPage(idBlog, mainText, localISOTime, status, idUser, token);
+            const response = await createBlogPage(idCollection, mainText, date, status, idUser, token);
             
             // Gérer la réponse ici
             const blogPageId = response.id;
@@ -337,7 +335,7 @@ const CreatePageBlog = () => {
 
             }
 
-            navigate(`/dashboard/modification/blog/${idBlog}`);
+            navigate(`/dashboard/modification/collection/${idCollection}`);
 
         } catch (error) {
             // Gérer l'erreur ici
@@ -347,6 +345,7 @@ const CreatePageBlog = () => {
 
     };
 
+
     return(
         <div className="Blog_creation_Page">
             <div className="header_modification">
@@ -355,7 +354,7 @@ const CreatePageBlog = () => {
                     <Tooltip title="Enregistrer comme brouillon" arrow placement="top">
                         <SecondaryButton className="SaveButton" variant="contained" theme={theme} onClick={ async () => {await handleSave(0)}}><SaveIcon/></SecondaryButton>
                     </Tooltip>
-                    <SecondaryButton  variant="contained" theme={theme} onClick={() => navigate(`/dashboard/modification/blog/${idBlog}`)}>Annuler</SecondaryButton>
+                    <SecondaryButton  variant="contained" theme={theme} onClick={() => navigate(`/dashboard/modification/collection/${idCollection}`)}>Annuler</SecondaryButton>
                     <DefaultButton type="submit" variant="contained" onClick={ async () => {await handleSave(1)}}>Publier</DefaultButton>
                 </div>
             </div>
@@ -376,15 +375,15 @@ const CreatePageBlog = () => {
                 )}
                 <div className="line_horizontal" style={{backgroundColor: theme.palette.text.secondary}}></div>
                 {DecodeConfigblog.blogConfig && DecodeConfigblog.blogConfig.map((blogItem) => (
-                  <div key={blogItem.id_config} className="blogField_contain">
+                  <div key={blogItem.id} className="blogField_contain">
                     <p className="blogField_name">{blogItem.name_field}</p>
                     <p className="blogField_description">{blogItem.description_field}</p>
                     <div className="blogField_field">
                         <Field
-                          id_blog_page={idBlog}
+                          id_blog_page={idCollection}
                           type={blogItem.tab_field}
-                          id_config={blogItem.id_config}
-                          id_collection_ref={blogItem.id_collection_ref}
+                          id_config={blogItem.id}
+                          id_collection_ref={blogItem.collection_id_ref}
                           onChange={handleBlogDataChange}
                           imagefunction={true}
                           multiline_text={blogItem.multiline_text}
@@ -539,4 +538,4 @@ const CreatePageBlog = () => {
     )
 }
 
-export default CreatePageBlog
+export default CreateElementCollection

@@ -1,5 +1,6 @@
 import React from "react"
-import Axios from 'axios';
+import Axios from '../../../../../service/AxiosConfig';
+
 import { useState, useEffect } from "react";
 import Cookies from 'js-cookie';
 import {jwtDecode} from 'jwt-decode'; 
@@ -10,7 +11,9 @@ import { useTheme } from '@mui/material/styles';
 
 
 
-const Blog = () => {
+
+
+const Collection = () => {
 
     const theme = useTheme();
     const token = Cookies.get('token')
@@ -35,7 +38,7 @@ const Blog = () => {
         if (user) { 
             const decodedUser = jwtDecode(user);
     
-            Axios.get(`${apiUrl}/getBlog`, {
+            Axios.get(`${apiUrl}/getCollection`, {
                 params: {
                     IdUser: decodedUser.idUser,
                 },
@@ -45,6 +48,7 @@ const Blog = () => {
                 }
             }).then((response) => {
                 setInfoblog(response.data);
+
             }).catch((error) => {
                 console.error('Erreur lors de la récupération de la du Blog :', error);
             });
@@ -57,7 +61,7 @@ const Blog = () => {
             const decoded = jwtDecode(Infoblog);
             setDecodedBlog(decoded);
             if(decoded && decoded.blog.length > 0 && !initialNavigationDone) {
-                navigate('/dashboard/modification/blog/' + decoded.blog[0].id_blog);
+                navigate('/dashboard/modification/collection/' + decoded.blog[0].id);
                 setInitialNavigationDone(true);
             }
         }
@@ -72,8 +76,8 @@ const Blog = () => {
             <div className="dashboard_case_empty" style={{backgroundColor : theme.palette.primary.secondary, borderColor : theme.palette.primary.third}}>
                 <div className="portfolio_onglet_box">
                     {decodedBlog && decodedBlog.blog.map((blogItem) => (
-                        <NavLink to={'/dashboard/modification/blog/' + blogItem.id_blog} className={({ isActive }) => (isActive ? 'page_ongletActive' : 'portfolio_onglet')} key={blogItem.id_blog}>
-                            <p style={{color: theme.palette.text.primary}}>{blogItem.blog_name}</p>
+                        <NavLink to={'/dashboard/modification/collection/' + blogItem.id} className={({ isActive }) => (isActive ? 'page_ongletActive' : 'portfolio_onglet')} key={blogItem.id}>
+                            <p style={{color: theme.palette.text.primary}}>{blogItem.collection_name}</p>
                         </NavLink>
                     ))}
                 </div>
@@ -84,4 +88,4 @@ const Blog = () => {
         </div>
     )
 }
-export default Blog
+export default Collection
