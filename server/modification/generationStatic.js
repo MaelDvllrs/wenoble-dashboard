@@ -105,6 +105,8 @@ router.post('/generateSite', (req, res) => {
         const SQL_PAGES = 'SELECT page_blog_slug FROM blog_page WHERE id_blog = ? AND status = 1';
         const Values_PAGES = [blog.id_blog];
 
+        console.log(`Récupération des pages pour le blog: ${blog.slug_blog} (${blogType})`); 
+
         
 
         db.query(SQL_PAGES, Values_PAGES, (err, pageResults) => {
@@ -119,10 +121,13 @@ router.post('/generateSite', (req, res) => {
           pageResults.forEach((page) => {
             if (page.page_blog_slug) {
               templateSlugs.push(page.page_blog_slug);
+
+              console.log(`Ajout du slug de page: ${page.page_blog_slug} pour le blog ${blog.slug_blog}`);
               
               // Si ce n'est pas le type par défaut, l'ajouter au mapping
               if (blogType !== 'realisations') {
                 templateTypes[page.page_blog_slug] = blogType;
+                console.log(`Ajout du type de template: ${blogType} pour le slug: ${page.page_blog_slug}`);
               }
             }
           });
