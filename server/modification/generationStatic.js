@@ -99,18 +99,21 @@ router.post('/generateSite', (req, res) => {
       blogResults.forEach((blog) => {
         // Extraire le type de template
         const blogType = extractTemplateType(blog.slug_blog);
+        console.log(`Type de blog extrait: ${blogType} pour le blog ${blog.slug_blog}`);
 
         // Récupérer les slugs des pages de ce blog
         const SQL_PAGES = 'SELECT page_blog_slug FROM blog_page WHERE id_blog = ? AND status = 1';
         const Values_PAGES = [blog.id_blog];
 
-        console.log(`Récupération des pages pour le blog: ${blog.slug_blog} (ID: ${blog.id_blog})`);
+        
 
         db.query(SQL_PAGES, Values_PAGES, (err, pageResults) => {
           if (err) {
             console.error('Database query error:', err);
             return res.status(500).send({ error: err });
           }
+
+          console.log(`Traitement du blog: ${blog.slug_blog} (${blogType})`);
 
           // Pour chaque page, ajouter le slug et définir son type
           pageResults.forEach((page) => {
