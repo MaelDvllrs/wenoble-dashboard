@@ -104,6 +104,8 @@ router.post('/generateSite', (req, res) => {
         const SQL_PAGES = 'SELECT page_blog_slug FROM blog_page WHERE id_blog = ? AND status = 1';
         const Values_PAGES = [blog.id_blog];
 
+        console.log(`Récupération des pages pour le blog: ${blog.slug_blog} (ID: ${blog.id_blog})`);
+
         db.query(SQL_PAGES, Values_PAGES, (err, pageResults) => {
           if (err) {
             console.error('Database query error:', err);
