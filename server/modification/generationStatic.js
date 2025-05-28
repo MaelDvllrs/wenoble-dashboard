@@ -19,30 +19,26 @@ const GENERATOR_API_URL = process.env.GENERATOR_API_URL || 'http://localhost:300
 // Fonction pour extraire correctement le type de template à partir d'une URL
 function extractTemplateType(slug) {
     try {
-      // Gestion des URL complètes (avec https:// etc.)
-      let pathSegments;
-      console.log('slug', slug)
-    
-      if (slug.startsWith('http://') || slug.startsWith('https://')) {
-        // Pour les URLs complètes, utiliser l'objet URL
-        const url = new URL(slug);
-        pathSegments = url.pathname.split('/').filter(Boolean);
-      } else {
-        // Pour les chemins simples
-        pathSegments = slug.split('/').filter(Boolean);
-      }
+        let pathSegments;
+        console.log('slug', slug);
 
-      // Si nous avons des segments de chemin, prendre le premier
-      // (qui sera typiquement "real", "blog", etc.)
-      if (pathSegments.length > 0) {
-        return pathSegments[0];
-      }
+        if (slug.startsWith('http://') || slug.startsWith('https://')) {
+            const url = new URL(slug);
+            pathSegments = url.pathname.split('/').filter(Boolean);
+        } else {
+            pathSegments = slug.split('/').filter(Boolean);
+        }
 
-      // Valeur par défaut si aucun segment n'est trouvé
-      return 'realisations';
+        // Prendre le DERNIER segment du chemin
+        if (pathSegments.length > 0) {
+            return pathSegments[pathSegments.length - 1];
+        }
+
+        // Valeur par défaut si aucun segment n'est trouvé
+        return 'realisations';
     } catch (error) {
-      console.error('Erreur lors de l\'extraction du type de template:', error);
-      return 'realisations'; // Valeur par défaut en cas d'erreur
+        console.error('Erreur lors de l\'extraction du type de template:', error);
+        return 'realisations';
     }
 }
 
