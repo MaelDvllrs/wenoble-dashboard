@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
-const db = require('../db');
+const { supabaseServer } = require('../supabase');
+const { authenticateToken } = require('../middleware/authToken');
+
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 
@@ -11,39 +13,38 @@ router.use(cors());
 router.use(express.json());
 
 
-router.get('/getMessage', async (req, res) => {
-    const iduser = req.query.idUser
-
-    const SQL = 'SELECT id_message, mail_sender, subject, date FROM contact_website WHERE id_user = ? ORDER BY date DESC'
-    const Values = [iduser]
-
-    db.query(SQL, Values, (err, results)=>{
-        if (err) {
-            res.send({ error: err })
-            return;
-        }
-        const message = results
-        const messageCrypt = jwt.sign({ message: message }, secretKey)
-        res.send(messageCrypt)
-    })
+router.get('/getMessage',authenticateToken, async (req, res) => {
+    const iduser = req.user.idUser;
+    try {
+        const { data, error } = await supabaseServer
+            .from('contact_website')
+            .select('id_message, mail_sender, subject, date')
+            .eq('user_id', iduser)
+            .order('date', { ascending: false });
+        if (error) throw error;
+        const messageCrypt = jwt.sign({ message: data }, secretKey);
+        res.send(messageCrypt);
+    } catch (err) {
+        res.send({ error: err.message });
+    }
 });
 
-router.get('/getMessageDetail', async (req, res) => {
-    const idMessage = req.query.idMessage
-    const idUser = req.query.idUser
-
-    const SQL = 'SELECT mail_sender, subject, html, date  FROM contact_website WHERE id_message = ? AND id_user = ?'
-    const Values = [idMessage, idUser]
-
-    db.query(SQL, Values, (err, results)=>{
-        if (err) {
-            res.send({ error: err })
-            return;
-        }
-        const message = results
-        const messageCrypt = jwt.sign({ message: message }, secretKey)
-        res.send(messageCrypt)
-    })
+router.get('/getMessageDetail',authenticateToken, async (req, res) => {
+    const idMessage = req.query.idMessage;
+    const idUser = req.user.idUser;
+    try {
+        const { data, error } = await supabaseServer
+            .from('contact_website')
+            .select('mail_sender, subject, html, date')
+            .eq('id_message', idMessage)
+            .eq('user_id', idUser)
+            .maybeSingle();
+        if (error) throw error;
+        const messageCrypt = jwt.sign({ message: data ? [data] : [] }, secretKey);
+        res.send(messageCrypt);
+    } catch (err) {
+        res.send({ error: err.message });
+    }
 });
 
 module.exports = router;

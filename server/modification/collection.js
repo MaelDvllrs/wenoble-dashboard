@@ -11,6 +11,8 @@ const axios = require('axios');
 
 const { supabaseServer } = require('../supabase');
 const { authenticateToken } = require('../middleware/authToken');
+const { id } = require('date-fns/locale/id');
+const { da } = require('date-fns/locale/da');
 
 
 const router = express.Router();
@@ -616,6 +618,27 @@ router.post('/createRichTextCollection', async (req, res) => {
 
 
 
+router.post('/createMultiReferenceCollection', authenticateToken, async (req, res) => {
+  try {
+    const id = req.body.params.id;
+    const multiReference = req.body.params.multiReference;
+    // multiReference est un objet { id_config, value }
+    await supabaseServer
+      .from('collection_field_multireference')
+      .insert({
+        collection_element_id: id,
+        id_config: multiReference.id_config,
+        info_ref: multiReference.value
+      });
+    res.status(200).send('MultiReference créée avec succès');
+  } catch (error) {
+    console.error('Erreur lors de la création du MultiReference:', error);
+    res.status(500).send({ error: error.message });
+  }
+});
+
+
+
 
 
 
@@ -677,8 +700,6 @@ router.get('/getTextCollection', authenticateToken, async (req, res) => {
     const sentIdBlogPage = req.query.IdBlogPage;
     const sentIdConfig = req.query.IdConfig;
 
-    console.log('sentIdBlogPage:', sentIdBlogPage);
-    console.log('sentIdConfig:', sentIdConfig);
 
     // Utilisation de Supabase pour récupérer les données
     const { data, error } = await supabaseServer
@@ -844,293 +865,358 @@ router.get('/getMultiReferenceCollection', authenticateToken, async (req, res) =
     res.status(500).send({ error: error.message });
   }
 });
-//
-//
-//
-//router.post('/updateBlogPage', (req, res) => {
-//  
-//  const id = req.body.params.id;
-//  
-//  const title = req.body.params.mainText[0].value;
-//  const slug = req.body.params.mainText[1].value;
-//  const date = req.body.params.date;
-//  const status = req.body.params.status;
-//  const setPublishDate = req.body.params.setpublishDate;
-//
-//  let SQL;
-//  let VALUES;
-//
-//  let setCreateNotification = false;
-//
-//  if (setPublishDate === 1) {
-//      SQL = 'UPDATE blog_page SET page_blog_name = ?, page_blog_slug = ?, status = ?, page_blog_update_date = ?, page_blog_publish_date = ? WHERE id_page_blog = ?';
-//    if (status === 1) {
-//      VALUES = [title, slug, status, date, date, id];
-//      setCreateNotification = true;
-//    } else {
-//      VALUES = [title, slug, status, date, null, id];
-//    }
-//  } else { 
-//    SQL = 'UPDATE blog_page SET page_blog_name = ?, page_blog_slug = ?, status = ?, page_blog_update_date = ? WHERE id_page_blog = ?';
-//    VALUES = [title, slug, status, date, id];
-//  }
-//
-//  db.query(SQL, VALUES, (err, results) => {
-//    if (err) {
-//      console.log('Database query error:', err);
-//      return res.status(500).send({ error: err });
-//    }
-//
-//    if (setCreateNotification) {
-//      SQL = 'SELECT id_blog FROM blog_page WHERE id_page_blog = ?';
-//      VALUES = [id];
-//      db.query(SQL, VALUES, (err, results) => {
-//        if (err) {
-//          console.log('Database query error:', err);
-//          return res.status(500).send({ error: err });
-//        }
-//        const idBlog = results[0].id_blog;
-//        const idBlogString = idBlog.toString();
-//
-//        createNotification(idBlogString, title, date, slug);
-//      }); 
-//    }
-//
-//    res.status(200).send({ message: 'Page modifiée avec succès'});
-//  });
-//
-//})
-//
-//
-//
-//router.post('/updateTextBlog', (req, res) => {
-//  const id = req.body.params.id;
-//  const text = req.body.params.otherText;
-//
-//  
-//  // Convertir chaque opération de base de données en une promesse
-//  const insertPromises = text.map((item) => {
-//    return new Promise((resolve, reject) => {
-//      const valueText = item.value;
-//      const id_config = item.id_config;
-//      const SQL = 'UPDATE blog_field_text SET text = ? WHERE id_config = ? AND id_blog_page = ?';
-//      const VALUES = [valueText, id_config, id];
-//
-//      db.query(SQL, VALUES, (err, results) => {
-//        if (err) {
-//          console.log('Database query error:', err);
-//          return reject(err);
-//        }
-//        resolve('Texte créé avec succès');
-//      });
-//    });
-//  });
-//
-//  // Attendre que toutes les promesses soient résolues
-//  Promise.all(insertPromises)
-//    .then((results) => {
-//      res.status(200).send('Tous les textes ont été créés avec succès');
-//    })
-//    .catch((error) => {
-//      res.status(500).send({ error: error });
-//    });
-//});
-//
-//
-//
-//
-//
-//
-//router.post('/updateRichTextBlog', (req, res) => {
-//  const id = req.body.params.id;
-//  const richtext = req.body.params.infoRichText;
-//
-//  const saveImage = (base64Data, callback) => {
-//    const matches = base64Data.match(/^data:image\/([A-Za-z-+/]+);base64,(.+)$/);
-//    if (!matches || matches.length !== 3) {
-//      return callback(new Error('Invalid base64 data'));
-//    }
-//
-//    const imageBuffer = Buffer.from(matches[2], 'base64');
-//    const imageExtension = matches[1];
-//    const imageName = `${uuidv4()}.${imageExtension}`;
-//    const imagePath = path.join(__dirname, '..', 'images', 'richtext_blog_images', imageName);
-//
-//    fs.writeFile(imagePath, imageBuffer, (err) => {
-//      if (err) {
-//        console.error('Erreur lors de l\'écriture de l\'image :', err);
-//        return callback(err);
-//      }
-//
-//      // Obtenir la taille du fichier en octets
-//      const fileSizeInBytes = Buffer.byteLength(imageBuffer);
-//      // Convertir la taille en kilo-octets
-//      const fileSizeInKB = fileSizeInBytes / 1024;
-//
-//      callback(null, `${process.env.SERVER_URL}/media/blog/richText/${imageName}`, fileSizeInKB);
-//    });
-//  };
-//
-//  const queries = richtext.map((item) => {
-//    return new Promise((resolve, reject) => {
-//      let richTextJSON = item.richText;
-//      const id_config = item.id_config;
-//
-//      // Parse the JSON to find and replace base64 images
-//      const content = JSON.parse(richTextJSON);
-//      const entityMap = content.entityMap;
-//
-//      const imagePromises = Object.keys(entityMap).map((key) => {
-//        const entity = entityMap[key];
-//        if (entity.type === 'IMAGE' && entity.data.src.startsWith('data:image/')) {
-//          return new Promise((resolveImage, rejectImage) => {
-//            saveImage(entity.data.src, (err, imageUrl, fileSizeInKB) => {
-//              if (err) {
-//                return rejectImage(err);
-//              }
-//              entity.data.src = imageUrl; // Remplacez les données encodées en base64 par l'URL de l'image
-//              entity.data.size = fileSizeInKB; // Ajoutez la taille de l'image en Ko
-//              resolveImage();
-//            });
-//          });
-//        }
-//        return Promise.resolve();
-//      });
-//
-//      Promise.all(imagePromises)
-//        .then(() => {
-//          const SQL_old = 'SELECT text_json FROM blog_field_richText WHERE id_blog_page = ? AND id_config = ?';
-//          const VALUES_old = [id, id_config];
-//
-//          db.query(SQL_old, VALUES_old, (err, results) => {
-//            if (err) {
-//              console.log('Database query error:', err);
-//              return reject(err);
-//            }
-//            const oldContent = JSON.parse(results[0].text_json);
-//            const oldEntityMap = oldContent.entityMap;
-//
-//            // Trouver les images à supprimer
-//            const oldImages = Object.keys(oldEntityMap)
-//              .filter(key => oldEntityMap[key].type === 'IMAGE')
-//              .map(key => oldEntityMap[key].data.src);
-//
-//            const newImages = Object.keys(entityMap)
-//              .filter(key => entityMap[key].type === 'IMAGE')
-//              .map(key => entityMap[key].data.src);
-//
-//            const imagesToDelete = oldImages.filter(src => !newImages.includes(src));
-//
-//            // Supprimer les images qui ne sont plus utilisées
-//            imagesToDelete.forEach(src => {
-//              const imagePath = path.join(__dirname, '..', 'images', 'richtext_blog_images', path.basename(src));
-//              fs.unlink(imagePath, (err) => {
-//                if (err) {
-//                  console.error('Erreur lors de la suppression de l\'image :', err);
-//                } else {
-//                  console.log('Image supprimée :', imagePath);
-//                }
-//              });
-//            });
-//
-//            richTextJSON = JSON.stringify(content);
-//            const totalSize = Object.keys(entityMap).reduce((acc, key) => {
-//              const entity = entityMap[key];
-//              return acc + (entity.data.size || 0);
-//            }, 0);
-//            const SQL = 'UPDATE blog_field_richText SET text_json = ?, size = ? WHERE id_config = ? AND id_blog_page = ?';
-//            const VALUES = [richTextJSON, totalSize, id_config, id];
-//
-//            db.query(SQL, VALUES, (err, results) => {
-//              if (err) {
-//                console.log('Database query error:', err);
-//                reject(err);
-//              } else {
-//                resolve('RichTexte modifié avec succès');
-//              }
-//            });
-//          });
-//        })
-//        .catch((error) => {
-//          reject(error);
-//        });
-//    });
-//  });
-//
-//  Promise.all(queries)
-//    .then((results) => {
-//      res.status(200).send('Tous les RichTextes ont été modifiés avec succès');
-//    })
-//    .catch((error) => {
-//      res.status(500).send({ error: error.message });
-//    });
-//});
-//
-//
-//
-//const uploadUpdateImage = multer({ storage: storageImage });
-//
-//router.post('/updateImagesBlog', uploadUpdateImage.single('image'), (req, res) => {
-//
-//  if (!req.file) {
-//    console.error('Aucune image n\'a été téléchargée.');
-//    return res.status(400).send('Aucune image n\'a été téléchargée.');
-//  }
-//  const id_photo =  path.basename(req.file.filename, path.extname(req.file.filename));
-//  const id_blog_page = req.body.id_blog_page;
-//  const id_config = req.body.id_config;
-//  const name = req.body.name;
-//  const alt = req.body.alt;
-//  const size = req.body.size;
-//  const extension = path.extname(req.file.filename);
-//  
-//  const src_image = id_photo + extension;
-//
-//  const SQL = 'SELECT src_image FROM blog_field_image WHERE id_blog_page = ? AND 	id_config = ?';
-//  const Values = [id_blog_page, id_config];
-//
-//  db.query(SQL, Values, (err, results) => {
-//    if (err) {
-//      console.error('Database query error:', err);
-//      return res.status(500).send({ error: err });
-//    }
-//
-//    const imageDirectory = path.join(__dirname, '..', 'images', 'blog_image');
-//    const imagePath = path.join(imageDirectory, results[0].src_image);
-//
-//    fs.unlink(imagePath, (err) => {
-//      if (err) {
-//        console.error('Erreur lors de la suppression de l\'image :', err);
-//      }
-//    });
-router.delete('/deleteBlogPage', authenticateToken, async (req, res) => {
+
+
+
+// Met à jour une page de collection (équivalent blog_page)
+router.post('/updateCollectionElement', authenticateToken, async (req, res) => {
+  try {
+    const id = req.body.params.id;
+    const title = req.body.params.mainText[0].value;
+    const slug = req.body.params.mainText[1].value;
+    const date = req.body.params.date;
+    const status = req.body.params.status;
+    const setPublishDate = req.body.params.setpublishDate;
+
+    let updateFields = {
+      collection_element_name: title,
+      collection_element_slug: slug,
+      collection_element_status: status,
+      collection_element_update_date: date
+    };
+    if (setPublishDate === 1) {
+      updateFields.collection_element_publish_date = (status === 1) ? date : null;
+    }
+
+    const { error } = await supabaseServer
+      .from('collection_element')
+      .update(updateFields)
+      .eq('id', id);
+
+    if (error) throw error;
+
+    // Optionnel: notification (à adapter si besoin)
+    // if (setPublishDate === 1 && status === 1) {
+    //   await createNotification(id, title, date, slug);
+    // }
+
+    res.status(200).send({ message: 'Page modifiée avec succès' });
+  } catch (error) {
+    console.error('Erreur lors de la modification de la page:', error);
+    res.status(500).send({ error: error.message });
+  }
+});
+
+// Met à jour les textes d'une page de collection
+router.post('/updateTextCollection', authenticateToken, async (req, res) => {
+  try {
+    const id = req.body.params.id;
+    const texts = req.body.params.otherText;
+    const updatePromises = texts.map(item =>
+      supabaseServer
+        .from('collection_field_text')
+        .update({ text: item.value })
+        .eq('collection_element_id', id)
+        .eq('id_config', item.id_config)
+    );
+    await Promise.all(updatePromises);
+    res.status(200).send('Tous les textes ont été modifiés avec succès');
+  } catch (error) {
+    console.error('Erreur lors de la modification des textes:', error);
+    res.status(500).send({ error: error.message });
+  }
+});
+
+// Met à jour les RichText d'une page de collection
+router.post('/updateRichTextCollection', authenticateToken, async (req, res) => {
+  const richtext = req.body.params.infoRichText;
+  const id_blog_page = req.body.params.id;
+
+  const saveImageToSupabase = async (base64Data) => {
+    const matches = base64Data.match(/^data:image\/([A-Za-z-+/]+);base64,(.+)$/);
+    if (!matches || matches.length !== 3) throw new Error('Base64 invalide');
+    const imageExtension = matches[1];
+    const imageBuffer = Buffer.from(matches[2], 'base64');
+    const imageName = `${uuidv4()}.${imageExtension}`;
+    const storagePath = `${imageName}`;
+    const { error: uploadError } = await supabaseServer.storage
+      .from('collection-richtext-images')
+      .upload(storagePath, imageBuffer, {
+        contentType: `image/${imageExtension}`,
+        upsert: false,
+      });
+    if (uploadError) throw new Error('Erreur Supabase : ' + uploadError.message);
+    const { data } = supabaseServer.storage
+      .from('collection-richtext-images')
+      .getPublicUrl(storagePath);
+    const fileSizeInKB = Math.round(Buffer.byteLength(imageBuffer) / 1024);
+    return { url: data.publicUrl, size: fileSizeInKB };
+  };
+
+  try {
+    for (const item of richtext) {
+      const id_config = item.id_config;
+      let richTextJSON = item.richText;
+      const content = JSON.parse(richTextJSON);
+      const entityMap = content.entityMap;
+      const imageKeys = Object.keys(entityMap).filter(
+        (key) => entityMap[key].type === 'IMAGE' && entityMap[key].data.src.startsWith('data:image/')
+      );
+      for (const key of imageKeys) {
+        const result = await saveImageToSupabase(entityMap[key].data.src);
+        entityMap[key].data.src = result.url;
+        entityMap[key].data.size = result.size;
+      }
+      richTextJSON = JSON.stringify(content);
+      const totalSize = Object.keys(entityMap).reduce((acc, key) => {
+        return acc + (entityMap[key].data.size || 0);
+      }, 0);
+      // Update dans SUPABASE
+      const { error: updateError } = await supabaseServer
+        .from('collection_field_richtext')
+        .update({ text_json: richTextJSON, size: totalSize })
+        .eq('collection_element_id', id_blog_page)
+        .eq('id_config', id_config);
+      if (updateError) throw new Error('Erreur Supabase DB: ' + updateError.message);
+    }
+    res.status(200).send('Tous les RichText ont été modifiés avec succès');
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ error: error.message });
+  }
+});
+
+// Met à jour une image d'une page de collection
+router.post('/updateImageCollection', authenticateToken, uploadImage.single('image'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).send('Aucune image n\'a été téléchargée.');
+    }
+    const id_photo = path.basename(req.file.filename, path.extname(req.file.filename));
+    const id_blog_page = req.body.id_blog_page;
+    const id_config = req.body.id_config;
+    const name = req.body.name;
+    const alt = req.body.alt;
+    const size = parseInt(req.body.size, 10);
+    const extension = path.extname(req.file.filename);
+    const src_image = id_photo + extension;
+    const filePath = req.file.path;
+    // Upload nouvelle image
+    const fileBuffer = fs.readFileSync(filePath);
+    const { error: uploadError } = await supabaseServer.storage
+      .from('collection-images')
+      .upload(src_image, fileBuffer, {
+        contentType: req.file.mimetype
+      });
+    if (uploadError) throw new Error('Erreur upload Supabase: ' + uploadError.message);
+    // Update metadata
+    const { error: updateError } = await supabaseServer
+      .from('collection_field_image')
+      .update({ src_image, name_image: name, alt_image: alt, size })
+      .eq('collection_element_id', id_blog_page)
+      .eq('id_config', id_config);
+    if (updateError) throw new Error('Erreur update BDD: ' + updateError.message);
+    fs.unlinkSync(filePath);
+    res.status(200).send('Image modifiée avec succès');
+  } catch (error) {
+    console.error('Erreur lors de la modification de l\'image:', error);
+    res.status(500).send({ error: error.message });
+  }
+});
+
+// Met à jour la galerie d'une page de collection
+router.post('/updateGalleryCollection', authenticateToken, uploadGallery.array('gallery'), async (req, res) => {
+  if (!req.files) {
+    return res.status(400).send('Aucune image n\'a été téléchargée.');
+  }
+  const id_blog_page = req.body.id_blog_page;
+  const id_config = req.body.id_config;
+  const filesInfo = [];
+  let totalSize = 0;
+  try {
+    for (let index = 0; index < req.files.length; index++) {
+      const file = req.files[index];
+      const id_photo = path.basename(file.filename, path.extname(file.filename));
+      const extension = path.extname(file.filename);
+      const src_photo = id_photo + extension;
+      const name = file.originalname;
+      const alt = req.body[`alt_${index}`] || '';
+      const size = Math.round(file.size / 1024);
+      const fileBuffer = fs.readFileSync(file.path);
+      // Upload image
+      const { error: uploadError } = await supabaseServer.storage
+        .from('collection-gallery')
+        .upload(src_photo, fileBuffer, {
+          contentType: file.mimetype
+        });
+      if (uploadError) throw new Error('Erreur upload Supabase: ' + uploadError.message);
+      filesInfo.push({ src_photo, name, alt, size });
+      totalSize += size;
+      fs.unlinkSync(file.path);
+    }
+    // Update BDD
+    const filesInfoJson = JSON.stringify(filesInfo);
+    const { error: updateError } = await supabaseServer
+      .from('collection_field_gallery')
+      .update({ gallery: filesInfoJson, size: totalSize })
+      .eq('collection_element_id', id_blog_page)
+      .eq('id_config', id_config);
+    if (updateError) throw new Error('Erreur update BDD: ' + updateError.message);
+    res.status(200).send({ success: true, message: 'Galerie modifiée avec succès', filesInfo });
+  } catch (err) {
+    console.error('Erreur lors de la modification de la galerie:', err);
+    res.status(500).send({ error: err.message });
+  }
+});
+
+// Met à jour une vidéo d'une page de collection
+router.post('/updateVideoCollection', authenticateToken, uploadVideo.single('video'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).send('Aucune vidéo n\'a été téléchargée.');
+    }
+    const id_video = req.body.id_video;
+    const id_blog_page = req.body.id_blog_page;
+    const id_config = req.body.id_config;
+    const name = req.body.name || req.file.originalname;
+    const alt = req.body.alt || '';
+    const size = Math.round(req.file.size / 1024);
+    const src_video = id_video + '.mp4';
+    const fileBuffer = fs.readFileSync(req.file.path);
+    // Upload vidéo
+    const { error: uploadError } = await supabaseServer.storage
+      .from('collection-video')
+      .upload(src_video, fileBuffer, {
+        contentType: req.file.mimetype
+      });
+    if (uploadError) throw new Error('Erreur upload Supabase: ' + uploadError.message);
+    // Update metadata
+    const { error: updateError } = await supabaseServer
+      .from('collection_field_video')
+      .update({ src_video, name_video: name, alt_video: alt, size })
+      .eq('collection_element_id', id_blog_page)
+      .eq('id_config', id_config);
+    if (updateError) throw new Error('Erreur update BDD: ' + updateError.message);
+    fs.unlinkSync(req.file.path);
+    res.status(200).send('Vidéo modifiée avec succès');
+  } catch (error) {
+    console.error('Erreur lors de la modification de la vidéo:', error);
+    res.status(500).send({ error: error.message });
+  }
+});
+
+// Met à jour une multi-référence d'une page de collection
+router.post('/updateMultiReferenceCollection', authenticateToken, async (req, res) => {
+  try {
+    const id = req.body.params.id;
+    const multiReference = req.body.params.multiReference;
+    const { error } = await supabaseServer
+      .from('collection_field_multireference')
+      .update({ info_ref: multiReference.value })
+      .eq('collection_element_id', id)
+      .eq('id_config', multiReference.id_config);
+    if (error) throw error;
+    res.status(200).send('MultiReference modifiée avec succès');
+  } catch (error) {
+    console.error('Erreur lors de la modification du MultiReference:', error);
+    res.status(500).send({ error: error.message });
+  }
+});
+
+
+
+
+
+router.delete('/deleteCollectionData', authenticateToken, async (req, res) => {
+  const id_blog_page = req.body.id_blog_page;
+  const dataArray = req.body.data;
+
+   console.log("idBlogPage" + id_blog_page);
+   console.log("data" + dataArray);
+  try {
+    for (const data of dataArray) {
+      const id_config = data.id_config;
+      const type = data.type;
+      if (type === 'images') {
+        // Récupérer le nom de l'image
+        const { data: imgData, error: imgError } = await supabaseServer
+          .from('collection_field_image')
+          .select('src_image')
+          .eq('collection_element_id', id_blog_page)
+          .eq('id_config', id_config)
+          .single();
+        if (imgError) throw imgError;
+        if (imgData && imgData.src_image) {
+          await supabaseServer.storage.from('collection-images').remove([imgData.src_image]);
+        }
+        await supabaseServer
+          .from('collection_field_image')
+          .delete()
+          .eq('collection_element_id', id_blog_page)
+          .eq('id_config', id_config);
+      } else if (type === 'video') {
+        // Récupérer le nom de la vidéo
+        const { data: vidData, error: vidError } = await supabaseServer
+          .from('collection_field_video')
+          .select('src_video')
+          .eq('collection_element_id', id_blog_page)
+          .eq('id_config', id_config)
+          .single();
+        if (vidError) throw vidError;
+        if (vidData && vidData.src_video) {
+          await supabaseServer.storage.from('collection-video').remove([vidData.src_video]);
+        }
+        await supabaseServer
+          .from('collection_field_video')
+          .delete()
+          .eq('collection_element_id', id_blog_page)
+          .eq('id_config', id_config);
+      }
+    }
+    res.status(200).send({ message: 'Données supprimées avec succès' });
+  } catch (error) {
+    console.error('Erreur lors de la suppression des données:', error);
+    res.status(500).send({ error: error.message });
+  }
+});
+
+
+
+router.delete('/deleteCollectionElement', authenticateToken, async (req, res) => {
   try {
     const idBlogPage = req.query.IdBlogPage;
     const idBlog = req.query.Id;
+
+    console.log("idBlog" + idBlog);
+    console.log("idBlogPage" + idBlogPage);
     // Récupérer la config des champs de la collection
     const { data: configData, error: configError } = await supabaseServer
       .from('collection_config')
-      .select('tab_field, id_config')
-      .eq('id_collection', idBlog);
+      .select('tab_field, id')
+      .eq('collection_id', idBlog);
     if (configError) throw configError;
     for (const field of configData) {
-      const id_config = field.id_config;
+      console.log("field.id_config" + field.id);
+      console.log("field.tab_field" + field.tab_field);
+
+      const id_config = field.id;
       const type = field.tab_field;
+      console.log("type" + type);
       if (type === 'text') {
-        await supabaseServer
+        const { error: delError } = await supabaseServer
           .from('collection_field_text')
           .delete()
           .eq('collection_element_id', idBlogPage)
           .eq('id_config', id_config);
+        if (delError && delError.code !== 'PGRST116') throw delError;
       } else if (type === 'richText') {
-        // Supprimer les images du richtext
         const { data: richData, error: richError } = await supabaseServer
           .from('collection_field_richtext')
           .select('text_json')
           .eq('collection_element_id', idBlogPage)
           .eq('id_config', id_config)
           .single();
-        if (richError) throw richError;
+        if (richError && richError.code !== 'PGRST116') throw richError;
         if (richData && richData.text_json) {
           let entityMap = {};
           try {
@@ -1145,17 +1231,19 @@ router.delete('/deleteBlogPage', authenticateToken, async (req, res) => {
             await supabaseServer.storage.from('collection-richtext-images').remove([name]);
           }
         }
-        await supabaseServer
+        const { error: delError } = await supabaseServer
           .from('collection_field_richtext')
           .delete()
           .eq('collection_element_id', idBlogPage)
           .eq('id_config', id_config);
+        if (delError && delError.code !== 'PGRST116') throw delError;
       } else if (type === 'multiReference') {
-        await supabaseServer
+        const { error: delError } = await supabaseServer
           .from('collection_field_multireference')
           .delete()
           .eq('collection_element_id', idBlogPage)
           .eq('id_config', id_config);
+        if (delError && delError.code !== 'PGRST116') throw delError;
       } else if (type === 'image') {
         const { data: imgData, error: imgError } = await supabaseServer
           .from('collection_field_image')
@@ -1163,15 +1251,16 @@ router.delete('/deleteBlogPage', authenticateToken, async (req, res) => {
           .eq('collection_element_id', idBlogPage)
           .eq('id_config', id_config)
           .single();
-        if (imgError) throw imgError;
+        if (imgError && imgError.code !== 'PGRST116') throw imgError;
         if (imgData && imgData.src_image) {
           await supabaseServer.storage.from('collection-images').remove([imgData.src_image]);
         }
-        await supabaseServer
+        const { error: delError } = await supabaseServer
           .from('collection_field_image')
           .delete()
           .eq('collection_element_id', idBlogPage)
           .eq('id_config', id_config);
+        if (delError && delError.code !== 'PGRST116') throw delError;
       } else if (type === 'video') {
         const { data: vidData, error: vidError } = await supabaseServer
           .from('collection_field_video')
@@ -1179,15 +1268,16 @@ router.delete('/deleteBlogPage', authenticateToken, async (req, res) => {
           .eq('collection_element_id', idBlogPage)
           .eq('id_config', id_config)
           .single();
-        if (vidError) throw vidError;
+        if (vidError && vidError.code !== 'PGRST116') throw vidError;
         if (vidData && vidData.src_video) {
           await supabaseServer.storage.from('collection-video').remove([vidData.src_video]);
         }
-        await supabaseServer
+        const { error: delError } = await supabaseServer
           .from('collection_field_video')
           .delete()
           .eq('collection_element_id', idBlogPage)
           .eq('id_config', id_config);
+        if (delError && delError.code !== 'PGRST116') throw delError;
       } else if (type === 'gallery') {
         const { data: galData, error: galError } = await supabaseServer
           .from('collection_field_gallery')
@@ -1195,7 +1285,7 @@ router.delete('/deleteBlogPage', authenticateToken, async (req, res) => {
           .eq('collection_element_id', idBlogPage)
           .eq('id_config', id_config)
           .single();
-        if (galError) throw galError;
+        if (galError && galError.code !== 'PGRST116') throw galError;
         if (galData && galData.gallery) {
           let galleryArr = [];
           try { galleryArr = JSON.parse(galData.gallery); } catch {}
@@ -1203,11 +1293,12 @@ router.delete('/deleteBlogPage', authenticateToken, async (req, res) => {
             await supabaseServer.storage.from('collection-gallery').remove([img.src_photo]);
           }
         }
-        await supabaseServer
+        const { error: delError } = await supabaseServer
           .from('collection_field_gallery')
           .delete()
           .eq('collection_element_id', idBlogPage)
           .eq('id_config', id_config);
+        if (delError && delError.code !== 'PGRST116') throw delError;
       }
     }
     // Supprimer la page elle-même
@@ -1221,26 +1312,8 @@ router.delete('/deleteBlogPage', authenticateToken, async (req, res) => {
     res.status(500).send({ error: error.message });
   }
 });
-//
-//
-router.post('/createMultiReferenceCollection', authenticateToken, async (req, res) => {
-  try {
-    const id = req.body.params.id;
-    const multiReference = req.body.params.multiReference;
-    // multiReference est un objet { id_config, value }
-    await supabaseServer
-      .from('collection_field_multireference')
-      .insert({
-        collection_element_id: id,
-        id_config: multiReference.id_config,
-        info_ref: multiReference.value
-      });
-    res.status(200).send('MultiReference créée avec succès');
-  } catch (error) {
-    console.error('Erreur lors de la création du MultiReference:', error);
-    res.status(500).send({ error: error.message });
-  }
-});
+
+
 
 
 

@@ -293,18 +293,17 @@ useEffect(() => {
 
 
 
-
 return(
     <div className="outlet">
         <div className="breadCrumbs"><NavLink style={{color: theme.palette.text.primary}} className={"breadCrumbsLink"} to={'/dashboard/home'}>Dashboard</NavLink> &gt; Modification</div>
         <div className="modification_contain">
-          
-            
+          {
+            (authPortfolio === true || authPage === true || authBlog === true) && (
               <div className="dashboard_case_empty limit_size_contain" style={{backgroundColor : theme.palette.primary.secondary, boxShadow: theme.palette.shadow.main}}>
                 <h3 className="title_contain">Espace utilisé</h3>
                 <div className="limit_size_info_contain">
                   {
-                    authPortfolio === 1 || authPage === 1 || authBlog === 1 ? (
+                    sizeTotal ? (
                       <div>
                         <div className="limit_size_text">{sizeTotal} / {threshold} Go</div>
                         <div className="limit_size_bar" style={{backgroundColor:theme.palette.secondary.secondary}}>
@@ -319,7 +318,9 @@ return(
                     )
                   }
                 </div>
-              </div> 
+              </div>
+            )
+          }
           
           <div className="modification_page_contain">
               <div ref={containerRef} className="modification_link_contain">

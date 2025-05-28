@@ -4,7 +4,8 @@ const jwt = require('jsonwebtoken');
 const path = require('path');
 const fs = require('fs');
 const cors = require('cors')
-const db = require('../db')
+const { supabaseServer } = require('../supabase');
+const { authenticateToken } = require('../middleware/authToken');
 const multer = require('multer');
 
 
@@ -17,92 +18,66 @@ router.use(express.json());
 require('dotenv').config();
 const secretKey = process.env.SECRET_KEY; 
 
-router.get('/getPortfolio', (req, res)=>{
-    
-  const sentIdUser = req.query.IdUser
-
-  const SQL = 'SELECT id_portfolio, portfolio_name FROM portfolio WHERE id_user = ?'
-
-  const Values = [sentIdUser]
-
-  db.query(SQL, Values, (err, results)=>{
-      if(err){
-          res.send({error: err})
-      }
-
-      const portfolio = results
-
-      const portfolioCrypt = jwt.sign({
-        portfolio : portfolio
-      }, secretKey);
-
-      res.send(portfolioCrypt)
-  }) 
+router.get('/getPortfolio',authenticateToken, async (req, res) => {
+  const sentIdUser = req.user.idUser;
+  try {
+    const { data, error } = await supabaseServer
+      .from('portfolio')
+      .select('id_portfolio, portfolio_name')
+      .eq('user_id', sentIdUser);
+    if (error) throw error;
+    const portfolioCrypt = jwt.sign({ portfolio: data }, secretKey);
+    res.send(portfolioCrypt);
+  } catch (err) {
+    res.send({ error: err.message });
+  }
 });
 
-
-
-router.get('/getPorfolioImages', (req, res) => {
-    const portfolioId = req.query.portfolioId;
-    const idUser = req.query.idUser;
-
-    console.log(portfolioId, idUser);
-
-
-    if (!portfolioId || !idUser) {
-        return res.status(400).send('L\'id du portfolio est manquant.');
+router.get('/getPorfolioImages',authenticateToken, async (req, res) => {
+  const portfolioId = req.query.portfolioId;
+  const idUser = req.user.idUser;
+  if (!portfolioId || !idUser) {
+    return res.status(400).send("L'id du portfolio est manquant.");
+  }
+  try {
+    // Vérifier que le portfolio appartient à l'utilisateur
+    const { data: portfolio, error: errPortfolio } = await supabaseServer
+      .from('portfolio')
+      .select('user_id')
+      .eq('id_portfolio', portfolioId)
+      .maybeSingle();
+    if (errPortfolio) throw errPortfolio;
+    if (!portfolio || portfolio.user_id != idUser) {
+      return res.status(403).send("Vous n'avez pas les droits pour accéder à ces images");
     }
-
-    const SQL_verif = 'SELECT id_user FROM portfolio WHERE id_portfolio = ?';
-    const Values_verif = [portfolioId];
-
-    db.query(SQL_verif, Values_verif, (err, results) => {
-
-      if (err) {
-        console.log('Error in db query', err);
-        return res.status(500).send({error: err});
-      }
-
-      console.log(results);
-
-      if(results[0].id_user != idUser){
-        return res.status(403).send('Vous n\'avez pas les droits pour accéder à ces images');
-      }
-
-      const SQL = 'SELECT id_photo, src_photo, alt_photo, size, order_photo FROM photo_portfolio WHERE id_portfolio = ? ORDER BY order_photo';
-      const values = [portfolioId];
-
-      db.query(SQL, values, (err, results) => {
-        if (err) {
-            return res.status(500).send({error: err});
-        }
-        const image_portfolio = results;
-        const imageDirectory = path.join(__dirname, '..', 'images', 'portfolio_image');
-        // Récupérer les noms de fichier, l'ordre et le texte alternatif des images depuis la base de données
-        const imagesData = image_portfolio.map(image => {
-            const imagePath = path.join(imageDirectory, image.src_photo);
-            try {
-              const imageData = fs.readFileSync(imagePath);
-              const imageDataBase64 = Buffer.from(imageData).toString('base64');
-              return {
-                id_photo: image.id_photo,
-                name: image.src_photo,
-                data: 'data:image/jpeg;base64,' + imageDataBase64,
-                alt: image.alt_photo,
-                order: image.order_photo,
-                size: image.size
-              };
-            } catch (error) {
-              console.error('Erreur lors de la lecture de l\'image :', error);
-              return null;
-            }
-          }).filter(Boolean); 
-        
-          res.status(200).json(imagesData);
-        });
-      });
-    });
-
+    // Récupérer les images
+    const { data: image_portfolio, error: errImages } = await supabaseServer
+      .from('photo_portfolio')
+      .select('id_photo, src_photo, alt_photo, size, order_photo')
+      .eq('id_portfolio', portfolioId)
+      .order('order_photo', { ascending: true });
+    if (errImages) throw errImages;
+    // Générer les URLs publiques Supabase pour chaque image
+    const imagesData = await Promise.all(
+      image_portfolio.map(async image => {
+        const { data: publicUrlData } = supabaseServer.storage
+          .from('portfolio-image')
+          .getPublicUrl(image.src_photo);
+        return {
+          id_photo: image.id_photo,
+          name: image.src_photo,
+          url: publicUrlData?.publicUrl || '',
+          alt: image.alt_photo,
+          order: image.order_photo,
+          size: image.size
+        };
+      })
+    );
+    res.status(200).json(imagesData);
+  } catch (err) {
+    res.status(500).send({ error: err.message });
+  }
+});
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -115,96 +90,93 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-router.post('/saveImagesPortfolio', upload.single('image'), (req, res) => {
-
-    if (!req.file) {
-      return res.status(400).send('Aucune image n\'a été téléchargée.');
-    }
-
-  
-    const id_photo = req.body.id_photo;
-    const id_portfolio = req.body.id_portfolio;
-    const name = req.body.name;
-    const alt = req.body.alt;
-    const size = req.body.size;
-    const src_photo = req.file.originalname;
-
-  
-    const SQL = 'INSERT INTO photo_portfolio (id_photo, id_portfolio, src_photo, name_photo, alt_photo, size) VALUES (?, ?, ?, ?, ?, ?)';
-    const Values = [id_photo, id_portfolio, src_photo, name, alt, size];
-  
-    db.query(SQL, Values, (err, results) => {
-      if (err) {
-        console.error('Database query error:', err);
-        return res.status(500).send({ error: err });
-      }
-  
-      res.status(200).send('Image sauvegardée avec succès');
-    });
-  });
-
-
-router.post('/orderPortfolio' , (req, res) => {
-  if (!req.body) {
-    return res.status(400).send('Aucune image n\'a été téléchargée.');
+router.post('/saveImagesPortfolio', authenticateToken, upload.single('image'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).send("Aucune image n'a été téléchargée.");
   }
-
-  const id_photo = req.body.id_photo
-  const order_photo = req.body.order
-
-  const SQL = 'UPDATE photo_portfolio SET order_photo = ? WHERE id_photo = ?'
-  const Values = [order_photo, id_photo]
-
-  db.query(SQL, Values, (err, results)=>{
-    if (err) {
-      return res.status(500).send({ error: err });
-    }
-    res.status(200).send('Ordre mis à jour avec succès');
-  })
-
+  const id_photo = req.body.id_photo;
+  const id_portfolio = req.body.id_portfolio;
+  const name = req.body.name;
+  const alt = req.body.alt;
+  const size = req.body.size;
+  const src_photo = req.file.originalname;
+  try {
+    // Upload dans le bucket Supabase
+    const fileBuffer = fs.readFileSync(req.file.path);
+    const { error: uploadError } = await supabaseServer.storage
+      .from('portfolio-image')
+      .upload(src_photo, fileBuffer, { upsert: true, contentType: req.file.mimetype });
+    if (uploadError) throw uploadError;
+    // Insertion des métadonnées
+    const { error } = await supabaseServer
+      .from('photo_portfolio')
+      .insert({
+        id_photo,
+        id_portfolio,
+        src_photo,
+        name_photo: name,
+        alt_photo: alt,
+        size
+      });
+    if (error) throw error;
+    // Nettoyer le fichier temporaire
+    fs.unlinkSync(req.file.path);
+    res.status(200).send('Image sauvegardée avec succès');
+  } catch (err) {
+    res.status(500).send({ error: err.message });
+  }
 });
 
-router.post('/deleteImage', (req, res) => {
+router.post('/orderPortfolio',authenticateToken, async (req, res) => {
   if (!req.body) {
-    console.log('No body in the request');
-    return res.status(400).send('Aucune image n\'a été téléchargée.');
+    return res.status(400).send("Aucune image n'a été téléchargée.");
+  }
+  const id_photo = req.body.id_photo;
+  const order_photo = req.body.order;
+  try {
+    const { error } = await supabaseServer
+      .from('photo_portfolio')
+      .update({ order_photo })
+      .eq('id_photo', id_photo);
+    if (error) throw error;
+    res.status(200).send('Ordre mis à jour avec succès');
+  } catch (err) {
+    res.status(500).send({ error: err.message });
+  }
+});
+
+router.post('/deleteImage',authenticateToken, async (req, res) => {
+  if (!req.body) {
+    return res.status(400).send("Aucune image n'a été téléchargée.");
   }
   const id_photo = req.body.params.id_photo;
   const type_photo = req.body.params.type_photo;
-
-
-
-  const SQLSelect = `SELECT src_photo FROM photo_portfolio WHERE id_photo = ?`;
-  const ValuesSelect = [id_photo];
-
-  db.query(SQLSelect, ValuesSelect, (err, results) => {
-    if (err) {
-      console.log('Error in db query', err);
-      return res.status(500).send({ error: err });
+  try {
+    // Récupérer le nom du fichier
+    const { data, error: errSelect } = await supabaseServer
+      .from('photo_portfolio')
+      .select('src_photo')
+      .eq('id_photo', id_photo)
+      .maybeSingle();
+    if (errSelect) throw errSelect;
+    const imageName = data?.src_photo;
+    // Supprimer la ligne
+    const { error: errDelete } = await supabaseServer
+      .from('photo_portfolio')
+      .delete()
+      .eq('id_photo', id_photo);
+    if (errDelete) throw errDelete;
+    // Supprimer le fichier du bucket Supabase
+    const { error: storageError } = await supabaseServer.storage
+      .from('portfolio-image')
+      .remove([imageName]);
+    if (storageError) {
+      return res.status(500).send({ error: storageError.message });
     }
-
-    // Assuming imageName is the column name in your table
-    const imageName = results[0].src_photo;
-
-    const SQLDelete = `DELETE FROM photo_portfolio WHERE id_photo = ?`;
-    const ValuesDelete = [id_photo];
-
-    db.query(SQLDelete, ValuesDelete, (err, results) => {
-      if (err) {
-        console.log('Error in db query', err);
-        return res.status(500).send({ error: err });
-      }
-
-      const imagePath = path.join(__dirname, '..', 'images', type_photo, imageName);
-      fs.unlink(imagePath, (err) => {
-        if (err) {
-          console.log('Error in fs.unlink', err);
-          return res.status(500).send({ error: err });
-        }
-        res.status(200).send('Image supprimée avec succès');
-      });
-    });
-  });
+    res.status(200).send('Image supprimée avec succès');
+  } catch (err) {
+    res.status(500).send({ error: err.message });
+  }
 });
 
 module.exports = router;

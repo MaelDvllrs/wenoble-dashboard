@@ -382,7 +382,7 @@ const EditElementCollection = () => {
         closePopup();
     
         // Vérifier le statut de la page
-        const isPublished = DecodeBlog.blogPage[0].status === 1;
+        const isPublished = DecodeBlog.blogPage[0].status === true;
         
         // Afficher la Snackbar appropriée
         if (isPublished) {
@@ -411,7 +411,7 @@ const EditElementCollection = () => {
             });
             
             // Supprimer la page
-            await Axios.delete(`${apiUrl}/deleteBlogPage`, {
+            await Axios.delete(`${apiUrl}/deleteCollectionElement`, {
                 params: {
                     IdBlogPage: idCollectionElement,
                     Id: idCollection
@@ -446,7 +446,7 @@ const EditElementCollection = () => {
                 setDeleteDataStatus(false);
                 setRegenerateSiteStatus(false);
                 setDeletionCompleted(false);
-                navigate(`/dashboard/modification/blog/${idCollection}`);
+                navigate(`/dashboard/modification/collection/${idCollection}`);
             }, 1500);
         } catch (error) {
             console.error('Erreur lors de la suppression de la page :', error);
@@ -672,6 +672,7 @@ const EditElementCollection = () => {
     
     useEffect(() => {
 
+        if (isDeleting) return; // Ne pas appeler si suppression en cours
         Axios.get(`${apiUrl}/getCollectionElement`, {
             params: {
                 IdBlogPage: idCollectionElement,
@@ -685,7 +686,7 @@ const EditElementCollection = () => {
         }).catch((error) => {
             console.error('Erreur lors de la récupération de la page du Blog :', error);
         });
-    }, [idCollectionElement, handleSave]);
+    }, [idCollectionElement, handleSave, isDeleting]);
 
 
     useEffect(() => {
@@ -731,9 +732,7 @@ const EditElementCollection = () => {
         }
         
     }, [DecodeBlog])
-
-
-
+    
     
 
 
@@ -748,15 +747,15 @@ const EditElementCollection = () => {
                         <p style={{color: theme.palette.text.secondary, whiteSpace:"nowrap"}}>Status :</p>
                         {
                             savingPage ? (
-                                <p className="Item_portfolio_element blog_status pending_status">En attente...</p>
-                            ) : DecodeBlog.blogPage[0].status === 1 ? (
-                                <p className="Item_portfolio_element blog_status publish_status">Publié</p>    
+                                <p className="blog_status pending_status">En attente...</p>
+                            ) : DecodeBlog.blogPage[0].status === true ? (
+                                <p className="blog_status publish_status">Publié</p>    
                             ) : (
-                                <p className="Item_portfolio_element blog_status draft_status">Brouillon</p>
+                                <p className="blog_status draft_status">Brouillon</p>
                             )
                         }
                         {
-                            DecodeBlog.blogPage[0].status === 1 ? (
+                            DecodeBlog.blogPage[0].status === true ? (
                                 <Tooltip title="Dépublier" arrow placement="top">
                                     <SecondaryButton className="SaveButton" type="submit" variant="contained" theme={theme} onClick={ async () => {await handleSave(0,1)}}><UnpublishedIcon/></SecondaryButton>
                                 </Tooltip>   
@@ -768,7 +767,7 @@ const EditElementCollection = () => {
                         }
                         <SecondaryButton variant="contained" theme={theme} onClick={() => navigate(`/dashboard/modification/collection/${idCollection}`)}>Annuler</SecondaryButton>
                         {
-                            DecodeBlog.blogPage[0].status === 1 ? (
+                            DecodeBlog.blogPage[0].status === true ? (
                                 <DefaultButton type="submit" variant="contained" onClick={async () => { await handleSave(1,0) }}>Enregistrer</DefaultButton>  
                             ) : (
                                 <DefaultButton type="submit" variant="contained" onClick={async () => { await handleSave(1,1) }}> Publier</DefaultButton>
@@ -791,15 +790,10 @@ const EditElementCollection = () => {
                     <div className="line_horizontal" style={{backgroundColor: theme.palette.text.secondary}}></div>
                     {DecodeConfigblog.blogConfig && DecodeConfigblog.blogConfig.map((blogItem) => {
                         // Trouver les données correspondantes dans InfoBlogPage.data, s'il y en a
-                        console.log('blogItem', blogItem);
-                        console.log('InfoBlogPage.data', InfoBlogPage.data);
-
-                        console.log('id_config', blogItem.id_config);
-
                         const correspondingData = InfoBlogPage.data.find(data => data.id_config === blogItem.id);
 
                         return (
-                            <div key={blogItem.id_config} className="blogField_contain">
+                            <div key={blogItem.id} className="blogField_contain">
                                 <p className="blogField_name">{blogItem.name_field}</p>
                                 <p className="blogField_description">{blogItem.description_field}</p>
                                 <div className="blogField_field">
@@ -809,9 +803,9 @@ const EditElementCollection = () => {
                                         id_config={blogItem.id} 
                                         onChange={handleBlogDataChange} 
                                         dataValue={correspondingData || {}}
-                                        id_collection_ref={blogItem.id_collection_ref}
+                                        id_collection_ref={blogItem.collection_id_ref}
                                         imagefunction={true}
-                                        imageDirectory={"/media/blog/"}
+                                        imageDirectory={"https://oeigawgmmhrlpjpgicww.supabase.co/storage/v1/object/public/collection-images/"}
                                         multiline_text={blogItem.multiline_text}
                                     />
                                 </div>

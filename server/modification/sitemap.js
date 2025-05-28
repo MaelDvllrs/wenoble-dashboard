@@ -2,11 +2,12 @@ const express = require('express')
 const path = require('path');
 const fs = require('fs');
 const cors = require('cors')
-const db = require('../db')
 const xml2js = require('xml2js');
 const dayjs = require('dayjs'); 
 const utc = require('dayjs/plugin/utc'); 
 const customParseFormat = require('dayjs/plugin/customParseFormat');
+const { supabaseServer } = require('../supabase');
+const { authenticateToken } = require('../middleware/authToken');
 dayjs.extend(utc);
 dayjs.extend(customParseFormat);
 
@@ -76,58 +77,37 @@ const findSitemapPath = async (folder) => {
 };
   
 // Route pour ajouter un nouvel article de blog
-router.post('/addRouteBlogSitemap', async (req, res) => {
-
-  const idUser = req.body.params.idUser;
-  const idBlog = req.body.params.idBlog;
+router.post('/addRouteBlogSitemap',authenticateToken, async (req, res) => {
+  const idUser = req.user.idUser;
+  const idCollection = req.body.params.idBlog; // idBlog = idCollection
   const slug = req.body.params.slug;
   const date = dayjs().utc().format('YYYY-MM-DDTHH:mm:ss+00:00');
-  console.log(date);
-
-
   try {
     // Récupérer le dossier de l'utilisateur
-    const userResult = await new Promise((resolve, reject) => {
-      const SQL = "SELECT folder_project FROM users WHERE id_user = ?";
-      db.query(SQL, [idUser], (err, result) => {
-        if (err) {
-          return reject('Erreur lors de la récupération du dossier de l\'utilisateur');
-        }
-        resolve(result);
-      });
-    });
-
-
-    if (userResult.length === 0 || !userResult[0].folder_project) {
+    const { data: userData, error: userError } = await supabaseServer
+      .from('users')
+      .select('folder_project')
+      .eq('id', idUser)
+      .maybeSingle();
+    if (userError) throw userError;
+    if (!userData || !userData.folder_project) {
       return res.status(200).json({ message: 'Aucun dossier trouvé pour cet utilisateur' });
     }
-
-    const folder = userResult[0].folder_project;
-
-    // Récupérer le slug de l'article de blog
-    const blogResult = await new Promise((resolve, reject) => {
-      const SQL = "SELECT slug_blog FROM blog WHERE id_blog = ?";
-      db.query(SQL, [idBlog], (err, result) => {
-        if (err) {
-          return reject('Erreur lors de la récupération du slug de l\'article');
-        }
-        resolve(result);
-      });
-    });
-
-    const slug_blog = blogResult[0].slug_blog;
-    const url = `${slug_blog}${slug}`;
-
+    const folder = userData.folder_project;
+    // Récupérer le slug de la collection (ancien blog)
+    const { data: collectionData, error: collectionError } = await supabaseServer
+      .from('collection')
+      .select('slug_collection')
+      .eq('id', idCollection)
+      .maybeSingle();
+    if (collectionError) throw collectionError;
+    const slug_collection = collectionData?.slug_collection || '';
+    const url = `${slug_collection}${slug}`;
     const sitemapPath = await findSitemapPath(folder);
-
-    // Lire le fichier sitemap existant
     const sitemap = await readSitemap(sitemapPath);
-
     if (!sitemap) {
       return res.status(200).json({ message: 'Sitemap non trouvé' });
     }
-
-    // Ajouter une nouvelle entrée pour l'article de blog
     const newEntry = {
       loc: url,
       lastmod: date,
@@ -135,160 +115,102 @@ router.post('/addRouteBlogSitemap', async (req, res) => {
       priority: '0.6'
     };
     sitemap.urlset.url.push(newEntry);
-
-    // Écrire les modifications dans le fichier sitemap
     await writeSitemap(sitemap, sitemapPath);
-
     res.status(200).json({ message: 'Article ajouté au sitemap avec succès' });
   } catch (error) {
     res.status(500).json({ error });
   }
 });
 
-
 // Route pour supprimer un article de blog
-router.post('/deleteRouteBlogSitemap', async (req, res) => {
-  //const { idUser, idBlog } = req.body.params;
-  const idUser = req.body.params.idUser;
-  const idBlog = req.body.params.idBlog;
-  const idBlogPage = req.body.params.idBlogPage;
-
-
+router.post('/deleteRouteBlogSitemap',authenticateToken, async (req, res) => {
+  const idUser = req.user.idUser;
+  const idCollection = req.body.params.idBlog;
+  const idCollectionElement = req.body.params.idBlogPage;
   try {
     // Récupérer le dossier de l'utilisateur
-    const userResult = await new Promise((resolve, reject) => {
-      const SQL = "SELECT folder_project FROM users WHERE id_user = ?";
-      db.query(SQL, [idUser], (err, result) => {
-        if (err) {
-          return reject('Erreur lors de la récupération du dossier de l\'utilisateur');
-        }
-        resolve(result);
-      });
-    });
-
-    if (userResult.length === 0 || !userResult[0].folder_project) {
+    const { data: userData, error: userError } = await supabaseServer
+      .from('users')
+      .select('folder_project')
+      .eq('id', idUser)
+      .maybeSingle();
+    if (userError) throw userError;
+    if (!userData || !userData.folder_project) {
       return res.status(200).json({ message: 'Aucun dossier trouvé pour cet utilisateur' });
     }
-
-    const folder = userResult[0].folder_project;
-
-        //Récuperer le slug de la page de blog
-
-
-    const page_blog_slug = await new Promise((resolve, reject) => {
-      const SQL = "SELECT page_blog_slug FROM blog_page WHERE id_page_blog = ? AND id_blog = ?";  
-      db.query(SQL, [idBlogPage, idBlog], (err, result) => {
-        if (err) {
-          return reject('Erreur lors de la récupération du slug de la page de blog');
-        }
-        resolve(result);
-      });
-    });
-    const slug = page_blog_slug[0].page_blog_slug;
-
-    // Récupérer le slug de l'article de blog
-    const blogResult = await new Promise((resolve, reject) => {
-      const SQL = "SELECT slug_blog FROM blog WHERE id_blog = ?";
-      db.query(SQL, [idBlog], (err, result) => {
-        if (err) {
-          return reject('Erreur lors de la récupération du slug de l\'article');
-        }
-        resolve(result);
-      });
-    });
-
-    const slug_blog = blogResult[0].slug_blog;
-    const url = `${slug_blog}${slug}`;
-
-
-
+    const folder = userData.folder_project;
+    // Récupérer le slug de la page de collection
+    const { data: pageData, error: pageError } = await supabaseServer
+      .from('collection_element')
+      .select('collection_element_slug')
+      .eq('id', idCollectionElement)
+      .eq('collection_id', idCollection)
+      .maybeSingle();
+    if (pageError) throw pageError;
+    const slug = pageData?.collection_element_slug || '';
+    // Récupérer le slug de la collection
+    const { data: collectionData, error: collectionError } = await supabaseServer
+      .from('collection')
+      .select('slug_collection')
+      .eq('id', idCollection)
+      .maybeSingle();
+    if (collectionError) throw collectionError;
+    const slug_collection = collectionData?.slug_collection || '';
+    const url = `${slug_collection}${slug}`;
     const sitemapPath = await findSitemapPath(folder);
-
-    // Lire le fichier sitemap existant
     const sitemap = await readSitemap(sitemapPath);
-
     if (!sitemap) {
       return res.status(200).json({ message: 'Sitemap non trouvé' });
     }
-
-    // Trouver et supprimer l'entrée correspondante dans le sitemap
     sitemap.urlset.url = sitemap.urlset.url.filter(entry => !entry.loc[0].includes(url));
-
-    // Écrire les modifications dans le fichier sitemap
     await writeSitemap(sitemap, sitemapPath);
-
     res.status(200).json({ message: 'Article supprimé du sitemap avec succès' });
   } catch (error) {
     console.log(error);
     res.status(500).json({ error });
-    
   }
 });
 
-
-
 // Route pour modifier un article de blog
-router.post('/updateRouteBlogSitemap', async (req, res) => {
-  const { idUser, idBlog, idBlogPage, slug, date } = req.body.params;
-
+router.post('/updateRouteBlogSitemap',authenticateToken, async (req, res) => {
+  const idUser = req.user.idUser;
+  const {idBlog, idBlogPage, slug, date } = req.body.params;
   try {
     // Récupérer le dossier de l'utilisateur
-    const userResult = await new Promise((resolve, reject) => {
-      const SQL = "SELECT folder_project FROM users WHERE id_user = ?";
-      db.query(SQL, [idUser], (err, result) => {
-        if (err) {
-          return reject('Erreur lors de la récupération du dossier de l\'utilisateur');
-        }
-        resolve(result);
-      });
-    });
-
-
-    if (userResult.length === 0 || !userResult[0].folder_project) {
+    const { data: userData, error: userError } = await supabaseServer
+      .from('users')
+      .select('folder_project')
+      .eq('id', idUser)
+      .maybeSingle();
+    if (userError) throw userError;
+    if (!userData || !userData.folder_project) {
       return res.status(200).json({ message: 'Aucun dossier trouvé pour cet utilisateur' });
     }
-
-    const folder = userResult[0].folder_project;
-
-    // Récupérer le slug de l'article de blog
-    const blogResult = await new Promise((resolve, reject) => {
-      const SQL = "SELECT slug_blog FROM blog WHERE id_blog = ?";
-      db.query(SQL, [idBlog], (err, result) => {
-        if (err) {
-          return reject('Erreur lors de la récupération du slug de l\'article');
-        }
-        resolve(result);
-      });
-    });
-
-    const slug_blog = blogResult[0].slug_blog;
-    const url = `${slug_blog}${slug}`;
-
-    const page_blog_slug = await new Promise((resolve, reject) => {
-      const SQL = "SELECT page_blog_slug FROM blog_page WHERE id_page_blog = ? AND id_blog = ?";  
-      db.query(SQL, [idBlogPage, idBlog], (err, result) => {
-        if (err) {
-          return reject('Erreur lors de la récupération du slug de la page de blog');
-        }
-        resolve(result);
-      });
-    });
-
-    const slug_old = page_blog_slug[0].page_blog_slug;
-    const url_old = `${slug_blog}${slug_old}`; 
-
+    const folder = userData.folder_project;
+    // Récupérer le slug de la collection
+    const { data: collectionData, error: collectionError } = await supabaseServer
+      .from('collection')
+      .select('slug_collection')
+      .eq('id', idBlog)
+      .maybeSingle();
+    if (collectionError) throw collectionError;
+    const slug_collection = collectionData?.slug_collection || '';
+    const url = `${slug_collection}${slug}`;
+    // Récupérer l'ancien slug de la page de collection
+    const { data: pageData, error: pageError } = await supabaseServer
+      .from('collection_element')
+      .select('collection_element_slug')
+      .eq('id', idBlogPage)
+      .eq('collection_id', idBlog)
+      .maybeSingle();
+    if (pageError) throw pageError;
+    const slug_old = pageData?.collection_element_slug || '';
+    const url_old = `${slug_collection}${slug_old}`;
     const sitemapPath = await findSitemapPath(folder);
-
-
-
-    // Lire le fichier sitemap existant
     const sitemap = await readSitemap(sitemapPath);
-
     if (!sitemap) {
       return res.status(200).json({ message: 'Sitemap non trouvé' });
     }
-
-    // Trouver et mettre à jour l'entrée correspondante dans le sitemap
     sitemap.urlset.url = sitemap.urlset.url.map(entry => {
       if (entry.loc[0] === url_old) {
         entry.loc[0] = url;
@@ -296,10 +218,7 @@ router.post('/updateRouteBlogSitemap', async (req, res) => {
       }
       return entry;
     });
-
-    // Écrire les modifications dans le fichier sitemap
     await writeSitemap(sitemap, sitemapPath);
-
     res.status(200).json({ message: 'Article modifié dans le sitemap avec succès' });
   } catch (error) {
     console.log(error);

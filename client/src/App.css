@@ -1,5 +1,5 @@
 html {
-    font-size: 16px;
+    font-size: 14px;
 }
 
   
@@ -168,6 +168,11 @@ a{
 
 .space_icon{
     margin-right: 1rem;
+}
+
+.breadCrumbs{
+    font-size: 0.9rem;
+    font-weight: 500;
 }
 
 .breadCrumbsLink:hover{

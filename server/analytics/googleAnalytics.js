@@ -1,9 +1,12 @@
 const express = require('express');
 const { BetaAnalyticsDataClient } = require('@google-analytics/data');
-const db = require('../db')
 const cors = require('cors')
 const keys = require('./API-ANALYTICS-39ab7998278f.json');
 const dayjs = require('dayjs');
+const { supabaseServer } = require('../supabase');
+const { authenticateToken } = require('../middleware/authToken');
+
+
 
 const router = express.Router();
 
@@ -74,302 +77,229 @@ const getDateRange = (period) => {
 };
 
 
-router.get('/getUserAnalytics', async (req, res) => {
+router.get('/getUserAnalytics',authenticateToken, async (req, res) => {
   const id_user = req.user.idUser
   const period = req.query.period
   const typeUser = req.query.typeUser
 
+  // Supabase : récupération analytic_id
+  const { data, error } = await supabaseServer
+    .from('users')
+    .select('analytic_id')
+    .eq('id', id_user)
+    .single();
+  if (error || !data) {
+    console.error('Supabase error:', error);
+    return res.status(404).send('Site not found');
+  }
+  const analytic_id = data.analytic_id;
+  const dateRange = getDateRange(period);
 
-  db.query('SELECT id_analytic FROM users_info WHERE id_user = ?', [id_user], async (err, results) => {
-    if (err) {
-      console.error('Database query error:', err);
-      return res.status(500).send('Database query error');
-    }
-
-    if (results.length === 0) {
-      return res.status(404).send('Site not found');
-    }
-    const id_analytic = results[0].id_analytic;
-    const dateRange = getDateRange(period);
-
-    try {
-      const [response] = await analyticsDataClient.runReport({
-            property: `properties/${id_analytic}`,
-            dateRanges: [
-              {
-                startDate: dateRange.startDate,
-                endDate: dateRange.endDate,
-              },
-              {
-                startDate: dateRange.compareStartDate,
-                endDate: dateRange.compareEndDate
-              }
-            ],
-            dimensions: [
-              {
-                name: 'date',
-              },
-            ],
-            metrics: [
-              {
-                name: typeUser,
-              },
-            ],
-      });
-
-          
-
-      const currentPeriodData = [];
-      const comparePeriodData = [];
-      
-      response.rows.forEach(row => {
-        const date = row.dimensionValues[0].value; // format YYYYMMDD
-        const value = row.metricValues[0].value;
-    
-        // Convertir les dates du range en YYYYMMDD
-        const startDate = dateRange.startDate.replace(/-/g, '');
-        const endDate = dateRange.endDate.replace(/-/g, '');
-        const compareStartDate = dateRange.compareStartDate.replace(/-/g, '');
-        const compareEndDate = dateRange.compareEndDate.replace(/-/g, '');
-
-    
-        if (date >= startDate && date <= endDate && value !== '0') {
-            currentPeriodData.push({ date, value });
-        } else if (date >= compareStartDate && date <= compareEndDate && value !== '0') {
-            comparePeriodData.push({ date, value });
+  try {
+    const [response] = await analyticsDataClient.runReport({
+      property: `properties/${analytic_id}`,
+      dateRanges: [
+        {
+          startDate: dateRange.startDate,
+          endDate: dateRange.endDate,
+        },
+        {
+          startDate: dateRange.compareStartDate,
+          endDate: dateRange.compareEndDate
         }
+      ],
+      dimensions: [
+        { name: 'date' },
+      ],
+      metrics: [
+        { name: typeUser },
+      ],
     });
-
-    
-
-
-      const formattedData = {
-          currentPeriod: currentPeriodData,
-          comparePeriod: comparePeriodData,
-      };
-
-      res.json(formattedData);
-
-
-    } catch (error) {
-        console.error('Error querying Google Analytics API:', JSON.stringify(error, null, 2));
-        res.status(500).send(`Error querying Google Analytics API: ${error.message}`);
-    }
-  });
+    const currentPeriodData = [];
+    const comparePeriodData = [];
+    response.rows.forEach(row => {
+      const date = row.dimensionValues[0].value;
+      const value = row.metricValues[0].value;
+      const startDate = dateRange.startDate.replace(/-/g, '');
+      const endDate = dateRange.endDate.replace(/-/g, '');
+      const compareStartDate = dateRange.compareStartDate.replace(/-/g, '');
+      const compareEndDate = dateRange.compareEndDate.replace(/-/g, '');
+      if (date >= startDate && date <= endDate && value !== '0') {
+        currentPeriodData.push({ date, value });
+      } else if (date >= compareStartDate && date <= compareEndDate && value !== '0') {
+        comparePeriodData.push({ date, value });
+      }
+    });
+    const formattedData = {
+      currentPeriod: currentPeriodData,
+      comparePeriod: comparePeriodData,
+    };
+    res.json(formattedData);
+  } catch (error) {
+    console.error('Error querying Google Analytics API:', JSON.stringify(error, null, 2));
+    res.status(500).send(`Error querying Google Analytics API: ${error.message}`);
+  }
 });
 
-
-router.get('/getEventAnalytics', async (req, res) => {
+router.get('/getEventAnalytics',authenticateToken, async (req, res) => {
   const id_user = req.user.idUser
   const period = req.query.period
-
-
-  db.query('SELECT id_analytic FROM users_info WHERE id_user = ?', [id_user], async (err, results) => {
-    if (err) {
-      console.error('Database query error:', err);
-      return res.status(500).send('Database query error');
-    }
-
-    if (results.length === 0) {
-      return res.status(404).send('Site not found');
-    }
-    const id_analytic = results[0].id_analytic;
-    const dateRange = getDateRange(period);
-
-    try {
-        const [response] = await analyticsDataClient.runReport({
-            property: `properties/${id_analytic}`,
-            dateRanges: [
-              {
-                startDate: dateRange.startDate,
-                endDate: dateRange.endDate,
-              },
-            ],
-            dimensions: [
-              {
-                name: 'date',
-              },
-            ],
-            metrics: [
-              {
-                name: 'eventCount',
-              },
-              {
-                name: 'eventCountPerUser',
-              },
-            ],
-          });
-
-
-
-
-          res.json(response.rows);
-
-    } catch (error) {
-        console.error('Error querying Google Analytics API:', JSON.stringify(error, null, 2));
-        res.status(500).send(`Error querying Google Analytics API: ${error.message}`);
-    }
-  });
+  // Supabase : récupération analytic_id
+  const { data, error } = await supabaseServer
+    .from('users')
+    .select('analytic_id')
+    .eq('id', id_user)
+    .single();
+  if (error || !data) {
+    console.error('Supabase error:', error);
+    return res.status(404).send('Site not found');
+  }
+  const analytic_id = data.analytic_id;
+  const dateRange = getDateRange(period);
+  try {
+    const [response] = await analyticsDataClient.runReport({
+      property: `properties/${analytic_id}`,
+      dateRanges: [
+        {
+          startDate: dateRange.startDate,
+          endDate: dateRange.endDate,
+        },
+      ],
+      dimensions: [
+        { name: 'date' },
+      ],
+      metrics: [
+        { name: 'eventCount' },
+        { name: 'eventCountPerUser' },
+      ],
+    });
+    res.json(response.rows);
+  } catch (error) {
+    console.error('Error querying Google Analytics API:', JSON.stringify(error, null, 2));
+    res.status(500).send(`Error querying Google Analytics API: ${error.message}`);
+  }
 });
 
-router.get('/getLocationAnalytics', async (req, res) => {
+router.get('/getLocationAnalytics',authenticateToken, async (req, res) => {
   const id_user = req.user.idUser
   const period = req.query.period
   const typeLocation = req.query.typeLocation 
   const locationID = req.query.locationID
   const typeUser = req.query.typeUser
-
-
-  db.query('SELECT id_analytic FROM users_info WHERE id_user = ?', [id_user], async (err, results) => {
-    if (err) {
-      console.error('Database query error:', err);
-      return res.status(500).send('Database query error');
-    }
-
-    if (results.length === 0) {
-      return res.status(404).send('Site not found');
-    }
-    const id_analytic = results[0].id_analytic;
-    const dateRange = getDateRange(period);
-
-    try {
-        const [response] = await analyticsDataClient.runReport({
-            property: `properties/${id_analytic}`,
-            dateRanges: [
-              {
-                startDate: dateRange.startDate,
-                endDate: dateRange.endDate,
-              },
-            ],
-            dimensions: [
-              {
-                name: typeLocation,
-              },
-              {
-                name: locationID,
-              }
-            ],
-            metrics: [
-              {
-                name: typeUser,
-              },
-            ],
-          });
-
-
-          res.json(response.rows);
-
-    } catch (error) {
-        console.error('Error querying Google Analytics API:', JSON.stringify(error, null, 2));
-        res.status(500).send(`Error querying Google Analytics API: ${error.message}`);
-    }
-  });
+  // Supabase : récupération analytic_id
+  const { data, error } = await supabaseServer
+    .from('users')
+    .select('analytic_id')
+    .eq('id', id_user)
+    .single();
+  if (error || !data) {
+    console.error('Supabase error:', error);
+    return res.status(404).send('Site not found');
+  }
+  const analytic_id = data.analytic_id;
+  const dateRange = getDateRange(period);
+  try {
+    const [response] = await analyticsDataClient.runReport({
+      property: `properties/${analytic_id}`,
+      dateRanges: [
+        {
+          startDate: dateRange.startDate,
+          endDate: dateRange.endDate,
+        },
+      ],
+      dimensions: [
+        { name: typeLocation },
+        { name: locationID },
+      ],
+      metrics: [
+        { name: typeUser },
+      ],
+    });
+    res.json(response.rows);
+  } catch (error) {
+    console.error('Error querying Google Analytics API:', JSON.stringify(error, null, 2));
+    res.status(500).send(`Error querying Google Analytics API: ${error.message}`);
+  }
 });
 
-
-router.get('/getPlateformCategorieAnalytics', async (req, res) => {
+router.get('/getPlateformCategorieAnalytics',authenticateToken, async (req, res) => {
   const id_user = req.user.idUser
   const period = req.query.period
   const typePlatform = req.query.typePlatform
   const typeUser = req.query.typeUser
-
-
-
-  db.query('SELECT id_analytic FROM users_info WHERE id_user = ?', [id_user], async (err, results) => {
-    if (err) {
-      console.error('Database query error:', err);
-      return res.status(500).send('Database query error');
-    }
-
-    if (results.length === 0) {
-      return res.status(404).send('Site not found');
-    }
-    const id_analytic = results[0].id_analytic;
-    const dateRange = getDateRange(period);
-
-    try {
-        const [response] = await analyticsDataClient.runReport({
-            property: `properties/${id_analytic}`,
-            dateRanges: [
-              {
-                startDate: dateRange.startDate,
-                endDate: dateRange.endDate,
-              },
-            ],
-            dimensions: [
-              {
-                name: typePlatform,
-              },
-            ],
-            metrics: [
-              {
-                name: typeUser,
-              },
-            ],
-          });
-
-
-
-
-          res.json(response.rows);
-
-    } catch (error) {
-        console.error('Error querying Google Analytics API:', JSON.stringify(error, null, 2));
-        res.status(500).send(`Error querying Google Analytics API: ${error.message}`);
-    }
-  });
+  // Supabase : récupération analytic_id
+  const { data, error } = await supabaseServer
+    .from('users')
+    .select('analytic_id')
+    .eq('id', id_user)
+    .single();
+  if (error || !data) {
+    console.error('Supabase error:', error);
+    return res.status(404).send('Site not found');
+  }
+  const analytic_id = data.analytic_id;
+  const dateRange = getDateRange(period);
+  try {
+    const [response] = await analyticsDataClient.runReport({
+      property: `properties/${analytic_id}`,
+      dateRanges: [
+        {
+          startDate: dateRange.startDate,
+          endDate: dateRange.endDate,
+        },
+      ],
+      dimensions: [
+        { name: typePlatform },
+      ],
+      metrics: [
+        { name: typeUser },
+      ],
+    });
+    res.json(response.rows);
+  } catch (error) {
+    console.error('Error querying Google Analytics API:', JSON.stringify(error, null, 2));
+    res.status(500).send(`Error querying Google Analytics API: ${error.message}`);
+  }
 });
 
-
-router.get('/getPageAnalytics', async (req, res) => {
+router.get('/getPageAnalytics',authenticateToken, async (req, res) => {
   const id_user = req.user.idUser
   const period = req.query.period
   const typePage = req.query.typePage 
   const typeUser = req.query.typeUser
-
-
-
-  db.query('SELECT id_analytic FROM users_info WHERE id_user = ?', [id_user], async (err, results) => {
-    if (err) {
-      console.error('Database query error:', err);
-      return res.status(500).send('Database query error');
-    }
-
-    if (results.length === 0) {
-      return res.status(404).send('Site not found');
-    }
-    const id_analytic = results[0].id_analytic;
-    const dateRange = getDateRange(period);
-
-    try {
-        const [response] = await analyticsDataClient.runReport({
-            property: `properties/${id_analytic}`,
-            dateRanges: [
-              {
-                startDate: dateRange.startDate,
-                endDate: dateRange.endDate,
-              },
-            ],
-            dimensions: [
-              {
-                name: typePage,
-              },
-            ],
-            metrics: [
-              {
-                name: typeUser,
-              },
-            ],
-          });
-
-
-          res.json(response.rows);
-
-    } catch (error) {
-        console.error('Error querying Google Analytics API:', JSON.stringify(error, null, 2));
-        res.status(500).send(`Error querying Google Analytics API: ${error.message}`);
-    }
-  });
+  // Supabase : récupération analytic_id
+  const { data, error } = await supabaseServer
+    .from('users')
+    .select('analytic_id')
+    .eq('id', id_user)
+    .single();
+  if (error || !data) {
+    console.error('Supabase error:', error);
+    return res.status(404).send('Site not found');
+  }
+  const analytic_id = data.analytic_id;
+  const dateRange = getDateRange(period);
+  try {
+    const [response] = await analyticsDataClient.runReport({
+      property: `properties/${analytic_id}`,
+      dateRanges: [
+        {
+          startDate: dateRange.startDate,
+          endDate: dateRange.endDate,
+        },
+      ],
+      dimensions: [
+        { name: typePage },
+      ],
+      metrics: [
+        { name: typeUser },
+      ],
+    });
+    res.json(response.rows);
+  } catch (error) {
+    console.error('Error querying Google Analytics API:', JSON.stringify(error, null, 2));
+    res.status(500).send(`Error querying Google Analytics API: ${error.message}`);
+  }
 });
 
 

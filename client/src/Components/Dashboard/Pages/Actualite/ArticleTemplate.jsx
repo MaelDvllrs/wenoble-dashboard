@@ -9,6 +9,7 @@ import ArrowLeftIcon from '@mui/icons-material/ArrowLeft';
 const ArticleTemplate = () => {
   const theme = useTheme();
   const apiUrl = config.apiUrl;
+  const urlBucketCollectionImage = config.urlBucketCollectionImage;
   const slug = useParams().slug;
   const articles = useArticlesTemplates(slug);
   const article = articles[0];
@@ -28,7 +29,7 @@ const ArticleTemplate = () => {
       </NavLink>
       {article ? ( 
         <div className='article_template_container' style={{borderColor : theme.palette.text.secondary}}>
-          <img src={`${apiUrl}/media/blog/${article.imageUrl.src_image}`} alt={article.imageUrl.alt_image} className="imageArticle imageArticleTemplate" />
+          <img src={`${urlBucketCollectionImage}${article.imageUrl.src_image}`} alt={article.imageUrl.alt_image} className="imageArticle imageArticleTemplate" />
           <div className='articleTemplateTitleBox'>
             <h2 className='articleTemplateTitle green_title'>{article.name}</h2>
             <div className="categorieArticleContain">{article.categorie}</div>

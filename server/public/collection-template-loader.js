@@ -1,5 +1,6 @@
 (async function () {
-    const apiUrl = "https://api-wenoble.wenoble.fr";
+    const apiUrl = "http://localhost:3002";
+    const urlVideoBucket = "https://oeigawgmmhrlpjpgicww.supabase.co/storage/v1/object/public/collection-video//" // Remplacez par l'URL de votre API
     const scriptTag = document.currentScript;
     const blogId = scriptTag.getAttribute("data-blog-id");
     const userKey = scriptTag.getAttribute("data-user-id");
@@ -44,13 +45,14 @@
         });
 
         const info = await collectionInfos.json();
+        console.log(info);
 
         const collectionContent = await fetch(`${apiUrl}/api/sendBlogContent`, {
             method: "GET",
             headers: {
                 'api_key': userKey,
                 'id_blog': blogId,
-                'id_blog_page': info.blog[0].id_page_blog,
+                'id_blog_page': info.blog[0].id,
             }
         });
         
@@ -91,7 +93,7 @@
             return options;
         }
         
-        document.title = info.blog[0].page_blog_name;
+        document.title = info.blog[0].collection_element_name;
 
         // Ajout de toutes les balises SEO
         const ogTitle = document.querySelector("meta[property='og:title']") || document.createElement('meta');
@@ -122,7 +124,7 @@
         ogImage.setAttribute('property', 'og:image');
         const image = data.content.image.find(img => img.id_config == metaTagsImage);
         if (image) {
-            ogImage.setAttribute('content', `${apiUrl}/media/blog/${image.src_image}`);
+            ogImage.setAttribute('content', image.url);
         }
         document.head.appendChild(ogImage);
 
@@ -157,8 +159,9 @@
 
         const twitterImage = document.querySelector("meta[name='twitter:image']") || document.createElement('meta');
         twitterImage.setAttribute('name', 'twitter:image');
+        console.log(image);
         if (image) {
-            twitterImage.setAttribute('content', `${apiUrl}/media/blog/${image.src_image}`);
+            twitterImage.setAttribute('content', image.url);
         }
         document.head.appendChild(twitterImage);
 
@@ -173,13 +176,13 @@
         // Parcourir uniquement les éléments filtrés
         elementsToProcess.forEach(async el => {
             if (el.hasAttribute("wn-title")) {
-                el.textContent = info.blog[0].page_blog_name;
+                el.textContent = info.blog[0].collection_element_name;
             }
 
 
             if (el.hasAttribute("wn-date-published")) {
                 const format = el.getAttribute("wn-date-published");
-                const date = new Date(info.blog[0].page_blog_publish_date);
+                const date = new Date(info.blog[0].collection_element_publish_date);
                 let options;
 
                 try {
@@ -196,7 +199,7 @@
                 const key = el.getAttribute("wn-image");
                 const imageData = data.content.image.find(img => img.id_config == key);
                 if (imageData) {
-                    el.src = `${apiUrl}/media/blog/${imageData.src_image}`;
+                    el.src = imageData.url;
                     el.alt = imageData.alt_image;
                 }
             }
@@ -218,8 +221,9 @@
             if (el.hasAttribute("wn-video")) {
                 const key = el.getAttribute("wn-video");
                 const videoData = data.content.video.find(img => img.id_config == key);
+                console.log(videoData);
                 if (videoData) {
-                    el.innerHTML = `<source src="${apiUrl}/streamVideo/${videoData.src_video}">`;
+                    el.innerHTML = `<source src="${urlVideoBucket}${videoData.src_video}">`;
                 }
             }
 
@@ -248,6 +252,7 @@
                         
                         // Utiliser loading="lazy" pour le chargement paresseux natif
                         imgElement.loading = "lazy";
+                        console.log(img);
                         
                         // Stocker l'URL réelle dans data-src
                         imgElement.dataset.src = `${apiUrl}/media/blogGallery/${img.src_photo}`;

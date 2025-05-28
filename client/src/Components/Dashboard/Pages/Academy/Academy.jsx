@@ -22,7 +22,6 @@ const Academy = () => {
 
 
 
-
     return (
         <div className="outlet">
             <div className="title_section">
@@ -109,16 +108,16 @@ const Academy = () => {
                                     style={{ boxShadow: theme.palette.shadow.main }}
                                   >
                                     <NavLink
-                                      to={`/dashboard/academy/${academy.page_blog_slug}`}
+                                      to={`/dashboard/academy/${academy.collection_element_slug}`}
                                       className="academy_link"
                                     >
                                       <img
-                                        src={`${config.apiUrl}/media/blog/${academy.content.image?.[0]?.src_image}`}
+                                        src={academy.content.image?.[0]?.url}
                                         alt={academy.content.image?.[0]?.alt_image || "Formation"}
                                         className="academy_box_image"
                                       />
                                       <div className="academy_info_box">
-                                        <p className="academy_title_list">{academy.page_blog_name}</p>
+                                        <p className="academy_title_list">{academy.collection_element_name}</p>
                                         <p style={{ color: theme.palette.text.secondary }}>
                                           {academy.content.text?.find(text => text.id_config === parseInt(config.idConfigAcademyResume))?.text}
                                         </p>

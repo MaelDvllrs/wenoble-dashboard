@@ -31,12 +31,13 @@ export const useAcademy = () => {
 
             if (!blogPages.blog) return [];
 
+            console.log("Blog Pages:", blogPages);
             const detailPromises = blogPages.blog.map(async (blog) => {
                 const { data: detailData } = await axios.get(`${apiUrl}/api/sendBlogContent`, {
                     headers: {
                         'api_key': userKey,
-                        'id_blog': blog.id_blog,
-                        'id_blog_page': blog.id_page_blog,
+                        'id_blog': blog.collection_id,
+                        'id_blog_page': blog.id,
                     }
                 });
 

@@ -9,8 +9,7 @@ import { Checkbox, Avatar, Badge, Popper, ClickAwayListener, Grow, IconButton } 
 import { useTheme } from '@mui/material/styles';
 import { formatDistance } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { createClient } from '@supabase/supabase-js';
-
+import { supabase } from '../../service/supabaseAuth';
 
 // Icons
 import { BsChevronCompactDown } from "react-icons/bs";
@@ -109,8 +108,6 @@ const Dashboard = () => {
 
 
     useEffect(() => {
-      const supabase = createClient(config.supabaseUrl, config.supabaseAnonKey);
-        
       // Vérifier si une session est active
       const checkAndRefreshSession = async () => {
         try {
@@ -119,11 +116,8 @@ const Dashboard = () => {
             console.log("Pas de session active");
             return;
           }
-          
           const { data, error } = await supabase.auth.refreshSession();
-          
           if (error) throw error;
-          
           if (data && data.session) {
             Cookies.set('token', data.session.access_token, {
               expires: 7,
@@ -135,13 +129,9 @@ const Dashboard = () => {
           console.error("Erreur lors du rafraîchissement périodique:", e);
         }
       };
-      
-      // Rafraîchir immédiatement au chargement
+
       checkAndRefreshSession();
-      
-      // Puis toutes les 45 minutes
       const refreshInterval = setInterval(checkAndRefreshSession, 45 * 60 * 1000);
-      
       return () => clearInterval(refreshInterval);
     }, []);
 

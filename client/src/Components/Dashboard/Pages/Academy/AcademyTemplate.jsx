@@ -50,9 +50,11 @@ const AcademyTemplate = () => {
   if (!academyData) return null;
 
   const { info, content } = academyData;
+  
+  console.log("Academy Template Content:", content);
   const categories = content.multiReference?.map(ref => ref.label) || [];
-  const videoSource = content.video?.[0]?.src_video;
-  const thumbnail = content.image?.[0]?.src_image;
+  const videoSource = `${config.urlBucketCollectionVideo}${content.video?.[0]?.src_video}`;
+  const thumbnail = content.image?.[0]?.url;
 
   // Modification pour récupérer le texte en fonction de l'id_config spécifique
   const timeConfigId = parseInt(config.idConfigAcademyTime); 
@@ -60,6 +62,9 @@ const AcademyTemplate = () => {
   const time = timeData?.text || "";
 
   const richTextContent = content.richText?.[0]?.text_html || "";
+
+
+  console.log("Academy Template Data:", academyData);
 
   return (
     <div className="outlet">
@@ -85,7 +90,7 @@ const AcademyTemplate = () => {
 
       <div className="academy_section">
         <div className="academy_template_container">
-          <h1 className="academy_template_title">{info.page_blog_name}</h1>
+          <h1 className="academy_template_title">{info.collection_element_name}</h1>
 
           <div className="academy_template_header">
             {categories.map((cat, idx) => (
@@ -121,7 +126,7 @@ const AcademyTemplate = () => {
                   onClick={handleThumbnailClick}
                 >
                   <img
-                    src={`${config.apiUrl}/media/blog/${thumbnail}`}
+                    src={`${thumbnail}`}
                     alt="Thumbnail"
                     className="academy_video_thumbnail"
                     style={{
@@ -150,7 +155,7 @@ const AcademyTemplate = () => {
                 }}
               >
                 {videoSource && (
-                  <source src={`${config.apiUrl}/streamVideo/${videoSource}`} type="video/mp4" />
+                  <source src={videoSource} type="video/mp4" />
                 )}
               </video>
             </div>

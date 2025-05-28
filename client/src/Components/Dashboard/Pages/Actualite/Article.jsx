@@ -9,6 +9,7 @@ import {formatDistanceWithoutApprox} from '../../../../utils/dateUtils'
 const Article = () => {
   const theme = useTheme();
   const apiUrl = config.apiUrl;
+  const urlBucketCollectionImage = config.urlBucketCollectionImage;
   const articles = useArticles();
 
 
@@ -27,7 +28,7 @@ const Article = () => {
             color:theme.palette.text.primary,
             '--primary-hover-background-color': theme.palette.primary.secondary,
         }}>
-          <img src={`${apiUrl}/media/blog/${article.imageUrl.src_image}`} alt={article.imageUrl.alt_image} className="imageArticle" />
+          <img src={`${urlBucketCollectionImage}${article.imageUrl.src_image}`} alt={article.imageUrl.alt_image} className="imageArticle" />
           <div className="textContainArticle" style={{borderColor: theme.palette.primary.third}}>
             <div className='textBoxArticle'>
                 <div className="auteurArticleContain">

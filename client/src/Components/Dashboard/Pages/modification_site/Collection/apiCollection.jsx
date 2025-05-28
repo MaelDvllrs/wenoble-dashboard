@@ -186,7 +186,7 @@ export const updateBlogPage = async (idBlogPage, mainText, date, status, setpubl
                 }
             });
         } else if (status === 0 && oldStatus === 1) {
-            await Axios.post(`${apiUrl}/deleteRouteBlogSitemap`, {
+            await Axios.post(`${apiUrl}/deleteRouteCollectionSitemap`, {
                 params: {
                     idUser: idUser,
                     idBlog: idBlog,
@@ -199,7 +199,7 @@ export const updateBlogPage = async (idBlogPage, mainText, date, status, setpubl
                 }
             });
         } else if (status === 1 && oldStatus === 1) {
-            await Axios.post(`${apiUrl}/updateRouteBlogSitemap`, {
+            await Axios.post(`${apiUrl}/updateRouteCollectionSitemap`, {
                 params: {
                     idUser: idUser,
                     idBlog: idBlog,
@@ -215,7 +215,7 @@ export const updateBlogPage = async (idBlogPage, mainText, date, status, setpubl
             });
         }
 
-        const response = await Axios.post(`${apiUrl}/updateBlogPage`, {
+        const response = await Axios.post(`${apiUrl}/updateCollectionElement`, {
             params: {
                 id: idBlogPage,
                 mainText: mainText,
@@ -246,7 +246,7 @@ export const updateTextBlog = async (id, otherText, token) => {
     try {
         if (otherText[0].create) {
             console.log("enregistrer " + otherText);
-            await Axios.post(`${apiUrl}/updateTextBlog`, {
+            await Axios.post(`${apiUrl}/updateTextCollection`, {
                 params: {
                     id: id,
                     otherText: otherText,
@@ -258,7 +258,7 @@ export const updateTextBlog = async (id, otherText, token) => {
                 }
             });
         } else {
-            await Axios.post(`${apiUrl}/createTextBlog`, {
+            await Axios.post(`${apiUrl}/createTextCollection`, {
                 params: {
                     id: id,
                     otherText: otherText,
@@ -279,7 +279,7 @@ export const updateTextBlog = async (id, otherText, token) => {
 export const updateRichTextBlog = async (id, infoRichText, token) => {
     try {
         if (infoRichText[0].create) {
-            await Axios.post(`${apiUrl}/updateRichTextBlog`, {
+            await Axios.post(`${apiUrl}/updateRichTextCollection`, {
                 params: {
                     id: id,
                     infoRichText: infoRichText,
@@ -291,7 +291,7 @@ export const updateRichTextBlog = async (id, infoRichText, token) => {
                 }
             });
         } else {
-            await Axios.post(`${apiUrl}/createRichTextBlog`, {
+            await Axios.post(`${apiUrl}/createRichTextCollection`, {
                 params: {
                     id: id,
                     infoRichText: infoRichText,
@@ -320,14 +320,14 @@ export const updateImageBlog = async (fields, blogPageId, token) => {
         formData.append('size', fields.size);
 
         if (fields.create) {
-            await Axios.post(`${apiUrl}/updateImagesBlog`, formData, {
+            await Axios.post(`${apiUrl}/updateImageCollection`, formData, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data'
                 }
             });
         } else {
-            await Axios.post(`${apiUrl}/createImagesBlog`, formData, {
+            await Axios.post(`${apiUrl}/createImagesCollection`, formData, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data'
@@ -353,14 +353,14 @@ export const updateVideoBlog = async (fields, blogPageId, token) => {
         formData.append('size', fields.size);
 
         if (fields.create) {
-            await Axios.post(`${apiUrl}/updateVideoBlog`, formData, {
+            await Axios.post(`${apiUrl}/updateVideoCollection`, formData, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data'
                 }
             });
         } else {
-            await Axios.post(`${apiUrl}/createVideoBlog`, formData, {
+            await Axios.post(`${apiUrl}/createVideoCollection`, formData, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data'
@@ -376,7 +376,7 @@ export const updateVideoBlog = async (fields, blogPageId, token) => {
 export const updateMultiReferenceBlog = async (id, multiReference, token) => {
     try {
         if (multiReference.create) {
-            await Axios.post(`${apiUrl}/updateMultiReferenceBlog`, {
+            await Axios.post(`${apiUrl}/updateMultiReferenceCollection`, {
                 params: {
                     id: id,
                     multiReference: multiReference,
@@ -388,7 +388,7 @@ export const updateMultiReferenceBlog = async (id, multiReference, token) => {
                 }
             });
         } else {
-            await Axios.post(`${apiUrl}/createMultiReferenceBlog`, {
+            await Axios.post(`${apiUrl}/createMultiReferenceCollection`, {
                 params: {
                     id: id,
                     multiReference: multiReference,
@@ -433,14 +433,14 @@ export const updateGalleryBlog = async (id, gallery, token) => {
         formData.append('type', gallery.type);
 
         if (galleryCreate) {
-            await Axios.post(`${apiUrl}/updateGalleryBlog`, formData, {
+            await Axios.post(`${apiUrl}/updateGalleryCollection`, formData, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data'
                 }
             });
         } else {
-            await Axios.post(`${apiUrl}/createGalleryBlog`, formData, {
+            await Axios.post(`${apiUrl}/createGalleryCollection`, formData, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data'

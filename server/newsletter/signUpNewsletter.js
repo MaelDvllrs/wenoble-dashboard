@@ -1,74 +1,71 @@
 const express = require('express');
-const db = require('../db');
+const { supabaseServer } = require('../supabase');
 const router = express.Router();
 
 
 
-const apiKeyMiddleware = (req, res, next) => {
+const apiKeyMiddleware = async (req, res, next) => {
     const apiKey = req.body.apiKey;
     const mail = req.body.mail;
-
-    
     if (!apiKey) {
         return res.status(401).json({ message: 'Clé API ou ID de data manquant.' });
     }
-
-    const SQL = 'SELECT id_user FROM users WHERE cle_api = ?';
-    const Values = [apiKey];
-
-    db.query(SQL, Values, (err, results) => {
-        if (err) {
-            res.send({ error: err });
-        }
-
-        if (results.length > 0) {
-            req.apiKey = apiKey;
-            req.mail = mail;
-            next();
-        } else {
-            return res.status(403).json({ message: 'Clé API invalide.' });
-        }
-    });
+    // Supabase : vérification de la clé API
+    const { data, error } = await supabaseServer
+        .from('users')
+        .select('id')
+        .eq('api_key', apiKey)
+        .maybeSingle();
+    if (error) {
+        return res.status(500).json({ error: error.message });
+    }
+    if (data) {
+        req.apiKey = apiKey;
+        req.mail = mail;
+        next();
+    } else {
+        return res.status(403).json({ message: 'Clé API invalide.' });
+    }
 };
 
-router.post ('/signUpNewsletter', apiKeyMiddleware, async (req, res) => {
+router.post('/signUpNewsletter', apiKeyMiddleware, async (req, res) => {
     const apiKey = req.apiKey;
-    const mail = req.mail
+    const mail = req.mail;
     const dateSend = new Date();
-
-    const SQL = 'SELECT id_user FROM users WHERE cle_api = ?';
-    const Values = [apiKey];
-
-    db.query(SQL, Values, async (err, results) => {
-        if (err) {
-            return res.send({ error: err });
+    try {
+        // Récupérer l'utilisateur par api_key
+        const { data: userData, error: userError } = await supabaseServer
+            .from('users')
+            .select('id')
+            .eq('api_key', apiKey)
+            .maybeSingle();
+        if (userError || !userData) {
+            return res.status(404).json({ error: 'Utilisateur non trouvé' });
         }
-        const idUser = results[0].id_user;
-
-        const verifySQL = 'SELECT * FROM newsletter_website WHERE mail = ? AND id_user = ?';
-        const verifyValues = [mail, idUser];
-
-        db.query(verifySQL, verifyValues, (err, results) => {
-            if (err) {
-                return res.send({ error: err });
-            }
-
-            if (results.length > 0) {
-                return res.status(409).json({ message: 'mail déjà enregistré.' });
-            }
-
-            const insertSQL = 'INSERT INTO newsletter_website (id_user, mail, date) VALUES (?, ?, ?)';
-            const insertValues = [idUser, mail, dateSend];
-
-            db.query(insertSQL, insertValues, (err, results) => {
-                if (err) {
-                    return res.send({ error: err });
-                }
-
-                res.status(200).json({ message: 'mail enregistré' });
-            });
-        });
-    });
+        const user_id = userData.id;
+        // Vérifier si le mail existe déjà
+        const { data: existing, error: existError } = await supabaseServer
+            .from('newsletter_website')
+            .select('id_newsletter')
+            .eq('mail', mail)
+            .eq('user_id', user_id);
+        if (existError) {
+            return res.status(500).json({ error: existError.message });
+        }
+        if (existing && existing.length > 0) {
+            return res.status(409).json({ message: 'mail déjà enregistré.' });
+        }
+        // Insérer le mail
+        const { error: insertError } = await supabaseServer
+            .from('newsletter_website')
+            .insert({ user_id, mail, date: dateSend });
+        if (insertError) {
+            return res.status(500).json({ error: insertError.message });
+        }
+        res.status(200).json({ message: 'mail enregistré' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 

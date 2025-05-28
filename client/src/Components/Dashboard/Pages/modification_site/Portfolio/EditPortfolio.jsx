@@ -158,6 +158,7 @@ const EditPortfolio = () => {
     window.location.reload();
   }
 
+
   return (
     <div className="editPortfolio_contain">
       <div className="header_modification">
@@ -198,7 +199,7 @@ const EditPortfolio = () => {
           <Reorder.Group values={fields} onReorder={handleReorder}>
             {fields.map((image, index) => {
               const isBlob = image.data instanceof Blob;
-              const src = isBlob ? URL.createObjectURL(image.data) : image.data;
+              const src = isBlob ? URL.createObjectURL(image.data) : image.url;  
 
               return (
                 <Reorder.Item

@@ -96,9 +96,9 @@ const ListeCollection = () => {
                             <p className="Item_portfolio_element order_element">{index}</p>
                             <p className="Item_portfolio_element blog_name_element">{blogpage.collection_element_name}</p>
                             {blogpage.collection_element_status === true ? (
-                              <p className="Item_portfolio_element blog_status publish_status">Publié</p>
+                              <p className="blog_status publish_status">Publié</p>
                             ) : (
-                              <p className="Item_portfolio_element blog_status draft_status">Brouillon</p>
+                              <p className="blog_status draft_status">Brouillon</p>
                             )}
                             <p className="Item_portfolio_element blog_date_element">{formattedCreateDate}</p>
                             <p className="Item_portfolio_element blog_date_element">{formattedUpdateDate}</p>

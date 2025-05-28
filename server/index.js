@@ -6,31 +6,31 @@ const path = require('path');
 
 
 // Client router
-//const apiRouter = require('./api/api');
+const apiRouter = require('./api/api');
 
 const authRoutes = require('./users/auth');
 const authorisationRouter = require('./users/authorisation');
 const infoUserRouter = require('./users/infoUser');
-//const portfolioRouter = require('./modification/portfolio');
-//const pageRouter = require('./modification/page');
+const portfolioRouter = require('./modification/portfolio');
+const pageRouter = require('./modification/page');
 const collectionRouter = require('./modification/collection');
 //const videoRouter = require('./modification/video');
-//const limitSizeRouter = require('./modification/limitSize');
-//const sitemapRouter = require('./modification/sitemap');
+const limitSizeRouter = require('./modification/limitSize');
+const sitemapRouter = require('./modification/sitemap');
 //const updateCacheRouter = require('./modification/SSRCache');
 //const generationStaticRouter = require('./modification/generationStatic');
-//const articleRouter = require('./actualite/article');
-//const analyticsRouter = require('./analytics/googleAnalytics');
+const articleRouter = require('./actualite/article');
+const analyticsRouter = require('./analytics/googleAnalytics');
 //
 //const orderRouter = require('./ecommerce/order');
 //
-//const sendEmailRouter = require('./contact/sendEmail');
-//const contactRouter = require('./contact/contact');
-//const newsletterRouter = require('./newsletter/newsletter');
-//const signUpNewsletterRouter = require('./newsletter/signUpNewsletter');  
+const sendEmailRouter = require('./contact/sendEmail');
+const contactRouter = require('./contact/contact');
+const newsletterRouter = require('./newsletter/newsletter');
+const signUpNewsletterRouter = require('./newsletter/signUpNewsletter');  
 //
 //
-//const { notificationRouter, notificationServer } = require('./users/notification');
+const { notificationRouter, notificationServer } = require('./users/notification');
 
 
 
@@ -142,15 +142,15 @@ app.use(express.json({ limit: '500mb' }));
 app.use(bodyParser.json({ limit: '500mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 //
-//app.use('/api', apiRouter);
+app.use('/api', apiRouter);
 app.use(express.static('public'));
 app.get('/blog-template-loader.js', (req, res) => {
  res.sendFile(path.join(__dirname, 'public', 'blog-loader.js'));
 });
 //
 //
-//app.use(signUpNewsletterRouter);
-//app.use(sendEmailRouter);
+app.use(signUpNewsletterRouter);
+app.use(sendEmailRouter);
 //
 //
 app.use(authRoutes);
@@ -158,16 +158,16 @@ app.use(authorisationRouter);
 //
 //
 //
-//app.use(notificationRouter);
+app.use(notificationRouter);
 //
 //
 ////Static files
-//app.use('/media/blog', express.static(path.join(__dirname, 'images', 'blog_image')));
-//app.use('/media/portfolio', express.static(path.join(__dirname, 'images', 'portfolio_image')));
-//app.use('/media/page', express.static(path.join(__dirname, 'images', 'page_image')));
-//app.use('/media/blogGallery', express.static(path.join(__dirname, 'images', 'blog_gallery')));
-//app.use('/media/blog/richText', express.static(path.join(__dirname, 'images', 'richtext_blog_images')));
-//app.use('/media/profile', express.static(path.join(__dirname, 'images', 'profile_image')));
+app.use('/media/blog', express.static(path.join(__dirname, 'images', 'blog_image')));
+app.use('/media/portfolio', express.static(path.join(__dirname, 'images', 'portfolio_image')));
+app.use('/media/page', express.static(path.join(__dirname, 'images', 'page_image')));
+app.use('/media/blogGallery', express.static(path.join(__dirname, 'images', 'blog_gallery')));
+app.use('/media/blog/richText', express.static(path.join(__dirname, 'images', 'richtext_blog_images')));
+app.use('/media/profile', express.static(path.join(__dirname, 'images', 'profile_image')));
 //
 //
 //app.use(videoRouter);
@@ -175,17 +175,17 @@ app.use(authorisationRouter);
 
 //
 app.use(infoUserRouter);
-//app.use(portfolioRouter);
-//app.use(pageRouter);
+app.use(portfolioRouter);
+app.use(pageRouter);
 app.use(collectionRouter);
-//app.use(limitSizeRouter);
+app.use(limitSizeRouter);
 //app.use(orderRouter);
-//app.use(contactRouter);
+app.use(contactRouter);
 //app.use(clientRouter);
-//app.use(sitemapRouter);
-//app.use(articleRouter);
-//app.use(analyticsRouter);
-//app.use(newsletterRouter);
+app.use(sitemapRouter);
+app.use(articleRouter);
+app.use(analyticsRouter);
+app.use(newsletterRouter);
 //app.use(updateCacheRouter);
 //app.use(generationStaticRouter);
 

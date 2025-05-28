@@ -23,7 +23,7 @@ const fetchData = async (url, params) => {
         });
         return response.data;
     } catch (error) {
-        console.error(`Erreur lors de l'appel à l'API ${url}:`, error);
+        //console.error(`Erreur lors de l'appel à l'API ${url}:`, error);
         throw error;
     }
 };
@@ -41,10 +41,10 @@ router.get('/getArticle', async (req, res) => {
 
         for (const blog of blogs) {
             try {
-                const blogText = await fetchData(`${apiUrl}/api/sendBlogText`, { id_data: blog.id_page_blog });
-                const blogImage = await fetchData(`${apiUrl}/api/sendBlogInfoImage`, { id_data: blog.id_page_blog });
-                const blogMultiReference = await fetchData(`${apiUrl}/api/sendMultiReference`, { id_data: blog.id_page_blog });
-                const auteur = await fetchData(`${apiUrl}/api/sendBlogAuteur`, { id_data: blog.id_blog });
+                const blogText = await fetchData(`${apiUrl}/api/sendBlogText`, { id_data: blog.id });
+                const blogImage = await fetchData(`${apiUrl}/api/sendBlogInfoImage`, { id_data: blog.id });
+                const blogMultiReference = await fetchData(`${apiUrl}/api/sendMultiReference`, { id_data: blog.id });
+                const auteur = await fetchData(`${apiUrl}/api/sendBlogAuteur`, { id_data: blog.collection_id });
 
                 let blogCategoryName = { blog: [{ page_blog_name: 'Auteur non trouvé' }] };
 
@@ -52,20 +52,20 @@ router.get('/getArticle', async (req, res) => {
                     blogCategoryName = await fetchData(`${apiUrl}/api/sendBlogInfo`, { id_data: blogMultiReference.references[0].value });
                 }
 
-                const date = blog.page_blog_publish_date;
+                const date = blog.collection_element_publish_date;
                 const resume = blogText.text?.find(item => process.env.idResumeArticle.includes(item.id_config)) || { text: 'Résumé non trouvé' };
                 const image = blogImage.images?.find(item => process.env.idMainImageArticle.includes(item.id_config)) || { url: 'Image non trouvée' };
 
                 tab.push({
-                    name: blog.page_blog_name,
-                    slug: blog.page_blog_slug,
+                    name: blog.collection_element_name,
+                    slug: blog.collection_element_slug,
                     resume: resume,
                     imageUrl: image,
-                    id: blog.id_page_blog,
+                    id: blog.id,
                     date: date,
                     auteurName: auteur.author.username,
                     auteurPhoto: auteur.author.src_profile_image,
-                    categorie: blogCategoryName.blog[0]?.page_blog_name || 'Categorie non trouvée',
+                    categorie: blogCategoryName.blog[0]?.collection_element_name || 'Categorie non trouvée',
                 });
             } catch (error) {
                 console.error(`Erreur lors de la récupération des informations pour id_page_blog ${blog.id_page_blog}:`, error);
@@ -91,22 +91,22 @@ router.get('/getUpdate', async (req, res) => {
 
         for (const blog of blogs) {
             try {
-                const blogMultiReference = await fetchData(`${apiUrl}/api/sendMultiReference`, { id_data: blog.id_page_blog });
+                const blogMultiReference = await fetchData(`${apiUrl}/api/sendMultiReference`, { id_data: blog.id });
 
-                let blogCategoryName = { blog: [{ page_blog_name: 'Auteur non trouvé' }] };
+                let blogCategoryName = { blog: [{ page_blog_name: 'Categorie non trouvé' }] };
 
                 if (blogMultiReference.references) {
                     blogCategoryName = await fetchData(`${apiUrl}/api/sendBlogInfo`, { id_data: blogMultiReference.references[0].value });
                 }
 
-                const date = blog.page_blog_publish_date;
+                const date = blog.collection_element_publish_date;
 
                 tab.push({
-                    name: blog.page_blog_name,
-                    slug: blog.page_blog_slug,
-                    id: blog.id_page_blog,
+                    name: blog.collection_element_name,
+                    slug: blog.collection_element_slug,
+                    id: blog.id,
                     date: date,
-                    categorie: blogCategoryName.blog[0]?.page_blog_name || 'Categorie non trouvée'
+                    categorie: blogCategoryName.blog[0]?.collection_element_name || 'Categorie non trouvée'
                 });
             } catch (error) {
                 console.error(`Erreur lors de la récupération des informations pour id_page_blog ${blog.id_page_blog}:`, error);
@@ -128,11 +128,11 @@ router.get('/getArticleTemplate', async (req, res) => {
 
         for (const blog of blogs) {
             try {
-                const blogText = await fetchData(`${apiUrl}/api/sendBlogText`, { id_data: blog.id_page_blog });
-                const blogImage = await fetchData(`${apiUrl}/api/sendBlogInfoImage`, { id_data: blog.id_page_blog });
-                const blogMultiReference = await fetchData(`${apiUrl}/api/sendMultiReference`, { id_data: blog.id_page_blog });
-                const auteur = await fetchData(`${apiUrl}/api/sendBlogAuteur`, { id_data: blog.id_blog });
-                const blogRichText = await fetchData(`${apiUrl}/api/sendBlogRichText`, { id_data: blog.id_page_blog });
+                const blogText = await fetchData(`${apiUrl}/api/sendBlogText`, { id_data: blog.id });
+                const blogImage = await fetchData(`${apiUrl}/api/sendBlogInfoImage`, { id_data: blog.id });
+                const blogMultiReference = await fetchData(`${apiUrl}/api/sendMultiReference`, { id_data: blog.id });
+                const auteur = await fetchData(`${apiUrl}/api/sendBlogAuteur`, { id_data: blog.collection_id });
+                const blogRichText = await fetchData(`${apiUrl}/api/sendBlogRichText`, { id_data: blog.id });
 
                 let blogCategoryName = { blog: [{ page_blog_name: 'Auteur non trouvé' }] };
 
@@ -140,25 +140,25 @@ router.get('/getArticleTemplate', async (req, res) => {
                     blogCategoryName = await fetchData(`${apiUrl}/api/sendBlogInfo`, { id_data: blogMultiReference.references[0].value });
                 }
 
-                const date = blog.page_blog_publish_date;
+                const date = blog.collection_element_publish_date;
                 const resume = blogText.text?.find(item => process.env.idResumeArticle.includes(item.id_config)) || { text: 'Résumé non trouvé' };
                 const image = blogImage.images?.find(item => process.env.idMainImageArticle.includes(item.id_config)) || { url: 'Image non trouvée' };
                 const contenue = blogRichText.richText?.find(item => process.env.idContenueArticle.includes(item.id_config)) || { text: 'Contenue non trouvé' };
 
                 tab.push({
-                    name: blog.page_blog_name,
-                    slug: blog.page_blog_slug,
+                    name: blog.collection_element_name,
+                    slug: blog.collection_element_slug,
                     resume: resume,
                     imageUrl: image,
-                    id: blog.id_page_blog,
+                    id: blog.id,
                     date: date,
                     auteurName: auteur.author.username,
                     auteurPhoto: auteur.author.src_profile_image,
-                    categorie: blogCategoryName.blog[0]?.page_blog_name || 'Categorie non trouvée',
+                    categorie: blogCategoryName.blog[0]?.collection_element_name || 'Categorie non trouvée',
                     contenue: contenue.text_html
                 });
             } catch (error) {
-                console.error(`Erreur lors de la récupération des informations pour id_page_blog ${blog.id_page_blog}:`, error);
+                //console.error(`Erreur lors de la récupération des informations pour id_page_blog ${blog.id_page_blog}:`, error);
             }
         }
         res.status(200).json(tab);
@@ -177,20 +177,20 @@ router.get('/getUpdateTemplate', async (req, res) => {
 
         for (const blog of blogs) {
             try {
-                const blogRichText = await fetchData(`${apiUrl}/api/sendBlogRichText`, { id_data: blog.id_page_blog });
+                const blogRichText = await fetchData(`${apiUrl}/api/sendBlogRichText`, { id_data: blog.id });
 
-                const date = blog.page_blog_publish_date;
+                const date = blog.collection_element_publish_date;
                 const contenue = blogRichText.richText?.find(item => process.env.idContenueUpdate.includes(item.id_config)) || { text: 'Contenue non trouvé' };
 
                 tab.push({
-                    name: blog.page_blog_name,
-                    slug: blog.page_blog_slug,
+                    name: blog.collection_element_name,
+                    slug: blog.collection_element_slug,
                     id: blog.id_page_blog,
                     date: date,
                     contenue: contenue.text_html
                 });
             } catch (error) {
-                console.error(`Erreur lors de la récupération des informations pour id_page_blog ${blog.id_page_blog}:`, error);
+                //console.error(`Erreur lors de la récupération des informations pour id_page_blog ${blog.id_page_blog}:`, error);
             }
         }
         res.status(200).json(tab);

@@ -22,13 +22,10 @@ const ContactMessage = () => {
     const { id } = useParams();
 
     const token = Cookies.get('token');
-    const decodedToken = jwtDecode(token);
 
     useEffect(() => {        
             Axios.get(`${apiUrl}/getMessageDetail`, {
-
                 params: {
-                    idUser: decodedToken.idUser,
                     idMessage: id,
                 },
                 headers: {

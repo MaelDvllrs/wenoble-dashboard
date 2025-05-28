@@ -497,7 +497,9 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
   useEffect(() => {
     if (dataValue && Object.keys(dataValue).length > 0 && type === 'richText') {
       if (dataValue.text_json) {
-        const contentFromJSON = JSON.parse(dataValue.text_json);
+        const contentFromJSON = typeof dataValue.text_json === 'string'
+          ? JSON.parse(dataValue.text_json)
+          : dataValue.text_json;
         const contentState = convertFromRaw(contentFromJSON);
         const newEditorState = EditorState.createWithContent(contentState, blockDecorator);
         setEditorState(newEditorState);

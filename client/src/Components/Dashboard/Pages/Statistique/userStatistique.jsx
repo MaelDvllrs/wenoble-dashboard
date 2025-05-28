@@ -240,6 +240,10 @@ export const UserStatistique = () => {
                 "& .MuiChartsAxis-tick":{
                   stroke:"none !important", 
                 },
+
+                "& .MuiHighlightElement-root":{
+                  transition: "transform 0.1s ease-in-out",
+                },
               }}
             >
 

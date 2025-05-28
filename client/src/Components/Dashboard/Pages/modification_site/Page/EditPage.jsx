@@ -94,6 +94,8 @@ const EditPage = () => {
 
 
 
+
+
     useEffect(() => {
         let allData = []; 
         const fetchData = async () => {
@@ -190,6 +192,7 @@ const EditPage = () => {
             setDecodePage(decodedPageInfo);
         }
     }, [InfoPage]);
+
 
 
 
@@ -323,7 +326,7 @@ const EditPage = () => {
                                             onChange={handlePageDataChange} 
                                             dataValue={correspondingData || {}}
                                             imagefunction={false}
-                                            imageDirectory={"/media/page/"}
+                                            imageDirectory={"https://oeigawgmmhrlpjpgicww.supabase.co/storage/v1/object/public/page-image/"}
                                         />
                                     </div>
                                 );

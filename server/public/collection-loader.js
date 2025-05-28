@@ -1,7 +1,8 @@
 (async function () {
-    const apiUrl = "https://api-wenoble.wenoble.fr";
+    const apiUrl = "http://localhost:3002"; // Remplacez par l'URL de votre API
     const scriptTag = document.currentScript;
     const userKey = scriptTag.getAttribute("data-user-id");
+
 
     
 
@@ -59,11 +60,14 @@
             return;
         }
 
+
+
         try {
             const encodedData = el.getAttribute("wn-collection-wrapper");
             const decodedData = decodeBase64(encodedData);
 
             const { blogId, limit, order, colone, joinTable, config } = decodedData;
+            console.log("Données décodées :", decodedData);
 
             if (!blogId) {
                 console.error("Blog ID manquant !");
@@ -117,13 +121,13 @@
                     
                     // Ajout de l'attribut wn-collection-element à chaque élément cloné
                     clone.setAttribute("wn-collection-element", "true");
-
+                    console.log("Clonage de l'élément pour le blog :", blog);
                     const response = await fetch(`${apiUrl}/api/sendBlogContent`, {
                         method: "GET",
                         headers: {
                             'api_key': userKey,
-                            'id_blog': blog.id_blog,
-                            'id_blog_page': blog.id_page_blog,
+                            'id_blog': blog.collection_id,
+                            'id_blog_page': blog.id,
                         }
                     });
 
@@ -138,12 +142,12 @@
                 clone.querySelectorAll("[wn-title], [wn-link], [wn-id], [wn-for], [wn-date-published], [wn-image], [wn-richtext], [wn-text], [wn-gallery], [wn-gallery-index],[wn-gallery-modal], [wn-video], [wn-multiReference-wrapper]").forEach(async el => {
                     
                     if (el.hasAttribute("wn-title")) {
-                        el.textContent = blog.page_blog_name;
+                        el.textContent = blog.collection_element_name;
                     }
 
                     if (el.hasAttribute("wn-link")) {
                         const prelinkAttr = el.getAttribute("wn-link");
-                        const linkData = blog.page_blog_slug;
+                        const linkData = blog.collection_element_slug;
                         
                         if (linkData) {
                             // Vérifier si l'attribut contient une virgule (format: "normal,webflow")
@@ -176,18 +180,18 @@
                     if (el.hasAttribute("wn-id")) {
                         const key = el.getAttribute("wn-id");
                         if(key) {
-                            el.id = `${key}_${blog.id_page_blog}`
+                            el.id = `${key}_${blog.id}`
                         } else {
-                            el.id = `${blog.id_page_blog}`;
+                            el.id = `${blog.id}`;
                         }
                     }
         
                     if (el.hasAttribute("wn-for")) {
                         const key = el.getAttribute("wn-for");
                         if(key) {
-                            el.htmlFor = `${key}_${blog.id_page_blog}`
+                            el.htmlFor = `${key}_${blog.id}`
                         } else {
-                            el.htmlFor = `${blog.id_page_blog}`;
+                            el.htmlFor = `${blog.id}`;
                         }
                     }
         
@@ -209,10 +213,12 @@
                     
                     if (el.hasAttribute("wn-image")) {
                         const key = el.getAttribute("wn-image");
+                        console.log("Key pour l'image :", key);
+                        console.log("Données de l'image :", data.content.image);
                         const imageData = data.content.image.find(img => img.id_config == key);
                         if (imageData) {
                             if (imageData.src_image) {
-                                el.src = `${apiUrl}/media/blog/${imageData.src_image}`;
+                                el.src = `${imageData.src_image}`;
                                 el.alt = imageData.alt_image;
                             }
                         } else {
@@ -222,6 +228,7 @@
 
                     if (el.hasAttribute("wn-text")) {
                         const key = el.getAttribute("wn-text");
+                        
                         const textData = data.content.text.find(text => text.id_config == key);
                         if (textData) {
                             el.textContent = textData.text;

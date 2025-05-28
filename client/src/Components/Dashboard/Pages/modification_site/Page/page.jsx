@@ -7,6 +7,7 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import '../Portfolio/portfolio.css';
 import config from "../../../../../config";
 import { useTheme } from '@mui/material/styles';
+import { de } from "date-fns/locale";
 
 
 const Page = () => {
@@ -48,14 +49,16 @@ const Page = () => {
         }
     }, [Infopage]);
 
-
+    console.log(decodedPage);
 
     useEffect(() => {
         if(Infopage != null){
+            console.log(Infopage);
             const decoded = jwtDecode(Infopage);
             setDecodedPage(decoded);
             if(decoded && decoded.page.length > 0 && !initialNavigationDone) {
-                navigate('/dashboard/modification/page/' + decoded.page[0].id_page);
+                
+                navigate('/dashboard/modification/page/' + decoded.page[0].id);
                 setInitialNavigationDone(true);
             }
         }
@@ -70,7 +73,7 @@ const Page = () => {
             <div className="dashboard_case_empty" style={{backgroundColor : theme.palette.primary.secondary, borderColor : theme.palette.primary.third}}>
                 <div className="portfolio_onglet_box">
                     {decodedPage && decodedPage.page.map((pageItem) => (
-                        <NavLink to={'/dashboard/modification/page/' + pageItem.id_page} className={({ isActive }) => (isActive ? 'page_ongletActive' : 'portfolio_onglet')} key={pageItem.id_page}>
+                        <NavLink to={'/dashboard/modification/page/' + pageItem.id} className={({ isActive }) => (isActive ? 'page_ongletActive' : 'portfolio_onglet')} key={pageItem.id}>
                             <p style={{color: theme.palette.text.primary}}>{pageItem.page_name}</p>
                         </NavLink>
                     ))}

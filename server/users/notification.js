@@ -1,5 +1,6 @@
 const express = require('express');
-const db = require('../db'); // Assurez-vous que le chemin est correct
+const { supabaseServer } = require('../supabase');
+const { authenticateToken } = require('../middleware/authToken');
 const cors = require('cors');
 const socketIo = require('socket.io');
 const http = require('http');
@@ -28,52 +29,68 @@ notificationRouter.post('/createNotification', async (req, res) => {
     const sentType = req.body.Type;
     const sentMessage = req.body.Message;
     const sentIdElement = req.body.IdElement;
-
-  
     const date = new Date();
-  
-    const SQL = 'INSERT INTO notifications (id_user, type, message, id_element, date) VALUES ?';
-    const Values = sentIdUsers.map(idUser => [idUser, sentType, sentMessage, sentIdElement, date]);
-  
-    db.query(SQL, [Values], (err, results) => {
-      if (err) {
-        res.send({ error: err });
-      } else {
-        sentIdUsers.forEach(idUser => {
-          io.to(idUser).emit('notification', { message: sentMessage, type: sentType, date: date });
-        });
-  
-        res.send({ message: 'Notifications created' });
-      }
-    });
-  });
-
-notificationRouter.get('/getNotifications', (req, res) => {
-    const sentIdUser = req.query.userId;
-    const SQL = 'SELECT id_notif, type, message, id_element, date, is_read FROM notifications WHERE id_user = ? ORDER BY date DESC';
-    const Values = [sentIdUser];
-
-    db.query(SQL, Values, (err, results) => {
-        if (err) {
-            res.send({ error: err });
-        } else {
-            res.send(results);
+    try {
+        // Préparer les notifications à insérer
+        const notifications = sentIdUsers.map(user_id => ({
+            user_id,
+            type: sentType,
+            message: sentMessage,
+            id_element: sentIdElement,
+            date
+        }));
+        // Insertion dans Supabase
+        const { error } = await supabaseServer
+            .from('notifications')
+            .insert(notifications);
+        if (error) {
+            return res.send({ error });
         }
-    });
+        // Émettre la notification via socket à chaque utilisateur
+        sentIdUsers.forEach(user_id => {
+            io.to(user_id).emit('notification', { message: sentMessage, type: sentType, date: date });
+        });
+        res.send({ message: 'Notifications created' });
+    } catch (err) {
+      console.error('Error creating notifications:', err);
+        res.send({ error: err.message });
+    }
 });
 
-
-notificationRouter.post('/readNotification', (req, res) => {
-    const sentIdNotif = req.body.IdNotif;
-    const SQL = 'UPDATE notifications SET is_read = 1 WHERE id_notif = ?';
-    const Values = [sentIdNotif];
-    db.query(SQL, Values, (err, results) => {
-        if (err) {
-            res.send({ error: err });
-        } else {
-            res.send({ message: 'Notification read' });
+notificationRouter.get('/getNotifications',authenticateToken, async (req, res) => {
+    const sentIdUser = req.user.idUser;
+    if (!sentIdUser) {
+        return res.status(400).send({ error: 'Le paramètre id_user est requis.' });
+    }
+    try {
+        const { data, error } = await supabaseServer
+            .from('notifications')
+            .select('id_notif, type, message, id_element, date, is_read')
+            .eq('user_id', sentIdUser)
+            .order('date', { ascending: false });
+        if (error) {
+            return res.send({ error });
         }
-    });
+        res.send(data);
+    } catch (err) {
+        res.send({ error: err.message });
+    }
+});
+
+notificationRouter.post('/readNotification', async (req, res) => {
+    const sentIdNotif = req.body.IdNotif;
+    try {
+        const { error } = await supabaseServer
+            .from('notifications')
+            .update({ is_read: true })
+            .eq('id_notif', sentIdNotif);
+        if (error) {
+            return res.send({ error });
+        }
+        res.send({ message: 'Notification read' });
+    } catch (err) {
+        res.send({ error: err.message });
+    }
 });
 
 io.on('connection', (socket) => {

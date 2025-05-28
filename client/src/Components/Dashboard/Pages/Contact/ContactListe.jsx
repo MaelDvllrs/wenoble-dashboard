@@ -52,13 +52,10 @@ const ContactList = () => {
             const decodedUser = jwtDecode(user);
     
             Axios.get(`${apiUrl}/getMessage`, {
-                params: {
-                    idUser: decodedUser.idUser,
-                },
                 headers: {
-                  'Authorization': `Bearer ${token}`,
-                  'Content-Type': 'application/json'
-                }
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'multipart/form-data'
+            }
             }).then((response) => {
                 setInfoListeMessage(jwtDecode(response.data));
                 setLoadingMessage(false);

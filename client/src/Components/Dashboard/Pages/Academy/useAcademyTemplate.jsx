@@ -20,8 +20,8 @@ export const useAcademyTemplate = (slug) => {
           }
         });
 
-        const blogIdPage = blogInfo.blog?.[0]?.id_page_blog;
-        const blogId = blogInfo.blog?.[0]?.id_blog;
+        const blogIdPage = blogInfo.blog?.[0]?.id;
+        const blogId = blogInfo.blog?.[0]?.collection_id;
 
         if (!blogIdPage || !blogId) {
           throw new Error("ID blog non trouvé");
@@ -34,8 +34,8 @@ export const useAcademyTemplate = (slug) => {
             'id_blog_page': blogIdPage,
           }
         });
-
         setAcademyData({
+          
           info: blogInfo.blog[0],
           content: blogContent.content
         });
@@ -49,6 +49,7 @@ export const useAcademyTemplate = (slug) => {
 
     fetchData();
   }, [slug]);
+
 
   return { academyData, loading, error };
 };
