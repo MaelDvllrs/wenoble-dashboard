@@ -99,9 +99,14 @@ function initContactForm(apiEndpoint, apiKey, formElement, submitButtonSelector 
             
             formFields.forEach(field => {
                 const fieldName = field.getAttribute('wn-element-form');
-                const fieldValue = field.value || '';
+                let fieldValue;
+                if (field.type === 'checkbox') {
+                    fieldValue = field.checked; // true si coché, false sinon
+                } else {
+                    fieldValue = field.value || '';
+                }
                 formData[fieldName] = fieldValue;
-                
+            
                 // Identifier l'email de l'expéditeur
                 if (fieldName.toLowerCase() === 'email') {
                     senderEmail = fieldValue;
