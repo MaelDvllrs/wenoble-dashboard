@@ -1,6 +1,7 @@
 (async function () {
     const apiUrl = "http://localhost:3002";
     const urlVideoBucket = "https://oeigawgmmhrlpjpgicww.supabase.co/storage/v1/object/public/collection-video//" // Remplacez par l'URL de votre API
+    const urlGalleryBucket = "https://oeigawgmmhrlpjpgicww.supabase.co/storage/v1/object/public/collection-gallery//"; // Remplacez par l'URL de votre API
     const scriptTag = document.currentScript;
     const blogId = scriptTag.getAttribute("data-blog-id");
     const userKey = scriptTag.getAttribute("data-user-id");
@@ -91,6 +92,35 @@
                 }
             });
             return options;
+        }
+
+
+        function setupLazyLoading() {
+            if ('IntersectionObserver' in window) {
+                const lazyImages = document.querySelectorAll('img.lazyload-img');
+                const observer = new IntersectionObserver((entries, obs) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const img = entry.target;
+                            if (img.dataset.src) {
+                                img.src = img.dataset.src;
+                                img.removeAttribute('data-src');
+                            }
+                            obs.unobserve(img);
+                        }
+                    });
+                });
+                lazyImages.forEach(img => observer.observe(img));
+            } else {
+                // Fallback pour les navigateurs sans IntersectionObserver
+                const lazyImages = document.querySelectorAll('img.lazyload-img');
+                lazyImages.forEach(img => {
+                    if (img.dataset.src) {
+                        img.src = img.dataset.src;
+                        img.removeAttribute('data-src');
+                    }
+                });
+            }
         }
         
         document.title = info.blog[0].collection_element_name;
@@ -245,17 +275,19 @@
                 const galleryData = data.content.gallery.find(gallery => gallery.id_config == idConfig);
                 if (galleryData) {
                     const galleryItems = JSON.parse(galleryData.gallery);
+
                     
+                    console.log("Gallery Items:", galleryItems);
                     // Création des images avec lazy loading
                     galleryItems.forEach(img => {
                         const imgElement = document.createElement('img');
                         
                         // Utiliser loading="lazy" pour le chargement paresseux natif
                         imgElement.loading = "lazy";
-                        console.log(img);
+                        
                         
                         // Stocker l'URL réelle dans data-src
-                        imgElement.dataset.src = `${apiUrl}/media/blogGallery/${img.src_photo}`;
+                        imgElement.dataset.src = `${urlGalleryBucket}${img.src_photo}`;
                         
                         // Mettre une image de remplacement très légère
                         imgElement.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E";
@@ -290,7 +322,7 @@
                     const galleryItems = JSON.parse(galleryData.gallery);
                     const img = galleryItems[indexPhoto];
                     if (img) {
-                        el.src = `${apiUrl}/media/blogGallery/${img.src_photo}`;
+                        el.src = `${urlGalleryBucket}${img.src_photo}`;
                         el.alt = img.alt;
                     }
                 }
@@ -305,7 +337,7 @@
                         const slideDiv = document.createElement("div");
                         slideDiv.classList.add("slides");
                         const imgElement = document.createElement("img");
-                        imgElement.src = `${apiUrl}/media/blogGallery/${img.src_photo}`;
+                        imgElement.src = `${urlGalleryBucket}${img.src_photo}`;
                         imgElement.alt = img.alt;
                         imgElement.classList.add("slide-image");
                         slideDiv.appendChild(imgElement);
@@ -317,7 +349,7 @@
             if (el.hasAttribute("wn-multiReference-wrapper")) {
                 const key = el.getAttribute("wn-multiReference-wrapper");
                 const multiReferenceInfos = data.content.multiReference.filter(multiReference => multiReference.id_config == key);
-                
+                console.log("multiReferenceInfos:", data.content.multiReference);
 
                 const template = el.querySelector("[wn-multiReference-box]");
                 if (!template) {
@@ -326,16 +358,18 @@
                 }
                 
                 for (const multiReferenceInfo of multiReferenceInfos) {
+                    console.log("multiReferenceInfo:", multiReferenceInfo);
                     const referenceContent = await fetch(`${apiUrl}/api/sendBlogContent`, {
                         method: "GET",
                         headers: {
                             'api_key': userKey,
-                            'id_blog': blogId,
+                            'id_blog': multiReferenceInfo.collection_id,
                             'id_blog_page': multiReferenceInfo.value,
                         }
                     });
 
                     const refContent = await referenceContent.json();
+                    console.log("refContent:", refContent);
                     if (refContent) {
                         const clone = template.cloneNode(true);
                         clone.removeAttribute("wn-multiReference-box");
@@ -347,9 +381,11 @@
                             }
                             if (el.hasAttribute("wn-multiReference-image")) {
                                 const key = el.getAttribute("wn-multiReference-image");
+
                                 const imageData = refContent.content.image.find(img => img.id_config == key);
+                                console.log("refContent:", refContent);
                                 if (imageData) {
-                                    el.src = `${apiUrl}/media/blog/${imageData.src_image}`;
+                                    el.src = imageData.url;
                                     el.alt = imageData.alt_image;
                                 }
                             }

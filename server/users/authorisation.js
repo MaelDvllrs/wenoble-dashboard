@@ -15,6 +15,8 @@ router.use(cors())
 router.use(express.json());
 
 router.post('/getAuthorisation', authenticateToken, async (req, res) => {
+    const token = req.headers['authorization']?.split(' ')[1];
+    const supabase = supabaseServer(token);   
     const { type } = req.body;
     const userId = req.user.idUser;
 
@@ -24,7 +26,7 @@ router.post('/getAuthorisation', authenticateToken, async (req, res) => {
 
     try {
         // Vérifier d'abord si l'utilisateur est admin
-        const { data: userData } = await supabaseServer
+        const { data: userData } = await supabase
             .from('users')
             .select('is_admin')
             .eq('id', userId)
@@ -39,7 +41,7 @@ router.post('/getAuthorisation', authenticateToken, async (req, res) => {
         }
 
         // Pour les non-admins, vérifier les autorisations spécifiques
-        const { data, error } = await supabaseServer
+        const { data, error } = await supabase
             .from('users_authorisation')
             .select(type)
             .eq('user_id', userId)

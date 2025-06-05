@@ -25,25 +25,34 @@ const secretKey = process.env.SECRET_KEY;
 // Route avec authentification
 router.get('/getUserInfoBasic', authenticateToken, async (req, res) => {
   try {
+    const token = req.headers['authorization']?.split(' ')[1];
+
+    console.log('Token:', token);
     const userId = req.user.idUser;
+    const supabase = supabaseServer(token);
     
     // 1. Récupérer les informations de base de l'utilisateur depuis auth.users
-    const { data: authUser, error: authError } = await supabaseServer.auth
-      .admin.getUserById(userId);
+    const { data: authUser, error: authError } = await supabase.auth.getUser(token);
     
     if (authError) throw authError;
-    
+
+    console.log('authUser:', authUser);
+
+    console.log('userId:', userId);
     // 2. Récupérer les informations complémentaires depuis public.users
-    const { data: userData, error: userError } = await supabaseServer
+    const { data: userData, error: userError } = await supabase
       .from('users')
       .select('username, website, api_key')
       .eq('id', userId)
       .single();
+
+  
     
     if (userError) throw userError;
+
     
     // 3. Récupérer l'image de profil (si stockée dans une table séparée)
-    const { data: imageData, error: imageError } = await supabaseServer
+    const { data: imageData, error: imageError } = await supabase
       .from('profile_images')
       .select('src_profile_image')
       .eq('user_id', userId)

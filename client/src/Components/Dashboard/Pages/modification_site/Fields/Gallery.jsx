@@ -21,6 +21,7 @@ const GalleryUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fie
     const [active, setActive] = useState(0);
     const [isLoading, setIsLoading] = useState(false); // Loading state
     const fileTypes = ["JPG", "PNG"];
+    const urlBucketCollectionGallery = config.urlBucketCollectionGallery;
     const apiUrl = config.apiUrl; 
 
     const handleGalleryChange = async (file, addImage = true) => {
@@ -90,7 +91,7 @@ const GalleryUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fie
             name: image.name,
             size: image.size,
             src: image.src_photo,
-            url: 'https://oeigawgmmhrlpjpgicww.supabase.co/storage/v1/object/public/collection-gallery/' + image.src_photo,
+            url: urlBucketCollectionGallery + image.src_photo,
             type: 'gallery',
             create: true
           };

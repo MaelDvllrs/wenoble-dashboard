@@ -100,6 +100,7 @@ const EditElementCollection = () => {
     });
 
     const apiUrl = config.apiUrl;
+    const urlBucketCollectionImage = config.urlBucketCollectionImage;
     const { idCollectionElement } = useParams();
     const { idCollection } = useParams();
 
@@ -805,7 +806,7 @@ const EditElementCollection = () => {
                                         dataValue={correspondingData || {}}
                                         id_collection_ref={blogItem.collection_id_ref}
                                         imagefunction={true}
-                                        imageDirectory={"https://oeigawgmmhrlpjpgicww.supabase.co/storage/v1/object/public/collection-images/"}
+                                        imageDirectory={urlBucketCollectionImage}
                                         multiline_text={blogItem.multiline_text}
                                     />
                                 </div>

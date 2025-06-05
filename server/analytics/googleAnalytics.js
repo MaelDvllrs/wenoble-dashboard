@@ -78,12 +78,14 @@ const getDateRange = (period) => {
 
 
 router.get('/getUserAnalytics',authenticateToken, async (req, res) => {
+  const token = req.headers['authorization']?.split(' ')[1];
+  const supabase = supabaseServer(token);
   const id_user = req.user.idUser
   const period = req.query.period
   const typeUser = req.query.typeUser
 
   // Supabase : récupération analytic_id
-  const { data, error } = await supabaseServer
+  const { data, error } = await supabase
     .from('users')
     .select('analytic_id')
     .eq('id', id_user)
@@ -142,10 +144,12 @@ router.get('/getUserAnalytics',authenticateToken, async (req, res) => {
 });
 
 router.get('/getEventAnalytics',authenticateToken, async (req, res) => {
+  const token = req.headers['authorization']?.split(' ')[1];
+  const supabase = supabaseServer(token);
   const id_user = req.user.idUser
   const period = req.query.period
   // Supabase : récupération analytic_id
-  const { data, error } = await supabaseServer
+  const { data, error } = await supabase
     .from('users')
     .select('analytic_id')
     .eq('id', id_user)
@@ -181,13 +185,15 @@ router.get('/getEventAnalytics',authenticateToken, async (req, res) => {
 });
 
 router.get('/getLocationAnalytics',authenticateToken, async (req, res) => {
+  const token = req.headers['authorization']?.split(' ')[1];
+  const supabase = supabaseServer(token);  
   const id_user = req.user.idUser
   const period = req.query.period
   const typeLocation = req.query.typeLocation 
   const locationID = req.query.locationID
   const typeUser = req.query.typeUser
   // Supabase : récupération analytic_id
-  const { data, error } = await supabaseServer
+  const { data, error } = await supabase
     .from('users')
     .select('analytic_id')
     .eq('id', id_user)
@@ -223,12 +229,14 @@ router.get('/getLocationAnalytics',authenticateToken, async (req, res) => {
 });
 
 router.get('/getPlateformCategorieAnalytics',authenticateToken, async (req, res) => {
+  const token = req.headers['authorization']?.split(' ')[1];
+  const supabase = supabaseServer(token);
   const id_user = req.user.idUser
   const period = req.query.period
   const typePlatform = req.query.typePlatform
   const typeUser = req.query.typeUser
   // Supabase : récupération analytic_id
-  const { data, error } = await supabaseServer
+  const { data, error } = await supabase
     .from('users')
     .select('analytic_id')
     .eq('id', id_user)
@@ -263,12 +271,14 @@ router.get('/getPlateformCategorieAnalytics',authenticateToken, async (req, res)
 });
 
 router.get('/getPageAnalytics',authenticateToken, async (req, res) => {
+  const token = req.headers['authorization']?.split(' ')[1];
+  const supabase = supabaseServer(token);
   const id_user = req.user.idUser
   const period = req.query.period
   const typePage = req.query.typePage 
   const typeUser = req.query.typeUser
   // Supabase : récupération analytic_id
-  const { data, error } = await supabaseServer
+  const { data, error } = await supabase
     .from('users')
     .select('analytic_id')
     .eq('id', id_user)

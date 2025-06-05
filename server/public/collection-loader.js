@@ -1,6 +1,8 @@
 (async function () {
     const apiUrl = "http://localhost:3002"; // Remplacez par l'URL de votre API
     const scriptTag = document.currentScript;
+    const urlVideoBucket = "https://oeigawgmmhrlpjpgicww.supabase.co/storage/v1/object/public/collection-video//" // Remplacez par l'URL de votre API
+    const urlGalleryBucket = "https://oeigawgmmhrlpjpgicww.supabase.co/storage/v1/object/public/collection-gallery//";
     const userKey = scriptTag.getAttribute("data-user-id");
 
 
@@ -197,7 +199,7 @@
         
                     if (el.hasAttribute("wn-date-published")) {
                         const format = el.getAttribute("wn-date-published");
-                        const date = new Date(blog.page_blog_publish_date);
+                        const date = new Date(blog.collection_element_publish_date);
                         let options;
         
                         try {
@@ -245,7 +247,7 @@
                         const key = el.getAttribute("wn-video");
                         const videoData = data.content.video.find(img => img.id_config == key);
                         if (videoData) {
-                            el.innerHTML = `<source src="${apiUrl}/streamVideo/${videoData.src_video}">`;
+                            el.innerHTML = `<source src="${urlVideoBucket}${videoData.src_video}">`;
                         }
                     }
 
@@ -254,7 +256,7 @@
                         const galleryData = data.content.gallery.find(gallery => gallery.id_config == key);
                         if (galleryData) {
                             const galleryItems = JSON.parse(galleryData.gallery);
-                            el.innerHTML = galleryItems.map(img => `<img src="${apiUrl}/media/blogGallery/${img.src_photo}" alt="${img.alt}">`).join("");
+                            el.innerHTML = galleryItems.map(img => `<img src="${urlGalleryBucket}${img.src_photo}">`).join("");
                         }
                     }
 
@@ -266,7 +268,7 @@
                             const galleryItems = JSON.parse(galleryData.gallery);
                             const img = galleryItems[indexPhoto];
                             if (img) {
-                                el.src = `${apiUrl}/media/blogGallery/${img.src_photo}`;
+                                el.src = `${urlGalleryBucket}${img.src_photo}`;
                                 el.alt = img.alt;
                             }
                         }
@@ -277,7 +279,7 @@
                         const galleryData = data.content.gallery.find(gallery => gallery.id_config == key);
                         if (galleryData) {
                             const galleryItems = JSON.parse(galleryData.gallery);
-                            el.innerHTML = galleryItems.map(img => `<div class="slides"><img src="${apiUrl}/media/blogGallery/${img.src_photo}" alt="${img.alt}"></div>`).join("");
+                            el.innerHTML = galleryItems.map(img => `<div class="slides"><img src="${urlGalleryBucket}${img.src_photo}"></div>`).join("");
                         }
                     }
 
@@ -308,7 +310,7 @@
                                 method: "GET",
                                 headers: {
                                     'api_key': userKey,
-                                    'id_blog': blogId,
+                                    'id_blog': multiReferenceInfo.collection_id,
                                     'id_blog_page': multiReferenceInfo.value,
                                 }
                             });
@@ -339,7 +341,7 @@
 
                                     if (el.hasAttribute("wn-multiReference-link")) {
                                         const prelinkAttr = el.getAttribute("wn-multiReference-link");
-                                        const linkData = refInfo.blog[0].page_blog_slug;
+                                        const linkData = refInfo.blog[0].collection_element_slug;
                                         
                                         if (linkData) {
                                             // Vérifier si l'attribut contient une virgule (format: "normal,webflow")
@@ -372,7 +374,7 @@
                                         const key = el.getAttribute("wn-multiReference-image");
                                         const imageData = refContent.content.image.find(img => img.id_config == key);
                                         if (imageData) {
-                                            el.src = `${apiUrl}/media/blog/${imageData.src_image}`;
+                                            el.src = imageData.url;
                                             el.alt = imageData.alt_image;
                                         }
                                     }

@@ -35,34 +35,35 @@ const createNotification = async (id, title, dateSend, slug) => {
 
   if (checkIdInArray(id)) {
     try {
-      const SQL = 'SELECT id_user FROM users';
-      db.query(SQL, async (err, results) => {
-        if (err) {
-          console.log("Erreur:", err);
-          return;
-        }
-        const idUsers = results.map(result => result.id_user);
+      // Utilisation de Supabase pour récupérer tous les IDs utilisateurs
+      const { data: users, error } = await supabaseServer
+        .from('users') // ou 'public.users' selon la structure
+        .select('id');
+      if (error) {
+        console.error('Erreur Supabase lors de la récupération des utilisateurs:', error);
+        return;
+      }
+      const idUsers = users.map(user => user.id);
 
-        try {
-          const response = await axios({
-            url: `${serverUrl}/createNotification`,
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            data: {
-              IdUsers: idUsers,
-              Type: 'actu',
-              Date: dateSend,
-              Message: `${title}`,
-              IdElement: slug
-            }
-          });
-          console.log('Notification créée :', response.data);
-        } catch (error) {
-          console.error('Erreur lors de la création de la notification :', error);
-        }
-      });
+      try {
+        const response = await axios({
+          url: `${serverUrl}/createNotification`,
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          data: {
+            IdUsers: idUsers,
+            Type: 'actu',
+            Date: dateSend,
+            Message: `${title}`,
+            IdElement: slug
+          }
+        });
+        console.log('Notification créée :', response.data);
+      } catch (error) {
+        console.error('Erreur lors de la création de la notification :', error);
+      }
     } catch (error) {
       console.error('Erreur lors de la création de la notification :', error);
     }

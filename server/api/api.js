@@ -291,7 +291,6 @@ router.get('/sendBlogContent', apiKeyMiddleware, async (req, res) => {
     const id_blog_page = req.headers.id_blog_page;
     const id_blog = req.headers.id_blog;
 
-
     
     try {
         // Récupérer la config des champs dynamiques
@@ -310,6 +309,8 @@ router.get('/sendBlogContent', apiKeyMiddleware, async (req, res) => {
                         .select('id_config, text')
                         .eq('collection_element_id', id_blog_page)
                         .eq('id_config', field.id);
+
+                    console.log('Text Data:', data);
                     return { type: 'text', data };
                 }
                 case 'richText': {
@@ -361,16 +362,38 @@ router.get('/sendBlogContent', apiKeyMiddleware, async (req, res) => {
                     return { type: 'gallery', data };
                 }
                 case 'multiReference': {
-                    const { data } = await supabaseServer
-                        .from('collection_field_multireference')
-                        .select('id_config, info_ref')
-                        .eq('collection_element_id', id_blog_page)
-                        .eq('id_config', field.id);
-                    const references = (data || []).flatMap(result => {
-                        const parsedRefs = JSON.parse(result.info_ref);
-                        return parsedRefs.map(ref => ({ ...ref, id_config: result.id_config }));
-                    });
-                    return { type: 'multiReference', data: references };
+                   // 1. Récupérer la ligne multireference
+                   const { data } = await supabaseServer
+                       .from('collection_field_multireference')
+                       .select('id_config, info_ref')
+                       .eq('collection_element_id', id_blog_page)
+                       .eq('id_config', field.id)
+                       .maybeSingle();
+
+                   let references = [];
+                   if (data && data.info_ref) {
+                        const parsedRefs = JSON.parse(data.info_ref); // tableau d'objets
+                        // Pour récupérer tous les value :
+                        const values = parsedRefs.map(ref => ref.value);
+                       
+                       
+                       let collection_id = null;
+                       const { data: configData, error: configError } = await supabaseServer
+                           .from('collection_element')
+                           .select('collection_id')
+                           .eq('id', values)
+                           .maybeSingle();
+                       if (!configError && configData) {
+                           collection_id = configData.collection_id;
+                       }
+                   
+                       references = parsedRefs.map(ref => ({
+                           ...ref,
+                           id_config: data.id_config,
+                           collection_id // Ajout du collection_id récupéré
+                       }));
+                   }
+                   return { type: 'multiReference', data: references };
                 }
                 default:
                     return { type: field.tab_field, data: [] };

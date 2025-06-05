@@ -84,6 +84,9 @@ router.post('/login', async (req, res) => {
 router.post('/auth/verify', async (req, res) => {
   const token = req.body.token;
 
+  const supabase = supabaseServer(token);
+
+
 
   if (!token) {
     return res.status(401).json({ success: false, message: 'No token provided' });
@@ -91,6 +94,7 @@ router.post('/auth/verify', async (req, res) => {
 
   // Verify token with Supabase
   const { data, error } = await supabase.auth.getUser(token);
+  
   
   if (error) {
     return res.status(401).json({ success: false, message: 'Invalid token' });

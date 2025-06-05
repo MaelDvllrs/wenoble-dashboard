@@ -11,8 +11,9 @@ const authenticateToken = async (req, res, next) => {
   }
 
   try {
+    const supabase = supabaseServer(token);
     // Vérifier le token avec Supabase
-    const { data, error } = await supabaseServer.auth.getUser(token);
+    const { data, error } = await supabase.auth.getUser(token);
     
     if (error) {
       console.error('Erreur de vérification du token:', error);
