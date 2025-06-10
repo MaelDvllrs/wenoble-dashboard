@@ -1,3 +1,14 @@
+(function() {
+  const styleElement = document.createElement('style');
+  styleElement.textContent = `
+    [wn-error-form]{
+      display: none !important;
+    }
+  `;
+  document.head.appendChild(styleElement);
+})();
+
+
 function initContactForm(apiEndpoint, apiKey, formElement, submitButtonSelector = '#contact_submit_button', triggerButtonSelector = '#contact_button') {
     // Fonction modifiée pour utiliser les éléments frères avec attributs wn-success-form et wn-error-form
     
@@ -218,10 +229,7 @@ function initContactForm(apiEndpoint, apiKey, formElement, submitButtonSelector 
 
 // Auto-initialisation du formulaire lorsque le script est chargé
 document.addEventListener('DOMContentLoaded', () => {
-        document.querySelectorAll('[wn-error-form]').forEach(el => {
-            el.style.setProperty('display', 'none', 'important');
-        });
-        
+
     // Rechercher les formulaires avec l'attribut wn-contact-form
     const contactForms = document.querySelectorAll('[wn-contact-form]');
     

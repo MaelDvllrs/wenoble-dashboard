@@ -1,3 +1,15 @@
+(function() {
+  const styleElement = document.createElement('style');
+  styleElement.textContent = `
+    [wn-error-form]{
+      display: none !important;
+    }
+  `;
+  document.head.appendChild(styleElement);
+})();
+
+
+
 // Newsletter form script that follows the same patterns as contact-form.js
 function initNewsletterForm(apiEndpoint, apiKey, formElement) {
     
@@ -87,9 +99,6 @@ function initNewsletterForm(apiEndpoint, apiKey, formElement) {
 
 // Auto-initialize newsletter forms when the script is loaded
 document.addEventListener('DOMContentLoaded', () => {
-        document.querySelectorAll('[wn-error-form]').forEach(el => {
-            el.style.setProperty('display', 'none', 'important');
-        });
 
 
     // Find all forms with the wn-newsletter-form attribute
