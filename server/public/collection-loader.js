@@ -248,12 +248,25 @@
                         const [idConfig, className] = attrValue.split(',').map(part => part.trim());
                                         
                         const galleryData = data.content.gallery.find(gallery => gallery.id_config == idConfig);
-                        if (galleryData) {
-                            const galleryItems = JSON.parse(galleryData.gallery);
-                            // Ajouter la classe si elle existe
-                            el.innerHTML = galleryItems.map(img => 
-                                `<img src="${apiUrl}/media/blogGallery/${img.src_photo}" alt="${img.alt}"${className ? ` class="${className}"` : ''}>`
-                            ).join("");
+                        if (galleryData && galleryData.gallery) {
+                            try {
+                                const galleryItems = JSON.parse(galleryData.gallery);
+                                if (galleryItems && galleryItems.length > 0) {
+                                    // Ajouter la classe si elle existe
+                                    el.innerHTML = galleryItems.map(img => 
+                                        `<img src="${apiUrl}/media/blogGallery/${img.src_photo}" alt="${img.alt}"${className ? ` class="${className}"` : ''}>`
+                                    ).join("");
+                                } else {
+                                    // Pas d'images dans la galerie
+                                    el.style.display = "none";
+                                }
+                            } catch (e) {
+                                console.error("Erreur de parsing JSON pour la galerie:", e);
+                                el.style.display = "none";
+                            }
+                        } else {
+                            // Pas de données de galerie trouvées
+                            el.style.display = "none";
                         }
                     }
 
