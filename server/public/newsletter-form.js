@@ -87,11 +87,9 @@ function initNewsletterForm(apiEndpoint, apiKey, formElement) {
 
 // Auto-initialize newsletter forms when the script is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('[wn-error-form]').forEach(el => {
             el.style.setProperty('display', 'none', 'important');
         });
-    });
 
 
     // Find all forms with the wn-newsletter-form attribute
