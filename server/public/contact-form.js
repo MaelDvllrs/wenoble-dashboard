@@ -1,10 +1,6 @@
 function initContactForm(apiEndpoint, apiKey, formElement, submitButtonSelector = '#contact_submit_button', triggerButtonSelector = '#contact_button') {
     // Fonction modifiée pour utiliser les éléments frères avec attributs wn-success-form et wn-error-form
-    document.addEventListener('DOMContentLoaded', () => {
-        document.querySelectorAll('[wn-error-form]').forEach(el => {
-            el.style.setProperty('display', 'none', 'important');
-        });
-    });
+    
     
     
     async function sendEmail(emailSender, subject, html) {
@@ -223,6 +219,12 @@ function initContactForm(apiEndpoint, apiKey, formElement, submitButtonSelector 
 // Auto-initialisation du formulaire lorsque le script est chargé
 document.addEventListener('DOMContentLoaded', () => {
     // Rechercher les formulaires avec l'attribut wn-contact-form
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('[wn-error-form]').forEach(el => {
+            el.style.setProperty('display', 'none', 'important');
+        });
+    });
+
     const contactForms = document.querySelectorAll('[wn-contact-form]');
     
     contactForms.forEach(form => {
