@@ -1,5 +1,12 @@
 function initContactForm(apiEndpoint, apiKey, formElement, submitButtonSelector = '#contact_submit_button', triggerButtonSelector = '#contact_button') {
     // Fonction modifiée pour utiliser les éléments frères avec attributs wn-success-form et wn-error-form
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('[wn-error-form]').forEach(el => {
+            el.style.setProperty('display', 'none', 'important');
+        });
+    });
+    
+    
     async function sendEmail(emailSender, subject, html) {
         // Trouver les éléments de succès et d'erreur (frères du formulaire)
         const parentElement = formElement.parentNode;

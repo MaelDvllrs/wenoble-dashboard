@@ -1,5 +1,12 @@
 // Newsletter form script that follows the same patterns as contact-form.js
 function initNewsletterForm(apiEndpoint, apiKey, formElement) {
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('[wn-error-form]').forEach(el => {
+            el.style.setProperty('display', 'none', 'important');
+        });
+    });
+    
+    
     async function subscribeToNewsletter(email) {
         // Find success and error elements (siblings of the form)
         const parentElement = formElement.parentNode;
