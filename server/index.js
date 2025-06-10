@@ -112,12 +112,20 @@ const whitelist =
   'https://salon-marco-d950f4.webflow.io',
 
   'https://kimberley-architecture.webflow.io',
+  'https://kimberleygouno.fr',
+  'https://www.kimberleygouno.fr',
 
   'https://billel-aissa-photography.webflow.io',
+  'https://www.billelaissa.com',
   
   'https://artesia-66566b.webflow.io',
+  'https://laboratoireartesia.fr',
+  'https://www.laboratoireartesia.fr',
 
   'https://oceane-colasseau.webflow.io',
+  'https://occhezvous.fr',
+  'https://www.occhezvous.fr',
+
 
   'https://maison-astucieuse-emma-lamarqu-388c45.webflow.io',
 ];
