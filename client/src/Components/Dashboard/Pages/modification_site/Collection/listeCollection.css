@@ -49,17 +49,16 @@
 
 
 .publish_status{
-    color: #46fea5d4;
-    
+    color: var(--color-green);
     background-color: #22ff991e;
 }
 
 .draft_status{
-    color: #92a6ff;
+    color : var(--color-blue);
     background-color: #1751ff2d;
 }
 
 .pending_status {
-    color: #fffd92;
+    color: var(--color-yellow);
     background-color: #ffe6072d;
 }

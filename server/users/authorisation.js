@@ -6,6 +6,8 @@ const { authenticateToken } = require('../middleware/authToken');
 
 
 
+
+
 require('dotenv').config();
 const secretKey = process.env.SECRET_KEY; 
 
@@ -17,6 +19,7 @@ router.use(express.json());
 router.post('/getAuthorisation', authenticateToken, async (req, res) => {
     const token = req.headers['authorization']?.split(' ')[1];
     const supabase = supabaseServer(token);   
+
     const { type } = req.body;
     const userId = req.user.idUser;
 
@@ -25,6 +28,7 @@ router.post('/getAuthorisation', authenticateToken, async (req, res) => {
     }
 
     try {
+
         // Vérifier d'abord si l'utilisateur est admin
         const { data: userData } = await supabase
             .from('users')
@@ -32,6 +36,7 @@ router.post('/getAuthorisation', authenticateToken, async (req, res) => {
             .eq('id', userId)
             .single();
             
+
         // Les admins ont toutes les autorisations
         if (userData && userData.is_admin) {
             return res.status(200).json({ 

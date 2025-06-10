@@ -75,6 +75,7 @@ const Home = () => {
                     <UpdateLast limit={4}/>
                 </div>
             </div>
+            
         </div>
 
     )

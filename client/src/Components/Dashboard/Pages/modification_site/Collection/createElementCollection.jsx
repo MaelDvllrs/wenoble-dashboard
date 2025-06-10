@@ -373,7 +373,7 @@ const CreateElementCollection = () => {
                 {slugFieldMissed && (   
                     <p className="missed_field_text">Champs obligatoires</p>
                 )}
-                <div className="line_horizontal" style={{backgroundColor: theme.palette.text.secondary}}></div>
+                <div className="line_horizontal" style={{backgroundColor: theme.palette.primary.third}}></div>
                 {DecodeConfigblog.blogConfig && DecodeConfigblog.blogConfig.map((blogItem) => (
                   <div key={blogItem.id} className="blogField_contain">
                     <p className="blogField_name">{blogItem.name_field}</p>

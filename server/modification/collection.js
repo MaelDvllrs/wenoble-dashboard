@@ -74,10 +74,13 @@ const createNotification = async (id, title, dateSend, slug) => {
 
 // Récupérer les collections (blogs) d'un utilisateur
 router.get('/getCollection', authenticateToken, async (req, res) => {
+
   try {
     const userId = req.user.idUser;
-    
-    const { data, error } = await supabaseServer
+    const token = req.headers['authorization']?.split(' ')[1];
+    const supabase = supabaseServer(token);
+
+    const { data, error } = await supabase
       .from('collection')
       .select('id, collection_name')
       .eq('user_id', userId);
@@ -97,9 +100,11 @@ router.get('/getListeCollection', authenticateToken, async (req, res) => {
   try {
     const sentIdBlog = req.query.IdBlog;
     const userId = req.user.idUser;
+    const token = req.headers['authorization']?.split(' ')[1];
+    const supabase = supabaseServer(token);
     
     // Vérifier les droits d'accès
-    const { data: blogData, error: blogError } = await supabaseServer
+    const { data: blogData, error: blogError } = await supabase
       .from('collection')
       .select('user_id')
       .eq('id', sentIdBlog)
@@ -113,7 +118,7 @@ router.get('/getListeCollection', authenticateToken, async (req, res) => {
     }
     
     // Récupérer la liste des pages
-    const { data, error } = await supabaseServer
+    const { data, error } = await supabase
       .from('collection_element')
       .select('id, collection_element_name, collection_element_status, collection_element_create_date, collection_element_update_date, collection_element_publish_date')
       .eq('collection_id', sentIdBlog)
@@ -128,15 +133,17 @@ router.get('/getListeCollection', authenticateToken, async (req, res) => {
     res.status(500).send({ error: error.message });
   }
 });
-//
-//
+
+
 // Récupérer la configuration d'un blog
 router.get('/getConfigCollection', authenticateToken, async (req, res) => {
   try {
     const sentIdBlog = req.query.IdBlog;
+    const token = req.headers['authorization']?.split(' ')[1];
+    const supabase = supabaseServer(token);
 
     
-    const { data, error } = await supabaseServer
+    const { data, error } = await supabase
       .from('collection_config')
       .select('id, tab_field, name_field, description_field, collection_id_ref, multiline_text')
       .eq('collection_id', sentIdBlog)
@@ -151,15 +158,17 @@ router.get('/getConfigCollection', authenticateToken, async (req, res) => {
     res.status(500).send({ error: error.message });
   }
 });
-//
+
 
 
 // Récupérer les références de collection
 router.get('/getCollectionRef', authenticateToken, async (req, res) => {
   try {
     const sentIdCollectionRef = req.query.id_collection_ref;
+    const token = req.headers['authorization']?.split(' ')[1];
+    const supabase = supabaseServer(token);
     
-    const { data, error } = await supabaseServer
+    const { data, error } = await supabase
       .from('collection_element')
       .select('id, collection_element_name')
       .eq('collection_id', sentIdCollectionRef);
@@ -184,6 +193,9 @@ router.get('/getCollectionRef', authenticateToken, async (req, res) => {
 // Créer une page de blog
 router.post('/createCollectionElement', authenticateToken, async (req, res) => {
   try {
+    const token = req.headers['authorization']?.split(' ')[1];
+    const supabase = supabaseServer(token);
+
     const id = req.body.params.id;
     const title = req.body.params.mainText[0].value;
     const slug = req.body.params.mainText[1].value;
@@ -196,7 +208,7 @@ router.post('/createCollectionElement', authenticateToken, async (req, res) => {
     }
     
     // Insérer la nouvelle page
-    const { data, error } = await supabaseServer
+    const { data, error } = await supabase
       .from('collection_element')
       .insert({
         collection_id: id, 
@@ -254,6 +266,9 @@ router.post('/createImagesCollection', authenticateToken, uploadImage.single('im
       return res.status(400).send('Aucune image n\'a été téléchargée.');
     }
 
+    const token = req.headers['authorization']?.split(' ')[1];
+    const supabase = supabaseServer(token);
+
     const id_photo = uuidv4();
     const id_blog_page = req.body.id_blog_page;
     const id_config = req.body.id_config;
@@ -269,7 +284,7 @@ router.post('/createImagesCollection', authenticateToken, uploadImage.single('im
     const fileBuffer = fs.readFileSync(filePath);
     
     // Upload du fichier vers Supabase Storage avec buffer au lieu de stream
-    const { data, error } = await supabaseServer.storage
+    const { data, error } = await supabase.storage
       .from('collection-images')
       .upload(src_image, fileBuffer, {
         contentType: req.file.mimetype
@@ -278,7 +293,7 @@ router.post('/createImagesCollection', authenticateToken, uploadImage.single('im
     if (error) throw error;
     
     // Enregistrer les métadonnées dans la base de données
-    const { error: insertError } = await supabaseServer
+    const { error: insertError } = await supabase
       .from('collection_field_image')
       .insert({
         id: id_photo,
@@ -327,6 +342,9 @@ router.post('/createGalleryCollection', uploadGallery.array('gallery'), async (r
     return res.status(400).send('Aucune image n\'a été téléchargée.');
   }
 
+  const token = req.headers['authorization']?.split(' ')[1];
+  const supabase = supabaseServer(token);
+
   const id_blog_page = req.body.id_blog_page;
   const id_config = req.body.id_config;
 
@@ -344,7 +362,7 @@ router.post('/createGalleryCollection', uploadGallery.array('gallery'), async (r
       const fileBuffer = fs.readFileSync(file.path);
 
       // Upload vers Supabase avec buffer au lieu de stream
-      const { data, error: uploadError } = await supabaseServer.storage
+      const { data, error: uploadError } = await supabase.storage
         .from('collection-gallery')
         .upload(storagePath, fileBuffer, {
           contentType: file.mimetype,
@@ -377,7 +395,7 @@ router.post('/createGalleryCollection', uploadGallery.array('gallery'), async (r
     const filesInfoJson = JSON.stringify(filesInfo);
 
     // CORRECTION: Utiliser supabaseServer au lieu de supabase
-    const { error: insertError } = await supabaseServer
+    const { error: insertError } = await supabase
       .from('collection_field_gallery')
       .insert([{
         collection_element_id: id_blog_page,
@@ -433,6 +451,9 @@ router.post('/createVideoCollection', uploadVideo.single('video'), async (req, r
     return res.status(400).send('Aucune vidéo n\'a été téléchargée.');
   }
 
+  const token = req.headers['authorization']?.split(' ')[1];
+  const supabase = supabaseServer(token);
+
   const id_video = req.body.id_video || uuidv4();
   const id_blog_page = req.body.id_blog_page;
   const id_config = req.body.id_config;
@@ -448,7 +469,7 @@ router.post('/createVideoCollection', uploadVideo.single('video'), async (req, r
     // Lire le fichier en buffer plutôt qu'en stream
     const fileBuffer = fs.readFileSync(filePath);
     
-    const { data, error: uploadError } = await supabaseServer.storage
+    const { data, error: uploadError } = await supabase.storage
       .from('collection-video')
       .upload(storagePath, fileBuffer, {
         contentType: req.file.mimetype,
@@ -469,7 +490,7 @@ router.post('/createVideoCollection', uploadVideo.single('video'), async (req, r
     // Utiliser directement le nom du fichier sans préfixe de dossier
     const src_video = req.file.originalname;
 
-    const { error: insertError } = await supabaseServer
+    const { error: insertError } = await supabase
       .from('collection_field_video')
       .insert([{
         id: id_video,
@@ -512,20 +533,32 @@ router.post('/createTextCollection', authenticateToken, async (req, res) => {
   try {
     const id = req.body.params.id;
     const texts = req.body.params.otherText;
+
+    const token = req.headers['authorization']?.split(' ')[1];
+    const supabase = supabaseServer(token);
+
+    
     
     // Traiter toutes les insertions en parallèle
     const insertPromises = texts.map(item => {
-      return supabaseServer
+      return supabase
         .from('collection_field_text')
         .insert({
           collection_element_id: id, // Ajout du lien via UUID
           id_config: item.id_config,
           text: item.value
-        });
+        })
     });
+
     
     // Attendre que toutes les promesses soient résolues
-    await Promise.all(insertPromises);
+    Promise.all(insertPromises).then(results => {
+      results.forEach(({ error }, i) => {
+        if (error) {
+          console.error(`Erreur à l'insertion ${i}:`, error.message);
+        }
+      });
+    });
     
     res.status(200).send('Tous les textes ont été créés avec succès');
   } catch (error) {
@@ -541,6 +574,10 @@ router.post('/createTextCollection', authenticateToken, async (req, res) => {
 
 
 router.post('/createRichTextCollection', async (req, res) => {
+
+  const token = req.headers['authorization']?.split(' ')[1];
+  const supabase = supabaseServer(token);
+
   const richtext = req.body.params.infoRichText;
   const id_blog_page = req.body.params.id;
 
@@ -553,7 +590,7 @@ router.post('/createRichTextCollection', async (req, res) => {
     const imageName = `${uuidv4()}.${imageExtension}`;
     const storagePath = `${imageName}`;
 
-    const { error: uploadError } = await supabaseServer.storage
+    const { error: uploadError } = await supabase.storage
       .from('collection-richtext-images')
       .upload(storagePath, imageBuffer, {
         contentType: `image/${imageExtension}`,
@@ -594,7 +631,7 @@ router.post('/createRichTextCollection', async (req, res) => {
       }, 0);
 
       // ✅ Insertion dans SUPABASE
-      const { error: insertError } = await supabaseServer
+      const { error: insertError } = await supabase
         .from('collection_field_richtext')
         .insert([
           {
@@ -620,17 +657,29 @@ router.post('/createRichTextCollection', async (req, res) => {
 
 
 router.post('/createMultiReferenceCollection', authenticateToken, async (req, res) => {
+  console.log("createMultireference")
   try {
+
+    const token = req.headers['authorization']?.split(' ')[1];
+    const supabase = supabaseServer(token);
+
+     
+
     const id = req.body.params.id;
     const multiReference = req.body.params.multiReference;
     // multiReference est un objet { id_config, value }
-    await supabaseServer
+
+    console.log("id", id)
+    console.log("multiReference", multiReference)
+
+    await supabase
       .from('collection_field_multireference')
       .insert({
         collection_element_id: id,
         id_config: multiReference.id_config,
         info_ref: multiReference.value
       });
+    console.log("MultiReference insérée avec succès");
     res.status(200).send('MultiReference créée avec succès');
   } catch (error) {
     console.error('Erreur lors de la création du MultiReference:', error);
@@ -650,9 +699,11 @@ router.post('/createMultiReferenceCollection', authenticateToken, async (req, re
 router.get('/getCollectionElement', authenticateToken, async (req, res) => {
   try {
     const sentIdBlogPage = req.query.IdBlogPage;
+    const token = req.headers['authorization']?.split(' ')[1];
+    const supabase = supabaseServer(token);
 
     // Utilisation de Supabase pour récupérer les données
-    const { data, error } = await supabaseServer
+    const { data, error } = await supabase
       .from('collection_element')
       .select(`
         collection_element_name, 
@@ -701,9 +752,12 @@ router.get('/getTextCollection', authenticateToken, async (req, res) => {
     const sentIdBlogPage = req.query.IdBlogPage;
     const sentIdConfig = req.query.IdConfig;
 
+    const token = req.headers['authorization']?.split(' ')[1];
+    const supabase = supabaseServer(token);
+
 
     // Utilisation de Supabase pour récupérer les données
-    const { data, error } = await supabaseServer
+    const { data, error } = await supabase
       .from('collection_field_text')
       .select('id_config, text')
       .eq('collection_element_id', sentIdBlogPage)
@@ -729,8 +783,11 @@ router.get('/getRichTextCollection', authenticateToken, async (req, res) => {
     const sentIdBlogPage = req.query.IdBlogPage;
     const sentIdConfig = req.query.IdConfig;
 
+    const token = req.headers['authorization']?.split(' ')[1];
+    const supabase = supabaseServer(token);
+
     // Utilisation de Supabase pour récupérer les données
-    const { data, error } = await supabaseServer
+    const { data, error } = await supabase
       .from('collection_field_richtext')
       .select('id_config, text_json')
       .eq('collection_element_id', sentIdBlogPage)
@@ -756,8 +813,11 @@ router.get('/getImageCollection', authenticateToken, async (req, res) => {
     const sentIdBlogPage = req.query.IdBlogPage;
     const sentIdConfig = req.query.IdConfig;
 
+    const token = req.headers['authorization']?.split(' ')[1];
+    const supabase = supabaseServer(token);
+
     // Utilisation de Supabase pour récupérer les données
-    const { data, error } = await supabaseServer
+    const { data, error } = await supabase
       .from('collection_field_image')
       .select('id_config, src_image, name_image, alt_image, size')
       .eq('collection_element_id', sentIdBlogPage)
@@ -788,8 +848,11 @@ router.get('/getGalleryCollection', authenticateToken, async (req, res) => {
     const sentIdBlogPage = req.query.IdBlogPage;
     const sentIdConfig = req.query.IdConfig;
 
+    const token = req.headers['authorization']?.split(' ')[1];
+    const supabase = supabaseServer(token);
+
     // Utilisation de Supabase pour récupérer les données
-    const { data, error } = await supabaseServer
+    const { data, error } = await supabase
       .from('collection_field_gallery')
       .select('id_config, gallery, size')
       .eq('collection_element_id', sentIdBlogPage)
@@ -815,8 +878,11 @@ router.get('/getVideoCollection', authenticateToken, async (req, res) => {
     const sentIdBlogPage = req.query.IdBlogPage;
     const sentIdConfig = req.query.IdConfig;
 
+    const token = req.headers['authorization']?.split(' ')[1];
+    const supabase = supabaseServer(token);
+
     // Utilisation de Supabase pour récupérer les données
-    const { data, error } = await supabaseServer
+    const { data, error } = await supabase
       .from('collection_field_video')
       .select('id_config, src_video, name_video, alt_video, size')
       .eq('collection_element_id', sentIdBlogPage)
@@ -847,8 +913,11 @@ router.get('/getMultiReferenceCollection', authenticateToken, async (req, res) =
     const sentIdBlogPage = req.query.IdBlogPage;
     const sentIdConfig = req.query.IdConfig;
 
+    const token = req.headers['authorization']?.split(' ')[1];
+    const supabase = supabaseServer(token);
+
     // Utilisation de Supabase pour récupérer les données
-    const { data, error } = await supabaseServer
+    const { data, error } = await supabase
       .from('collection_field_multireference')
       .select('id_config, info_ref')
       .eq('collection_element_id', sentIdBlogPage)
@@ -879,6 +948,9 @@ router.post('/updateCollectionElement', authenticateToken, async (req, res) => {
     const status = req.body.params.status;
     const setPublishDate = req.body.params.setpublishDate;
 
+    const token = req.headers['authorization']?.split(' ')[1];
+    const supabase = supabaseServer(token);
+
     let updateFields = {
       collection_element_name: title,
       collection_element_slug: slug,
@@ -889,7 +961,7 @@ router.post('/updateCollectionElement', authenticateToken, async (req, res) => {
       updateFields.collection_element_publish_date = (status === 1) ? date : null;
     }
 
-    const { error } = await supabaseServer
+    const { error } = await supabase
       .from('collection_element')
       .update(updateFields)
       .eq('id', id);
@@ -913,8 +985,11 @@ router.post('/updateTextCollection', authenticateToken, async (req, res) => {
   try {
     const id = req.body.params.id;
     const texts = req.body.params.otherText;
+    const token = req.headers['authorization']?.split(' ')[1];
+    const supabase = supabaseServer(token);
+
     const updatePromises = texts.map(item =>
-      supabaseServer
+      supabase
         .from('collection_field_text')
         .update({ text: item.value })
         .eq('collection_element_id', id)
@@ -933,6 +1008,9 @@ router.post('/updateRichTextCollection', authenticateToken, async (req, res) => 
   const richtext = req.body.params.infoRichText;
   const id_blog_page = req.body.params.id;
 
+  const token = req.headers['authorization']?.split(' ')[1];
+  const supabase = supabaseServer(token);
+
   const saveImageToSupabase = async (base64Data) => {
     const matches = base64Data.match(/^data:image\/([A-Za-z-+/]+);base64,(.+)$/);
     if (!matches || matches.length !== 3) throw new Error('Base64 invalide');
@@ -940,14 +1018,14 @@ router.post('/updateRichTextCollection', authenticateToken, async (req, res) => 
     const imageBuffer = Buffer.from(matches[2], 'base64');
     const imageName = `${uuidv4()}.${imageExtension}`;
     const storagePath = `${imageName}`;
-    const { error: uploadError } = await supabaseServer.storage
+    const { error: uploadError } = await supabase.storage
       .from('collection-richtext-images')
       .upload(storagePath, imageBuffer, {
         contentType: `image/${imageExtension}`,
         upsert: false,
       });
     if (uploadError) throw new Error('Erreur Supabase : ' + uploadError.message);
-    const { data } = supabaseServer.storage
+    const { data } = supabase.storage
       .from('collection-richtext-images')
       .getPublicUrl(storagePath);
     const fileSizeInKB = Math.round(Buffer.byteLength(imageBuffer) / 1024);
@@ -973,7 +1051,7 @@ router.post('/updateRichTextCollection', authenticateToken, async (req, res) => 
         return acc + (entityMap[key].data.size || 0);
       }, 0);
       // Update dans SUPABASE
-      const { error: updateError } = await supabaseServer
+      const { error: updateError } = await supabase
         .from('collection_field_richtext')
         .update({ text_json: richTextJSON, size: totalSize })
         .eq('collection_element_id', id_blog_page)
@@ -993,6 +1071,9 @@ router.post('/updateImageCollection', authenticateToken, uploadImage.single('ima
     if (!req.file) {
       return res.status(400).send('Aucune image n\'a été téléchargée.');
     }
+    const token = req.headers['authorization']?.split(' ')[1];
+    const supabase = supabaseServer(token);
+
     const id_photo = path.basename(req.file.filename, path.extname(req.file.filename));
     const id_blog_page = req.body.id_blog_page;
     const id_config = req.body.id_config;
@@ -1004,14 +1085,14 @@ router.post('/updateImageCollection', authenticateToken, uploadImage.single('ima
     const filePath = req.file.path;
     // Upload nouvelle image
     const fileBuffer = fs.readFileSync(filePath);
-    const { error: uploadError } = await supabaseServer.storage
+    const { error: uploadError } = await supabase.storage
       .from('collection-images')
       .upload(src_image, fileBuffer, {
         contentType: req.file.mimetype
       });
     if (uploadError) throw new Error('Erreur upload Supabase: ' + uploadError.message);
     // Update metadata
-    const { error: updateError } = await supabaseServer
+    const { error: updateError } = await supabase
       .from('collection_field_image')
       .update({ src_image, name_image: name, alt_image: alt, size })
       .eq('collection_element_id', id_blog_page)
@@ -1030,6 +1111,10 @@ router.post('/updateGalleryCollection', authenticateToken, uploadGallery.array('
   if (!req.files) {
     return res.status(400).send('Aucune image n\'a été téléchargée.');
   }
+
+  const token = req.headers['authorization']?.split(' ')[1];
+  const supabase = supabaseServer(token);
+
   const id_blog_page = req.body.id_blog_page;
   const id_config = req.body.id_config;
   const filesInfo = [];
@@ -1045,7 +1130,7 @@ router.post('/updateGalleryCollection', authenticateToken, uploadGallery.array('
       const size = Math.round(file.size / 1024);
       const fileBuffer = fs.readFileSync(file.path);
       // Upload image
-      const { error: uploadError } = await supabaseServer.storage
+      const { error: uploadError } = await supabase.storage
         .from('collection-gallery')
         .upload(src_photo, fileBuffer, {
           contentType: file.mimetype
@@ -1057,7 +1142,7 @@ router.post('/updateGalleryCollection', authenticateToken, uploadGallery.array('
     }
     // Update BDD
     const filesInfoJson = JSON.stringify(filesInfo);
-    const { error: updateError } = await supabaseServer
+    const { error: updateError } = await supabase
       .from('collection_field_gallery')
       .update({ gallery: filesInfoJson, size: totalSize })
       .eq('collection_element_id', id_blog_page)
@@ -1076,6 +1161,10 @@ router.post('/updateVideoCollection', authenticateToken, uploadVideo.single('vid
     if (!req.file) {
       return res.status(400).send('Aucune vidéo n\'a été téléchargée.');
     }
+
+    const token = req.headers['authorization']?.split(' ')[1];
+    const supabase = supabaseServer(token);
+
     const id_video = req.body.id_video;
     const id_blog_page = req.body.id_blog_page;
     const id_config = req.body.id_config;
@@ -1085,14 +1174,14 @@ router.post('/updateVideoCollection', authenticateToken, uploadVideo.single('vid
     const src_video = id_video + '.mp4';
     const fileBuffer = fs.readFileSync(req.file.path);
     // Upload vidéo
-    const { error: uploadError } = await supabaseServer.storage
+    const { error: uploadError } = await supabase.storage
       .from('collection-video')
       .upload(src_video, fileBuffer, {
         contentType: req.file.mimetype
       });
     if (uploadError) throw new Error('Erreur upload Supabase: ' + uploadError.message);
     // Update metadata
-    const { error: updateError } = await supabaseServer
+    const { error: updateError } = await supabase
       .from('collection_field_video')
       .update({ src_video, name_video: name, alt_video: alt, size })
       .eq('collection_element_id', id_blog_page)
@@ -1109,9 +1198,15 @@ router.post('/updateVideoCollection', authenticateToken, uploadVideo.single('vid
 // Met à jour une multi-référence d'une page de collection
 router.post('/updateMultiReferenceCollection', authenticateToken, async (req, res) => {
   try {
+
+    const token = req.headers['authorization']?.split(' ')[1];
+    const supabase = supabaseServer(token);
+
     const id = req.body.params.id;
     const multiReference = req.body.params.multiReference;
-    const { error } = await supabaseServer
+
+
+    const { error } = await supabase
       .from('collection_field_multireference')
       .update({ info_ref: multiReference.value })
       .eq('collection_element_id', id)
@@ -1132,6 +1227,9 @@ router.delete('/deleteCollectionData', authenticateToken, async (req, res) => {
   const id_blog_page = req.body.id_blog_page;
   const dataArray = req.body.data;
 
+  const token = req.headers['authorization']?.split(' ')[1];
+  const supabase = supabaseServer(token);
+
    console.log("idBlogPage" + id_blog_page);
    console.log("data" + dataArray);
   try {
@@ -1140,7 +1238,7 @@ router.delete('/deleteCollectionData', authenticateToken, async (req, res) => {
       const type = data.type;
       if (type === 'images') {
         // Récupérer le nom de l'image
-        const { data: imgData, error: imgError } = await supabaseServer
+        const { data: imgData, error: imgError } = await supabase
           .from('collection_field_image')
           .select('src_image')
           .eq('collection_element_id', id_blog_page)
@@ -1148,16 +1246,16 @@ router.delete('/deleteCollectionData', authenticateToken, async (req, res) => {
           .single();
         if (imgError) throw imgError;
         if (imgData && imgData.src_image) {
-          await supabaseServer.storage.from('collection-images').remove([imgData.src_image]);
+          await supabase.storage.from('collection-images').remove([imgData.src_image]);
         }
-        await supabaseServer
+        await supabase
           .from('collection_field_image')
           .delete()
           .eq('collection_element_id', id_blog_page)
           .eq('id_config', id_config);
       } else if (type === 'video') {
         // Récupérer le nom de la vidéo
-        const { data: vidData, error: vidError } = await supabaseServer
+        const { data: vidData, error: vidError } = await supabase
           .from('collection_field_video')
           .select('src_video')
           .eq('collection_element_id', id_blog_page)
@@ -1165,9 +1263,9 @@ router.delete('/deleteCollectionData', authenticateToken, async (req, res) => {
           .single();
         if (vidError) throw vidError;
         if (vidData && vidData.src_video) {
-          await supabaseServer.storage.from('collection-video').remove([vidData.src_video]);
+          await supabase.storage.from('collection-video').remove([vidData.src_video]);
         }
-        await supabaseServer
+        await supabase
           .from('collection_field_video')
           .delete()
           .eq('collection_element_id', id_blog_page)
@@ -1185,33 +1283,33 @@ router.delete('/deleteCollectionData', authenticateToken, async (req, res) => {
 
 router.delete('/deleteCollectionElement', authenticateToken, async (req, res) => {
   try {
+
+    const token = req.headers['authorization']?.split(' ')[1];
+    const supabase = supabaseServer(token);
+
     const idBlogPage = req.query.IdBlogPage;
     const idBlog = req.query.Id;
 
-    console.log("idBlog" + idBlog);
-    console.log("idBlogPage" + idBlogPage);
     // Récupérer la config des champs de la collection
-    const { data: configData, error: configError } = await supabaseServer
+    const { data: configData, error: configError } = await supabase
       .from('collection_config')
       .select('tab_field, id')
       .eq('collection_id', idBlog);
     if (configError) throw configError;
     for (const field of configData) {
-      console.log("field.id_config" + field.id);
-      console.log("field.tab_field" + field.tab_field);
+
 
       const id_config = field.id;
       const type = field.tab_field;
-      console.log("type" + type);
       if (type === 'text') {
-        const { error: delError } = await supabaseServer
+        const { error: delError } = await supabase
           .from('collection_field_text')
           .delete()
           .eq('collection_element_id', idBlogPage)
           .eq('id_config', id_config);
         if (delError && delError.code !== 'PGRST116') throw delError;
       } else if (type === 'richText') {
-        const { data: richData, error: richError } = await supabaseServer
+        const { data: richData, error: richError } = await supabase
           .from('collection_field_richtext')
           .select('text_json')
           .eq('collection_element_id', idBlogPage)
@@ -1232,21 +1330,21 @@ router.delete('/deleteCollectionElement', authenticateToken, async (req, res) =>
             await supabaseServer.storage.from('collection-richtext-images').remove([name]);
           }
         }
-        const { error: delError } = await supabaseServer
+        const { error: delError } = await supabase
           .from('collection_field_richtext')
           .delete()
           .eq('collection_element_id', idBlogPage)
           .eq('id_config', id_config);
         if (delError && delError.code !== 'PGRST116') throw delError;
       } else if (type === 'multiReference') {
-        const { error: delError } = await supabaseServer
+        const { error: delError } = await supabase
           .from('collection_field_multireference')
           .delete()
           .eq('collection_element_id', idBlogPage)
           .eq('id_config', id_config);
         if (delError && delError.code !== 'PGRST116') throw delError;
       } else if (type === 'image') {
-        const { data: imgData, error: imgError } = await supabaseServer
+        const { data: imgData, error: imgError } = await supabase
           .from('collection_field_image')
           .select('src_image')
           .eq('collection_element_id', idBlogPage)
@@ -1254,16 +1352,16 @@ router.delete('/deleteCollectionElement', authenticateToken, async (req, res) =>
           .single();
         if (imgError && imgError.code !== 'PGRST116') throw imgError;
         if (imgData && imgData.src_image) {
-          await supabaseServer.storage.from('collection-images').remove([imgData.src_image]);
+          await supabase.storage.from('collection-images').remove([imgData.src_image]);
         }
-        const { error: delError } = await supabaseServer
+        const { error: delError } = await supabase
           .from('collection_field_image')
           .delete()
           .eq('collection_element_id', idBlogPage)
           .eq('id_config', id_config);
         if (delError && delError.code !== 'PGRST116') throw delError;
       } else if (type === 'video') {
-        const { data: vidData, error: vidError } = await supabaseServer
+        const { data: vidData, error: vidError } = await supabase
           .from('collection_field_video')
           .select('src_video')
           .eq('collection_element_id', idBlogPage)
@@ -1271,16 +1369,16 @@ router.delete('/deleteCollectionElement', authenticateToken, async (req, res) =>
           .single();
         if (vidError && vidError.code !== 'PGRST116') throw vidError;
         if (vidData && vidData.src_video) {
-          await supabaseServer.storage.from('collection-video').remove([vidData.src_video]);
+          await supabase.storage.from('collection-video').remove([vidData.src_video]);
         }
-        const { error: delError } = await supabaseServer
+        const { error: delError } = await supabase
           .from('collection_field_video')
           .delete()
           .eq('collection_element_id', idBlogPage)
           .eq('id_config', id_config);
         if (delError && delError.code !== 'PGRST116') throw delError;
       } else if (type === 'gallery') {
-        const { data: galData, error: galError } = await supabaseServer
+        const { data: galData, error: galError } = await supabase
           .from('collection_field_gallery')
           .select('gallery')
           .eq('collection_element_id', idBlogPage)
@@ -1291,10 +1389,10 @@ router.delete('/deleteCollectionElement', authenticateToken, async (req, res) =>
           let galleryArr = [];
           try { galleryArr = JSON.parse(galData.gallery); } catch {}
           for (const img of galleryArr) {
-            await supabaseServer.storage.from('collection-gallery').remove([img.src_photo]);
+            await supabase.storage.from('collection-gallery').remove([img.src_photo]);
           }
         }
-        const { error: delError } = await supabaseServer
+        const { error: delError } = await supabase
           .from('collection_field_gallery')
           .delete()
           .eq('collection_element_id', idBlogPage)
@@ -1303,7 +1401,7 @@ router.delete('/deleteCollectionElement', authenticateToken, async (req, res) =>
       }
     }
     // Supprimer la page elle-même
-    await supabaseServer
+    await supabase
       .from('collection_element')
       .delete()
       .eq('id', idBlogPage);

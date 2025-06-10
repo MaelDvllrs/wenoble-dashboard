@@ -213,6 +213,10 @@ const Dashboard = () => {
 
                 '--color-text-primary': theme.palette.text.primary,
                 '--color-text-secondary': theme.palette.text.secondary,
+
+                '--color-green': theme.palette.colors.green,
+                '--color-blue': theme.palette.colors.blue,
+                '--color-yellow': theme.palette.colors.yellow,
             }}
         >
         <AnimatePresence initial={false}>

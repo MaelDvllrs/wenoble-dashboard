@@ -10,6 +10,8 @@ const notificationRouter = express.Router();
 const app = express();
 const notificationServer = http.createServer(app);
 
+
+
 require('dotenv').config();
 
 const io = socketIo(notificationServer, {
@@ -25,6 +27,8 @@ app.use(express.json());
 
 
 notificationRouter.post('/createNotification', async (req, res) => {
+    const token = req.headers['authorization']?.split(' ')[1];
+    const supabase = supabaseServer(token);
     const sentIdUsers = req.body.IdUsers;
     const sentType = req.body.Type;
     const sentMessage = req.body.Message;
@@ -40,7 +44,7 @@ notificationRouter.post('/createNotification', async (req, res) => {
             date
         }));
         // Insertion dans Supabase
-        const { error } = await supabaseServer
+        const { error } = await supabase
             .from('notifications')
             .insert(notifications);
         if (error) {
@@ -58,19 +62,24 @@ notificationRouter.post('/createNotification', async (req, res) => {
 });
 
 notificationRouter.get('/getNotifications',authenticateToken, async (req, res) => {
+
+    const token = req.headers['authorization']?.split(' ')[1];
+    const supabase = supabaseServer(token);
     const sentIdUser = req.user.idUser;
     if (!sentIdUser) {
         return res.status(400).send({ error: 'Le paramètre id_user est requis.' });
     }
     try {
-        const { data, error } = await supabaseServer
+        const { data, error } = await supabase
             .from('notifications')
             .select('id_notif, type, message, id_element, date, is_read')
             .eq('user_id', sentIdUser)
             .order('date', { ascending: false });
         if (error) {
+            console.error('Error fetching notifications:', error);
             return res.send({ error });
         }
+        
         res.send(data);
     } catch (err) {
         res.send({ error: err.message });
@@ -78,9 +87,11 @@ notificationRouter.get('/getNotifications',authenticateToken, async (req, res) =
 });
 
 notificationRouter.post('/readNotification', async (req, res) => {
+    const token = req.headers['authorization']?.split(' ')[1];
+    const supabase = supabaseServer(token);
     const sentIdNotif = req.body.IdNotif;
     try {
-        const { error } = await supabaseServer
+        const { error } = await supabase
             .from('notifications')
             .update({ is_read: true })
             .eq('id_notif', sentIdNotif);

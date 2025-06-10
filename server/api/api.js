@@ -7,6 +7,8 @@ const { convertFromRaw } = require('draft-js');
 const { ca } = require('date-fns/locale/ca');
 const { supabaseServer } = require('../supabase');
 
+const supabase = supabaseServer();
+
 
 const apiKeyMiddleware = async (req, res, next) => {
     const apiKey = req.headers['api_key'];
@@ -16,7 +18,7 @@ const apiKeyMiddleware = async (req, res, next) => {
         return res.status(401).json({ message: 'Clé API ou ID de data manquant.' });
     }
     try {
-        const { data, error } = await supabaseServer
+        const { data, error } = await supabase
             .from('users')
             .select('id')
             .eq('api_key', apiKey)
@@ -41,7 +43,7 @@ const apiKeyMiddleware = async (req, res, next) => {
 router.get('/sendPhoto', apiKeyMiddleware, async (req, res) => {
     const id_portfolio = req.id_data;
     try {
-        const { data, error } = await supabaseServer
+        const { data, error } = await supabase
             .from('photo_portfolio')
             .select('src_photo, alt_photo')
             .eq('id_portfolio', id_portfolio)
@@ -50,7 +52,7 @@ router.get('/sendPhoto', apiKeyMiddleware, async (req, res) => {
         if (!data || data.length === 0) return res.status(403).json({ message: 'Aucune photo trouvée' });
         // Générer les URLs publiques Supabase pour chaque image
         const images = data.map(photo => {
-            const { data: publicUrlData } = supabaseServer.storage
+            const { data: publicUrlData } = supabase.storage
                 .from('portfolio-image')
                 .getPublicUrl(photo.src_photo);
             return {
@@ -68,7 +70,7 @@ router.get('/sendPhoto', apiKeyMiddleware, async (req, res) => {
 router.get('/sendPhotoPortfolio', apiKeyMiddleware, async (req, res) => {
     const id_portfolio = req.id_data;
     try {
-        const { data, error } = await supabaseServer
+        const { data, error } = await supabase
             .from('photo_portfolio')
             .select('src_photo, alt_photo')
             .eq('id_portfolio', id_portfolio)
@@ -85,6 +87,7 @@ router.get('/sendPhotoPortfolio', apiKeyMiddleware, async (req, res) => {
 
 // Récupérer toutes les pages de blogs (collections)
 router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
+    
     const ids = req.ids;
     const order = req.query.order || 'DESC';
     const limit = req.query.limit ? parseInt(req.query.limit, 10) : null;
@@ -92,7 +95,7 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
     const joinTable = req.query.joinTable || 'collection_element';
     const configs = req.query.configs || null;
     try {
-        let query = supabaseServer
+        let query = supabase
             .from('collection_element')
             .select('*')
             .order(colone, { ascending: order.toUpperCase() === 'ASC' });
@@ -116,7 +119,7 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
 router.get('/sendBlogInfo', apiKeyMiddleware, async (req, res) => {
     const id_blog_page = req.id_data;
     try {
-        const { data, error } = await supabaseServer
+        const { data, error } = await supabase
             .from('collection_element')
             .select('*')
             .eq('id', id_blog_page)
@@ -139,7 +142,7 @@ router.get('/sendBlogInfoSlug', apiKeyMiddleware, async (req, res) => {
         id_blog = [id_blog];
     }
     try {
-        const { data, error } = await supabaseServer
+        const { data, error } = await supabase
             .from('collection_element')
             .select('*')
             .eq('collection_element_slug', slug)
@@ -156,7 +159,7 @@ router.get('/sendBlogInfoSlug', apiKeyMiddleware, async (req, res) => {
 router.get('/sendBlogRichText', apiKeyMiddleware, async (req, res) => {
     const id_blog_page = req.id_data;
     try {
-        const { data, error } = await supabaseServer
+        const { data, error } = await supabase
             .from('collection_field_richtext')
             .select('id_config, text_json')
             .eq('collection_element_id', id_blog_page);
@@ -178,7 +181,7 @@ router.get('/sendBlogRichText', apiKeyMiddleware, async (req, res) => {
 router.get('/sendBlogText', apiKeyMiddleware, async (req, res) => {
     const id_blog_page = req.id_data;
     try {
-        const { data, error } = await supabaseServer
+        const { data, error } = await supabase
             .from('collection_field_text')
             .select('id_config, text')
             .eq('collection_element_id', id_blog_page);
@@ -194,7 +197,7 @@ router.get('/sendBlogText', apiKeyMiddleware, async (req, res) => {
 router.get('/sendBlogImage', apiKeyMiddleware, async (req, res) => {
     const id_blog_page = req.id_data;
     try {
-        const { data, error } = await supabaseServer
+        const { data, error } = await supabase
             .from('collection_field_image')
             .select('id_config, src_image, alt_image')
             .eq('collection_element_id', id_blog_page);
@@ -202,7 +205,7 @@ router.get('/sendBlogImage', apiKeyMiddleware, async (req, res) => {
         if (!data || data.length === 0) return res.status(200).json({ message: 'Aucune image trouvée' });
         // Générer les URLs publiques Supabase pour chaque image
         const images = data.map(image => {
-            const { data: publicUrlData } = supabaseServer.storage
+            const { data: publicUrlData } = supabase.storage
                 .from('collection-images')
                 .getPublicUrl(image.src_image);
             return {
@@ -221,7 +224,7 @@ router.get('/sendBlogImage', apiKeyMiddleware, async (req, res) => {
 router.get('/sendBlogInfoImage', apiKeyMiddleware, async (req, res) => {
     const id_blog_page = req.id_data;
     try {
-        const { data, error } = await supabaseServer
+        const { data, error } = await supabase
             .from('collection_field_image')
             .select('id_config, src_image, alt_image')
             .eq('collection_element_id', id_blog_page);
@@ -237,7 +240,7 @@ router.get('/sendBlogInfoImage', apiKeyMiddleware, async (req, res) => {
 router.get('/sendBlogInfoGallery', apiKeyMiddleware, async (req, res) => {
     const id_blog_page = req.id_data;
     try {
-        const { data, error } = await supabaseServer
+        const { data, error } = await supabase
             .from('collection_field_gallery')
             .select('id_config, gallery')
             .eq('collection_element_id', id_blog_page);
@@ -253,7 +256,7 @@ router.get('/sendBlogInfoGallery', apiKeyMiddleware, async (req, res) => {
 router.get('/sendBlogVideo', apiKeyMiddleware, async (req, res) => {
     const id_blog_page = req.id_data;
     try {
-        const { data, error } = await supabaseServer
+        const { data, error } = await supabase
             .from('collection_field_video')
             .select('id_config, src_video')
             .eq('collection_element_id', id_blog_page);
@@ -269,7 +272,7 @@ router.get('/sendBlogVideo', apiKeyMiddleware, async (req, res) => {
 router.get('/sendMultiReference', apiKeyMiddleware, async (req, res) => {
     const id_blog_page = req.id_data;
     try {
-        const { data, error } = await supabaseServer
+        const { data, error } = await supabase
             .from('collection_field_multireference')
             .select('id_config, info_ref')
             .eq('collection_element_id', id_blog_page);
@@ -294,7 +297,7 @@ router.get('/sendBlogContent', apiKeyMiddleware, async (req, res) => {
     
     try {
         // Récupérer la config des champs dynamiques
-        const { data: configData, error: configError } = await supabaseServer
+        const { data: configData, error: configError } = await supabase
             .from('collection_config')
             .select('tab_field, id')
             .eq('collection_id', id_blog);
@@ -304,7 +307,7 @@ router.get('/sendBlogContent', apiKeyMiddleware, async (req, res) => {
         const contentPromises = configData.map(async (field) => {
             switch (field.tab_field) {
                 case 'text': {
-                    const { data } = await supabaseServer
+                    const { data } = await supabase
                         .from('collection_field_text')
                         .select('id_config, text')
                         .eq('collection_element_id', id_blog_page)
@@ -314,7 +317,7 @@ router.get('/sendBlogContent', apiKeyMiddleware, async (req, res) => {
                     return { type: 'text', data };
                 }
                 case 'richText': {
-                    const { data } = await supabaseServer
+                    const { data } = await supabase
                         .from('collection_field_richtext')
                         .select('id_config, text_json')
                         .eq('collection_element_id', id_blog_page)
@@ -328,13 +331,13 @@ router.get('/sendBlogContent', apiKeyMiddleware, async (req, res) => {
                     return { type: 'richText', data: convertedResults };
                 }
                 case 'image': {
-                    const { data } = await supabaseServer
+                    const { data } = await supabase
                         .from('collection_field_image')
                         .select('id_config, src_image, alt_image')
                         .eq('collection_element_id', id_blog_page)
                         .eq('id_config', field.id);
                     const images = (data || []).map(image => {
-                        const { data: publicUrlData } = supabaseServer.storage
+                        const { data: publicUrlData } = supabase.storage
                             .from('collection-images')
                             .getPublicUrl(image.src_image);
                         return {
@@ -346,7 +349,7 @@ router.get('/sendBlogContent', apiKeyMiddleware, async (req, res) => {
                     return { type: 'image', data: images };
                 }
                 case 'video': {
-                    const { data } = await supabaseServer
+                    const { data } = await supabase
                         .from('collection_field_video')
                         .select('id_config, src_video')
                         .eq('collection_element_id', id_blog_page)
@@ -354,7 +357,7 @@ router.get('/sendBlogContent', apiKeyMiddleware, async (req, res) => {
                     return { type: 'video', data };
                 }
                 case 'gallery': {
-                    const { data } = await supabaseServer
+                    const { data } = await supabase
                         .from('collection_field_gallery')
                         .select('id_config, gallery')
                         .eq('collection_element_id', id_blog_page)
@@ -363,7 +366,7 @@ router.get('/sendBlogContent', apiKeyMiddleware, async (req, res) => {
                 }
                 case 'multiReference': {
                    // 1. Récupérer la ligne multireference
-                   const { data } = await supabaseServer
+                   const { data } = await supabase
                        .from('collection_field_multireference')
                        .select('id_config, info_ref')
                        .eq('collection_element_id', id_blog_page)
@@ -378,7 +381,7 @@ router.get('/sendBlogContent', apiKeyMiddleware, async (req, res) => {
                        
                        
                        let collection_id = null;
-                       const { data: configData, error: configError } = await supabaseServer
+                       const { data: configData, error: configError } = await supabase
                            .from('collection_element')
                            .select('collection_id')
                            .eq('id', values)
@@ -421,7 +424,7 @@ router.get('/sendBlogContent', apiKeyMiddleware, async (req, res) => {
 router.get('/sendPage', apiKeyMiddleware, async (req, res) => {
     const id = req.id_data;
     try {
-        const { data, error } = await supabaseServer
+        const { data, error } = await supabase
             .from('page')
             .select('*')
             .eq('id_page', id)
@@ -437,7 +440,7 @@ router.get('/sendPage', apiKeyMiddleware, async (req, res) => {
 router.get('/sendPageImage', apiKeyMiddleware, async (req, res) => {
     const id = req.id_data;
     try {
-        const { data, error } = await supabaseServer
+        const { data, error } = await supabase
             .from('page_photo')
             .select('id_config, src_image, alt_image')
             .eq('id_page', id);
@@ -452,7 +455,7 @@ router.get('/sendPageImage', apiKeyMiddleware, async (req, res) => {
 router.get('/sendPageRichText', apiKeyMiddleware, async (req, res) => {
     const id = req.id_data;
     try {
-        const { data, error } = await supabaseServer
+        const { data, error } = await supabase
             .from('page_richtext')
             .select('id_config, text_json')
             .eq('id_page', id);
@@ -473,7 +476,7 @@ router.get('/sendPageRichText', apiKeyMiddleware, async (req, res) => {
 router.get('/sendPageText', apiKeyMiddleware, async (req, res) => {
     const id = req.id_data;
     try {
-        const { data, error } = await supabaseServer
+        const { data, error } = await supabase
             .from('page_text')
             .select('id_config, text')
             .eq('id_page', id);
@@ -490,7 +493,7 @@ router.get('/sendBlogAuteur', apiKeyMiddleware, async (req, res) => {
     const id_blog = req.id_data;
     try {
         // 1. Récupérer l'user_id du blog (table blog)
-        const { data: blogData, error: blogError } = await supabaseServer
+        const { data: blogData, error: blogError } = await supabase
             .from('collection')
             .select('user_id')
             .eq('id', id_blog)
@@ -499,7 +502,7 @@ router.get('/sendBlogAuteur', apiKeyMiddleware, async (req, res) => {
         if (!blogData) return res.status(200).json({ message: 'Aucun auteur trouvé' });
         const user_id = blogData.user_id;
         // 2. Récupérer le username (table users)
-        const { data: userData, error: userError } = await supabaseServer
+        const { data: userData, error: userError } = await supabase
             .from('users')
             .select('username')
             .eq('id', user_id)
@@ -507,7 +510,7 @@ router.get('/sendBlogAuteur', apiKeyMiddleware, async (req, res) => {
         if (userError) throw userError;
         if (!userData) return res.status(200).json({ message: 'Aucun auteur trouvé' });
         // 3. Récupérer la photo de profil (table profile_images)
-        const { data: imageData, error: imageError } = await supabaseServer
+        const { data: imageData, error: imageError } = await supabase
             .from('profile_images')
             .select('src_profile_image')
             .eq('user_id', user_id)

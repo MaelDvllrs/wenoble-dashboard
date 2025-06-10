@@ -374,8 +374,10 @@ export const updateVideoBlog = async (fields, blogPageId, token) => {
 };
 
 export const updateMultiReferenceBlog = async (id, multiReference, token) => {
+    console.log("updateMultiReferenceBlog", id, multiReference);
     try {
         if (multiReference.create) {
+            console.log("updateMultiReference")
             await Axios.post(`${apiUrl}/updateMultiReferenceCollection`, {
                 params: {
                     id: id,

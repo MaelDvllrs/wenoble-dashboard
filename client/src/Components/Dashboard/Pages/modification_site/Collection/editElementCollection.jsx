@@ -112,6 +112,8 @@ const EditElementCollection = () => {
 
         // MODIFIER LA PAGE
 
+        
+
         if (status === 1 || status !== DecodeBlog.blogPage[0].status) {
             setSavingPage(true);
         } else {
@@ -138,6 +140,8 @@ const EditElementCollection = () => {
                 otherText.push(text);
             }
         });
+
+        
 
         try {        
 
@@ -220,6 +224,8 @@ const EditElementCollection = () => {
             }
 
             //ENREGISTRER LES MULTIREFERENCE
+
+            console.log(blogData.multiReference);
             if(blogData.multiReference.length > 0){
                 try {
                     await Promise.all(blogData.multiReference.map(async (multiReference) => {
@@ -499,7 +505,6 @@ const EditElementCollection = () => {
                     images: [...prevData.images, {id_config: blogItem.id}]
                 }));
             } else if (blogItem.tab_field === 'text') {
-                console.log('blogItem', blogItem);
                 setBlogDataConfig(prevData => ({
                     ...prevData,
                     text: [...prevData.text, {id_config: blogItem.id}]
@@ -788,7 +793,7 @@ const EditElementCollection = () => {
                       <p className="blogField_name">Slug *</p>
                       <Field fieldValue={DecodeBlog.blogPage[0]} type='text' id_config="slug" onChange={handleBlogDataChange} slugValue={slugValue}/>
                     </div>
-                    <div className="line_horizontal" style={{backgroundColor: theme.palette.text.secondary}}></div>
+                    <div className="line_horizontal" style={{backgroundColor: theme.palette.primary.third}}></div>
                     {DecodeConfigblog.blogConfig && DecodeConfigblog.blogConfig.map((blogItem) => {
                         // Trouver les données correspondantes dans InfoBlogPage.data, s'il y en a
                         const correspondingData = InfoBlogPage.data.find(data => data.id_config === blogItem.id);
@@ -813,7 +818,7 @@ const EditElementCollection = () => {
                             </div>
                         );
                     })}
-                    <div className="line_horizontal" style={{backgroundColor: theme.palette.text.secondary}}></div>
+                    <div className="line_horizontal" style={{backgroundColor: theme.palette.primary.third}}></div>
                     <div className="blogField_contain">
                       <p className="blogField_name">Item ID :</p>
                       <p className="blogDate">{idCollectionElement}</p>
@@ -830,7 +835,7 @@ const EditElementCollection = () => {
                       <p className="blogField_name">Date de Publication :</p>
                       <p className="blogDate">{formattedPublishedDate}</p>
                     </div>
-                    <div className="line_horizontal" style={{backgroundColor: theme.palette.text.secondary}}></div>
+                    <div className="line_horizontal" style={{backgroundColor: theme.palette.primary.third}}></div>
                     <RedButton className="delete_button_blog" variant="contained" theme={theme} onClick={openPopup}>Supprimer</RedButton>
                     {isPopupOpen && (   
                         <Popup theme={theme}>

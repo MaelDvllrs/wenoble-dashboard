@@ -27,7 +27,6 @@ router.get('/getUserInfoBasic', authenticateToken, async (req, res) => {
   try {
     const token = req.headers['authorization']?.split(' ')[1];
 
-    console.log('Token:', token);
     const userId = req.user.idUser;
     const supabase = supabaseServer(token);
     
@@ -36,9 +35,7 @@ router.get('/getUserInfoBasic', authenticateToken, async (req, res) => {
     
     if (authError) throw authError;
 
-    console.log('authUser:', authUser);
 
-    console.log('userId:', userId);
     // 2. Récupérer les informations complémentaires depuis public.users
     const { data: userData, error: userError } = await supabase
       .from('users')
