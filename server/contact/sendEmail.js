@@ -40,6 +40,9 @@ const apiKeyMiddleware = (req, res, next) => {
 
 const emailLocks = new Set();
 
+
+const EMAIL_LOCK_TIMEOUT = 10 * 1000;
+
 router.post('/sendEmail', apiKeyMiddleware, async (req, res) => {
     const apiKey = req.apiKey;
     const subject = req.subject;
