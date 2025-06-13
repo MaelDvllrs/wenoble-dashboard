@@ -65,7 +65,7 @@ const LIGHT_THEME = createTheme({
         },
 
         colors: {
-            green: 'rgb(0, 179, 92)',
+            green: 'rgb(1, 154, 80)',
             blue: 'rgb(0, 46, 252)',
             yellow: 'rgb(187, 184, 0)',
         },

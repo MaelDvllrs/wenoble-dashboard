@@ -451,6 +451,8 @@ router.post('/createVideoCollection', uploadVideo.single('video'), async (req, r
     return res.status(400).send('Aucune vidéo n\'a été téléchargée.');
   }
 
+  console.log('Fichier vidéo reçu:', req.file); 
+
   const token = req.headers['authorization']?.split(' ')[1];
   const supabase = supabaseServer(token);
 
@@ -478,6 +480,9 @@ router.post('/createVideoCollection', uploadVideo.single('video'), async (req, r
 
     // Supprimer le fichier temporaire
     fs.unlinkSync(filePath);
+
+    console.log('Fichier vidéo uploadé avec succès:', data);
+
 
     if (uploadError) {
       console.error('Erreur d\'upload Supabase détaillée:', uploadError);
@@ -509,6 +514,8 @@ router.post('/createVideoCollection', uploadVideo.single('video'), async (req, r
         details: insertError.details
       });
     }
+
+    console.log('Vidéo insérée avec succès dans la base de données');
 
     res.status(200).send({
       success: true,
@@ -599,7 +606,7 @@ router.post('/createRichTextCollection', async (req, res) => {
 
     if (uploadError) throw new Error('Erreur Supabase : ' + uploadError.message);
 
-    const { data } = supabaseServer.storage
+    const { data } = supabase.storage
       .from('collection-richtext-images')
       .getPublicUrl(storagePath);
 

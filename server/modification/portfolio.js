@@ -19,9 +19,13 @@ require('dotenv').config();
 const secretKey = process.env.SECRET_KEY; 
 
 router.get('/getPortfolio',authenticateToken, async (req, res) => {
+  
+  const token = req.headers.authorization?.split(' ')[1];
+  const supabase = supabaseServer(token);
+
   const sentIdUser = req.user.idUser;
   try {
-    const { data, error } = await supabaseServer
+    const { data, error } = await supabase
       .from('portfolio')
       .select('id_portfolio, portfolio_name')
       .eq('user_id', sentIdUser);
@@ -29,11 +33,15 @@ router.get('/getPortfolio',authenticateToken, async (req, res) => {
     const portfolioCrypt = jwt.sign({ portfolio: data }, secretKey);
     res.send(portfolioCrypt);
   } catch (err) {
+    console.error('Erreur lors de la récupération du portfolio :', err);
     res.send({ error: err.message });
   }
 });
 
 router.get('/getPorfolioImages',authenticateToken, async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  const supabase = supabaseServer(token);
+
   const portfolioId = req.query.portfolioId;
   const idUser = req.user.idUser;
   if (!portfolioId || !idUser) {
@@ -41,7 +49,7 @@ router.get('/getPorfolioImages',authenticateToken, async (req, res) => {
   }
   try {
     // Vérifier que le portfolio appartient à l'utilisateur
-    const { data: portfolio, error: errPortfolio } = await supabaseServer
+    const { data: portfolio, error: errPortfolio } = await supabase
       .from('portfolio')
       .select('user_id')
       .eq('id_portfolio', portfolioId)
@@ -51,7 +59,7 @@ router.get('/getPorfolioImages',authenticateToken, async (req, res) => {
       return res.status(403).send("Vous n'avez pas les droits pour accéder à ces images");
     }
     // Récupérer les images
-    const { data: image_portfolio, error: errImages } = await supabaseServer
+    const { data: image_portfolio, error: errImages } = await supabase
       .from('photo_portfolio')
       .select('id_photo, src_photo, alt_photo, size, order_photo')
       .eq('id_portfolio', portfolioId)
@@ -60,7 +68,7 @@ router.get('/getPorfolioImages',authenticateToken, async (req, res) => {
     // Générer les URLs publiques Supabase pour chaque image
     const imagesData = await Promise.all(
       image_portfolio.map(async image => {
-        const { data: publicUrlData } = supabaseServer.storage
+        const { data: publicUrlData } = supabase.storage
           .from('portfolio-image')
           .getPublicUrl(image.src_photo);
         return {
@@ -75,6 +83,7 @@ router.get('/getPorfolioImages',authenticateToken, async (req, res) => {
     );
     res.status(200).json(imagesData);
   } catch (err) {
+    console.error('Erreur lors de la récupération des images du portfolio :', err);
     res.status(500).send({ error: err.message });
   }
 });
@@ -94,6 +103,11 @@ router.post('/saveImagesPortfolio', authenticateToken, upload.single('image'), a
   if (!req.file) {
     return res.status(400).send("Aucune image n'a été téléchargée.");
   }
+
+  const token = req.headers.authorization?.split(' ')[1];
+  const supabase = supabaseServer(token);
+
+
   const id_photo = req.body.id_photo;
   const id_portfolio = req.body.id_portfolio;
   const name = req.body.name;
@@ -103,12 +117,12 @@ router.post('/saveImagesPortfolio', authenticateToken, upload.single('image'), a
   try {
     // Upload dans le bucket Supabase
     const fileBuffer = fs.readFileSync(req.file.path);
-    const { error: uploadError } = await supabaseServer.storage
+    const { error: uploadError } = await supabase.storage
       .from('portfolio-image')
       .upload(src_photo, fileBuffer, { upsert: true, contentType: req.file.mimetype });
     if (uploadError) throw uploadError;
     // Insertion des métadonnées
-    const { error } = await supabaseServer
+    const { error } = await supabase
       .from('photo_portfolio')
       .insert({
         id_photo,
@@ -123,6 +137,7 @@ router.post('/saveImagesPortfolio', authenticateToken, upload.single('image'), a
     fs.unlinkSync(req.file.path);
     res.status(200).send('Image sauvegardée avec succès');
   } catch (err) {
+    console.error('Erreur lors de la sauvegarde de l\'image du portfolio :', err);
     res.status(500).send({ error: err.message });
   }
 });
@@ -131,10 +146,14 @@ router.post('/orderPortfolio',authenticateToken, async (req, res) => {
   if (!req.body) {
     return res.status(400).send("Aucune image n'a été téléchargée.");
   }
+
+  const token = req.headers.authorization?.split(' ')[1];
+  const supabase = supabaseServer(token);
+
   const id_photo = req.body.id_photo;
   const order_photo = req.body.order;
   try {
-    const { error } = await supabaseServer
+    const { error } = await supabase
       .from('photo_portfolio')
       .update({ order_photo })
       .eq('id_photo', id_photo);
@@ -149,11 +168,15 @@ router.post('/deleteImage',authenticateToken, async (req, res) => {
   if (!req.body) {
     return res.status(400).send("Aucune image n'a été téléchargée.");
   }
+
+  const token = req.headers.authorization?.split(' ')[1];
+  const supabase = supabaseServer(token);
+
   const id_photo = req.body.params.id_photo;
   const type_photo = req.body.params.type_photo;
   try {
     // Récupérer le nom du fichier
-    const { data, error: errSelect } = await supabaseServer
+    const { data, error: errSelect } = await supabase
       .from('photo_portfolio')
       .select('src_photo')
       .eq('id_photo', id_photo)
@@ -161,13 +184,13 @@ router.post('/deleteImage',authenticateToken, async (req, res) => {
     if (errSelect) throw errSelect;
     const imageName = data?.src_photo;
     // Supprimer la ligne
-    const { error: errDelete } = await supabaseServer
+    const { error: errDelete } = await supabase
       .from('photo_portfolio')
       .delete()
       .eq('id_photo', id_photo);
     if (errDelete) throw errDelete;
     // Supprimer le fichier du bucket Supabase
-    const { error: storageError } = await supabaseServer.storage
+    const { error: storageError } = await supabase.storage
       .from('portfolio-image')
       .remove([imageName]);
     if (storageError) {

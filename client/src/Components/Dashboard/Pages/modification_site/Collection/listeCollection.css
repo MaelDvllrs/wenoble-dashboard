@@ -43,7 +43,7 @@
     padding-left: 0.2rem;
     padding-right: 0.2rem;
     padding-top: 0.1rem;
-    border-radius: 0.3rem;
+    border-radius: 1rem;
     font-size: 0.8rem;
 }
 
@@ -51,14 +51,17 @@
 .publish_status{
     color: var(--color-green);
     background-color: #22ff991e;
+    border: 0.5px solid var(--color-green);
 }
 
 .draft_status{
     color : var(--color-blue);
     background-color: #1751ff2d;
+    border: 0.5px solid var(--color-blue);
 }
 
 .pending_status {
     color: var(--color-yellow);
     background-color: #ffe6072d;
+    border: 0.5px solid var(--color-yellow);
 }

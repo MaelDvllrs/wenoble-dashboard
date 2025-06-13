@@ -2,3 +2,6 @@
 /server/images/*
 /server/.env
 server/.env
+
+/server/temp
+/server/temp/*

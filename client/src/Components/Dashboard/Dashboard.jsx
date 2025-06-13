@@ -33,6 +33,7 @@ import ThemeContext from '../../Theme/themeContext';
 import { notificationTitle, notificationLink } from '../../Theme/element';
 import { checkAuthorization } from '../../Authorisation/Authorisation';
 import { fetchUserInfo } from './Pages/Users/apiAccount';
+import InstallPWA from '../InstallPWA';
 
 // Component definition
 const Dashboard = () => {
@@ -253,7 +254,7 @@ const Dashboard = () => {
                             <div className="option_user_box">
                                 <Link key="account" className='link option_user_text' to='/dashboard/account' style={{color: theme.palette.text.primary}}><PiUserBold className='option_user_icon'/><b>Mon Compte</b></Link>
                                 <Link key="parameter" className='link option_user_text' to="/dashboard/parameter" style={{color: theme.palette.text.primary}}><PiGearSixBold className='option_user_icon'/><b>Parametre</b></Link>
-                                <button onClick={logoutUser} key="option" className='option_user_text' to="/dashboard/lougout" style={{color: theme.palette.text.primary}}><PiPowerBold  className='option_user_icon'/><b>Logout</b></button>
+                                <button onClick={logoutUser} key="option" className='option_user_text' to="/dashboard/lougout" style={{color: theme.palette.text.primary}}><PiPowerBold  className='option_user_icon'/><b>Déconnexion</b></button>
                             </div>
                         </div>   
                     </motion.div>
@@ -362,6 +363,8 @@ const Dashboard = () => {
                                     <PiBellBold className='icon' />
                                 </Badge>
                             </IconButton>
+
+                            <InstallPWA />
                         
                         <ClickAwayListener onClickAway={handleClickAway}>
                         <Popper open={openNotif} anchorEl={anchorRef.current} transition placement="bottom-end" style={{zIndex:100}}>

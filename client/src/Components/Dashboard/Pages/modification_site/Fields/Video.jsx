@@ -21,8 +21,8 @@ const VideoUpload = ({ id_blog_page, type, id_config, onChange, slugValue, field
 
     const handleVideoChange = async (file, idToReplace) => {
       if (file instanceof File) {
-        setIsLoading(true); // Start loading
-
+        setIsLoading(true);
+      
         const data = {
           id_blog_page: id_blog_page,
           id_config: id_config,
@@ -33,22 +33,30 @@ const VideoUpload = ({ id_blog_page, type, id_config, onChange, slugValue, field
           url: URL.createObjectURL(file),
           size: (file.size / 1024).toFixed(0),
           type: 'video',
-          create : createBoolVideo,
+          create: createBoolVideo,
         };
-
-        setVideoUploaded(prevVideoq => {
-          const foundIndex = prevVideoq.findIndex(img => img.id_config === idToReplace);
-          if (idToReplace !== undefined && foundIndex !== -1) {
-            onChange({ data });
-            return prevVideoq.map((img, index) => index === foundIndex ? data : img);
-          } else {
-            onChange({ ...prevVideoq, data });
-
-            return [...prevVideoq, data];
-          }
-        });
-
-        setIsLoading(false); // End loading
+      
+        // Déterminer si c'est un remplacement ou un ajout
+        const foundIndex = videoUploaded.findIndex(img => img.id_config === idToReplace);
+        const isReplacement = idToReplace !== undefined && foundIndex !== -1;
+        
+        // Mettre à jour l'état local
+        if (isReplacement) {
+          setVideoUploaded(prevVideoq => 
+            prevVideoq.map((img, index) => index === foundIndex ? data : img)
+          );
+        } else {
+          setVideoUploaded(prevVideoq => [...prevVideoq, data]);
+        }
+        
+        // Appeler onChange en dehors de la fonction de mise à jour d'état
+        if (isReplacement) {
+          onChange({ data });
+        } else {
+          onChange({ ...videoUploaded, data });
+        }
+      
+        setIsLoading(false);
       } else {
         console.error("Aucun fichier n'a été téléchargé.");
       }

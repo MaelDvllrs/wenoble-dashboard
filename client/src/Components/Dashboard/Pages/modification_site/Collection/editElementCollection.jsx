@@ -212,6 +212,7 @@ const EditElementCollection = () => {
             }
 
             //ENREGISTRER LES VIDEO
+            console.log(blogData.video);
             if(blogData.video.length > 0){
                 try {
                     await Promise.all(blogData.video.map(async (video) => {
@@ -225,7 +226,6 @@ const EditElementCollection = () => {
 
             //ENREGISTRER LES MULTIREFERENCE
 
-            console.log(blogData.multiReference);
             if(blogData.multiReference.length > 0){
                 try {
                     await Promise.all(blogData.multiReference.map(async (multiReference) => {

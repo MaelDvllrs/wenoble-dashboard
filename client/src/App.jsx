@@ -9,6 +9,8 @@ import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 
 
+
+
 // Global styles
 import './App.css';
 
@@ -90,11 +92,9 @@ function App() {
 
 
 
-    
-
-    return (
+        return (
         <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="fr">
-            <div>
+            <div>                
                 <Router>
                     <Routes>
                         {/* Authentication routes */}

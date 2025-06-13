@@ -57,6 +57,7 @@ const ContactList = () => {
                 'Content-Type': 'multipart/form-data'
             }
             }).then((response) => {
+                console.log(response.data);
                 setInfoListeMessage(jwtDecode(response.data));
                 setLoadingMessage(false);
             }).catch((error) => {

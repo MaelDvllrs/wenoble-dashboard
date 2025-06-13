@@ -15,8 +15,10 @@ router.use(express.json());
 
 router.get('/getMessage',authenticateToken, async (req, res) => {
     const iduser = req.user.idUser;
+    const token = req.headers.authorization?.split(' ')[1];
+    const supabase = supabaseServer(token);
     try {
-        const { data, error } = await supabaseServer
+        const { data, error } = await supabase
             .from('contact_website')
             .select('id_message, mail_sender, subject, date')
             .eq('user_id', iduser)
@@ -32,8 +34,11 @@ router.get('/getMessage',authenticateToken, async (req, res) => {
 router.get('/getMessageDetail',authenticateToken, async (req, res) => {
     const idMessage = req.query.idMessage;
     const idUser = req.user.idUser;
+
+    const token = req.headers.authorization?.split(' ')[1];
+    const supabase = supabaseServer(token);
     try {
-        const { data, error } = await supabaseServer
+        const { data, error } = await supabase
             .from('contact_website')
             .select('mail_sender, subject, html, date')
             .eq('id_message', idMessage)

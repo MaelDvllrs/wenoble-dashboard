@@ -5,28 +5,41 @@ const { stateToHTML } = require('draft-js-export-html');
 const { convertFromRaw } = require('draft-js');
 
 const { ca } = require('date-fns/locale/ca');
-const { supabaseServer } = require('../supabase');
+const { createClient } = require('@supabase/supabase-js');
 
-const supabase = supabaseServer();
+require('dotenv').config();
+
+// Création d'une instance Supabase avec la clé de service pour accès administrateur
+const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_KEY,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+);
 
 
 const apiKeyMiddleware = async (req, res, next) => {
     const apiKey = req.headers['api_key'];
     const id_data = req.headers['id_data'];
     const ids = req.headers['ids'];
+    
     if (!apiKey) {
         return res.status(401).json({ message: 'Clé API ou ID de data manquant.' });
     }
+    
     try {
+        // Vérification de la clé API avec l'instance Supabase service
         const { data, error } = await supabase
             .from('users')
             .select('id')
             .eq('api_key', apiKey)
             .maybeSingle();
+            
         if (error) throw error;
+        
         if (!data) {
             return res.status(403).json({ message: 'Clé API invalide pour api.' });
         }
+        
         req.id_data = id_data;
         req.ids = ids;
         next();
@@ -87,7 +100,7 @@ router.get('/sendPhotoPortfolio', apiKeyMiddleware, async (req, res) => {
 
 // Récupérer toutes les pages de blogs (collections)
 router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
-    
+    console.log('Récupération des blogs avec les paramètres :', req.query);
     const ids = req.ids;
     const order = req.query.order || 'DESC';
     const limit = req.query.limit ? parseInt(req.query.limit, 10) : null;
@@ -111,6 +124,7 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
         if (!data || data.length === 0) return res.status(200).json({ message: 'Aucun blog trouvé' });
         return res.json({ blog: data });
     } catch (err) {
+        console.error('Erreur lors de la récupération des blogs :', err);
         res.status(500).send({ error: err.message });
     }
 });

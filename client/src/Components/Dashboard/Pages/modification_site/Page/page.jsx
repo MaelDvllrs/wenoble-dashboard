@@ -49,7 +49,6 @@ const Page = () => {
         }
     }, [Infopage]);
 
-    console.log(decodedPage);
 
     useEffect(() => {
         if(Infopage != null){

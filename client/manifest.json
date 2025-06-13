@@ -1,24 +1,39 @@
 {
-  "name": "My PWA App",
-  "short_name": "PWA App",
-  "description": "My awesome Progressive Web App!",
-  "start_url": ".",
+  "name": "Wenoble Dashboard",
+  "short_name": "Wenoble",
+  "description": "Tableau de bord pour la gestion de contenu WeNoble",
+  "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#ffffff",
+  "background_color": "#131417",
+  "theme_color": "#131417",
   "icons": [
     {
-      "src": "pwa-192x192.png",
+      "src": "./src/assets/icon/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "./src/assets/icon/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "./src/assets/icon/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "./src/assets/icon/android-chrome-192x192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "pwa-512x512.png",
+      "src": "./src/assets/icon/android-chrome-512x512.png",
       "sizes": "512x512",
       "type": "image/png"
     },
     {
-      "src": "pwa-512x512.png",
+      "src": "./src/assets/icon/logo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"

@@ -18,8 +18,10 @@ router.use(express.json());
 
 router.get('/getNewsletter',authenticateToken, async (req, res) => {
     const iduser = req.user.idUser;
+    const token = req.headers.authorization?.split(' ')[1];
+    const supabase = supabaseServer(token);
     try {
-        const { data, error } = await supabaseServer
+        const { data, error } = await supabase
             .from('newsletter_website')
             .select('id_newsletter, mail, date')
             .eq('user_id', iduser)
@@ -34,8 +36,10 @@ router.get('/getNewsletter',authenticateToken, async (req, res) => {
 
 router.get('/exportNewsletter',authenticateToken, async (req, res) => {
     const iduser = req.user.idUser;
+    const token = req.headers.authorization?.split(' ')[1];
+    const supabase = supabaseServer(token);
     try {
-        const { data, error } = await supabaseServer
+        const { data, error } = await supabase
             .from('newsletter_website')
             .select('mail, date')
             .eq('user_id', iduser);
@@ -65,8 +69,11 @@ router.get('/exportNewsletter',authenticateToken, async (req, res) => {
 router.delete('/deleteNewsletter',authenticateToken, async (req, res) => {
     const idNewsletter = req.body.id_newsletter;
     const idUser = req.user.idUser;
+
+    const token = req.headers.authorization?.split(' ')[1];
+    const supabase = supabaseServer(token);
     try {
-        const { error, count } = await supabaseServer
+        const { error, count } = await supabase
             .from('newsletter_website')
             .delete({ count: 'exact' })
             .eq('user_id', idUser)

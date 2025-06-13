@@ -110,23 +110,24 @@
 }
 
 .option_user_text{
-    font-size: 1.1rem;
-    color: rgba(255, 255, 255, 0.5);
-    margin-top: 1rem;
+    margin-top: 0.8rem;
     background-color: transparent;
     border: none;
     display: flex;
     padding: 0;
     cursor: pointer;
+    font-size: 0.87rem;
 }
 
 .option_user_text:hover{
-    color: rgba(255, 255, 255, 0.8); 
+    color: var(--primary-color) !important; 
     transition: 0.2s ease;
+    
 }
 
 .option_user_icon{
-    margin-right: 0.7rem;
+    font-size: 0.87rem;
+    margin-right: 0.5rem;
 }
 
 .menu_title{

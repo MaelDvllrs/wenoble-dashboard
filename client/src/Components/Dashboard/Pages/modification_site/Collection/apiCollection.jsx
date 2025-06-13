@@ -50,6 +50,8 @@ export const createGalleryBlog = async (fields, blogPageId, token) => {
 };
 
 export const createVideoBlog = async (fields, blogPageId, token) => {
+    console.log("createVideoBlog", fields, blogPageId, token);
+    
     try {
         const formData = new FormData();
         const src = fields.id_video + ".mp4";
@@ -352,7 +354,10 @@ export const updateVideoBlog = async (fields, blogPageId, token) => {
         formData.append('name', fields.name);
         formData.append('size', fields.size);
 
+
+
         if (fields.create) {
+            console.log("updateVideoBlog", fields, blogPageId, token);
             await Axios.post(`${apiUrl}/updateVideoCollection`, formData, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -360,6 +365,7 @@ export const updateVideoBlog = async (fields, blogPageId, token) => {
                 }
             });
         } else {
+            console.log("createVideoBlog", fields, blogPageId, token);
             await Axios.post(`${apiUrl}/createVideoCollection`, formData, {
                 headers: {
                     'Authorization': `Bearer ${token}`,

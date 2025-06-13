@@ -54,27 +54,33 @@ export default defineConfig({
 			registerType: 'autoUpdate',
 			includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
 			manifest: {
-			  name: 'My PWA App',
-			  short_name: 'PWA App',
-			  description: 'My awesome Progressive Web App!',
-			  theme_color: '#ffffff',
+			  name: 'Wenoble Dashboard',
+			  short_name: 'Wenoble Dashboard',
+			  description: 'A powerful dashboard for managing your Wenoble projects.',
+			  theme_color: '#171717',
 			  icons: [
-				{
-				  src: 'pwa-192x192.png',
-				  sizes: '192x192',
-				  type: 'image/png',
-				},
-				{
-				  src: 'pwa-512x512.png',
-				  sizes: '512x512',
-				  type: 'image/png',
-				},
-				{
-				  src: 'pwa-512x512.png',
-				  sizes: '512x512',
-				  type: 'image/png',
-				  purpose: 'any maskable',
-				},
+			  	{
+			  		src: "/android-chrome-192x192.png",
+			  		sizes: "192x192",
+			  		type: "image/png",
+			  	},
+			  	{
+			  		src: "/android-chrome-512x512.png",
+			  		sizes: "512x512",
+			  		type: "image/png",
+			  	},
+			  	{
+			  		src: "/apple-touch-icon.png",
+			  		sizes: "180x180",
+			  		type: "image/png",
+			  		purpose: "apple touch icon",
+			  	},
+			  	{
+			  		src: "/maskable_icon.png",
+			  		sizes: "225x225",
+			  		type: "image/png",
+			  		purpose: "any maskable",
+			  	},
 			  ],
 			},
 		}),

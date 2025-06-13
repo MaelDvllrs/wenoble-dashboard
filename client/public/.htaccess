@@ -1,0 +1,25 @@
+<IfModule mod_mime.c>
+  # Définir le type MIME correct pour les fichiers JavaScript
+  AddType application/javascript .js
+  AddType application/json .json
+  AddType application/manifest+json .webmanifest
+</IfModule>
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  # Ne pas rediriger les fichiers ou dossiers existants
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  # Rediriger toutes les autres requêtes vers index.html
+  RewriteRule . /index.html [L]
+</IfModule>
+
+# Caching pour les fichiers statiques
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType application/javascript "access plus 1 year"
+  ExpiresByType text/css "access plus 1 year"
+  ExpiresByType image/png "access plus 1 year"
+  ExpiresByType image/svg+xml "access plus 1 year"
+</IfModule>

@@ -1,8 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const { supabaseServer } = require('../supabase'); 
 const axios = require('axios');
-const {Resend} = require('resend'); 
+const {Resend} = require('resend');
+
+const { createClient } = require('@supabase/supabase-js');
+
+const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_KEY,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+);
 
 
 require('dotenv').config();
@@ -19,7 +26,7 @@ const apiKeyMiddleware = async (req, res, next) => {
     }
 
     // Supabase : vérification de la clé API
-    const { data, error } = await supabaseServer
+    const { data, error } = await supabase
         .from('users')
         .select('id')
         .eq('api_key', apiKey)
@@ -57,20 +64,31 @@ router.post('/sendEmail', apiKeyMiddleware, async (req, res) => {
 
     try {
         // Récupérer l'utilisateur par cle_api
-        const { data: userData, error: userError } = await supabaseServer
+        const { data: userData, error: userError } = await supabase
             .from('users')
-            .select('email, id')
+            .select('id')
             .eq('api_key', apiKey)
             .maybeSingle();
         if (userError || !userData) {
             emailLocks.delete(emailSender);
+            console.error('Erreur lors de la récupération de l\'utilisateur:', userError);
             return res.status(404).json({ error: 'Utilisateur non trouvé' });
         }
-        const to = userData.email;
         const user_id = userData.id;
 
+        // Récupérer l'email via l'API Auth Admin
+        const { data: authData, error: authError } = await supabase.auth.admin.getUserById(user_id);
+            
+        if (authError || !authData || !authData.user) {
+            emailLocks.delete(emailSender);
+            console.error('Erreur lors de la récupération de l\'email:', authError);
+            return res.status(404).json({ error: 'Email utilisateur non trouvé' });
+        }
+        
+        const to = authData.user.email;
+
         // Insérer le message dans contact_website
-        const { error: insertError, data: insertData } = await supabaseServer
+        const { error: insertError, data: insertData } = await supabase
             .from('contact_website')
             .insert({
                 user_id,

@@ -326,7 +326,7 @@ const EditPage = () => {
                                             onChange={handlePageDataChange} 
                                             dataValue={correspondingData || {}}
                                             imagefunction={false}
-                                            imageDirectory={"https://oeigawgmmhrlpjpgicww.supabase.co/storage/v1/object/public/page-image/"}
+                                            imageDirectory={config.urlBucketPageImage}
                                         />
                                     </div>
                                 );
