@@ -128,6 +128,7 @@ const whitelist =
 
 
   'https://maison-astucieuse-emma-lamarqu-388c45.webflow.io',
+  'https://maisonastucieuse.fr',
 ];
 
 
