@@ -53,6 +53,10 @@ router.post('/sendEmail', apiKeyMiddleware, async (req, res) => {
 
     emailLocks.add(emailSender);
 
+    setTimeout(() => {
+        emailLocks.delete(emailSender);
+    }, EMAIL_LOCK_TIMEOUT);
+
     const serverUrl = process.env.SERVER_URL;
 
     const SQL = 'SELECT email, id_user FROM users WHERE cle_api = ?';
