@@ -364,7 +364,6 @@ const Dashboard = () => {
                                 </Badge>
                             </IconButton>
 
-                            <InstallPWA />
                         
                         <ClickAwayListener onClickAway={handleClickAway}>
                         <Popper open={openNotif} anchorEl={anchorRef.current} transition placement="bottom-end" style={{zIndex:100}}>

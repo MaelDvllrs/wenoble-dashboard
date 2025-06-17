@@ -1,8 +1,8 @@
 (async function () {
     const apiUrl = "http://localhost:3002"; // Remplacez par l'URL de votre API
     const scriptTag = document.currentScript;
-    const urlVideoBucket = "https://oeigawgmmhrlpjpgicww.supabase.co/storage/v1/object/public/collection-video//" // Remplacez par l'URL de votre API
-    const urlGalleryBucket = "https://oeigawgmmhrlpjpgicww.supabase.co/storage/v1/object/public/collection-gallery//";
+    const urlVideoBucket = "https://zaagwamadxckevfocnul.supabase.co/storage/v1/object/public/collection-video//" // Remplacez par l'URL de votre API
+    const urlGalleryBucket = "https://zaagwamadxckevfocnul.supabase.co/storage/v1/object/public/collection-gallery//";
     const userKey = scriptTag.getAttribute("data-user-id");
 
 
@@ -69,7 +69,6 @@
             const decodedData = decodeBase64(encodedData);
 
             const { blogId, limit, order, colone, joinTable, config } = decodedData;
-            console.log("Données décodées :", decodedData);
 
             if (!blogId) {
                 console.error("Blog ID manquant !");
@@ -95,6 +94,7 @@
             const dataBlog = await blogPageResponse.json();
 
 
+
             if (!dataBlog.blog || dataBlog.blog.length === 0) {
                 
                 const comingSoonMessage = document.createElement('div');
@@ -118,12 +118,12 @@
 
             for (const blog of dataBlog.blog) {
                 const blogPromise = (async () => {
+
                     const clone = template.cloneNode(true);
                     clone.removeAttribute("wn-collection-box");
                     
                     // Ajout de l'attribut wn-collection-element à chaque élément cloné
                     clone.setAttribute("wn-collection-element", "true");
-                    console.log("Clonage de l'élément pour le blog :", blog);
                     const response = await fetch(`${apiUrl}/api/sendBlogContent`, {
                         method: "GET",
                         headers: {
@@ -215,12 +215,10 @@
                     
                     if (el.hasAttribute("wn-image")) {
                         const key = el.getAttribute("wn-image");
-                        console.log("Key pour l'image :", key);
-                        console.log("Données de l'image :", data.content.image);
                         const imageData = data.content.image.find(img => img.id_config == key);
                         if (imageData) {
-                            if (imageData.src_image) {
-                                el.src = `${imageData.src_image}`;
+                            if (imageData.url) {
+                                el.src = `${imageData.url}`;
                                 el.alt = imageData.alt_image;
                             }
                         } else {
@@ -245,7 +243,8 @@
                     }
                     if (el.hasAttribute("wn-video")) {
                         const key = el.getAttribute("wn-video");
-                        const videoData = data.content.video.find(img => img.id_config == key);
+                        
+                        const videoData = data.content.video.find(video => video.id_config == key);
                         if (videoData) {
                             el.innerHTML = `<source src="${urlVideoBucket}${videoData.src_video}">`;
                         }
@@ -253,7 +252,10 @@
 
                     if (el.hasAttribute("wn-gallery")) {
                         const key = el.getAttribute("wn-gallery");
+
+
                         const galleryData = data.content.gallery.find(gallery => gallery.id_config == key);
+                        console.log(galleryData);
                         if (galleryData) {
                             const galleryItems = JSON.parse(galleryData.gallery);
                             el.innerHTML = galleryItems.map(img => `<img src="${urlGalleryBucket}${img.src_photo}">`).join("");
@@ -327,7 +329,8 @@
                                 // Parcours tous les éléments qui ont un attribut `wn-*` dans le clone
                                 clone.querySelectorAll("[wn-multiReference-title], [wn-multiReference-link], [wn-multiReference-image], [wn-multiReference-text]").forEach(el => {
                                     if (el.hasAttribute("wn-multiReference-title")) {
-                                        el.textContent = multiReferenceInfo.label;
+                                        console.log(multiReferenceInfo.label);
+                                        el.textContent = 'tets';
                                     }
 
                                     if (el.hasAttribute("wn-multiReference-id")) {

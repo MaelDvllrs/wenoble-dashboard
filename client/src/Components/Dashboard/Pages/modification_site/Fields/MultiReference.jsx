@@ -52,13 +52,26 @@ const MultiReference = ({ id_blog_page,type, id_config, onChange, slugValue, fie
 
    useEffect(() => {
      if (dataValue && Object.keys(dataValue).length > 0 && type === 'multiReference') {
-       const selectedOptions = JSON.parse(dataValue.info_ref);
-       const selectedOptionsFormatted = selectedOptions.map(option => ({
-         value: option.value,
-         label: option.label
-       }));
-       setCreateBoolMultiRef(dataValue.create)
-       setOptionDefault(selectedOptionsFormatted);
+      console.log('dataValue', dataValue);
+
+      let selectedOptions;
+
+      if (typeof dataValue.info_ref === 'string') {
+        try {
+          selectedOptions = JSON.parse(dataValue.info_ref);
+        } catch (e) {
+          // Gestion d'erreur si la chaîne n'est pas du JSON valide
+          selectedOptions = dataValue.info_ref;
+        }
+      } else {
+        selectedOptions = dataValue.info_ref;
+      }
+      const selectedOptionsFormatted = selectedOptions.map(option => ({
+        value: option.value,
+        label: option.label
+      }));
+      setCreateBoolMultiRef(dataValue.create)
+      setOptionDefault(selectedOptionsFormatted);
        
      }
    }, [dataValue, type, CollectionRef]);

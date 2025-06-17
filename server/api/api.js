@@ -6,6 +6,7 @@ const { convertFromRaw } = require('draft-js');
 
 const { ca } = require('date-fns/locale/ca');
 const { createClient } = require('@supabase/supabase-js');
+const e = require('express');
 
 require('dotenv').config();
 
@@ -100,18 +101,19 @@ router.get('/sendPhotoPortfolio', apiKeyMiddleware, async (req, res) => {
 
 // Récupérer toutes les pages de blogs (collections)
 router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
-    console.log('Récupération des blogs avec les paramètres :', req.query);
     const ids = req.ids;
     const order = req.query.order || 'DESC';
     const limit = req.query.limit ? parseInt(req.query.limit, 10) : null;
     const colone = req.query.colone || 'collection_element_publish_date';
     const joinTable = req.query.joinTable || 'collection_element';
     const configs = req.query.configs || null;
+
     try {
         let query = supabase
             .from('collection_element')
             .select('*')
-            .order(colone, { ascending: order.toUpperCase() === 'ASC' });
+            .eq('collection_element_status', true)
+            .order(colone, { ascending: false });
         if (ids) {
             const idArray = ids.split(',').map(id => id.trim());
             query = query.in('collection_id', idArray);
@@ -122,6 +124,7 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
         const { data, error } = await query;
         if (error) throw error;
         if (!data || data.length === 0) return res.status(200).json({ message: 'Aucun blog trouvé' });
+
         return res.json({ blog: data });
     } catch (err) {
         console.error('Erreur lors de la récupération des blogs :', err);
@@ -309,25 +312,33 @@ router.get('/sendBlogContent', apiKeyMiddleware, async (req, res) => {
     const id_blog = req.headers.id_blog;
 
     
+    
     try {
         // Récupérer la config des champs dynamiques
         const { data: configData, error: configError } = await supabase
             .from('collection_config')
             .select('tab_field, id')
             .eq('collection_id', id_blog);
-        if (configError) throw configError;
+        if (configError) {
+            console.error('Erreur lors de la récupération de la config des champs dynamiques :', configError);
+            return res.status(500).send({ error: configError.message });
+        }
         if (!configData || configData.length === 0) return res.status(200).json({ message: 'Aucun contenu trouvé' });
         // Pour chaque champ, récupérer la data correspondante
         const contentPromises = configData.map(async (field) => {
             switch (field.tab_field) {
                 case 'text': {
-                    const { data } = await supabase
+                    const { data, error } = await supabase
                         .from('collection_field_text')
                         .select('id_config, text')
                         .eq('collection_element_id', id_blog_page)
                         .eq('id_config', field.id);
 
-                    console.log('Text Data:', data);
+                    if (error) {
+                     console.error('Erreur lors de la récupération des blogs :', error.message);
+                     // Tu peux aussi afficher un message à l'utilisateur ou gérer l'erreur autrement
+                     return;
+                    }
                     return { type: 'text', data };
                 }
                 case 'richText': {
@@ -354,28 +365,40 @@ router.get('/sendBlogContent', apiKeyMiddleware, async (req, res) => {
                         const { data: publicUrlData } = supabase.storage
                             .from('collection-images')
                             .getPublicUrl(image.src_image);
+
                         return {
                             id_config: image.id_config,
                             alt_image: image.alt_image,
                             url: publicUrlData?.publicUrl || ''
                         };
+                        
                     });
                     return { type: 'image', data: images };
+
                 }
                 case 'video': {
-                    const { data } = await supabase
+                    const { data, error } = await supabase
                         .from('collection_field_video')
                         .select('id_config, src_video')
                         .eq('collection_element_id', id_blog_page)
                         .eq('id_config', field.id);
+
+                    if (error) {
+                        console.error('Erreur lors de la récupération des vidéos :', error.message);
+                        return;
+                    }
                     return { type: 'video', data };
                 }
                 case 'gallery': {
-                    const { data } = await supabase
+                    const { data, error } = await supabase
                         .from('collection_field_gallery')
                         .select('id_config, gallery')
                         .eq('collection_element_id', id_blog_page)
                         .eq('id_config', field.id);
+                    if (error) {
+                        console.error('Erreur lors de la récupération de la gallery :', error.message);
+                        return;
+                    }
                     return { type: 'gallery', data };
                 }
                 case 'multiReference': {
