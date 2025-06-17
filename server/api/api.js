@@ -108,6 +108,8 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
     const joinTable = req.query.joinTable || 'collection_element';
     const configs = req.query.configs || null;
 
+
+    console.log('IDs:', ids);
     try {
         let query = supabase
             .from('collection_element')
