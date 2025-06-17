@@ -109,7 +109,6 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
     const configs = req.query.configs || null;
 
 
-    console.log('IDs:', ids);
     try {
         let query = supabase
             .from('collection_element')
@@ -312,6 +311,10 @@ router.get('/sendMultiReference', apiKeyMiddleware, async (req, res) => {
 router.get('/sendBlogContent', apiKeyMiddleware, async (req, res) => {
     const id_blog_page = req.headers.id_blog_page;
     const id_blog = req.headers.id_blog;
+
+
+    console.log('ID Blog Page:', id_blog_page);
+    console.log('ID Blog:', id_blog);
 
     
     
