@@ -29,23 +29,6 @@ function extractTemplateType(slug) {
             return pathSegments[pathSegments.length - 1];
         }
         return 'realisations';
-        let pathSegments;
-        console.log('slug', slug);
-
-        if (slug.startsWith('http://') || slug.startsWith('https://')) {
-            const url = new URL(slug);
-            pathSegments = url.pathname.split('/').filter(Boolean);
-        } else {
-            pathSegments = slug.split('/').filter(Boolean);
-        }
-
-        // Prendre le DERNIER segment du chemin
-        if (pathSegments.length > 0) {
-            return pathSegments[pathSegments.length - 1];
-        }
-
-        // Valeur par défaut si aucun segment n'est trouvé
-        return 'realisations';
     } catch (error) {
         console.error('Erreur lors de l\'extraction du type de template:', error);
         return 'realisations';
@@ -53,10 +36,6 @@ function extractTemplateType(slug) {
 }
 
 const { supabaseServer } = require('../supabase');
-        console.error('Erreur lors de l\'extraction du type de template:', error);
-        return 'realisations';
-    }
-}
 
 router.post('/generateSite', async (req, res) => {
   const user_id = req.user.idUser;
