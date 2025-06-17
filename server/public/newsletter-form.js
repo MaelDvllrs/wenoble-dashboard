@@ -1,5 +1,18 @@
+(function() {
+  const styleElement = document.createElement('style');
+  styleElement.textContent = `
+    [wn-error-form]{
+      display: none !important;
+    }
+  `;
+  document.head.appendChild(styleElement);
+})();
+
+
+
 // Newsletter form script that follows the same patterns as contact-form.js
 function initNewsletterForm(apiEndpoint, apiKey, formElement) {
+    
     async function subscribeToNewsletter(email) {
         // Find success and error elements (siblings of the form)
         const parentElement = formElement.parentNode;
@@ -86,6 +99,8 @@ function initNewsletterForm(apiEndpoint, apiKey, formElement) {
 
 // Auto-initialize newsletter forms when the script is loaded
 document.addEventListener('DOMContentLoaded', () => {
+
+
     // Find all forms with the wn-newsletter-form attribute
     const newsletterForms = document.querySelectorAll('[wn-newsletter-form]');
     
@@ -129,6 +144,8 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Set up face buttons that trigger submit buttons
     document.querySelectorAll('[wn-submit-face-form]').forEach(faceButton => {
+
+
         faceButton.addEventListener('click', function() {
             // Find parent or targeted form
             let targetFormId = faceButton.getAttribute('wn-target-form');

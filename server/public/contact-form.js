@@ -1,5 +1,19 @@
+(function() {
+  const styleElement = document.createElement('style');
+  styleElement.textContent = `
+    [wn-error-form]{
+      display: none !important;
+    }
+  `;
+  document.head.appendChild(styleElement);
+})();
+
+
 function initContactForm(apiEndpoint, apiKey, formElement, submitButtonSelector = '#contact_submit_button', triggerButtonSelector = '#contact_button') {
     // Fonction modifiée pour utiliser les éléments frères avec attributs wn-success-form et wn-error-form
+    
+    
+    
     async function sendEmail(emailSender, subject, html) {
         // Trouver les éléments de succès et d'erreur (frères du formulaire)
         const parentElement = formElement.parentNode;
@@ -99,9 +113,14 @@ function initContactForm(apiEndpoint, apiKey, formElement, submitButtonSelector 
             
             formFields.forEach(field => {
                 const fieldName = field.getAttribute('wn-element-form');
-                const fieldValue = field.value || '';
+                let fieldValue;
+                if (field.type === 'checkbox') {
+                    fieldValue = field.checked; // true si coché, false sinon
+                } else {
+                    fieldValue = field.value || '';
+                }
                 formData[fieldName] = fieldValue;
-                
+            
                 // Identifier l'email de l'expéditeur
                 if (fieldName.toLowerCase() === 'email') {
                     senderEmail = fieldValue;
@@ -210,6 +229,7 @@ function initContactForm(apiEndpoint, apiKey, formElement, submitButtonSelector 
 
 // Auto-initialisation du formulaire lorsque le script est chargé
 document.addEventListener('DOMContentLoaded', () => {
+
     // Rechercher les formulaires avec l'attribut wn-contact-form
     const contactForms = document.querySelectorAll('[wn-contact-form]');
     

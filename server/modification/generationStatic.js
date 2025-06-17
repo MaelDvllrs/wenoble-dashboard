@@ -29,6 +29,23 @@ function extractTemplateType(slug) {
             return pathSegments[pathSegments.length - 1];
         }
         return 'realisations';
+        let pathSegments;
+        console.log('slug', slug);
+
+        if (slug.startsWith('http://') || slug.startsWith('https://')) {
+            const url = new URL(slug);
+            pathSegments = url.pathname.split('/').filter(Boolean);
+        } else {
+            pathSegments = slug.split('/').filter(Boolean);
+        }
+
+        // Prendre le DERNIER segment du chemin
+        if (pathSegments.length > 0) {
+            return pathSegments[pathSegments.length - 1];
+        }
+
+        // Valeur par défaut si aucun segment n'est trouvé
+        return 'realisations';
     } catch (error) {
         console.error('Erreur lors de l\'extraction du type de template:', error);
         return 'realisations';
@@ -36,6 +53,10 @@ function extractTemplateType(slug) {
 }
 
 const { supabaseServer } = require('../supabase');
+        console.error('Erreur lors de l\'extraction du type de template:', error);
+        return 'realisations';
+    }
+}
 
 router.post('/generateSite', async (req, res) => {
   const user_id = req.user.idUser;
@@ -94,6 +115,53 @@ router.post('/generateSite', async (req, res) => {
 
     // 4. Construire l'objet siteConfig et lancer la génération
     await generateSite(siteDir, templateSlugs, templateTypes);
+      // 3. Pour chaque blog, extraire le type et récupérer les pages
+      blogResults.forEach((blog) => {
+        // Extraire le type de template
+        const blogType = extractTemplateType(blog.slug_blog);
+        console.log(`Type de blog extrait: ${blogType} pour le blog ${blog.slug_blog}`);
+
+        // Récupérer les slugs des pages de ce blog
+        const SQL_PAGES = 'SELECT page_blog_slug FROM blog_page WHERE id_blog = ? AND status = 1';
+        const Values_PAGES = [blog.id_blog];
+
+        console.log(`Récupération des pages pour le blog: ${blog.slug_blog} (${blogType})`); 
+
+        
+
+        db.query(SQL_PAGES, Values_PAGES, (err, pageResults) => {
+          if (err) {
+            console.error('Database query error:', err);
+            return res.status(500).send({ error: err });
+          }
+
+          console.log(`Traitement du blog: ${blog.slug_blog} (${blogType})`);
+
+          // Pour chaque page, ajouter le slug et définir son type
+          pageResults.forEach((page) => {
+            if (page.page_blog_slug) {
+              templateSlugs.push(page.page_blog_slug);
+
+              console.log(`Ajout du slug de page: ${page.page_blog_slug} pour le blog ${blog.slug_blog}`);
+              
+              // Si ce n'est pas le type par défaut, l'ajouter au mapping
+              if (blogType !== 'realisations') {
+                templateTypes[page.page_blog_slug] = blogType;
+                console.log(`Ajout du type de template: ${blogType} pour le slug: ${page.page_blog_slug}`);
+              }
+            }
+          });
+
+          // Incrémenter le compteur de blogs traités
+          processedBlogs++;
+
+          // Vérifier si tous les blogs ont été traités
+          if (processedBlogs === blogResults.length) {
+            // 4. Construire l'objet siteConfig et lancer la génération
+            generateSite(siteDir, templateSlugs, templateTypes);
+          }
+        });
+      });
 
     async function generateSite(siteDir, templateSlugs, templateTypes) {
       const siteConfig = {

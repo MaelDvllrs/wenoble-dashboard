@@ -251,14 +251,33 @@
                     }
 
                     if (el.hasAttribute("wn-gallery")) {
-                        const key = el.getAttribute("wn-gallery");
+                        const attrValue = el.getAttribute("wn-gallery");
 
 
-                        const galleryData = data.content.gallery.find(gallery => gallery.id_config == key);
+                        // Séparer l'ID et la classe éventuelle
+                        const [idConfig, className] = attrValue.split(',').map(part => part.trim());
+                                        
+                        const galleryData = data.content.gallery.find(gallery => gallery.id_config == idConfig);
                         console.log(galleryData);
-                        if (galleryData) {
-                            const galleryItems = JSON.parse(galleryData.gallery);
-                            el.innerHTML = galleryItems.map(img => `<img src="${urlGalleryBucket}${img.src_photo}">`).join("");
+                        if (galleryData && galleryData.gallery) {
+                            try {
+                                const galleryItems = JSON.parse(galleryData.gallery);
+                                if (galleryItems && galleryItems.length > 0) {
+                                    // Ajouter la classe si elle existe
+                                    el.innerHTML = galleryItems.map(img => 
+                                        `<img src="${urlGalleryBucket}${img.src_photo}"${className ? ` class="${className}"` : ''}>`
+                                    ).join("");
+                                } else {
+                                    // Pas d'images dans la galerie
+                                    el.style.display = "none";
+                                }
+                            } catch (e) {
+                                console.error("Erreur de parsing JSON pour la galerie:", e);
+                                el.style.display = "none";
+                            }
+                        } else {
+                            // Pas de données de galerie trouvées
+                            el.style.display = "none";
                         }
                     }
 
