@@ -356,8 +356,13 @@ router.get('/sendBlogContent', apiKeyMiddleware, async (req, res) => {
                         .eq('id_config', field.id);
                     const convertedResults = (data || []).map(result => {
                         if (!result.text_json) return { id_config: result.id_config, text_html: '' };
-                        const contentState = convertFromRaw(JSON.parse(result.text_json));
-                        const html = stateToHTML(contentState);
+                        let parsed;
+                        if (typeof item === 'string') {
+                          parsed = JSON.parse(item);
+                        } else {
+                          parsed = item;
+                        }
+                        const html = stateToHTML(parsed);
                         return { id_config: result.id_config, text_html: html };
                     });
                     return { type: 'richText', data: convertedResults };
