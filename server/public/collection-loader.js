@@ -1,8 +1,8 @@
 (async function () {
-    const apiUrl = "http://localhost:3002"; // Remplacez par l'URL de votre API
+    const apiUrl = "https://testwenoble.fr/"; // Remplacez par l'URL de votre API
     const scriptTag = document.currentScript;
-    const urlVideoBucket = "https://zaagwamadxckevfocnul.supabase.co/storage/v1/object/public/collection-video//" // Remplacez par l'URL de votre API
-    const urlGalleryBucket = "https://zaagwamadxckevfocnul.supabase.co/storage/v1/object/public/collection-gallery//";
+    const urlVideoBucket = "https://xgwszpuiiacukrvvtrze.supabase.co/storage/v1/object/public/collection-video//" // Remplacez par l'URL de votre API
+    const urlGalleryBucket = "https://xgwszpuiiacukrvvtrze.supabase.co/storage/v1/object/public/collection-gallery//";
     const userKey = scriptTag.getAttribute("data-user-id");
 
 

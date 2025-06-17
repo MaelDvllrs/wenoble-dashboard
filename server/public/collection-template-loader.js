@@ -1,7 +1,7 @@
 (async function () {
-    const apiUrl = "http://localhost:3002";
-    const urlVideoBucket = "https://zaagwamadxckevfocnul.supabase.co/storage/v1/object/public/collection-video//" // Remplacez par l'URL de votre API
-    const urlGalleryBucket = "https://zaagwamadxckevfocnul.supabase.co/storage/v1/object/public/collection-gallery//"; // Remplacez par l'URL de votre API
+    const apiUrl = "https://testwenoble.fr/";
+    const urlVideoBucket = "https://xgwszpuiiacukrvvtrze.supabase.co/storage/v1/object/public/collection-video//" // Remplacez par l'URL de votre API
+    const urlGalleryBucket = "https://xgwszpuiiacukrvvtrze.supabase.co/storage/v1/object/public/collection-gallery//"; // Remplacez par l'URL de votre API
     const scriptTag = document.currentScript;
     const blogId = scriptTag.getAttribute("data-blog-id");
     const userKey = scriptTag.getAttribute("data-user-id");
