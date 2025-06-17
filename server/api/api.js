@@ -328,6 +328,8 @@ router.get('/sendBlogContent', apiKeyMiddleware, async (req, res) => {
             console.error('Erreur lors de la récupération de la config des champs dynamiques :', configError);
             return res.status(500).send({ error: configError.message });
         }
+
+
         if (!configData || configData.length === 0) return res.status(200).json({ message: 'Aucun contenu trouvé' });
         // Pour chaque champ, récupérer la data correspondante
         const contentPromises = configData.map(async (field) => {
@@ -456,6 +458,7 @@ router.get('/sendBlogContent', apiKeyMiddleware, async (req, res) => {
         }, {});
         return res.json({ content: combinedResults });
     } catch (err) {
+        console.error('Erreur lors de la récupération du contenu du blog :', err);
         res.status(500).send({ error: err.message });
     }
 });
