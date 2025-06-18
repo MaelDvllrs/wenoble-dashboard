@@ -46,7 +46,6 @@
         });
 
         const info = await collectionInfos.json();
-        console.log(info);
 
         const collectionContent = await fetch(`${apiUrl}/api/sendBlogContent`, {
             method: "GET",
@@ -319,7 +318,17 @@
                 const [idConfig, indexPhoto] = key.split(',');
                 const galleryData = data.content.gallery.find(gallery => gallery.id_config == idConfig);
                 if (galleryData) {
-                    const galleryItems = JSON.parse(galleryData.gallery);
+                    let galleryItems;
+                    if (typeof galleryData.gallery === 'string') {
+                        try {
+                            galleryItems = JSON.parse(galleryData.gallery);
+                        } catch (e) {
+                            console.error('Erreur lors du parsing JSON gallery-index:', e, galleryData.gallery);
+                            galleryItems = [];
+                        }
+                    } else {
+                        galleryItems = galleryData.gallery;
+                    }
                     const img = galleryItems[indexPhoto];
                     if (img) {
                         el.src = `${urlGalleryBucket}${img.src_photo}`;
