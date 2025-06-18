@@ -341,7 +341,17 @@
                 const key = el.getAttribute("wn-gallery-modal");
                 const galleryData = data.content.gallery.find(gallery => gallery.id_config == key);
                 if (galleryData) {
-                    const galleryItems = JSON.parse(galleryData.gallery);
+                    let galleryItems;
+                    if (typeof galleryData.gallery === 'string') {
+                        try {
+                            galleryItems = JSON.parse(galleryData.gallery);
+                        } catch (e) {
+                            console.error('Erreur lors du parsing JSON gallery-modal:', e, galleryData.gallery);
+                            galleryItems = [];
+                        }
+                    } else {
+                        galleryItems = galleryData.gallery;
+                    }
                     galleryItems.forEach(img => {
                         const slideDiv = document.createElement("div");
                         slideDiv.classList.add("slides");
