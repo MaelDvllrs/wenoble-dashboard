@@ -273,9 +273,18 @@
                 
                 const galleryData = data.content.gallery.find(gallery => gallery.id_config == idConfig);
                 if (galleryData) {
-                    const galleryItems = JSON.parse(galleryData.gallery);
+                    let galleryItems;
+                    if (typeof galleryData.gallery === 'string') {
+                        try {
+                            galleryItems = JSON.parse(galleryData.gallery);
+                        } catch (e) {
+                            console.error('Erreur lors du parsing JSON gallery:', e, galleryData.gallery);
+                            galleryItems = [];
+                        }
+                    } else {
+                        galleryItems = galleryData.gallery;
+                    }
 
-                    
                     console.log("Gallery Items:", galleryItems);
                     // Création des images avec lazy loading
                     galleryItems.forEach(img => {
