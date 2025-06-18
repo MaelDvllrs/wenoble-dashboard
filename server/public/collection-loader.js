@@ -349,7 +349,7 @@
                                 clone.querySelectorAll("[wn-multiReference-title], [wn-multiReference-link], [wn-multiReference-image], [wn-multiReference-text]").forEach(el => {
                                     if (el.hasAttribute("wn-multiReference-title")) {
                                         console.log(multiReferenceInfo.label);
-                                        el.textContent = 'tets';
+                                        el.textContent = multiReferenceInfo.label;
                                     }
 
                                     if (el.hasAttribute("wn-multiReference-id")) {
