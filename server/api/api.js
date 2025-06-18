@@ -441,7 +441,17 @@ router.get('/sendBlogContent', apiKeyMiddleware, async (req, res) => {
 
                    let references = [];
                    if (data && data.info_ref) {
-                        const parsedRefs = JSON.parse(data.info_ref); // tableau d'objets
+                        let parsedRefs;
+                        if (typeof data.info_ref === 'string') {
+                            try {
+                                parsedRefs = JSON.parse(data.info_ref); // tableau d'objets
+                            } catch (e) {
+                                console.error('Erreur lors du parsing JSON multiReference:', e, data.info_ref);
+                                parsedRefs = [];
+                            }
+                        } else {
+                            parsedRefs = data.info_ref;
+                        }
                         // Pour récupérer tous les value :
                         const values = parsedRefs.map(ref => ref.value);
                        
