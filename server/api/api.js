@@ -102,7 +102,6 @@ router.get('/sendPhotoPortfolio', apiKeyMiddleware, async (req, res) => {
 // Récupérer toutes les pages de blogs (collections)
 router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
     const ids = req.ids;
-    console.log('IDs reçus:', ids);
     const order = req.query.order || 'DESC';
     const limit = req.query.limit ? parseInt(req.query.limit, 10) : null;
     const colone = req.query.colone || 'collection_element_publish_date';

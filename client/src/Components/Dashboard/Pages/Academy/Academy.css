@@ -205,9 +205,10 @@
 
 
 .academy_template_content_container{
-    height: calc(100% - 7rem);
+    height: calc(100% - 9rem);
     overflow: auto;
     padding-right: 0.5rem;
+    padding-bottom: 1rem;
 }
 
 .academy_template_content_container::-webkit-scrollbar {
@@ -218,6 +219,11 @@
 .academy_template_content_container::-webkit-scrollbar-thumb {
     background: var(--color-primary-third);
     border-radius: 8px;
+}
+
+.video_container{
+    border-radius: 0.5rem;
+    overflow: hidden;
 }
 
 .academy_video{
@@ -272,5 +278,19 @@
 
 .academy_template_content{
     padding-top: 1rem;
-    padding-bottom: 2rem;
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+    border-bottom: 0.5px solid var(--color-primary-third);
+}
+
+
+.academy_template_footer{
+    display: flex;
+    justify-content: space-between;
+}
+
+.academy_template_footer_text{
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--color-text-secondary);
 }

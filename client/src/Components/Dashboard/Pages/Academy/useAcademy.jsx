@@ -49,6 +49,7 @@ export const useAcademy = () => {
 
             return Promise.all(detailPromises);
         } catch (error) {
+            console.error("Erreur lors de la récupération des données de l'académie :", error);
             throw error;
         }
     };

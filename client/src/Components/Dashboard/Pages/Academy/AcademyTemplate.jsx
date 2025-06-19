@@ -142,7 +142,6 @@ const AcademyTemplate = () => {
                 </div>
               )}
 
-              {/* Video */}
               <video
                 className="academy_video"
                 id="video_upload"
@@ -164,6 +163,17 @@ const AcademyTemplate = () => {
               className="academy_template_content"
               dangerouslySetInnerHTML={{ __html: richTextContent }}
             />
+            <div className="academy_template_footer">
+              <p className="academy_template_footer_text">
+                wenoble
+              </p>
+              <p className="academy_template_footer_text">
+                Academy
+              </p>
+              <p className="academy_template_footer_text">
+                2025
+              </p>
+            </div>
           </div>
         </div>
       </div>
