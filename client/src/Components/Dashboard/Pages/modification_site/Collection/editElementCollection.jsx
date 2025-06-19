@@ -212,7 +212,6 @@ const EditElementCollection = () => {
             }
 
             //ENREGISTRER LES VIDEO
-            console.log(blogData.video);
             if(blogData.video.length > 0){
                 try {
                     await Promise.all(blogData.video.map(async (video) => {
@@ -238,6 +237,7 @@ const EditElementCollection = () => {
             }
 
             //ENREGISTRER LES GALLERIES
+            console.log("blogData.gallery", blogData.gallery);
             if(blogData.gallery.length > 0){
                 try {
                     await Promise.all(blogData.gallery.map(async (gallery) => {

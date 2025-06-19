@@ -1115,47 +1115,60 @@ router.post('/updateImageCollection', authenticateToken, uploadImage.single('ima
 
 // Met à jour la galerie d'une page de collection
 router.post('/updateGalleryCollection', authenticateToken, uploadGallery.array('gallery'), async (req, res) => {
-  if (!req.files) {
-    return res.status(400).send('Aucune image n\'a été téléchargée.');
-  }
+  // On ne bloque plus si !req.files, car il peut n'y avoir que des anciennes images
 
   const token = req.headers['authorization']?.split(' ')[1];
   const supabase = supabaseServer(token);
 
   const id_blog_page = req.body.id_blog_page;
   const id_config = req.body.id_config;
-  const filesInfo = [];
+  const galleryLength = parseInt(req.body.gallery_length, 10); // à envoyer côté client
+  const finalGallery = [];
+  let fileIndex = 0;
   let totalSize = 0;
+
   try {
-    for (let index = 0; index < req.files.length; index++) {
-      const file = req.files[index];
-      const id_photo = path.basename(file.filename, path.extname(file.filename));
-      const extension = path.extname(file.filename);
-      const src_photo = id_photo + extension;
-      const name = file.originalname;
-      const alt = req.body[`alt_${index}`] || '';
-      const size = Math.round(file.size / 1024);
-      const fileBuffer = fs.readFileSync(file.path);
-      // Upload image
-      const { error: uploadError } = await supabase.storage
-        .from('collection-gallery')
-        .upload(src_photo, fileBuffer, {
-          contentType: file.mimetype
-        });
-      if (uploadError) throw new Error('Erreur upload Supabase: ' + uploadError.message);
-      filesInfo.push({ src_photo, name, alt, size });
-      totalSize += size;
-      fs.unlinkSync(file.path);
+    for (let i = 0; i < galleryLength; i++) {
+      const existing = req.body[`existing_${i}`];
+      if (existing) {
+        // Ancienne image, on la garde
+        const parsed = JSON.parse(existing);
+        finalGallery.push(parsed);
+        totalSize += parseInt(parsed.size, 10) || 0;
+      } else {
+        // Nouvelle image uploadée
+        const file = req.files[fileIndex];
+        if (file) {
+          const id_photo = path.basename(file.filename, path.extname(file.filename));
+          const extension = path.extname(file.filename);
+          const src_photo = id_photo + extension;
+          const name = file.originalname;
+          const alt = req.body[`alt_${i}`] || '';
+          const size = Math.round(file.size / 1024);
+          const fileBuffer = fs.readFileSync(file.path);
+          // Upload image
+          const { error: uploadError } = await supabase.storage
+            .from('collection-gallery')
+            .upload(src_photo, fileBuffer, {
+              contentType: file.mimetype
+            });
+          if (uploadError) throw new Error('Erreur upload Supabase: ' + uploadError.message);
+          finalGallery.push({ src_photo, name, alt, size });
+          totalSize += size;
+          fs.unlinkSync(file.path);
+          fileIndex++;
+        }
+      }
     }
     // Update BDD
-    const filesInfoJson = JSON.stringify(filesInfo);
+    const filesInfoJson = JSON.stringify(finalGallery);
     const { error: updateError } = await supabase
       .from('collection_field_gallery')
       .update({ gallery: filesInfoJson, size: totalSize })
       .eq('collection_element_id', id_blog_page)
       .eq('id_config', id_config);
     if (updateError) throw new Error('Erreur update BDD: ' + updateError.message);
-    res.status(200).send({ success: true, message: 'Galerie modifiée avec succès', filesInfo });
+    res.status(200).send({ success: true, message: 'Galerie modifiée avec succès', filesInfo: finalGallery });
   } catch (err) {
     console.error('Erreur lors de la modification de la galerie:', err);
     res.status(500).send({ error: err.message });

@@ -415,27 +415,35 @@ export const updateMultiReferenceBlog = async (id, multiReference, token) => {
 };
 
 export const updateGalleryBlog = async (id, gallery, token) => {
+    console.log("updateGalleryBlog", id, gallery);
     try {
-        const formData = new FormData();
         let galleryCreate = false;
 
         if (gallery.create) {
             galleryCreate = true;
         }
 
+        const formData = new FormData();
+        formData.append('gallery_length', gallery.gallery.length); // Ajout de la longueur totale
+        let fileCount = 0;
         gallery.gallery.forEach((field, index) => {
-            if (field.create) {
-                galleryCreate = true;
-                formData.append(`alt_${index}`, field.alt || '');
-                formData.append(`name_${index}`, field.name || '');
-                formData.append(`src_${index}`, field.src || '');
-                formData.append(`size_${index}`, field.size || '');
-            } else {
-                formData.append('gallery', field.data, field.name);
-                formData.append(`alt_${index}`, field.alt || '');
-            }
+          if (field.data) {
+            // Nouvelle image à uploader
+            formData.append('gallery', field.data, field.name);
+            formData.append(`alt_${index}`, field.alt || '');
+            formData.append(`name_${index}`, field.name || '');
+            formData.append(`size_${index}`, field.size || '');
+            fileCount++;
+          } else {
+            // Image déjà présente sur le serveur, on transmet ses infos pour la garder
+            formData.append(`existing_${index}`, JSON.stringify({
+              src_photo: field.src || field.src_photo,
+              alt: field.alt,
+              name: field.name,
+              size: field.size
+            }));
+          }
         });
-
         formData.append('id_blog_page', id);
         formData.append('id_config', gallery.id_config);
         formData.append('type', gallery.type);
