@@ -47,6 +47,8 @@ const { supabaseServer } = require('../supabase');
 
 router.post('/generateSite', async (req, res) => {
   const user_id = req.user.idUser;
+  console.log('Démarrage de la génération statique pour l\'utilisateur:', user_id);
+
   if (!user_id) {
     return res.status(400).send({ error: 'Le paramètre user_id est requis.' });
   }
