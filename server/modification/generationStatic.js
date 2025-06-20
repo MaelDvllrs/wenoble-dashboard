@@ -3,6 +3,14 @@ const cors = require('cors');
 const axios = require('axios');
 const path = require('path');
 const fs = require('fs');
+const { createClient } = require('@supabase/supabase-js');
+
+
+const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_KEY,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+);
 
 const router = express.Router();
 
@@ -45,7 +53,7 @@ router.post('/generateSite', async (req, res) => {
 
   try {
     // 1. Récupérer le chemin du dossier projet depuis la table users
-    const { data: userData, error: userError } = await supabaseServer
+    const { data: userData, error: userError } = await supabase
       .from('users')
       .select('folder_project')
       .eq('id', user_id)
@@ -57,7 +65,7 @@ router.post('/generateSite', async (req, res) => {
     const siteDir = userData.folder_project;
 
     // 2. Récupérer les collections de l'utilisateur
-    const { data: collections, error: collectionsError } = await supabaseServer
+    const { data: collections, error: collectionsError } = await supabase
       .from('collection')
       .select('id, collection_slug')
       .eq('user_id', user_id)
@@ -76,7 +84,7 @@ router.post('/generateSite', async (req, res) => {
     for (const collection of collections) {
       const blogType = extractTemplateType(collection.collection_slug);
       // Récupérer les slugs des pages publiées de cette collection
-      const { data: pages, error: pagesError } = await supabaseServer
+      const { data: pages, error: pagesError } = await supabase
         .from('collection_element')
         .select('collection_element_slug')
         .eq('collection_id', collection.id)
@@ -94,54 +102,8 @@ router.post('/generateSite', async (req, res) => {
 
     // 4. Construire l'objet siteConfig et lancer la génération
     await generateSite(siteDir, templateSlugs, templateTypes);
-      // 3. Pour chaque blog, extraire le type et récupérer les pages
-      blogResults.forEach((blog) => {
-        // Extraire le type de template
-        const blogType = extractTemplateType(blog.slug_blog);
-        console.log(`Type de blog extrait: ${blogType} pour le blog ${blog.slug_blog}`);
-
-        // Récupérer les slugs des pages de ce blog
-        const SQL_PAGES = 'SELECT page_blog_slug FROM blog_page WHERE id_blog = ? AND status = 1';
-        const Values_PAGES = [blog.id_blog];
-
-        console.log(`Récupération des pages pour le blog: ${blog.slug_blog} (${blogType})`); 
-
-        
-
-        db.query(SQL_PAGES, Values_PAGES, (err, pageResults) => {
-          if (err) {
-            console.error('Database query error:', err);
-            return res.status(500).send({ error: err });
-          }
-
-          console.log(`Traitement du blog: ${blog.slug_blog} (${blogType})`);
-
-          // Pour chaque page, ajouter le slug et définir son type
-          pageResults.forEach((page) => {
-            if (page.page_blog_slug) {
-              templateSlugs.push(page.page_blog_slug);
-
-              console.log(`Ajout du slug de page: ${page.page_blog_slug} pour le blog ${blog.slug_blog}`);
-              
-              // Si ce n'est pas le type par défaut, l'ajouter au mapping
-              if (blogType !== 'realisations') {
-                templateTypes[page.page_blog_slug] = blogType;
-                console.log(`Ajout du type de template: ${blogType} pour le slug: ${page.page_blog_slug}`);
-              }
-            }
-          });
-
-          // Incrémenter le compteur de blogs traités
-          processedBlogs++;
-
-          // Vérifier si tous les blogs ont été traités
-          if (processedBlogs === blogResults.length) {
-            // 4. Construire l'objet siteConfig et lancer la génération
-            generateSite(siteDir, templateSlugs, templateTypes);
-          }
-        });
-      });
-
+    // Ancien code SQL/MySQL supprimé car tout est géré via Supabase ci-dessus
+    return res.status(200).send({ success: true, message: 'Génération statique lancée.' });
     async function generateSite(siteDir, templateSlugs, templateTypes) {
       const siteConfig = {
         siteDir,
