@@ -516,6 +516,8 @@ router.get('/sendPage', apiKeyMiddleware, async (req, res) => {
 
 router.get('/sendPageImage', apiKeyMiddleware, async (req, res) => {
     const id = req.id_data;
+    console.log('ID de la page:', id);
+
     try {
         const { data, error } = await supabase
             .from('page_photo')
@@ -525,6 +527,7 @@ router.get('/sendPageImage', apiKeyMiddleware, async (req, res) => {
         if (!data || data.length === 0) return res.status(200).json({ message: 'Aucune image trouvée' });
         return res.json({ images: data });
     } catch (err) {
+        console.error('Erreur lors de la récupération des images de la page :', err);
         res.status(500).send({ error: err.message });
     }
 });
