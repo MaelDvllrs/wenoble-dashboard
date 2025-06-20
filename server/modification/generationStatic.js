@@ -4,6 +4,8 @@ const axios = require('axios');
 const path = require('path');
 const fs = require('fs');
 const { createClient } = require('@supabase/supabase-js');
+const { authenticateToken } = require('../middleware/authToken');
+
 
 
 const supabase = createClient(
@@ -45,11 +47,13 @@ function extractTemplateType(slug) {
 
 const { supabaseServer } = require('../supabase');
 
-router.post('/generateSite', async (req, res) => {
-  const user_id = req.user.idUser;
-  console.log('Démarrage de la génération statique pour l\'utilisateur:', user_id);
+router.post('/generateSite', authenticateToken, async (req, res) => {
+  const token = req.headers['authorization']?.split(' ')[1];
+  const userId = req.user.idUser;
+  const supabase = supabaseServer(token);
+  console.log('Démarrage de la génération statique pour l\'utilisateur:', userId);
 
-  if (!user_id) {
+  if (!userId) {
     return res.status(400).send({ error: 'Le paramètre user_id est requis.' });
   }
 
@@ -58,7 +62,7 @@ router.post('/generateSite', async (req, res) => {
     const { data: userData, error: userError } = await supabase
       .from('users')
       .select('folder_project')
-      .eq('id', user_id)
+      .eq('id', userId)
       .maybeSingle();
     if (userError) throw userError;
     if (!userData || !userData.folder_project) {
@@ -70,7 +74,7 @@ router.post('/generateSite', async (req, res) => {
     const { data: collections, error: collectionsError } = await supabase
       .from('collection')
       .select('id, collection_slug')
-      .eq('user_id', user_id)
+      .eq('user_id', userId)
       .not('collection_slug', 'is', null);
     if (collectionsError) throw collectionsError;
 
