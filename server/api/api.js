@@ -534,6 +534,7 @@ router.get('/sendPageImage', apiKeyMiddleware, async (req, res) => {
 
 router.get('/sendPageRichText', apiKeyMiddleware, async (req, res) => {
     const id = req.id_data;
+    console.log('ID de la page pour RichText:', id);
     try {
         const { data, error } = await supabase
             .from('page_richtext')
@@ -549,6 +550,7 @@ router.get('/sendPageRichText', apiKeyMiddleware, async (req, res) => {
         });
         return res.json({ richText: convertedResults });
     } catch (err) {
+        console.error('Erreur lors de la récupération du RichText de la page :', err);
         res.status(500).send({ error: err.message });
     }
 });
