@@ -190,7 +190,7 @@ router.get('/sendBlogRichText', apiKeyMiddleware, async (req, res) => {
                 try {
                     rawContent = JSON.parse(result.text_json);
                 } catch (e) {
-                    console.error('Erreur lors du parsing JSON richText:', e, result.text_json);
+                    console.error('Erreur lors du parsing JSON sendPageRichText:', e, result.text_json);
                     return { id_config: result.id_config, text_html: '' };
                 }
             } else {
@@ -544,7 +544,18 @@ router.get('/sendPageRichText', apiKeyMiddleware, async (req, res) => {
         if (!data || data.length === 0) return res.status(200).json({ message: 'Aucun texte riche trouvé' });
         const convertedResults = data.map(result => {
             if (!result.text_json) return { id_config: result.id_config, text_html: '' };
-            const contentState = convertFromRaw(JSON.parse(result.text_json));
+            let rawContent;
+            if (typeof result.text_json === 'string') {
+                try {
+                    rawContent = JSON.parse(result.text_json);
+                } catch (e) {
+                    console.error('Erreur lors du parsing JSON sendPageRichText:', e, result.text_json);
+                    return { id_config: result.id_config, text_html: '' };
+                }
+            } else {
+                rawContent = result.text_json;
+            }
+            const contentState = convertFromRaw(rawContent);
             const html = stateToHTML(contentState);
             return { id_config: result.id_config, text_html: html };
         });
