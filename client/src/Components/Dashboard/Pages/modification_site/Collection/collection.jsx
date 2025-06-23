@@ -8,6 +8,7 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import '../Portfolio/portfolio.css';
 import config from "../../../../../config";
 import { useTheme } from '@mui/material/styles';
+import { RiDatabase2Fill } from "react-icons/ri";
 
 
 
@@ -72,16 +73,20 @@ const Collection = () => {
             <div className="title_section">
             <div className="breadCrumbs"><NavLink style={{color: theme.palette.text.primary}} className={"breadCrumbsLink"} to={'/dashboard/home'}>Dashboard</NavLink> &gt; <NavLink style={{color: theme.palette.text.primary}} className={"breadCrumbsLink"} to={'/dashboard/modification'}>Modification</NavLink> &gt; Blog</div>
             </div>
-
-            <div className="dashboard_case_empty" style={{backgroundColor : theme.palette.primary.secondary, borderColor : theme.palette.primary.third}}>
-                <div className="portfolio_onglet_box">
+            <div className="dashboard_case_empty">
+                <div className="header_modification">
+                        <RiDatabase2Fill className="icon_modifiaction_title"/>
+                        <h3 className="heading_h3">Gestion des collections CMS</h3>
+                </div>
+                <div className="link_menu_box">
+                    
                     {decodedBlog && decodedBlog.blog.map((blogItem) => (
-                        <NavLink to={'/dashboard/modification/collection/' + blogItem.id} className={({ isActive }) => (isActive ? 'page_ongletActive' : 'portfolio_onglet')} key={blogItem.id}>
+                        <NavLink to={'/dashboard/modification/collection/' + blogItem.id} className={({ isActive }) => `link_menu ${isActive ? ' link_menu_active' : ''}`} key={blogItem.id}>
                             <p style={{color: theme.palette.text.primary}}>{blogItem.collection_name}</p>
                         </NavLink>
                     ))}
                 </div>
-                <div className='dashboard_section secondaire'>
+                <div className='dashboard_section secondaire shutter_section'>
                         <Outlet />
                 </div>
             </div>       

@@ -81,6 +81,16 @@ button{
     padding-top: 1rem;
 }
 
+.shutter_section{
+    background-color: var(--color-primary-secondary);
+    border: 0.5px solid var(--color-primary-third);
+    border-end-end-radius: 0.5rem;
+    border-end-start-radius: 0.5rem;
+    border-start-end-radius: 0.5rem;
+    margin-top: -1px;
+    width: 100%;
+}
+
 
 
 
@@ -124,6 +134,9 @@ button{
 
 
 .dashboard_case_empty{
+    display: flex;
+    flex-direction: column;
+    align-items: start;
     position: relative;
     height: calc(100% - 2.5rem);
     overflow: hidden;
@@ -132,6 +145,8 @@ button{
     border-radius: 0.5rem;
     box-sizing: border-box;
     backdrop-filter: blur(10px);
+    background-color: var(--color-primary-main);
+    border: 0.5px solid var(--color-primary-third);
 
 }
 
@@ -196,11 +211,9 @@ button{
 
 .header_modification{
     display: flex;
-    justify-content: space-between;
+    justify-content: left;
     align-items: center;
     margin-bottom: 1rem;
-    border-bottom: solid 1px #6d6d6d;
-    height: 4rem;
     width: 100%;
 }
 
@@ -265,4 +278,38 @@ figure > div{
     display: none;
 }
 
+
+
+.heading_h3{
+    margin: 0;
+}
+
+
+.link_menu{
+    padding: 0.5rem 1rem ;
+    font-size: 0.87rem;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+    border-right: solid 0.5px var(--color-primary-third);
+}
+
+.link_menu_box{
+    position: relative;
+    display: flex;
+    align-items: center;
+    border-start-start-radius: 0.5rem;
+    border-start-end-radius: 0.5rem;
+    overflow: hidden;
+    border-top: solid 0.5px var(--color-primary-third);
+    border-left: solid 0.5px var(--color-primary-third);
+}
+
+.link_menu:hover{
+    background-color: var(--color-primary-secondary);
+}
+
+.link_menu_active{
+    background-color: var(--color-primary-secondary);
+    border-bottom: 0.5px solid transparent;
+}
 

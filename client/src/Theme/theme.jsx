@@ -16,7 +16,7 @@ const DARK_THEME = createTheme({
         type: "dark",
         primary: {
             main: 'rgba(14, 15, 17, 1)',
-            secondary: 'rgba(22, 23, 28, 1)',
+            secondary: 'rgb(17, 17, 22)',
             third: 'rgba(51, 51, 51, 1)'
         },
         secondary: {

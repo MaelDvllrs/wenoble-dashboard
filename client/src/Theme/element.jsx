@@ -15,6 +15,8 @@ import Flag from 'react-world-flags';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import 'dayjs/locale/fr';
+import InputAdornment from '@mui/material/InputAdornment';
+import { FiSearch } from "react-icons/fi";
 
 // Internal utilities and hooks
 import { useAxisTooltip, useItemTooltip, useMouseTracker } from '@mui/x-charts/ChartsTooltip';
@@ -85,6 +87,37 @@ export const SearchField = styled(TextField)(({ theme }) => ({
     },
     '& .MuiInputLabel-root.Mui-focused': {
         color: theme.palette.text.secondary,
+    },
+}));
+
+export const SearchFieldSmall = styled(TextField)(({ theme, variant }) => ({
+    variant: variant || 'outlined',
+    '& .MuiOutlinedInput-input': {
+        padding: '0.3rem 0.5rem',
+    },
+    '& .MuiOutlinedInput-root': {
+        paddingLeft: '0.2rem',
+        '& fieldset': {
+            borderColor: theme.palette.primary.third,
+            borderRadius: '0.3rem',
+        },
+        '&:hover fieldset': {
+            borderColor: theme.palette.primary.third,
+        },
+        '&.Mui-focused fieldset': {
+            borderColor: theme.palette.text.secondary,
+            borderWidth: '1px',
+        },
+    },
+    '& .MuiInputLabel-root': {
+        fontSize: '0.8rem',
+        color: theme.palette.text.secondary,
+
+    },
+    '& .MuiInputLabel-root.Mui-focused': {
+        top: '0rem',
+        color: theme.palette.text.secondary,
+        padding: '0 0.2rem',
     },
 }));
 
@@ -261,6 +294,69 @@ export const Popup = styled('div')(({ theme }) => ({
     flexDirection: 'column',
     borderRadius: '0.5rem',
 }));
+
+// Champ de texte simple avec loupe, placeholder, fond transparent et bordure personnalisée
+export function SimpleSearchField({ value, onChange, placeholder = "Rechercher...", theme, ...props }) {
+  return (
+    <TextField
+      variant="outlined"
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      autoComplete="off"
+      {...props}
+      InputProps={{
+        startAdornment: (
+          <InputAdornment position="start">
+            <FiSearch  style={{ color: theme?.palette?.text?.secondary || '#888' }} />
+          </InputAdornment>
+        ),
+        style: {
+          background: 'transparent',
+          borderRadius: 6,
+          padding: '0.2rem 0.5rem 0.1rem 0.5rem',
+          height: '2rem',
+        },
+        ...props.InputProps,
+      }}
+      sx={{
+        minWidth: 160,
+        background: 'transparent',
+        height: '2rem',
+
+        '& .MuiFormControl-root': {
+            height: '2rem',
+        },
+        '& .MuiOutlinedInput-root': {
+          background: 'transparent',
+          borderRadius: 1,
+          height: '2rem',
+          fontSize: '0.8rem',
+          '& fieldset': {
+            borderColor: theme?.palette?.primary?.third || '#1976d2',
+          },
+          '&:hover fieldset': {
+            borderColor: theme?.palette?.primary?.third || '#1976d2',
+          },
+          '&.Mui-focused fieldset': {
+            borderColor: theme?.palette?.primary?.third || '#1976d2',
+          },
+          '& input': {
+            background: 'transparent !important',
+          },
+        },
+        '& input': {
+          background: 'transparent !important',
+          padding: 0,
+          fontSize: '0.8rem',
+        },
+        '& .MuiAutocomplete-listbox': {
+          background: 'transparent',
+        },
+      }}
+    />
+  );
+}
 
 // Utility functions
 export const notificationTitle = (type) => {

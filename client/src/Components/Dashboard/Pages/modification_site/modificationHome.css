@@ -223,7 +223,15 @@
   }
 
 
-
+.modification_action_wrapper{
+    display: flex;
+    align-items: center;
+    justify-content: left;
+    gap: 1rem;
+    width: 100%;
+    margin-bottom: 1rem;
+    padding-left: 1rem;
+}
 
 
 .modification_image_box_blog{

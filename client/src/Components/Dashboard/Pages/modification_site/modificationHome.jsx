@@ -6,6 +6,8 @@ import Axios from 'axios';
 import { MdImportContacts, MdArrowForwardIos } from "react-icons/md";
 import { PiLockBold } from "react-icons/pi";  
 import { FaElementor } from "react-icons/fa";
+import { RiDatabase2Fill } from "react-icons/ri";
+
 import { MdArticle } from "react-icons/md";
 import sphere_page from "../../../../assets/background/sphere_page.svg";
 import { SkeletonTotalSize } from "../../../skeleton/skeleton";
@@ -434,7 +436,7 @@ return(
                   </NavLink>
                   <NavLink to={authBlog === true ? '/dashboard/modification/collection' : '#'} className="modification_box box_blog" ref={iconContainerRef} style={{backgroundColor : theme.palette.primary.secondary, boxShadow: theme.palette.shadow.main}}>
                       <div className="modification_title_box" style={{color: theme.palette.text.primary}}>
-                        <div className="modification_title"><MdArticle className="icon_modifiaction_title"/><b>Blog</b>
+                        <div className="modification_title"><RiDatabase2Fill className="icon_modifiaction_title"/><b>CMS</b>
                         {
                           authBlog === true ? (
                               null
