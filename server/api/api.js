@@ -218,6 +218,7 @@ router.get('/sendBlogText', apiKeyMiddleware, async (req, res) => {
         if (!data || data.length === 0) return res.status(200).json({ message: 'Aucun texte trouvé' });
         return res.json({ text: data });
     } catch (err) {
+        console.error('Erreur lors de la récupération des textes de la page de blog :', err);
         res.status(500).send({ error: err.message });
     }
 });
