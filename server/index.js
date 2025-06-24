@@ -14,7 +14,7 @@ const infoUserRouter = require('./users/infoUser');
 const portfolioRouter = require('./modification/portfolio');
 const pageRouter = require('./modification/page');
 const collectionRouter = require('./modification/collection');
-//const videoRouter = require('./modification/video');
+const videoRouter = require('./modification/video');
 const limitSizeRouter = require('./modification/limitSize');
 const sitemapRouter = require('./modification/sitemap');
 //const updateCacheRouter = require('./modification/SSRCache');
@@ -182,7 +182,7 @@ app.use('/media/blog/richText', express.static(path.join(__dirname, 'images', 'r
 app.use('/media/profile', express.static(path.join(__dirname, 'images', 'profile_image')));
 //
 //
-//app.use(videoRouter);
+app.use(videoRouter);
 //
 
 //
