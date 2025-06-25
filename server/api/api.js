@@ -456,24 +456,41 @@ router.get('/sendBlogContent', apiKeyMiddleware, async (req, res) => {
                         console.log('Valeurs récupérées pour multiReference:', values);
                        
                        
-                       let collection_id = null;
-                       const { data: configData, error: configError } = await supabase
-                           .from('collection_element')
-                           .select('collection_id')
-                           .eq('id', values)
-                           .maybeSingle();
-                       if (configError) {
-                           console.error('Erreur lors de la récupération de la collection_id :', configError.message);
-                            return;
-                       }
-                       if (!configError && configData) {
-                           collection_id = configData.collection_id;
+                       let collection_ids = [];
+                       if (Array.isArray(values) && values.length > 0) {
+                           const { data: configData, error: configError } = await supabase
+                               .from('collection_element')
+                               .select('collection_id, id')
+                               .in('id', values);
+                           if (configError) {
+                               console.error('Erreur lors de la récupération des collection_id :', configError.message);
+                               return;
+                           }
+                           // Associer chaque value à son collection_id
+                           // Exemple : [{value: ..., collection_id: ...}, ...]
+                           collection_ids = values.map(val => {
+                               const found = configData.find(row => row.id === val);
+                               return found ? found.collection_id : null;
+                           });
+                       } else if (values) {
+                           const { data: configData, error: configError } = await supabase
+                               .from('collection_element')
+                               .select('collection_id')
+                               .eq('id', values)
+                               .maybeSingle();
+                           if (configError) {
+                               console.error('Erreur lors de la récupération de la collection_id :', configError.message);
+                               return;
+                           }
+                           if (configData) {
+                               collection_ids = [configData.collection_id];
+                           }
                        }
                    
-                       references = parsedRefs.map(ref => ({
+                       references = parsedRefs.map((ref, i) => ({
                            ...ref,
                            id_config: data.id_config,
-                           collection_id // Ajout du collection_id récupéré
+                           collection_id: collection_ids[i] // Ajout du collection_id récupéré
                        }));
                    }
                    return { type: 'multiReference', data: references };
