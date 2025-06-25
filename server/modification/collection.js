@@ -581,79 +581,79 @@ router.post('/createTextCollection', authenticateToken, async (req, res) => {
 
 
 router.post('/createRichTextCollection', async (req, res) => {
-
   const token = req.headers['authorization']?.split(' ')[1];
   const supabase = supabaseServer(token);
-
   const richtext = req.body.params.infoRichText;
   const id_blog_page = req.body.params.id;
-
   const saveImageToSupabase = async (base64Data) => {
-    const matches = base64Data.match(/^data:image\/([A-Za-z-+/]+);base64,(.+)$/);
+    const matches = base64Data.match(/^data:image\/(\w+);base64,(.+)$/);
     if (!matches || matches.length !== 3) throw new Error('Base64 invalide');
-
     const imageExtension = matches[1];
     const imageBuffer = Buffer.from(matches[2], 'base64');
     const imageName = `${uuidv4()}.${imageExtension}`;
     const storagePath = `${imageName}`;
-
     const { error: uploadError } = await supabase.storage
       .from('collection-richtext-images')
       .upload(storagePath, imageBuffer, {
         contentType: `image/${imageExtension}`,
         upsert: false,
       });
-
     if (uploadError) throw new Error('Erreur Supabase : ' + uploadError.message);
-
     const { data } = supabase.storage
       .from('collection-richtext-images')
       .getPublicUrl(storagePath);
-
     const fileSizeInKB = Math.round(Buffer.byteLength(imageBuffer) / 1024);
     return { url: data.publicUrl, size: fileSizeInKB };
   };
-
   try {
     for (const item of richtext) {
       const id_config = item.id_config;
       let richTextJSON = item.richText;
-
       const content = JSON.parse(richTextJSON);
       const entityMap = content.entityMap;
-
       const imageKeys = Object.keys(entityMap).filter(
         (key) => entityMap[key].type === 'IMAGE' && entityMap[key].data.src.startsWith('data:image/')
       );
-
       for (const key of imageKeys) {
         const result = await saveImageToSupabase(entityMap[key].data.src);
         entityMap[key].data.src = result.url;
         entityMap[key].data.size = result.size;
       }
-
       richTextJSON = JSON.stringify(content);
       const totalSize = Object.keys(entityMap).reduce((acc, key) => {
         return acc + (entityMap[key].data.size || 0);
       }, 0);
-
-      // ✅ Insertion dans SUPABASE
-      const { error: insertError } = await supabase
+      // Vérifier si la ligne existe déjà
+      const { data: existing, error: selectError } = await supabase
         .from('collection_field_richtext')
-        .insert([
-          {
-            collection_element_id: id_blog_page,
-            id_config,
-            text_json: richTextJSON,
-            size: totalSize,
-          },
-        ]);
-
-      if (insertError) {
-        throw new Error('Erreur Supabase DB: ' + insertError.message);
+        .select('id')
+        .eq('collection_element_id', id_blog_page)
+        .eq('id_config', id_config)
+        .maybeSingle();
+      if (selectError) throw selectError;
+      if (existing) {
+        // Update si existe
+        const { error: updateError } = await supabase
+          .from('collection_field_richtext')
+          .update({ text_json: richTextJSON, size: totalSize })
+          .eq('collection_element_id', id_blog_page)
+          .eq('id_config', id_config);
+        if (updateError) throw new Error('Erreur Supabase DB: ' + updateError.message);
+      } else {
+        // Insert sinon
+        const { error: insertError } = await supabase
+          .from('collection_field_richtext')
+          .insert([
+            {
+              collection_element_id: id_blog_page,
+              id_config,
+              text_json: richTextJSON,
+              size: totalSize,
+            },
+          ]);
+        if (insertError) throw new Error('Erreur Supabase DB: ' + insertError.message);
       }
     }
-
     res.status(200).send('RichText enregistré avec succès dans Supabase');
   } catch (error) {
     console.error(error);
@@ -1031,10 +1031,13 @@ router.post('/updateRichTextCollection', authenticateToken, async (req, res) => 
         contentType: `image/${imageExtension}`,
         upsert: false,
       });
+
     if (uploadError) throw new Error('Erreur Supabase : ' + uploadError.message);
+
     const { data } = supabase.storage
       .from('collection-richtext-images')
       .getPublicUrl(storagePath);
+
     const fileSizeInKB = Math.round(Buffer.byteLength(imageBuffer) / 1024);
     return { url: data.publicUrl, size: fileSizeInKB };
   };
@@ -1043,29 +1046,58 @@ router.post('/updateRichTextCollection', authenticateToken, async (req, res) => 
     for (const item of richtext) {
       const id_config = item.id_config;
       let richTextJSON = item.richText;
+
       const content = JSON.parse(richTextJSON);
       const entityMap = content.entityMap;
+
       const imageKeys = Object.keys(entityMap).filter(
         (key) => entityMap[key].type === 'IMAGE' && entityMap[key].data.src.startsWith('data:image/')
       );
+
       for (const key of imageKeys) {
         const result = await saveImageToSupabase(entityMap[key].data.src);
         entityMap[key].data.src = result.url;
         entityMap[key].data.size = result.size;
       }
+
       richTextJSON = JSON.stringify(content);
       const totalSize = Object.keys(entityMap).reduce((acc, key) => {
         return acc + (entityMap[key].data.size || 0);
       }, 0);
-      // Update dans SUPABASE
-      const { error: updateError } = await supabase
+
+      // Vérifier si la ligne existe déjà
+      const { data: existing, error: selectError } = await supabase
         .from('collection_field_richtext')
-        .update({ text_json: richTextJSON, size: totalSize })
+        .select('id')
         .eq('collection_element_id', id_blog_page)
-        .eq('id_config', id_config);
-      if (updateError) throw new Error('Erreur Supabase DB: ' + updateError.message);
+        .eq('id_config', id_config)
+        .maybeSingle();
+      if (selectError) throw selectError;
+      if (existing) {
+        // Update si existe
+        const { error: updateError } = await supabase
+          .from('collection_field_richtext')
+          .update({ text_json: richTextJSON, size: totalSize })
+          .eq('collection_element_id', id_blog_page)
+          .eq('id_config', id_config);
+        if (updateError) throw new Error('Erreur Supabase DB: ' + updateError.message);
+      } else {
+        // Insert sinon
+        const { error: insertError } = await supabase
+          .from('collection_field_richtext')
+          .insert([
+            {
+              collection_element_id: id_blog_page,
+              id_config,
+              text_json: richTextJSON,
+              size: totalSize,
+            },
+          ]);
+        if (insertError) throw new Error('Erreur Supabase DB: ' + insertError.message);
+      }
     }
-    res.status(200).send('Tous les RichText ont été modifiés avec succès');
+
+    res.status(200).send('RichText enregistré avec succès dans Supabase');
   } catch (error) {
     console.error(error);
     res.status(500).send({ error: error.message });
