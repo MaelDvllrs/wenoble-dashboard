@@ -83,8 +83,12 @@ router.post('/addRouteBlogSitemap',authenticateToken, async (req, res) => {
   const slug = req.body.params.slug;
   const date = dayjs().utc().format('YYYY-MM-DDTHH:mm:ss+00:00');
   try {
+    // Utiliser le token du header Authorization (format Bearer TOKEN)
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
+    const supabase = supabaseServer(token);
     // Récupérer le dossier de l'utilisateur
-    const { data: userData, error: userError } = await supabaseServer
+    const { data: userData, error: userError } = await supabase
       .from('users')
       .select('folder_project')
       .eq('id', idUser)
@@ -95,9 +99,9 @@ router.post('/addRouteBlogSitemap',authenticateToken, async (req, res) => {
     }
     const folder = userData.folder_project;
     // Récupérer le slug de la collection (ancien blog)
-    const { data: collectionData, error: collectionError } = await supabaseServer
+    const { data: collectionData, error: collectionError } = await supabase
       .from('collection')
-      .select('slug_collection')
+      .select('collection_slug')
       .eq('id', idCollection)
       .maybeSingle();
     if (collectionError) throw collectionError;
@@ -106,7 +110,8 @@ router.post('/addRouteBlogSitemap',authenticateToken, async (req, res) => {
     const sitemapPath = await findSitemapPath(folder);
     const sitemap = await readSitemap(sitemapPath);
     if (!sitemap) {
-      return res.status(200).json({ message: 'Sitemap non trouvé' });
+      // Ne pas retourner d'erreur si le sitemap n'existe pas
+      return res.status(200).json({ message: 'Sitemap non trouvé, aucune modification effectuée' });
     }
     const newEntry = {
       loc: url,
@@ -118,6 +123,7 @@ router.post('/addRouteBlogSitemap',authenticateToken, async (req, res) => {
     await writeSitemap(sitemap, sitemapPath);
     res.status(200).json({ message: 'Article ajouté au sitemap avec succès' });
   } catch (error) {
+    console.log('Erreur lors de l\'ajout de l\'article au sitemap:', error);
     res.status(500).json({ error });
   }
 });
@@ -128,8 +134,12 @@ router.post('/deleteRouteBlogSitemap',authenticateToken, async (req, res) => {
   const idCollection = req.body.params.idBlog;
   const idCollectionElement = req.body.params.idBlogPage;
   try {
+    // Utiliser le token du header Authorization (format Bearer TOKEN)
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
+    const supabase = supabaseServer(token);
     // Récupérer le dossier de l'utilisateur
-    const { data: userData, error: userError } = await supabaseServer
+    const { data: userData, error: userError } = await supabase
       .from('users')
       .select('folder_project')
       .eq('id', idUser)
@@ -140,7 +150,7 @@ router.post('/deleteRouteBlogSitemap',authenticateToken, async (req, res) => {
     }
     const folder = userData.folder_project;
     // Récupérer le slug de la page de collection
-    const { data: pageData, error: pageError } = await supabaseServer
+    const { data: pageData, error: pageError } = await supabase
       .from('collection_element')
       .select('collection_element_slug')
       .eq('id', idCollectionElement)
@@ -149,9 +159,9 @@ router.post('/deleteRouteBlogSitemap',authenticateToken, async (req, res) => {
     if (pageError) throw pageError;
     const slug = pageData?.collection_element_slug || '';
     // Récupérer le slug de la collection
-    const { data: collectionData, error: collectionError } = await supabaseServer
+    const { data: collectionData, error: collectionError } = await supabase
       .from('collection')
-      .select('slug_collection')
+      .select('collection_slug')
       .eq('id', idCollection)
       .maybeSingle();
     if (collectionError) throw collectionError;
@@ -176,8 +186,12 @@ router.post('/updateRouteBlogSitemap',authenticateToken, async (req, res) => {
   const idUser = req.user.idUser;
   const {idBlog, idBlogPage, slug, date } = req.body.params;
   try {
+    // Utiliser le token du header Authorization (format Bearer TOKEN)
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
+    const supabase = supabaseServer(token);
     // Récupérer le dossier de l'utilisateur
-    const { data: userData, error: userError } = await supabaseServer
+    const { data: userData, error: userError } = await supabase
       .from('users')
       .select('folder_project')
       .eq('id', idUser)
@@ -188,16 +202,16 @@ router.post('/updateRouteBlogSitemap',authenticateToken, async (req, res) => {
     }
     const folder = userData.folder_project;
     // Récupérer le slug de la collection
-    const { data: collectionData, error: collectionError } = await supabaseServer
+    const { data: collectionData, error: collectionError } = await supabase
       .from('collection')
-      .select('slug_collection')
+      .select('collection_slug')
       .eq('id', idBlog)
       .maybeSingle();
     if (collectionError) throw collectionError;
     const slug_collection = collectionData?.slug_collection || '';
     const url = `${slug_collection}${slug}`;
     // Récupérer l'ancien slug de la page de collection
-    const { data: pageData, error: pageError } = await supabaseServer
+    const { data: pageData, error: pageError } = await supabase
       .from('collection_element')
       .select('collection_element_slug')
       .eq('id', idBlogPage)
