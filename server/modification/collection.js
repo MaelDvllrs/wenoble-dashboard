@@ -609,18 +609,37 @@ router.post('/createRichTextCollection', async (req, res) => {
       const totalSize = Object.keys(entityMap).reduce((acc, key) => {
         return acc + (entityMap[key].data.size || 0);
       }, 0);
-      // Utiliser upsert pour éviter les conflits de clé unique
-      const { error: upsertError } = await supabase
+      // Vérifier si la ligne existe déjà
+      const { data: existing, error: selectError } = await supabase
         .from('collection_field_richtext')
-        .upsert({
-          collection_element_id: id_blog_page,
-          id_config,
-          text_json: richTextJSON,
-          size: totalSize
-        }, { onConflict: ['collection_element_id', 'id_config'] });
-      if (upsertError) throw new Error('Erreur Supabase DB: ' + upsertError.message);
+        .select('id_richtext')
+        .eq('collection_element_id', id_blog_page)
+        .eq('id_config', id_config)
+        .maybeSingle();
+      if (selectError) throw selectError;
+      if (existing) {
+        // Update si existe
+        const { error: updateError } = await supabase
+          .from('collection_field_richtext')
+          .update({ text_json: richTextJSON, size: totalSize })
+          .eq('id_richtext', existing.id_richtext);
+        if (updateError) throw new Error('Erreur Supabase DB: ' + updateError.message);
+      } else {
+        // Insert sinon
+        const { error: insertError } = await supabase
+          .from('collection_field_richtext')
+          .insert([
+            {
+              collection_element_id: id_blog_page,
+              id_config,
+              text_json: richTextJSON,
+              size: totalSize,
+            },
+          ]);
+        if (insertError) throw new Error('Erreur Supabase DB: ' + insertError.message);
+      }
     }
-    res.status(200).send('RichText enregistré ou mis à jour avec succès dans Supabase');
+    res.status(200).send('RichText enregistré avec succès dans Supabase');
   } catch (error) {
     console.error(error);
     res.status(500).send({ error: error.message });
@@ -1034,7 +1053,7 @@ router.post('/updateRichTextCollection', authenticateToken, async (req, res) => 
       // Vérifier si la ligne existe déjà
       const { data: existing, error: selectError } = await supabase
         .from('collection_field_richtext')
-        .select('id')
+        .select('id_richtext')
         .eq('collection_element_id', id_blog_page)
         .eq('id_config', id_config)
         .maybeSingle();
@@ -1044,8 +1063,7 @@ router.post('/updateRichTextCollection', authenticateToken, async (req, res) => 
         const { error: updateError } = await supabase
           .from('collection_field_richtext')
           .update({ text_json: richTextJSON, size: totalSize })
-          .eq('collection_element_id', id_blog_page)
-          .eq('id_config', id_config);
+          .eq('id_richtext', existing.id_richtext);
         if (updateError) throw new Error('Erreur Supabase DB: ' + updateError.message);
       } else {
         // Insert sinon
