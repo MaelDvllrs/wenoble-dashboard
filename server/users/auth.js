@@ -10,7 +10,7 @@ const router = express.Router();
 router.use(cors());
 router.use(express.json());
 
-const supabase = supabaseServer;
+const supabase = supabaseServer();
 
 // IP and geolocation utilities - keep your existing ones
 const getIpAddress = (req) => {
