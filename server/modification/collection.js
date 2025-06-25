@@ -626,7 +626,7 @@ router.post('/createRichTextCollection', async (req, res) => {
       // Vérifier si la ligne existe déjà
       const { data: existing, error: selectError } = await supabase
         .from('collection_field_richtext')
-        .select('id')
+        .select('id_richtext')
         .eq('collection_element_id', id_blog_page)
         .eq('id_config', id_config)
         .maybeSingle();
