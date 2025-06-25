@@ -121,28 +121,25 @@ router.post('/auth/verify', async (req, res) => {
 router.post('/register', async (req, res) => {
   try {
     const { email, password } = req.body;
-    
     if (!email || !password) {
       return res.status(400).json({ 
         success: false, 
         message: 'Email and password are required' 
       });
     }
-    
+    // Correction : obtenir une instance de supabase côté serveur
+    const supabase = supabaseServer();
     // Create user in Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
     });
-    
     if (authError) {
       return res.status(400).json({ 
         success: false, 
         message: authError.message 
       });
     }
-    
-
     console.log('User created in Supabase Auth:', authData);
     // Create user profile record in 'users' table
     const { data: profileData, error: profileError } = await supabase
@@ -154,20 +151,16 @@ router.post('/register', async (req, res) => {
         api_key: 'API' + Date.now() + (req.body.username || email.split('@')[0]),
       })
       .select();
-    
     if (profileError) {
       console.error('Error creating user profile:', profileError);
       console.error('Error details:', JSON.stringify(profileError, null, 2));
     } else {
       console.log('User profile created successfully:', profileData);
     }
-    
     await logConnectionAttempt(req); // Log the registration attempt
-    
     return res.status(201).json({
       success: true,
       message: 'Registration successful',
-      // If email confirmation is enabled:
       requiresEmailConfirmation: !authData.session, // true if no session returned
     });
   } catch (error) {
