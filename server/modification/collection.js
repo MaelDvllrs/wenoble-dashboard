@@ -540,34 +540,20 @@ router.post('/createTextCollection', authenticateToken, async (req, res) => {
   try {
     const id = req.body.params.id;
     const texts = req.body.params.otherText;
-
     const token = req.headers['authorization']?.split(' ')[1];
     const supabase = supabaseServer(token);
-
-    
-    
-    // Traiter toutes les insertions en parallèle
-    const insertPromises = texts.map(item => {
+    // Utiliser upsert pour éviter les conflits de clé unique
+    const upsertPromises = texts.map(item => {
       return supabase
         .from('collection_field_text')
-        .insert({
+        .upsert({
           collection_element_id: id, // Ajout du lien via UUID
           id_config: item.id_config,
           text: item.value
-        })
+        }, { onConflict: ['collection_element_id', 'id_config'] });
     });
-
-    
-    // Attendre que toutes les promesses soient résolues
-    Promise.all(insertPromises).then(results => {
-      results.forEach(({ error }, i) => {
-        if (error) {
-          console.error(`Erreur à l'insertion ${i}:`, error.message);
-        }
-      });
-    });
-    
-    res.status(200).send('Tous les textes ont été créés avec succès');
+    await Promise.all(upsertPromises);
+    res.status(200).send('Tous les textes ont été créés ou mis à jour avec succès');
   } catch (error) {
     console.error('Erreur lors de la création des textes:', error);
     res.status(500).send({ error: error.message });
@@ -623,38 +609,18 @@ router.post('/createRichTextCollection', async (req, res) => {
       const totalSize = Object.keys(entityMap).reduce((acc, key) => {
         return acc + (entityMap[key].data.size || 0);
       }, 0);
-      // Vérifier si la ligne existe déjà
-      const { data: existing, error: selectError } = await supabase
+      // Utiliser upsert pour éviter les conflits de clé unique
+      const { error: upsertError } = await supabase
         .from('collection_field_richtext')
-        .select('id_richtext')
-        .eq('collection_element_id', id_blog_page)
-        .eq('id_config', id_config)
-        .maybeSingle();
-      if (selectError) throw selectError;
-      if (existing) {
-        // Update si existe
-        const { error: updateError } = await supabase
-          .from('collection_field_richtext')
-          .update({ text_json: richTextJSON, size: totalSize })
-          .eq('collection_element_id', id_blog_page)
-          .eq('id_config', id_config);
-        if (updateError) throw new Error('Erreur Supabase DB: ' + updateError.message);
-      } else {
-        // Insert sinon
-        const { error: insertError } = await supabase
-          .from('collection_field_richtext')
-          .insert([
-            {
-              collection_element_id: id_blog_page,
-              id_config,
-              text_json: richTextJSON,
-              size: totalSize,
-            },
-          ]);
-        if (insertError) throw new Error('Erreur Supabase DB: ' + insertError.message);
-      }
+        .upsert({
+          collection_element_id: id_blog_page,
+          id_config,
+          text_json: richTextJSON,
+          size: totalSize
+        }, { onConflict: ['collection_element_id', 'id_config'] });
+      if (upsertError) throw new Error('Erreur Supabase DB: ' + upsertError.message);
     }
-    res.status(200).send('RichText enregistré avec succès dans Supabase');
+    res.status(200).send('RichText enregistré ou mis à jour avec succès dans Supabase');
   } catch (error) {
     console.error(error);
     res.status(500).send({ error: error.message });
