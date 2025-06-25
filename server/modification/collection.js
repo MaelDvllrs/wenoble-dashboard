@@ -537,32 +537,48 @@ router.post('/createVideoCollection', uploadVideo.single('video'), async (req, r
 
 
 router.post('/createTextCollection', authenticateToken, async (req, res) => {
+  console.log("createTextCollection")
   try {
     const id = req.body.params.id;
     const texts = req.body.params.otherText;
     const token = req.headers['authorization']?.split(' ')[1];
     const supabase = supabaseServer(token);
-    // Utiliser upsert pour éviter les conflits de clé unique
-    const upsertPromises = texts.map(item => {
-      return supabase
+    for (const item of texts) {
+      // Vérifier si la ligne existe déjà
+      const { data: existing, error: selectError } = await supabase
         .from('collection_field_text')
-        .upsert({
-          collection_element_id: id, // Ajout du lien via UUID
-          id_config: item.id_config,
-          text: item.value
-        }, { onConflict: ['collection_element_id', 'id_config'] });
-    });
-    await Promise.all(upsertPromises);
+        .select('id_text')
+        .eq('collection_element_id', id)
+        .eq('id_config', item.id_config)
+        .maybeSingle();
+      if (selectError) throw selectError;
+      if (existing) {
+        // Update si existe
+        const { error: updateError } = await supabase
+          .from('collection_field_text')
+          .update({ text: item.value })
+          .eq('id_text', existing.id_text);
+        if (updateError) throw new Error('Erreur Supabase DB: ' + updateError.message);
+      } else {
+        // Insert sinon
+        const { error: insertError } = await supabase
+          .from('collection_field_text')
+          .insert([
+            {
+              collection_element_id: id,
+              id_config: item.id_config,
+              text: item.value,
+            },
+          ]);
+        if (insertError) throw new Error('Erreur Supabase DB: ' + insertError.message);
+      }
+    }
     res.status(200).send('Tous les textes ont été créés ou mis à jour avec succès');
   } catch (error) {
     console.error('Erreur lors de la création des textes:', error);
     res.status(500).send({ error: error.message });
   }
 });
-
-
-
-
 
 
 
@@ -974,6 +990,7 @@ router.post('/updateCollectionElement', authenticateToken, async (req, res) => {
 
 // Met à jour les textes d'une page de collection
 router.post('/updateTextCollection', authenticateToken, async (req, res) => {
+  console.log("updateTextCollection")
   try {
     const id = req.body.params.id;
     const texts = req.body.params.otherText;
