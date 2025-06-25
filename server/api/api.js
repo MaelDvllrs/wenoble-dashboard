@@ -462,6 +462,8 @@ router.get('/sendBlogContent', apiKeyMiddleware, async (req, res) => {
                            .select('collection_id')
                            .eq('id', values)
                            .maybeSingle();
+                       
+                       console.log('Collection ID récupéré pour multiReference:', configData);
                        if (!configError && configData) {
                            collection_id = configData.collection_id;
                        }
