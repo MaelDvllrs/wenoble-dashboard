@@ -134,6 +134,7 @@
                     });
 
                     const data = await response.json();
+                    console.log(data);
 
                     if (!data) {
                         console.error("Aucune donnée trouvée pour cette page.");
