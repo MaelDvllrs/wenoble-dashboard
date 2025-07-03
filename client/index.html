@@ -32,6 +32,14 @@
       });
     }
   }, true);
+
+  window.addEventListener('error', (e) => {
+    if (e.target.tagName === 'SCRIPT') {
+      console.warn('[App] JS chunk failed to load. Reloading...');
+      caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))))
+        .finally(() => location.reload(true));
+    }
+  }, true);
 </script>
 </body>
 </html>
