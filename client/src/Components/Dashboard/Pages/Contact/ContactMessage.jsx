@@ -56,20 +56,20 @@ const ContactMessage = () => {
             
                 return (
                     <div className="dashboard_case_empty" style={{backgroundColor : theme.palette.primary.secondary, borderColor : theme.palette.primary.third}} key={index}>
-                        <div>
-                            <div className="header_modification">
-                                <h3 >{message.mail_sender}</h3>
-                                <DefaultButton type="submit" variant="contained" onClick={() => window.location = 'mailto:' + message.mail_sender} style={{gap: "0.5rem"}}><EmailIcon/> Répondre</DefaultButton>
-                            </div>
-                            
-                        </div>
-                        <h2>{message.subject}</h2>
-                        <div className="message_contain">
-                            <div className="message_content" style={{backgroundColor : theme.palette.primary.main, color : theme.palette.text.primary}}>
-                                <div dangerouslySetInnerHTML={{ __html: message.html }} />
-                            </div>
-                            <div className="message_date">
-                                <p>{formattedMessageDate}</p>
+                        
+                        <div className="header_modification header_page_modification">
+                            <h3 className="titlePage">{message.mail_sender}</h3>
+                            <DefaultButton type="submit" variant="contained" onClick={() => window.location = 'mailto:' + message.mail_sender} style={{gap: "0.5rem"}}><EmailIcon/> Répondre</DefaultButton>
+                        </div>   
+                        <div className="message_wrapper">
+                            <h4>{message.subject}</h4>
+                            <div className="message_contain">
+                                <div className="message_content" style={{backgroundColor : theme.palette.primary.main, color : theme.palette.text.primary}}>
+                                    <div dangerouslySetInnerHTML={{ __html: message.html }} />
+                                </div>
+                                <div className="message_date">
+                                    <p>{formattedMessageDate}</p>
+                                </div>
                             </div>
                         </div>
                     </div>

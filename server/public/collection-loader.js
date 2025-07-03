@@ -134,7 +134,6 @@
                     });
 
                     const data = await response.json();
-                    console.log(data);
 
                     if (!data) {
                         console.error("Aucune donnée trouvée pour cette page.");
@@ -259,7 +258,6 @@
                         const [idConfig, className] = attrValue.split(',').map(part => part.trim());
                                         
                         const galleryData = data.content.gallery.find(gallery => gallery.id_config == idConfig);
-                        console.log(galleryData);
                         if (galleryData && galleryData.gallery) {
                             try {
                                 const galleryItems = JSON.parse(galleryData.gallery);
@@ -349,7 +347,6 @@
                                 // Parcours tous les éléments qui ont un attribut `wn-*` dans le clone
                                 clone.querySelectorAll("[wn-multiReference-title], [wn-multiReference-link], [wn-multiReference-image], [wn-multiReference-text]").forEach(el => {
                                     if (el.hasAttribute("wn-multiReference-title")) {
-                                        console.log(multiReferenceInfo.label);
                                         el.textContent = multiReferenceInfo.label;
                                     }
 
@@ -429,8 +426,7 @@
 
             await Promise.all(blogPromises);  
 
-            template.remove();
-
+            // Créer le marker SEULEMENT après que tout est prêt
             const collectionMarker = document.createElement('div');
             collectionMarker.className = 'ssr-wn-collection-box';
             collectionMarker.style.display = 'none';

@@ -52,7 +52,6 @@ const Page = () => {
 
     useEffect(() => {
         if(Infopage != null){
-            console.log(Infopage);
             const decoded = jwtDecode(Infopage);
             setDecodedPage(decoded);
             if(decoded && decoded.page.length > 0 && !initialNavigationDone) {

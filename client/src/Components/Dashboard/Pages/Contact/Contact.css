@@ -2,16 +2,39 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    border-top: solid 0.5px var(--color-primary-third);
 }
 
 .liste_contact_contain{
     height: 100%;
+    width: 100%;
+    padding-top: 1rem;
+    padding-bottom: 1px;
+}
+
+.Item_contact_wrapper{
+    height: calc(100% - 2.7rem);
+    background-color: var(--color-primary-secondary);
+    border: solid 0.5px var(--color-primary-third);
+    border-radius: 0.5rem;
+    padding-top: 1rem;
+    overflow: hidden;
+}
+
+.ItemMessage{
+    display: flex;
+    align-items: center;
+
 }
 
 .message_name_element{
     width: 20%;
     display: flex;
     align-items: start;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-left: 0.5rem;
 }
 
 .message_subject_element{
@@ -29,6 +52,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    max-height: 1.5rem;
 }
 
 .option_menu{
@@ -48,6 +72,13 @@
     color: #0541b7 !important;
 }
 
+
+.message_wrapper{
+    width: 100%;
+    border-top: var(--color-primary-third) solid 0.5px ;
+    height: calc(100% - 3rem);
+}
+
 .message_contain{
     display: flex;
     flex-direction: column;
@@ -56,7 +87,7 @@
     overflow-y: auto;
     scrollbar-color: #272a31 transparent; 
     scrollbar-width: thin;
-    height: calc(100% - 9rem);
+    height: calc(100% - 4rem);
 }
 
 .message_content{
@@ -73,5 +104,5 @@
 
 
 .liste_contact_box{
-    height: calc(100% - 11.5rem);
+    height: calc(100% - 3rem);
 }

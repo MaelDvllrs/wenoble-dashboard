@@ -25,8 +25,22 @@ export const fetchImagesPage = async (pageId, token) => {
   
 export const saveImagePage = async (fields, token) => {
   try {
+    // Si on ne modifie que l'alt, ne pas envoyer de FormData (même principe que updateImageCollection)
+    if (fields.onlyAlt) {
+      await Axios.post(`${apiUrl}/updateAltPage`, {
+        params: {
+          fields: fields,
+          directory: "page_image"
+        }
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      return;
+    }
     if (fields.data) {
-      console.log(fields);
       const formData = new FormData();
       formData.append('image', fields.data, fields.src);
       formData.append('id_photo', fields.id);
@@ -54,7 +68,7 @@ export const saveImagePage = async (fields, token) => {
       });
     }
   } catch (error) {
-    console.error('Message d\'erreur du serveur:', error.response.data.message);
+    console.error('Message d\'erreur du serveur:', error.response?.data?.message || error.message);
     throw error;
   }
 }
@@ -117,6 +131,22 @@ export const updateRichTextPage = async (idPage, richtext, token) => {
 
 export const updateImagePage = async (fields, pageId, token) => {
   try {
+    // Si on ne modifie que l'alt, ne pas envoyer de FormData (même principe que updateImageCollection)
+    if (fields.onlyAlt) {
+      await Axios.post(`${apiUrl}/updateAltPage`, {
+        params: {
+          id_config: fields.id_config,
+          alt: fields.alt,
+          pageId: pageId
+        }
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      return;
+    }
     const formData = new FormData();
     formData.append('image', fields.data, fields.name);
     formData.append('id_page', pageId);
@@ -132,7 +162,7 @@ export const updateImagePage = async (fields, pageId, token) => {
       }
     });
   } catch (error) {
-    console.error('Message d\'erreur du serveur:', error);
+    console.error('Message d\'erreur du serveur:', error.response?.data?.message || error.message);
     throw error;
   }
 };

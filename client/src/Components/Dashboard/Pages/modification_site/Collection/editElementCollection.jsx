@@ -22,7 +22,7 @@ import Paper from '@mui/material/Paper';
 import Box from '@mui/material/Box';
 import PendingIcon from '@mui/icons-material/Pending';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-
+import { deleteBlogPage } from './collectionDeleteUtils';
 
 
 
@@ -108,7 +108,23 @@ const EditElementCollection = () => {
 
 
 
+    // Loading states pour chaque action
+    const [isPublishing, setIsPublishing] = useState(false);
+    const [isSavingDraft, setIsSavingDraft] = useState(false);
+    const [isUnpublishing, setIsUnpublishing] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+
     const handleSave = async (status, setpublishDate) => {
+        // Gestion des loaders par action
+        if (status === 1 && DecodeBlog.blogPage[0].status !== true) {
+            setIsPublishing(true);
+        } else if (status === 1 && DecodeBlog.blogPage[0].status === true) {
+            setIsSaving(true);
+        } else if (status === 0 && DecodeBlog.blogPage[0].status === true) {
+            setIsUnpublishing(true);
+        } else if (status === 0 && DecodeBlog.blogPage[0].status !== true) {
+            setIsSavingDraft(true);
+        }
 
         // MODIFIER LA PAGE
 
@@ -237,7 +253,6 @@ const EditElementCollection = () => {
             }
 
             //ENREGISTRER LES GALLERIES
-            console.log("blogData.gallery", blogData.gallery);
             if(blogData.gallery.length > 0){
                 try {
                     await Promise.all(blogData.gallery.map(async (gallery) => {
@@ -272,26 +287,29 @@ const EditElementCollection = () => {
             // Mettre à jour le site si le statut est 1 ou si le statut a changé
             if (status === 1 || status !== DecodeBlog.blogPage[0].status) {
                 setDataRetrievalStatus(true);
-
                 try {
                     setTimeout(() => {
                       setPageGenerationStatus(true);
                     }, 1000);
-            
                     await generateStaticSite(token);
-            
                     setTimeout(() => {
                       setSitePublishingStatus(true);
                     }, 1000);
-            
                     await new Promise(resolve => setTimeout(resolve, 2000));
-            
                     setDataRetrievalStatus(false);
                     setPageGenerationStatus(false);
                     setSitePublishingStatus(false);
                     setSavingPage(false);
+                    setIsPublishing(false);
+                    setIsSaving(false);
+                    setIsUnpublishing(false);
+                    setIsSavingDraft(false);
                   } catch (error) {
                     console.error('Erreur lors de la generation static :', error);
+                    setIsPublishing(false);
+                    setIsSaving(false);
+                    setIsUnpublishing(false);
+                    setIsSavingDraft(false);
                     setDataRetrievalStatus(false);
                     setPageGenerationStatus(false);
                     setSitePublishingStatus(false);
@@ -310,7 +328,11 @@ const EditElementCollection = () => {
                     // Puis fermez la snackbar après un délai supplémentaire
                     setTimeout(() => {
                         setDataLoading(false);
-                        setDataSaved(false); // Réinitialiser pour la prochaine utilisation
+                        setDataSaved(false);
+                        setIsPublishing(false);
+                        setIsSaving(false);
+                        setIsUnpublishing(false);
+                        setIsSavingDraft(false);
                     }, 1000);
                 }, 1500);
 
@@ -321,6 +343,10 @@ const EditElementCollection = () => {
         } catch (error) {
             // Gérer l'erreur ici
             console.error('Erreur lors de la création de la page :',error);
+            setIsPublishing(false);
+            setIsSaving(false);
+            setIsUnpublishing(false);
+            setIsSavingDraft(false);
             setSavingPage(false);
             return;
         }
@@ -332,7 +358,7 @@ const EditElementCollection = () => {
 
 
     const handleBlogDataChange = (data, isDelete = false) => {
-
+        console.log('handleBlogDataChange', data);
         
         setBlogData(prevData => {
           const newData = { ...prevData };
@@ -384,84 +410,42 @@ const EditElementCollection = () => {
 
 
     const handleDeletePage = async (slug) => {
-        // Indiquer que la page est en cours de suppression  
         setIsDeleting(true);
         closePopup();
-    
-        // Vérifier le statut de la page
         const isPublished = DecodeBlog.blogPage[0].status === true;
-        
-        // Afficher la Snackbar appropriée
-        if (isPublished) {
-            setDeletingPublishedPage(true);
-        } else {
-            setDeletingDraftPage(true);
-        }
-    
+        if (isPublished) setDeletingPublishedPage(true);
+        else setDeletingDraftPage(true);
         try {
-            // ÉTAPE 1: Activer l'indicateur de suppression des données
-            setDeleteDataStatus(true);
-            
-            // Supprimer les routes du sitemap
-            await Axios.post(`${apiUrl}/deleteRouteBlogSitemap`, {
-                params: {
-                    idUser: idUser,
-                    idBlog: idCollection,
-                    slug: slug,
-                    idBlogPage: idCollectionElement
-                }
-            }, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-            
-            // Supprimer la page
-            await Axios.delete(`${apiUrl}/deleteCollectionElement`, {
-                params: {
-                    IdBlogPage: idCollectionElement,
-                    Id: idCollection
-                },
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-            
-            // Pour les brouillons, marquer la suppression comme terminée
-            if (!isPublished) {
-                setDeletionCompleted(true);
-                await new Promise(resolve => setTimeout(resolve, 1000));
-            } 
-            // Pour les pages publiées, passer à la régénération du site
-            else {
-                // ÉTAPE 2: Activer l'indicateur de régénération du site
-                setRegenerateSiteStatus(true);
-                
-                // Générer le site
-                await generateStaticSite(token);
-                
-                // Attendre un peu pour montrer l'état complété
-                await new Promise(resolve => setTimeout(resolve, 1000));
-            }
-            
-            // Réinitialiser les états et naviguer
-            setTimeout(() => {
-                setDeletingPublishedPage(false);
-                setDeletingDraftPage(false);
-                setDeleteDataStatus(false);
-                setRegenerateSiteStatus(false);
-                setDeletionCompleted(false);
-                navigate(`/dashboard/modification/collection/${idCollection}`);
-            }, 1500);
-        } catch (error) {
-            console.error('Erreur lors de la suppression de la page :', error);
-            setIsDeleting(false); 
+          setDeleteDataStatus(true);
+          await deleteBlogPage({
+            apiUrl,
+            token,
+            idUser,
+            idBlog: idCollection,
+            slug,
+            idBlogPage: idCollectionElement,
+            isPublished,
+            onStatus: (status) => {
+              if (status === 'regenerating') setRegenerateSiteStatus(true);
+              if (status === 'deleted') setDeletionCompleted(true);
+            },
+            generateStaticSite: () => generateStaticSite(token),
+            navigate
+          });
+          setTimeout(() => {
             setDeletingPublishedPage(false);
             setDeletingDraftPage(false);
             setDeleteDataStatus(false);
             setRegenerateSiteStatus(false);
+            setDeletionCompleted(false);
+          }, 1500);
+        } catch (error) {
+          console.error('Erreur lors de la suppression de la page :', error);
+          setIsDeleting(false);
+          setDeletingPublishedPage(false);
+          setDeletingDraftPage(false);
+          setDeleteDataStatus(false);
+          setRegenerateSiteStatus(false);
         }
     };
 
@@ -746,8 +730,8 @@ const EditElementCollection = () => {
         <div className="Blog_creation_Page">
             {
             DecodeBlog.blogPage && !isDeleting ? (
-                <div className="Blog_creation_Page">
-                  <div className="header_modification">
+                <div className="collection_content">
+                  <div className="header_modification header_page_modification">
                     <h3 className="titlePage">Modification de : {DecodeBlog.blogPage[0].page_blog_name}</h3>
                     <div className="button_save_contain">
                         <p style={{color: theme.palette.text.secondary, whiteSpace:"nowrap"}}>Status :</p>
@@ -763,20 +747,38 @@ const EditElementCollection = () => {
                         {
                             DecodeBlog.blogPage[0].status === true ? (
                                 <Tooltip title="Dépublier" arrow placement="top">
-                                    <SecondaryButton className="SaveButton" type="submit" variant="contained" theme={theme} onClick={ async () => {await handleSave(0,1)}}><UnpublishedIcon/></SecondaryButton>
+                                    <SecondaryButton className="SaveButton" type="submit" variant="contained" theme={theme} onClick={ async () => {await handleSave(0,1)}} disabled={isUnpublishing || isPublishing || isSaving || isSavingDraft}>
+                                        {isUnpublishing ? (
+                                            <CircularProgress size={16} sx={{color: theme.palette.text.primary, margin: '0.2rem'}}/>
+                                        ) : (
+                                            <UnpublishedIcon/>
+                                        )}
+                                    </SecondaryButton>
                                 </Tooltip>   
                             ) : (
                                 <Tooltip title="Enregistrer comme brouillon" arrow placement="top">
-                                    <SecondaryButton className="SaveButton" variant="contained" theme={theme} onClick={ async () => {await handleSave(0,0)}}><SaveIcon/></SecondaryButton>
+                                    <SecondaryButton className="SaveButton" variant="contained" theme={theme} onClick={ async () => {await handleSave(0,0)}} disabled={isSavingDraft || isPublishing || isSaving || isUnpublishing}>
+                                        {isSavingDraft ? (
+                                            <CircularProgress size={16} sx={{color: theme.palette.text.primary, margin: '0.2rem'}}/>
+                                        ) : (
+                                            <SaveIcon/>
+                                        )}
+                                    </SecondaryButton>
                                 </Tooltip>
                             )
                         }
-                        <SecondaryButton variant="contained" theme={theme} onClick={() => navigate(`/dashboard/modification/collection/${idCollection}`)}>Annuler</SecondaryButton>
+                        <SecondaryButton variant="contained" theme={theme} onClick={() => navigate(`/dashboard/modification/collection/${idCollection}`)} disabled={isPublishing || isSaving || isUnpublishing || isSavingDraft}>Annuler</SecondaryButton>
                         {
                             DecodeBlog.blogPage[0].status === true ? (
-                                <DefaultButton type="submit" variant="contained" onClick={async () => { await handleSave(1,0) }}>Enregistrer</DefaultButton>  
+                                <DefaultButton type="submit" variant="contained" onClick={async () => { await handleSave(1,0) }} disabled={isSaving || isPublishing || isUnpublishing || isSavingDraft}>
+                                    {isSaving && <CircularProgress size={16} sx={{color: theme.palette.text.primary, marginRight: 1}}/>}
+                                    Enregistrer
+                                </DefaultButton>  
                             ) : (
-                                <DefaultButton type="submit" variant="contained" onClick={async () => { await handleSave(1,1) }}> Publier</DefaultButton>
+                                <DefaultButton type="submit" variant="contained" onClick={async () => { await handleSave(1,1) }} disabled={isPublishing || isSaving || isUnpublishing || isSavingDraft}>
+                                    {isPublishing && <CircularProgress size={16} sx={{color: theme.palette.text.primary, marginRight: 1}}/>}
+                                    Publier
+                                </DefaultButton>
                             )
                         }
                         

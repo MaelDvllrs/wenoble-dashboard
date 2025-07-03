@@ -39,21 +39,43 @@
 
 .Blog_creation_Page{
     height: 100%;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-bottom: 1rem;
+}
+
+.collection_content{
+    height: 100%;
+
 }
 
 .Blog_creation_field_contain{
     padding-left: 1px;
     padding-right: 1px;
+    padding-bottom: 1px;
     overflow-y: auto;
     scrollbar-gutter: stable;
     scrollbar-color: #272a31 transparent; 
     scrollbar-width: thin;
-    height: calc(100% - 4rem);
+    height: calc(100% - 3rem);
+    border-top: solid 0.5px var(--color-primary-third);
 }
 
 
 .delete_button_blog{
     font-size: 0.7rem !important;
+}
+
+
+.edit-case_empty{
+    padding: 0;
+    border: none;
+    background-color: transparent;
+}
+
+
+.header_page_modification{
+    justify-content: space-between;
 }
 
 

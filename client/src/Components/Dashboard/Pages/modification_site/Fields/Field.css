@@ -294,6 +294,8 @@
     padding-bottom: 0.2rem;
     cursor: grab;
     border-radius: 0.5rem;
+    gap: 1rem;
+    max-width: 100%;
     
 }
 
@@ -328,18 +330,33 @@
 
 
 .image_gallery{
-    height: 100%;
-    width: 4rem;
+    height: 2.5rem;
+    min-width: 4rem;
     object-fit: cover;
     border-radius: 0.5rem;
 }
 
 
+.gallery_text_contain{
+    width: 40%;
+    
+
+}
+
 .gallery_text{
     overflow-x: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    width: 100%;
 }
+
+
+.gallery_size{
+    text-wrap: nowrap;
+    width: 5rem;
+    text-align: right;
+}
+
 
 .link_image_gallery{
     display: flex;

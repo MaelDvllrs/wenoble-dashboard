@@ -37,6 +37,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 1rem 0.5rem 1rem 0.5rem;
+    border-bottom: solid 0.5px var(--color-primary-third);
 }
 
 .portfolio_edit_place{

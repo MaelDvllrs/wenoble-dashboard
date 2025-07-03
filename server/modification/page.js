@@ -349,6 +349,36 @@ router.post('/updateImagesPage',authenticateToken, uploadUpdateImage.single('ima
   }
 });
 
+
+router.post('/updateAltPage' ,authenticateToken, async (req, res) => {
+
+  if (!req.body) {
+    return res.status(400).send("Aucun Alt n'a été envoyé.");
+  }
+  const token = req.headers.authorization?.split(' ')[1];
+  const supabase = supabaseServer(token);
+
+  const id_page = req.body.params.pageId;
+  const alt = req.body.params.alt;
+  const id_config = req.body.params.id_config;
+
+
+
+  try {
+    const { error } = await supabase
+      .from('page_photo')
+      .update({ alt_image: alt })
+      .eq('id_page', id_page)
+      .eq('id_config', id_config);
+    if (error) throw error;
+    res.status(200).send('Alt mis à jour avec succès');
+  } catch (err) {
+    console.error('Erreur lors de la mise à jour de l\'alt de l\'image :', err);
+    res.status(500).send({ error: err.message });
+  }
+}); 
+
+
 // Delete page data (Supabase version)
 router.delete('/deletePageData',authenticateToken, async (req, res) => {
   const id_page = req.body.id_page;

@@ -1,6 +1,5 @@
 import React from "react"
 import Axios from '../../../../../service/AxiosConfig';
-
 import { useState, useEffect } from "react";
 import Cookies from 'js-cookie';
 import {jwtDecode} from 'jwt-decode'; 
@@ -73,7 +72,7 @@ const Collection = () => {
             <div className="title_section">
             <div className="breadCrumbs"><NavLink style={{color: theme.palette.text.primary}} className={"breadCrumbsLink"} to={'/dashboard/home'}>Dashboard</NavLink> &gt; <NavLink style={{color: theme.palette.text.primary}} className={"breadCrumbsLink"} to={'/dashboard/modification'}>Modification</NavLink> &gt; Blog</div>
             </div>
-            <div className="dashboard_case_empty">
+            <div className="dashboard_case_empty edit-case_empty">
                 <div className="header_modification">
                         <RiDatabase2Fill className="icon_modifiaction_title"/>
                         <h3 className="heading_h3">Gestion des collections CMS</h3>

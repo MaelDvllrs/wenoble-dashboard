@@ -1,10 +1,9 @@
-import React from "react"
+import React, { useState, useEffect } from "react"
 import Axios from 'axios';
-import { useState, useEffect } from "react";
 import Cookies from 'js-cookie';
 import {jwtDecode} from 'jwt-decode'; 
 import { Outlet, NavLink, useNavigate, useParams } from 'react-router-dom';
-import { DefaultButton, SecondaryButton} from '../../../../../Theme/element';
+import { DefaultButton, SecondaryButton, RedButton} from '../../../../../Theme/element';
 import { useTheme } from '@mui/material/styles';
 import './listeCollection.css'
 import '../Portfolio/portfolio.css';
@@ -16,6 +15,15 @@ import { PiSmileyMeltingFill } from "react-icons/pi";
 import { RiDatabase2Fill } from "react-icons/ri";
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
 import { SimpleSearchField } from '../../../../../Theme/element';
+import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
+import { deleteBlogPage } from './collectionDeleteUtils';
+import CircularProgress from '@mui/material/CircularProgress';
+import { generateStaticSite } from './apiCollection';
+import Paper from '@mui/material/Paper';
+import Box from '@mui/material/Box';
+import PendingIcon from '@mui/icons-material/Pending';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import Snackbar from '@mui/material/Snackbar';
 
 
 
@@ -36,6 +44,18 @@ const ListeCollection = () => {
 
     // Ajout d'un état pour la recherche
     const [searchValue, setSearchValue] = useState("");
+
+    // Ajout d'un état pour la popup de confirmation
+    const [showConfirm, setShowConfirm] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    // Ajout d'états pour le chargement par étape (comme dans editElementCollection)
+    const [deleteDataStatus, setDeleteDataStatus] = useState(false);
+    const [regenerateSiteStatus, setRegenerateSiteStatus] = useState(false);
+    const [deletionCompleted, setDeletionCompleted] = useState(false);
+
+    const navigate = useNavigate();
+    const idUser = jwtDecode(token).idUser;
 
     useEffect(() => {    
 
@@ -97,6 +117,186 @@ const ListeCollection = () => {
 
     return(
         <div className="liste_blog_contain">
+          {/* Popup de confirmation personnalisée */}
+          {showConfirm && (
+            <>
+              {/* Overlay pour bloquer les interactions pendant la confirmation */}
+              <div style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '100vw',
+                height: '100vh',
+                background: 'rgba(0,0,0,0.18)',
+                zIndex: 1300
+              }} />
+              <Snackbar
+                open={showConfirm}
+                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+                sx={{ bottom: 24, zIndex: 1400 }}
+                onClose={() => setShowConfirm(false)}
+              >
+                <Paper
+                  elevation={6}
+                  sx={{
+                    p: 2,
+                    minWidth: 300,
+                    maxWidth: 400,
+                    backgroundColor: theme.palette.background.default,
+                    borderRadius: 2,
+                  }}
+                >
+                  <Box sx={{ mb: 2 }}>
+                    <h3 style={{ margin: 0, color: theme.palette.text.primary }}>Confirmation de suppression</h3>
+                  </Box>
+                  <Box sx={{ mb: 2, color: theme.palette.text.primary }}>
+                    Êtes-vous sûr de vouloir supprimer la sélection ?
+                  </Box>
+                  <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+                    <SecondaryButton className="modal-btn cancel" onClick={() => setShowConfirm(false)}>Annuler</SecondaryButton>
+                    <RedButton className="modal-btn confirm" onClick={async () => {
+                      setShowConfirm(false);
+                      setIsDeleting(true);
+                      setDeleteDataStatus(false);
+                      setRegenerateSiteStatus(false);
+                      setDeletionCompleted(false);
+                      // Suppression multiple
+                      const selectedIds = Object.entries(checkedItems)
+                        .filter(([id, checked]) => checked)
+                        .map(([id]) => id);
+                      const selectedPages = filteredBlogList.filter(page => selectedIds.includes(page.id));
+                      let atLeastOnePublished = false;
+                      setTimeout(() => setDeleteDataStatus(true), 500); // Simule le passage à l'étape 2
+                      for (const page of selectedPages) {
+                        const isPublished = page.collection_element_status === true;
+                        if (isPublished) atLeastOnePublished = true;
+                        try {
+                          await deleteBlogPage({
+                            apiUrl,
+                            token,
+                            idUser,
+                            idBlog: idCollection,
+                            slug: page.page_blog_slug || page.collection_element_slug,
+                            idBlogPage: page.id,
+                            isPublished,
+                            skipRegenerate: true
+                          });
+                        } catch (e) {
+                          console.error('Erreur suppression page', page.id, e);
+                        }
+                      }
+                      setRegenerateSiteStatus(atLeastOnePublished);
+                      if (atLeastOnePublished) {
+                        try {
+                          await generateStaticSite(token);
+                          setTimeout(() => setDeletionCompleted(true), 800);
+                        } catch (e) {
+                          console.error('Erreur lors de la régénération du site', e);
+                        }
+                      } else {
+                        setTimeout(() => setDeletionCompleted(true), 800);
+                      }
+                      // Rafraîchir la liste après suppression
+                      Axios.get(`${apiUrl}/getListeCollection`, {
+                        params: {
+                          IdBlog: idCollection,
+                          idUser: idUser,
+                        },
+                        headers: {
+                          'Authorization': `Bearer ${token}`,
+                          'Content-Type': 'application/json'
+                        }
+                      }).then((response) => {
+                        setInfoblog(jwtDecode(response.data));
+                        setLoadingBlog(false);
+                        setCheckedItems({});
+                        setAllChecked(false);
+                        setTimeout(() => setIsDeleting(false), 1200);
+                        setDeleteDataStatus(false);
+                        setRegenerateSiteStatus(false);
+                        setDeletionCompleted(false);
+                      }).catch((error) => {
+                        setIsDeleting(false);
+                        setDeleteDataStatus(false);
+                        setRegenerateSiteStatus(false);
+                        setDeletionCompleted(false);
+                        console.error('Erreur lors du refresh du Blog :', error);
+                      });
+                    }}>
+                      Confirmer
+                    </RedButton>
+                  </Box>
+                </Paper>
+              </Snackbar>
+            </>
+          )}
+          {isDeleting && (
+            <>
+              {/* Overlay pour bloquer les interactions */}
+              <div style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '100vw',
+                height: '100vh',
+                background: 'rgba(0,0,0,0.18)',
+                zIndex: 1300
+              }} />
+              <Snackbar
+                open={isDeleting}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                sx={{ bottom: 24, zIndex: 1400 }}
+              >
+                <Paper
+                  elevation={6}
+                  sx={{
+                    p: 2,
+                    minWidth: 300,
+                    maxWidth: 400,
+                    backgroundColor: theme.palette.background.default,
+                    borderRadius: 2,
+                  }}
+                >
+                  <Box sx={{ mb: 2 }}>
+                    <h3 style={{ margin: 0, color: theme.palette.text.primary }}>Suppression de la sélection</h3>
+                  </Box>
+                  {/* Étape 1: Suppression des données */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                    {!deleteDataStatus ? (
+                      <>
+                        <PendingIcon sx={{ color: theme.palette.text.secondary, width: 16, height: 16 }} />
+                        <Box sx={{ color: theme.palette.text.secondary }}>Suppression des données</Box>
+                      </>
+                    ) : regenerateSiteStatus ? (
+                      <>
+                        <CheckCircleIcon sx={{ color: "#2ec96d", width: 16, height: 16 }} />
+                        <Box sx={{ color: theme.palette.text.secondary }}>Données supprimées</Box>
+                      </>
+                    ) : (
+                      <>
+                        <CircularProgress size={16} sx={{ color: "#2ec96d" }} />
+                        <Box sx={{ color: theme.palette.text.primary }}>Suppression des données...</Box>
+                      </>
+                    )}
+                  </Box>
+                  {/* Étape 2: Régénération du site */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    {!regenerateSiteStatus ? (
+                      <>
+                        <PendingIcon sx={{ color: theme.palette.text.secondary, width: 16, height: 16 }} />
+                        <Box sx={{ color: theme.palette.text.secondary }}>Mise à jour du site</Box>
+                      </>
+                    ) : (
+                      <>
+                        <CircularProgress size={16} sx={{ color: "#2ec96d" }} />
+                        <Box sx={{ color: theme.palette.text.primary }}>Mise à jour du site...</Box>
+                      </>
+                    )}
+                  </Box>
+                </Paper>
+              </Snackbar>
+            </>
+          )}
             <div className="modification_action_wrapper">
               <div className="button_save_contain">
                     <NavLink to={'createPage'} ><DefaultButton type="submit" variant="contained"><AddIcon/>Créer Page</DefaultButton></NavLink>
@@ -112,11 +312,17 @@ const ListeCollection = () => {
                   <SecondaryButton
                     variant="contained"
                     color="error"
-                    onClick={() => {/* Ajoute ici la logique de suppression */}}
+                    onClick={() => setShowConfirm(true)}
                   >
-                    Supprimer
+                    <DeleteOutlineOutlinedIcon style={{ marginRight: 4 , color: theme.palette.text.secondary}} fontSize='small'/>
+                    Supprimer la selection
                   </SecondaryButton>
                 )}
+                <span className="item_count">
+                  {atLeastOneChecked
+                    ? `${Object.values(checkedItems).filter(Boolean).length} / ${filteredBlogList.length} sélectionné(s)`
+                    : `${filteredBlogList.length} item(s)`}
+                </span>
               </div>
             </div>
 
@@ -191,3 +397,4 @@ const ListeCollection = () => {
 }
 
 export default ListeCollection
+

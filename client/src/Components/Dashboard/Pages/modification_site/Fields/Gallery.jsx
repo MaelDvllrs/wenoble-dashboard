@@ -4,7 +4,7 @@ import { FileUploader } from "react-drag-drop-files";
 import { Reorder } from 'framer-motion';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { compressImage } from "../../../../../utils/imageUtils";
-import { SecondaryButton } from '../../../../../Theme/element';
+import { SecondaryButton, SimpleInputField } from '../../../../../Theme/element';
 import DeleteIcon from '@mui/icons-material/Delete';
 import OpenInNewOutlinedIcon from '@mui/icons-material/OpenInNewOutlined';
 import CollectionsIcon from '@mui/icons-material/Collections';
@@ -13,7 +13,7 @@ import './Field.css';
 
 const GalleryUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fieldValue, dataValue, id_collection_ref, theme }) => {
     const { control } = useForm();
-    const { fields, append, remove, move } = useFieldArray({
+    const { fields, append, remove, move, update } = useFieldArray({
       control,
       name: "images",
     });
@@ -115,6 +115,31 @@ const GalleryUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fie
       }
     }, [dataValue, type, imagesAdded, append]);
 
+    // Ajout de la gestion de la modification de l'alt d'une image de galerie
+    const handleAltChangeGallery = (index, newAlt) => {
+      // Met à jour l'alt sans modifier l'ordre
+      const updatedImage = { ...fields[index], alt: newAlt };
+      update(index, updatedImage);
+      // Détection : si seule l'alt change, on envoie onlyAlt
+      const updatedFields = fields.map((img, i) =>
+        i === index ? updatedImage : img
+      );
+      const data = {
+        gallery: updatedFields,
+        id_config: id_config,
+        type: 'gallery',
+      };
+      // Ajout du flag create:true si la galerie est en mode création
+      if (fields.some(img => img.create)) {
+        data.create = true;
+      }
+      // onlyAlt doit être true uniquement si aucune image n'a été ajoutée récemment
+      if (!fields[index].create && !(fields[index].data instanceof File)) {
+        data.onlyAlt = true;
+      }
+      onChange({ data });
+    };
+
     function handleDeleteGallery(indexToDelete) {
       // Supprimer l'image à l'index spécifié
       remove(indexToDelete);
@@ -172,14 +197,25 @@ const GalleryUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fie
                   className="ImageUploaded_contain gallery_box"
                 >
                   <img className='Image_uploaded image_gallery' src={image.url} alt={image.alt} />
-                  <p className='titlePage gallery_text'><b>{image.name}</b></p>
-                  <p className='user_id titlePage gallery_text' style={{color: theme.palette.text.secondary}}>{image.alt}</p>
+                  <div className='gallery_text_contain'>
+                    <p className='titlePage gallery_text'><b>{image.name}</b></p>
+
+                  </div>
+                  <div className='gallery_text_contain'>
+                    <SimpleInputField
+                      value={image.alt}
+                      onChange={e => handleAltChangeGallery(index, e.target.value)}
+                      placeholder="Texte alternatif"
+                      theme={theme}
+                      className="user_id titlePage gallery_text"
+                    />
+                  </div>
                   <div className='flex_contain  flex_gallery'>
-                    <p style={{color: theme.palette.text.secondary}}>{image.size} Ko</p>
+                    <p className='gallery_size' style={{color: theme.palette.text.secondary}}>{image.size} Ko</p>
                     <div className='button_contain'>
-                    <SecondaryButton theme={theme} className="button_image_blog" type="submit" variant="contained" onClick={() => handleDeleteGallery(index)}>
-                      <DeleteIcon/>
-                    </SecondaryButton>
+                      <SecondaryButton theme={theme} className="button_image_blog" type="submit" variant="contained" onClick={() => handleDeleteGallery(index)}>
+                        <DeleteIcon/>
+                      </SecondaryButton>
                     </div>
                     <a href={image.url} target="_blank" className='link_image_gallery'>
                       <OpenInNewOutlinedIcon style={{color: theme.palette.text.primary}}/>

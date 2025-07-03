@@ -304,7 +304,7 @@ const EditPage = () => {
             <div className="Page_creation_Page">
                 {DecodePage.page ? (
                     <div className="Page_creation_Page">
-                        <div className="header_modification">
+                        <div className="header_modification header_page_modification">
                             <h3 className="titlePage">Modification de : {DecodePage.page[0].page_name}</h3>
                             <div className="button_save_contain">
                                 <SecondaryButton variant="contained" theme={theme} onClick={() => navigate(`/dashboard/modification/page/${id}`)}>Annuler</SecondaryButton>

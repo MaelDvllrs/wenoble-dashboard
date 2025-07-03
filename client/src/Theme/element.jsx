@@ -1,5 +1,6 @@
 // External libraries
-import React from 'react';
+import React, { useRef, useLayoutEffect, useState } from "react";
+
 import TextField from '@mui/material/TextField';
 import { styled } from '@mui/material/styles';
 import Switch from '@mui/material/Switch';
@@ -21,6 +22,7 @@ import { FiSearch } from "react-icons/fi";
 // Internal utilities and hooks
 import { useAxisTooltip, useItemTooltip, useMouseTracker } from '@mui/x-charts/ChartsTooltip';
 import { formatTime } from '../utils/numberFormatted';
+import { min } from "date-fns";
 
 // Initialize dayjs plugins
 dayjs.extend(customParseFormat);
@@ -212,11 +214,17 @@ export const DefaultButton = styled(Button)(({ theme }) => ({
         backgroundColor: "var(--primary-color)",
         color: 'rgba(255, 255, 255, 0.8)',
         fontSize: '0.8rem',
-        padding: '0.2rem 0.5rem 0.1rem 0.5rem',
+        padding: '0.15rem 0.5rem 0.05rem 0.5rem',
         boxShadow: 'none',
     },
     '&:hover': {
         backgroundColor: "var(--primary-color-hover)",
+    },
+    '&.Mui-disabled': {
+        backgroundColor: "var(--primary-color)",
+        color: 'rgba(255,255,255,0.4)',
+        opacity: 0.7,
+        cursor: 'not-allowed',
     },
 }));
 
@@ -225,11 +233,16 @@ export const SecondaryButton = styled(Button)(({ theme }) => ({
         backgroundColor: "transparent",
         color: theme.palette.text.primary,
         fontSize: '0.8rem',
-        padding: '0.2rem 0.5rem 0.1rem 0.5rem',
+        padding: '0.15rem 0.5rem 0.05rem 0.5rem',
         boxShadow: theme.palette.shadow.main,
+        minWidth: '0',
     },
     '&:hover': {
         boxShadow: theme.palette.shadow.secondary,
+    },
+    '&.Mui-disabled': {
+        opacity: 0.7,
+        cursor: 'not-allowed',
     },
 }));
 
@@ -355,6 +368,60 @@ export function SimpleSearchField({ value, onChange, placeholder = "Rechercher..
         },
       }}
     />
+  );
+}
+
+
+
+export function SimpleInputField({ value, onChange, placeholder = "", theme, ...props }) {
+  const spanRef = useRef(null);
+  const [inputWidth, setInputWidth] = useState(20);
+  const [isFocused, setIsFocused] = useState(false);
+
+  useLayoutEffect(() => {
+    if (spanRef.current) {
+      setInputWidth(spanRef.current.offsetWidth + 17); // 16px de marge/padding
+    }
+  }, [value, placeholder]);
+
+  return (
+    <div style={{ display: "inline-block", position: "relative" }}>
+      <input
+        type="text"
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        style={{
+          width: inputWidth,
+          minWidth: 40,
+          maxWidth: 400,
+          fontSize: "0.8rem",
+          background: "transparent",
+          color: theme?.palette?.text?.secondary,
+          border: `1px solid ${isFocused ? '#2ec96d' : (theme?.palette?.primary?.third || '#ccc')}`,
+          borderRadius: 4,
+          padding: "0.2rem 0.5rem",
+          outline: "none",
+          transition: 'border 0.2s, box-shadow 0.2s',
+          fontFamily: "'Montserrat',sans-serif",
+        }}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
+        {...props}
+      />
+      <span
+        ref={spanRef}
+        style={{
+          position: "absolute",
+          visibility: "hidden",
+          height: 0,
+          whiteSpace: "pre",
+          fontSize: "0.8rem",
+        }}
+      >
+        {value || placeholder}
+      </span>
+    </div>
   );
 }
 

@@ -8,6 +8,7 @@ import OpenInNewOutlinedIcon from '@mui/icons-material/OpenInNewOutlined';
 import ImageIcon from '@mui/icons-material/Image';
 import './Field.css';
 import config from '../../../../../config';
+import { SimpleInputField } from '../../../../../Theme/element';
 
 const ImageUpload = ({ id_blog_page, type, id_config, onChange, dataValue, theme, imageDirectory }) => {
     const [imagesUploaded, setImagesUploaded] = useState([]);
@@ -50,11 +51,27 @@ const ImageUpload = ({ id_blog_page, type, id_config, onChange, dataValue, theme
     };
 
     const handleAltChange = (idToUpdate, newAlt) => {
-      setImagesUploaded(prevImages => 
-        prevImages.map(image => 
+      setImagesUploaded(prevImages => {
+        const updated = prevImages.map(image =>
           image.id_config === idToUpdate ? { ...image, alt: newAlt } : image
-        )
-      );
+        );
+        // Détecter si seule la propriété alt a changé
+        const originalImage = dataValue && dataValue.id_config === idToUpdate ? dataValue : null;
+        const updatedImage = updated.find(image => image.id_config === idToUpdate);
+        if (updatedImage) {
+          if (
+            originalImage &&
+            originalImage.create
+          ) {
+            // Seulement l'alt a changé
+            onChange({ data: { id_config: idToUpdate, id_blog_page: id_blog_page, alt: newAlt, type: 'images', onlyAlt: true } });
+          } else {
+            // Toute l'image a changé (ou ajout)
+            onChange({ data: updatedImage });
+          }
+        }
+        return updated;
+      });
     };
 
     useEffect(() => {
@@ -95,7 +112,14 @@ const ImageUpload = ({ id_blog_page, type, id_config, onChange, dataValue, theme
               <div className='info_image_blog'>
                 <div>
                   <p className='titlePage'><b>{image.name}</b></p>
-                  <p className='user_id titlePage' style={{ color: theme.palette.text.secondary }}>{image.alt}</p>
+                  <SimpleInputField
+                    className='user_id titlePage input_alt_image'
+                    type="text"
+                    value={image.alt || ''}
+                    onChange={e => handleAltChange(image.id_config, e.target.value)}
+                    placeholder="Texte alternatif (alt) de l'image"
+                    theme={theme}
+                  />
                 </div>
                 <div className='flex_contain flex_image'>
                   <p style={{ color: theme.palette.text.secondary }}>{image.size} Ko</p>

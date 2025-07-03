@@ -50,7 +50,6 @@ export const createGalleryBlog = async (fields, blogPageId, token) => {
 };
 
 export const createVideoBlog = async (fields, blogPageId, token) => {
-    console.log("createVideoBlog", fields, blogPageId, token);
     
     try {
         const formData = new FormData();
@@ -247,7 +246,6 @@ export const updateBlogPage = async (idBlogPage, mainText, date, status, setpubl
 export const updateTextBlog = async (id, otherText, token) => {
     try {
         if (otherText[0].create) {
-            console.log("enregistrer " + otherText);
             await Axios.post(`${apiUrl}/updateTextCollection`, {
                 params: {
                     id: id,
@@ -313,6 +311,23 @@ export const updateRichTextBlog = async (id, infoRichText, token) => {
 
 export const updateImageBlog = async (fields, blogPageId, token) => {
     try {
+        // Si on ne modifie que l'alt, ne pas envoyer de FormData
+        if (fields.onlyAlt) {
+            await Axios.post(`${apiUrl}/updateImageAltCollection`, {
+                params: {
+                    id_config: fields.id_config,
+                    alt: fields.alt,
+                    id_blog_page: fields.id_blog_page,
+                }
+            }, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            return;
+        }
+        // Sinon, on modifie toute l'image (FormData)
         const formData = new FormData();
         formData.append('image', fields.data, fields.name);
         formData.append('id_blog_page', blogPageId);
@@ -320,6 +335,8 @@ export const updateImageBlog = async (fields, blogPageId, token) => {
         formData.append('alt', fields.alt);
         formData.append('name', fields.name);
         formData.append('size', fields.size);
+
+        console.log('fields', fields);
 
         if (fields.create) {
             await Axios.post(`${apiUrl}/updateImageCollection`, formData, {
@@ -357,7 +374,6 @@ export const updateVideoBlog = async (fields, blogPageId, token) => {
 
 
         if (fields.create) {
-            console.log("updateVideoBlog", fields, blogPageId, token);
             await Axios.post(`${apiUrl}/updateVideoCollection`, formData, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -365,7 +381,6 @@ export const updateVideoBlog = async (fields, blogPageId, token) => {
                 }
             });
         } else {
-            console.log("createVideoBlog", fields, blogPageId, token);
             await Axios.post(`${apiUrl}/createVideoCollection`, formData, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -380,10 +395,8 @@ export const updateVideoBlog = async (fields, blogPageId, token) => {
 };
 
 export const updateMultiReferenceBlog = async (id, multiReference, token) => {
-    console.log("updateMultiReferenceBlog", id, multiReference);
     try {
         if (multiReference.create) {
-            console.log("updateMultiReference")
             await Axios.post(`${apiUrl}/updateMultiReferenceCollection`, {
                 params: {
                     id: id,
@@ -415,7 +428,6 @@ export const updateMultiReferenceBlog = async (id, multiReference, token) => {
 };
 
 export const updateGalleryBlog = async (id, gallery, token) => {
-    console.log("updateGalleryBlog", id, gallery);
     try {
         let galleryCreate = false;
 
@@ -480,7 +492,6 @@ export const generateStaticSite = async (token) => {
         });
         return response.data;
     } catch (error) {
-        console.log('Tentative de génération du site échouée:', error.message);
         // Retourne un objet avec un statut d'échec au lieu de propager l'erreur
         return {
             success: false,

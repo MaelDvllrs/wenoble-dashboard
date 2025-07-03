@@ -990,7 +990,6 @@ router.post('/updateCollectionElement', authenticateToken, async (req, res) => {
 
 // Met à jour les textes d'une page de collection
 router.post('/updateTextCollection', authenticateToken, async (req, res) => {
-  console.log("updateTextCollection")
   try {
     const id = req.body.params.id;
     const texts = req.body.params.otherText;
@@ -1146,6 +1145,36 @@ router.post('/updateImageCollection', authenticateToken, uploadImage.single('ima
   }
 });
 
+
+router.post('/updateImageAltCollection', authenticateToken, async (req, res) => {
+  try {
+    const token = req.headers['authorization']?.split(' ')[1];
+    const supabase = supabaseServer(token);
+
+    // Correction : récupérer les paramètres dans req.body.params
+    const id_blog_page = req.body.params?.id_blog_page;
+    const id_config = req.body.params?.id_config;
+    const alt = req.body.params?.alt;
+
+    if (!id_blog_page || !id_config) {
+      return res.status(400).send({ error: 'id_blog_page et id_config sont requis' });
+    }
+
+    const { error } = await supabase
+      .from('collection_field_image')
+      .update({ alt_image: alt })
+      .eq('collection_element_id', id_blog_page)
+      .eq('id_config', id_config);
+    if (error) throw error;
+    res.status(200).send('Alt de l\'image modifiée avec succès');
+  } catch (error) { 
+    console.error('Erreur lors de la modification de l\'alt de l\'image:', error);
+    res.status(500).send({ error: error.message });
+  }
+});
+
+
+
 // Met à jour la galerie d'une page de collection
 router.post('/updateGalleryCollection', authenticateToken, uploadGallery.array('gallery'), async (req, res) => {
   // On ne bloque plus si !req.files, car il peut n'y avoir que des anciennes images
@@ -1159,6 +1188,8 @@ router.post('/updateGalleryCollection', authenticateToken, uploadGallery.array('
   const finalGallery = [];
   let fileIndex = 0;
   let totalSize = 0;
+
+  console.log("finalGallery", finalGallery);
 
   try {
     for (let i = 0; i < galleryLength; i++) {
@@ -1380,7 +1411,7 @@ router.delete('/deleteCollectionElement', authenticateToken, async (req, res) =>
             .map(key => entityMap[key].data.src);
           for (const url of images) {
             const name = url.split('/').pop();
-            await supabaseServer.storage.from('collection-richtext-images').remove([name]);
+            await supabase.storage.from('collection-richtext-images').remove([name]);
           }
         }
         const { error: delError } = await supabase

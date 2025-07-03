@@ -452,8 +452,6 @@ router.get('/sendBlogContent', apiKeyMiddleware, async (req, res) => {
                         // Pour récupérer tous les value :
                         const values = parsedRefs.map(ref => ref.value);
 
-
-                        console.log('Valeurs récupérées pour multiReference:', values);
                        
                        
                        let collection_ids = [];

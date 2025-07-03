@@ -77,7 +77,8 @@ button{
 }
 
 .secondaire{
-    height: calc(100% - 4rem);
+    width: 100%;
+    height: calc(100% - 5.5rem);
     padding-top: 1rem;
 }
 
@@ -238,6 +239,7 @@ button{
 
 
 .titlePage{
+    margin: 0;
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;  
@@ -294,6 +296,7 @@ figure > div{
 }
 
 .link_menu_box{
+    min-height: 2.5rem;
     position: relative;
     display: flex;
     align-items: center;
@@ -302,6 +305,7 @@ figure > div{
     overflow: hidden;
     border-top: solid 0.5px var(--color-primary-third);
     border-left: solid 0.5px var(--color-primary-third);
+    margin-bottom: -0.5px;
 }
 
 .link_menu:hover{
@@ -311,5 +315,11 @@ figure > div{
 .link_menu_active{
     background-color: var(--color-primary-secondary);
     border-bottom: 0.5px solid transparent;
+}
+
+
+.circularProgressButton{
+    width: 1rem !important;
+    height: 1rem !important;
 }
 

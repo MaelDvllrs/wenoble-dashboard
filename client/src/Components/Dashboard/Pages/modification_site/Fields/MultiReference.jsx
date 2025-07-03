@@ -66,6 +66,7 @@ const MultiReference = ({ id_blog_page,type, id_config, onChange, slugValue, fie
       } else {
         selectedOptions = dataValue.info_ref;
       }
+      console.log('selectedOptions', selectedOptions);
       const selectedOptionsFormatted = selectedOptions.map(option => ({
         value: option.value,
         label: option.label
