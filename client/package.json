@@ -23,6 +23,7 @@
     "@mui/material": "^5.16.8",
     "@mui/x-charts": "^7.23.0",
     "@mui/x-date-pickers": "^7.22.3",
+    "@supabase/supabase-js": "^2.50.3",
     "axios": "^1.6.8",
     "browser-image-compression": "^2.0.2",
     "cobe": "^0.6.3",
