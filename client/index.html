@@ -19,5 +19,19 @@
 <body>
   <div id="root"></div>
   <script type="module" src="/src/main.jsx"></script>
+  <script>
+  window.addEventListener('error', (e) => {
+    const isChunkError = e?.target?.tagName === 'SCRIPT' && e?.target?.src?.includes('/assets/');
+    if (isChunkError) {
+      // Recharge forcée si une erreur de chunk JS
+      console.warn('[PWA] Chunk load error. Forcing reload.');
+      caches.keys().then((names) => {
+        for (let name of names) caches.delete(name); // Vide les caches SW
+      }).finally(() => {
+        location.reload(true);
+      });
+    }
+  }, true);
+</script>
 </body>
 </html>
