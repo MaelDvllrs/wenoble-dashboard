@@ -446,7 +446,7 @@ return(
                         <div className="button_modificationHome"><MdArrowForwardIos /></div>
                       </div>
                       <div className="texte_modification" style={{color: theme.palette.text.secondary}}>
-                        Dynamisez votre blog avec notre outil intuitif : publiez articles, images et vidéos facilement pour captiver vos lecteurs.
+                        Créez et gérez facilement des contenus dynamiques comme vos Réalisations, Articles de blog, Actualités ou Avis clients depuis votre dashboard.
                       </div>
                       <div className="modification_image_box_blog point-background" ref={plusContainerRef} style={{ '--point-color': theme.palette.primary.third }}>
                         <ImageIcon className="icon_modifiaction_title big_icon icon_modif_blog_1" style={{color: theme.palette.text.primary}}/>
