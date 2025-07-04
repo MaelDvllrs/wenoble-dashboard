@@ -426,6 +426,12 @@
 
             await Promise.all(blogPromises);  
 
+            // Supprimer le template original wn-collection-box après clonage
+            const originalTemplate = el.querySelector('[wn-collection-box]');
+            if (originalTemplate) {
+                originalTemplate.remove();
+            }
+
             // Créer le marker SEULEMENT après que tout est prêt
             const collectionMarker = document.createElement('div');
             collectionMarker.className = 'ssr-wn-collection-box';
