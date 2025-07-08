@@ -132,6 +132,8 @@ const whitelist =
   'https://maisonastucieuse.fr',
 
   'https://manuella-83b40f.webflow.io',
+
+  'https://attique-b881c8.webflow.io',
 ];
 
 
