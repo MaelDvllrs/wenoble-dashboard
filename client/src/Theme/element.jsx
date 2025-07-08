@@ -446,7 +446,7 @@ export const notificationLink = (type) => {
     return links[type] || '/home';
 };
 
-export function CustomAxisTooltip({ themeColor, type, unite }) {
+export function CustomAxisTooltip({ themeColor, type, unite, typeMetric }) {
     const mousePosition = useMouseTracker();
     const tooltipData = type === 'axes' ? useAxisTooltip() : useItemTooltip();
     const items = type === 'axes' ? tooltipData?.seriesItems : tooltipData?.value;
@@ -551,7 +551,14 @@ export function CustomAxisTooltip({ themeColor, type, unite }) {
                                         {items[0].formattedLabel} :
                                     </p>
                                     <p>
-                                        <b>{unite === 's' ? formatTime(items[0].formattedValue) : items[0].formattedValue}</b>
+                                        <b>{
+
+                                            unite === 's'
+                                                ? formatTime(items[0].formattedValue)
+                                                : typeMetric === 'ctr'
+                                                    ? `${(Number(items[0].value) * 100).toFixed(2)} %`
+                                                    : items[0].formattedValue
+                                        }</b>
                                     </p>
                                 </div>
 

@@ -49,6 +49,10 @@
    align-items: center;
 }
 
+.select-stat-container-tab{
+    padding: 1rem;
+}
+
 .icon-select-stat-container{
     width: 1rem !important;
     height: 1rem !important;
@@ -93,4 +97,118 @@
     justify-content: left;
     align-items: center;
     width: 100%;
+}
+
+
+.loading-table-container{
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+}
+
+.search-tab-statistique{
+    padding: 0 !important;
+}
+
+
+.table-container{
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.table-statistique{
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.87rem;
+    color: var(--color-text-secondary);
+}
+
+
+.table-header{
+    border-bottom: solid 1px var(--color-text-secondary);
+    color: var(--primary-color);
+}
+
+
+.table-footer{
+    padding: 1rem;
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    gap: 1rem;
+}
+
+.table-footer-info{
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.table-footer-buttons{
+    display: flex;
+    gap: 0.2rem;
+    align-items: center;
+    justify-content: center;
+}
+
+.table-arrow-button{
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 2rem;
+    height: 2rem;
+    color: var(--color-text-secondary);
+}
+
+
+.searchconsole-th {
+  padding: 8px;
+}
+.searchconsole-th-main {
+  text-align: left;
+}
+.searchconsole-th-clicks,
+.searchconsole-th-impr,
+.searchconsole-th-ctr,
+.searchconsole-th-pos {
+  text-align: right;
+}
+.searchconsole-row {
+  transition: background 0.15s;
+}
+.searchconsole-row:hover {
+  background: var(--color-primary-third);
+}
+.searchconsole-td {
+
+  font-size: 0.87rem;
+}
+.searchconsole-td-main {
+  font-size: 0.87rem;
+  text-align: left;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.searchconsole-td-clicks,
+.searchconsole-td-impr,
+.searchconsole-td-ctr,
+.searchconsole-td-pos {
+  text-align: right;
+}
+.searchconsole-td-empty {
+  text-align: center;
+  padding: 24px;
+  font-style: italic;
 }

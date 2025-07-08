@@ -7,6 +7,8 @@ import { EventStatistique } from "./eventStatistique";
 import { CityStatistique } from "./cityStatistique";
 import { PlatformCategorieStatistique } from "./platformCategorieStatistique";
 import { PageStatistique } from "./pageStatistique";
+import { SearchConsoleStatistique } from "./searchConsoleStatisique";
+import { SearchConsoleTab } from "./searchConsoleTab";
 
 
 
@@ -40,8 +42,15 @@ const Statistique = () => {
                     <p className="title-statisqtique" style={{color : theme.palette.text.secondary}}><b>Quelle est la répartition des utilisateurs de votre site ?</b></p>
                     <PageStatistique/>
                 </div>
+                <div className="grid-stats-container">
+                    <p className="title-statisqtique" style={{color : theme.palette.text.secondary}}><b>Quelle est la répartition des utilisateurs de votre site ?</b></p> 
+                    <SearchConsoleStatistique/>
+                </div>
+                <div className="grid-stats-container">
+                    <p className="title-statisqtique" style={{color : theme.palette.text.secondary}}><b>Quelle est la répartition des utilisateurs de votre site ?</b></p> 
+                    <SearchConsoleTab/>
+                </div>
             </div>
-            
         </div>
 
     )
