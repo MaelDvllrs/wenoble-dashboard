@@ -112,18 +112,38 @@ function initContactForm(apiEndpoint, apiKey, formElement, submitButtonSelector 
             let senderEmail = '';
             
             formFields.forEach(field => {
-                const fieldName = field.getAttribute('wn-element-form');
-                let fieldValue;
-                if (field.type === 'checkbox') {
-                    fieldValue = field.checked; // true si coché, false sinon
+                // Si c'est un label avec wn-element-form (cas radio)
+                if (field.tagName === 'LABEL' && field.querySelector('input[type="radio"]')) {
+                    const fieldName = field.getAttribute('wn-element-form');
+                    // Cherche tous les radios enfants de ce label
+                    const radios = field.querySelectorAll('input[type="radio"]');
+                    radios.forEach(radio => {
+                        if (radio.checked) {
+                            formData[fieldName] = radio.value;
+                            // Si c'est un champ email
+                            if (fieldName.toLowerCase() === 'email') {
+                                senderEmail = radio.value;
+                            }
+                        }
+                    });
                 } else {
-                    fieldValue = field.value || '';
-                }
-                formData[fieldName] = fieldValue;
-            
-                // Identifier l'email de l'expéditeur
-                if (fieldName.toLowerCase() === 'email') {
-                    senderEmail = fieldValue;
+                    // ...gestion classique (input, textarea, etc.)
+                    const fieldName = field.getAttribute('wn-element-form');
+                    let fieldValue;
+                    if (field.type === 'checkbox') {
+                        fieldValue = field.checked;
+                        formData[fieldName] = fieldValue;
+                    } else if (field.type === 'radio') {
+                        if (field.checked) {
+                            formData[fieldName] = field.value;
+                        }
+                    } else {
+                        fieldValue = field.value || '';
+                        formData[fieldName] = fieldValue;
+                    }
+                    if (fieldName.toLowerCase() === 'email' && field.checked !== false) {
+                        senderEmail = field.value;
+                    }
                 }
             });
             
