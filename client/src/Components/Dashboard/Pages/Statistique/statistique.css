@@ -122,9 +122,11 @@
 
 .table-statistique{
     width: 100%;
+    max-width: 100%;
     border-collapse: collapse;
     font-size: 0.87rem;
     color: var(--color-text-secondary);
+    table-layout: fixed; /* Ajouté pour éviter le débordement */
 }
 
 
@@ -173,15 +175,31 @@
 
 .searchconsole-th {
   padding: 1.5rem;
+  position: relative;
+  padding-right: 2rem;
+  transition: background-color 0.2s;
+  vertical-align: middle;
 }
+
+
+.searchconsole-sort-icon{
+    position: absolute;
+    right: 0.5rem;
+    transform: translateY(-1.4rem);
+}
+
 .searchconsole-th-main {
-  text-align: left;
+    text-align: left;
+    width: 40%;
+    max-width: 40%;
 }
 .searchconsole-th-clicks,
 .searchconsole-th-impr,
 .searchconsole-th-ctr,
 .searchconsole-th-pos {
   text-align: right;
+  width: 10%;
+
 }
 .searchconsole-row {
   transition: background 0.15s;
@@ -192,14 +210,19 @@
 .searchconsole-td {
   padding: 1.5rem;
   font-size: 0.87rem;
+  padding-right: 2rem;
+
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .searchconsole-td-main {
-  text-align: left;
-  max-width: 260px;
-  color: var(--color-text-primary);
+    text-align: left;
+    color: var(--color-text-primary);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+
 }
 .searchconsole-td-clicks,
 .searchconsole-td-impr,
@@ -212,3 +235,5 @@
   padding: 24px;
   font-style: italic;
 }
+
+

@@ -1,16 +1,18 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useTheme } from '@mui/material/styles';
 import MenuItem from '@mui/material/MenuItem';
-import { SecondaryButton, SelectFieldSecondary } from '../../../../Theme/element';
+import { SecondaryButton, SelectFieldSecondary, SortMenu } from '../../../../Theme/element';
 import CircularProgress from '@mui/material/CircularProgress';
 import Cookies from 'js-cookie';
 import { getSearchConsoleTable } from './apiStatistique';
 import dayjs from 'dayjs';
-
 import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
 import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
+import ArrowDropDownOutlinedIcon from '@mui/icons-material/ArrowDropDownOutlined';
+import ArrowDropUpOutlinedIcon from '@mui/icons-material/ArrowDropUpOutlined';
+import SortIcon from '@mui/icons-material/Sort';
 
-
+// Colonnes du tableau
 const columns = {
   query: 'Requête',
   page: 'Page',
@@ -21,33 +23,46 @@ const columns = {
 };
 
 export const SearchConsoleTab = () => {
+  // --- Hooks & States ---
   const theme = useTheme();
   const token = Cookies.get('token');
   const [type, setType] = useState('query');
   const [period, setPeriod] = useState('last14days');
   const [allData, setAllData] = useState([]); // toutes les lignes
-  const [data, setData] = useState([]); // lignes paginées (pour compatibilité)
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [totalRows, setTotalRows] = useState(0);
   const [tableHeight, setTableHeight] = useState(null);
   const tableContainerRef = useRef(null);
   const rowsPerPage = 10;
+  // Tri
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState('desc');
+  const [sortMenuAnchor, setSortMenuAnchor] = useState(null);
+  const [addColumn, setAddColumn] = useState('');
+  const [pendingSorts, setPendingSorts] = useState([]); // Liste temporaire de tris
+  const [appliedSorts, setAppliedSorts] = useState([]); // Tris appliqués au tableau
 
+  // --- Options de tri dynamiques ---
+  const sortOptions = [
+    { key: 'main', label: columns[type] },
+    { key: 'clicks', label: columns.clicks },
+    { key: 'impressions', label: columns.impressions },
+    { key: 'ctr', label: columns.ctr },
+    { key: 'position', label: columns.position },
+  ];
+
+  // --- Data Fetching ---
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
         const json = await getSearchConsoleTable(type, period, token);
         setTotalRows(json.rows ? json.rows.length : 0);
-        setAllData(json.rows || []); // stocke toutes les lignes
-        setData(json.rows ? json.rows.slice(0, rowsPerPage) : []); // pour compatibilité
-        setPage(0); // reset page si changement de filtre
+        setAllData(json.rows || []);
+        setPage(0);
       } catch (e) {
         setAllData([]);
-        setData([]);
         setTotalRows(0);
       }
       setLoading(false);
@@ -55,82 +70,117 @@ export const SearchConsoleTab = () => {
     fetchData();
   }, [type, period, token]);
 
+  // --- UI: Table Height ---
   useEffect(() => {
     if (!loading && tableContainerRef.current) {
       setTableHeight(tableContainerRef.current.offsetHeight);
     }
-  }, [loading, data]);
+  }, [loading, allData]);
 
+  // --- Pagination ---
   const handlePrev = () => setPage((p) => Math.max(0, p - 1));
   const handleNext = () => setPage((p) => (p + 1) * rowsPerPage < totalRows ? p + 1 : p);
 
-  // Fonction de tri sur toutes les lignes
+  // --- Tri multi-colonnes ---
   const getSortedData = () => {
     let arr = [...allData];
-    if (!sortColumn) return arr.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
+    if (!appliedSorts || appliedSorts.length === 0) return arr.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
     arr.sort((a, b) => {
-      let aValue, bValue;
-      switch (sortColumn) {
-        case 'main':
-          aValue = a.keys[0];
-          bValue = b.keys[0];
-          break;
-        case 'clicks':
-          aValue = a.clicks;
-          bValue = b.clicks;
-          break;
-        case 'impressions':
-          aValue = a.impressions;
-          bValue = b.impressions;
-          break;
-        case 'ctr':
-          aValue = a.ctr;
-          bValue = b.ctr;
-          break;
-        case 'position':
-          aValue = a.position;
-          bValue = b.position;
-          break;
-        default:
-          aValue = a.keys[0];
-          bValue = b.keys[0];
+      for (let i = 0; i < appliedSorts.length; i++) {
+        const sort = appliedSorts[i];
+        let aValue, bValue;
+        switch (sort.key) {
+          case 'main':
+            aValue = a.keys[0];
+            bValue = b.keys[0];
+            break;
+          case 'clicks':
+            aValue = a.clicks;
+            bValue = b.clicks;
+            break;
+          case 'impressions':
+            aValue = a.impressions;
+            bValue = b.impressions;
+            break;
+          case 'ctr':
+            aValue = a.ctr;
+            bValue = b.ctr;
+            break;
+          case 'position':
+            aValue = a.position;
+            bValue = b.position;
+            break;
+          default:
+            aValue = a.keys[0];
+            bValue = b.keys[0];
+        }
+        let cmp;
+        if (typeof aValue === 'string') {
+          cmp = aValue.localeCompare(bValue);
+        } else {
+          cmp = aValue - bValue;
+        }
+        if (cmp !== 0) {
+          return sort.dir === 'asc' ? cmp : -cmp;
+        }
       }
-      if (typeof aValue === 'string') {
-        return sortDirection === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
-      } else {
-        return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
-      }
+      return 0;
     });
-    // Pagination sur le résultat trié
     return arr.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
   };
 
+  // --- Gestion du tri via l'en-tête du tableau ---
   const handleSort = (col) => {
-    if (sortColumn === col) {
-      setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'));
+    if (appliedSorts.length > 0 && appliedSorts[0].key === col) {
+      setAppliedSorts([{ key: col, dir: appliedSorts[0].dir === 'asc' ? 'desc' : 'asc' }]);
     } else {
-      setSortColumn(col);
-      setSortDirection('desc');
+      setAppliedSorts([{ key: col, dir: 'desc' }]);
     }
-    setPage(0); // reset page au tri
+    setSortColumn(col);
+    setSortDirection(appliedSorts.length > 0 && appliedSorts[0].key === col && appliedSorts[0].dir === 'asc' ? 'desc' : 'asc');
+    setPage(0);
   };
 
-  // Calcule la date de fin de la période sélectionnée
+  // --- Gestion du menu de tri ---
+  const handleOpenSortMenu = (e) => {
+    setPendingSorts(appliedSorts.length > 0 ? [...appliedSorts] : []);
+    setSortMenuAnchor(e.currentTarget);
+  };
+  const handleCloseSortMenu = () => setSortMenuAnchor(null);
+  const handleAddSortColumn = (colKey) => {
+    if (!pendingSorts.some(s => s.key === colKey)) {
+      setPendingSorts([...pendingSorts, { key: colKey, dir: 'desc' }]);
+    }
+    setAddColumn('');
+  };
+  const handleRemoveSort = (colKey) => {
+    setPendingSorts(pendingSorts.filter(s => s.key !== colKey));
+  };
+  const handleToggleSortDir = (colKey) => {
+    setPendingSorts(pendingSorts.map(s =>
+      s.key === colKey ? { ...s, dir: s.dir === 'asc' ? 'desc' : 'asc' } : s
+    ));
+  };
+  const handleValidateSorts = () => {
+    setAppliedSorts(pendingSorts);
+    if (pendingSorts.length > 0) {
+      setSortColumn(pendingSorts[0]?.key || null);
+      setSortDirection(pendingSorts[0]?.dir || 'desc');
+    }
+    setSortMenuAnchor(null);
+  };
+
+  // --- Utilitaires ---
   const getLastDate = () => {
     const today = dayjs();
     switch (period) {
       case 'today':
         return today;
       case 'yesterday':
-        return today.subtract(1, 'day');
       case 'last7days':
-        return today.subtract(1, 'day');
       case 'last14days':
-        return today.subtract(1, 'day');
       case 'last30days':
-        return today.subtract(1, 'day');
       case 'last90days':
-        return today.subtract(1, 'day');
       case 'last365days':
         return today.subtract(1, 'day');
       default:
@@ -138,9 +188,10 @@ export const SearchConsoleTab = () => {
     }
   };
 
+  // --- Rendu UI ---
   return (
     <div className="statistique-container search-tab-statistique" style={{ boxShadow: theme.palette.shadow.main, backgroundColor: theme.palette.primary.main, minHeight: 320, width: '100%', padding: 24 }}>
-      <div className='select-stat-container select-stat-container-tab'>
+      <div className='select-stat-container select-stat-container-tab' style={{gap: 16}}>
         <SelectFieldSecondary
           id="type-select"
           value={type}
@@ -164,6 +215,45 @@ export const SearchConsoleTab = () => {
           <MenuItem value={'last90days'}>90 jours</MenuItem>
           <MenuItem value={'last365days'}>12 mois</MenuItem>
         </SelectFieldSecondary>
+        <SecondaryButton
+          variant="contained"
+          onClick={handleOpenSortMenu}
+          sx={{
+            border: appliedSorts.length > 0 ? '1px solid var(--primary-color)' : '1px solid transparent',
+            color: appliedSorts.length > 0 ? 'var(--primary-color)' : theme.palette.text.primary,
+            background: appliedSorts.length > 0 ? 'rgba(46,201,109,0.08)' : 'transparent',
+            transition: 'all 0.2s',
+            minWidth: 0,
+            padding: '0.2rem 0.7rem',
+            gap: 1,
+            '& .MuiButton-root': {
+              boxShadow: theme.palette.shadow.main,
+            },
+          }}
+        >
+          <SortIcon fontSize='small' sx={{ color: appliedSorts.length > 0 ? 'var(--primary-color)' : theme.palette.text.secondary, mr: 0.5 }} />
+          <span>
+            {appliedSorts.length === 0
+              ? 'Trier'
+              : `Trier par ${appliedSorts.length} règle${appliedSorts.length > 1 ? 's' : ''}`}
+          </span>
+        </SecondaryButton>
+        <SortMenu
+          anchorEl={sortMenuAnchor}
+          open={Boolean(sortMenuAnchor)}
+          onClose={handleCloseSortMenu}
+          options={sortOptions}
+          sorts={pendingSorts}
+          addColumn={addColumn}
+          setAddColumn={col => {
+            setAddColumn(col);
+            if (col) handleAddSortColumn(col);
+          }}
+          onAddSort={handleValidateSorts}
+          onRemoveSort={handleRemoveSort}
+          onToggleSortDir={handleToggleSortDir}
+          theme={theme}
+        />
       </div>
       {loading ? (
         <div className='loading-table-container' style={tableHeight ? { minHeight: tableHeight } : {}}>
@@ -177,20 +267,32 @@ export const SearchConsoleTab = () => {
                 <th className="searchconsole-th searchconsole-th-main" onClick={() => handleSort('main')} style={{cursor:'pointer'}}>
                   {columns[type]}
                   <div className="searchconsole-sort-icon">
-                    {sortColumn === 'main' && (sortDirection === 'asc' ? ' ▲' : ' ▼')}
+                    {appliedSorts.length > 0 && appliedSorts[0].key === 'main' && (appliedSorts[0].dir === 'asc' ? <ArrowDropUpOutlinedIcon /> : <ArrowDropDownOutlinedIcon />)}
                   </div>
                 </th>
                 <th className="searchconsole-th searchconsole-th-clicks" onClick={() => handleSort('clicks')} style={{cursor:'pointer'}}>
-                  Clics{sortColumn === 'clicks' && (sortDirection === 'asc' ? ' ▲' : ' ▼')}
+                  Clics
+                  <div className="searchconsole-sort-icon">
+                    {appliedSorts.length > 0 && appliedSorts[0].key === 'clicks' && (appliedSorts[0].dir === 'asc' ? <ArrowDropUpOutlinedIcon /> : <ArrowDropDownOutlinedIcon />)}
+                  </div>
                 </th>
                 <th className="searchconsole-th searchconsole-th-impr" onClick={() => handleSort('impressions')} style={{cursor:'pointer'}}>
-                  Impressions{sortColumn === 'impressions' && (sortDirection === 'asc' ? ' ▲' : ' ▼')}
+                  Impressions
+                  <div className="searchconsole-sort-icon">
+                    {appliedSorts.length > 0 && appliedSorts[0].key === 'impressions' && (appliedSorts[0].dir === 'asc' ? <ArrowDropUpOutlinedIcon /> : <ArrowDropDownOutlinedIcon />)}
+                  </div>
                 </th>
                 <th className="searchconsole-th searchconsole-th-ctr" onClick={() => handleSort('ctr')} style={{cursor:'pointer'}}>
-                  CTR{sortColumn === 'ctr' && (sortDirection === 'asc' ? ' ▲' : ' ▼')}
+                  CTR
+                  <div className="searchconsole-sort-icon">
+                    {appliedSorts.length > 0 && appliedSorts[0].key === 'ctr' && (appliedSorts[0].dir === 'asc' ? <ArrowDropUpOutlinedIcon /> : <ArrowDropDownOutlinedIcon />)}
+                  </div>
                 </th>
                 <th className="searchconsole-th searchconsole-th-pos" onClick={() => handleSort('position')} style={{cursor:'pointer'}}>
-                  Position{sortColumn === 'position' && (sortDirection === 'asc' ? ' ▲' : ' ▼')}
+                  Position
+                  <div className="searchconsole-sort-icon">
+                    {appliedSorts.length > 0 && appliedSorts[0].key === 'position' && (appliedSorts[0].dir === 'asc' ? <ArrowDropUpOutlinedIcon /> : <ArrowDropDownOutlinedIcon />)}
+                  </div>
                 </th>
               </tr>
             </thead>

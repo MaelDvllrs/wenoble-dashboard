@@ -19,12 +19,21 @@ import 'dayjs/locale/fr';
 import InputAdornment from '@mui/material/InputAdornment';
 import { FiSearch } from "react-icons/fi";
 
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import IconButton from '@mui/material/IconButton';
+import CloseIcon from '@mui/icons-material/Close';
+import SortIcon from '@mui/icons-material/Sort';
+import CheckIcon from '@mui/icons-material/Check';
+import ArrowDropDownOutlinedIcon from '@mui/icons-material/ArrowDropDownOutlined';
+import ArrowDropUpOutlinedIcon from '@mui/icons-material/ArrowDropUpOutlined';
 
 // Internal utilities and hooks
 import { useAxisTooltip, useItemTooltip, useMouseTracker } from '@mui/x-charts/ChartsTooltip';
 import { formatTime } from '../utils/numberFormatted';
 import { min } from "date-fns";
 import { color } from "framer-motion";
+
 
 
 
@@ -177,11 +186,11 @@ SelectField.defaultProps = {
 export const SelectFieldSecondary = styled(Select)(({ theme }) => ({
     color: theme.palette.text.secondary,
     borderColor: theme.palette.primary.third,
-    transition: 'border-color 0.3s ease, background-color 0.3s ease',
+    transition: 'background-color 0.2s ease',
 
     '& .MuiSelect-select': {
-        padding: '0 1.8rem 0 0.7rem !important',
-        transition: 'background-color 0.2s ease',
+        padding: '0',
+        transition: 'color 0.2s ease',
         marginRight: '0.5rem',
     },
     '& .MuiOutlinedInput-notchedOutline': {
@@ -197,7 +206,7 @@ export const SelectFieldSecondary = styled(Select)(({ theme }) => ({
     },
 
     '&:hover .MuiSelect-select': {
-        background: theme.palette.primary.third,
+        color: theme.palette.text.primary,
     },
 
 }));
@@ -604,6 +613,103 @@ export function CustomAxisTooltip({ themeColor, type, unite, typeMetric }) {
             </Popper>
         </NoSsr>
     );
+}
+
+// Composant menu de tri réutilisable
+export function SortMenu({
+  anchorEl, open, onClose, options, sorts = [], addColumn, setAddColumn, onAddSort, onRemoveSort, onToggleSortDir, theme
+}) {
+  return (
+    <Menu
+      anchorEl={anchorEl}
+      open={open}
+      onClose={onClose}
+      anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+      transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+      sx={{
+        '& .MuiPaper-root': {
+          backgroundColor: theme.palette.background.default,
+          color: theme.palette.text.primary,
+          minWidth: 260,
+          border: `1px solid ${theme.palette.primary.third}`,
+        },
+        '& .MuiList-root': {
+          padding: 0,
+        }
+
+      }}
+    >
+      {/* Liste des tris actifs */}
+      <div style={{padding: '0.5rem 1rem 0.5rem 1rem', minWidth: 220}}>
+        {sorts.length === 0 && <div style={{fontSize: 13, opacity: 0.7}}>Aucun tri actif</div>}
+        {sorts.map((sort, idx) => {
+          const col = options.find(o => o.key === sort.key);
+          return (
+            <div key={sort.key} style={{display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center'}}>
+              <div style={{fontSize: '0.87rem', minWidth: 70, textAlign: 'center', color: theme.palette.text.secondary, display: 'flex', justifyContent: 'center', gap: '0.5rem'}}><SortIcon fontSize="small"/>trier par :</div>
+              <span style={{flex: 1}}>{col ? col.label : sort.key}</span>
+              <Switch
+                size="small"
+                checked={sort.dir === 'asc'}
+                onChange={() => onToggleSortDir(sort.key)}
+                inputProps={{ 'aria-label': 'asc/desc' }}
+                sx={{
+                  '& .MuiSwitch-switchBase.Mui-checked': {
+                    color: 'var(--primary-color)',
+                  },
+                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                    backgroundColor: 'var(--primary-color)',
+                  },
+                  '& .MuiSwitch-track': {
+                    backgroundColor: 'var(--primary-color-light, #b3d4fc)',
+                  },
+                }}
+              />
+              <span style={{fontSize: '0.87rem', minWidth: 70, textAlign: 'center', color: theme.palette.text.secondary}}>{sort.dir === 'asc' ? 'Ascendant' : 'Descendant'}</span>
+              <IconButton size="small" onClick={() => onRemoveSort(sort.key)}>
+                <CloseIcon 
+                    fontSize="small"
+                    sx={{ color: theme.palette.text.secondary, '&:hover': { color: theme.palette.text.primary } }} 
+                />
+              </IconButton>
+            </div>
+          );
+        })}
+      </div>
+      <div style={{borderTop: '1px solid ' + theme.palette.primary.third}} />
+      {/* Ajout d'un tri */}
+      <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '0.5rem 1rem 0.5rem 1rem'}}>
+        <SelectFieldSecondary
+          size="small"
+          value={addColumn}
+          theme={theme}
+          displayEmpty
+          onChange={e => setAddColumn(e.target.value)}
+          renderValue={selected => {
+            if (!selected) return <span>Sélectionner une colonne</span>;
+            const opt = options.find(o => o.key === selected);
+            return opt ? opt.label : '';
+          }}
+        >   
+          <MenuItem value="" disabled>
+            Sélectionner une colonne
+          </MenuItem>
+          {options.filter(opt => !sorts.some(s => s.key === opt.key)).map(opt => (
+            <MenuItem key={opt.key} value={opt.key}>{opt.label}</MenuItem>
+          ))}
+        </SelectFieldSecondary>
+        <SecondaryButton
+          variant="contained"
+          color="success"
+          size="small"
+          disabled={false}
+          onClick={onAddSort}
+        >
+          Valider
+        </SecondaryButton>
+      </div>
+    </Menu>
+  );
 }
 
 
