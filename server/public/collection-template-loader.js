@@ -211,11 +211,8 @@
         // Ajout de la balise canonical
         const canonicalLink = document.querySelector("link[rel='canonical']") || document.createElement('link');
         canonicalLink.setAttribute('rel', 'canonical');
-        console.log("Collection slug:", collection_slug.body);
-        if (collection_slug.body.slug) {
-            canonicalLink.setAttribute('href', `${collection_slug.slug}${slug}`);
-        }
-        document.head.appendChild(canonicalLink);
+        console.log("Collection slug:", collection_slug);
+        
 
         // Parcours tous les éléments qui ont un attribut `wn-*` mais pas ceux dans wn-collection-wrapper
         const allElements = document.querySelectorAll("[wn-title], [wn-date-published], [wn-image], [wn-title], [wn-richtext], [wn-text], [wn-gallery], [wn-gallery-index], [wn-gallery-modal], [wn-video], [wn-multiReference-wrapper]");
