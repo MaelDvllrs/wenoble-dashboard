@@ -21,6 +21,7 @@ const sitemapRouter = require('./modification/sitemap');
 const generationStaticRouter = require('./modification/generationStatic');
 const articleRouter = require('./actualite/article');
 const analyticsRouter = require('./analytics/googleAnalytics');
+const searchConsoleRouter = require('./searchConsole/googleSearchConsole');
 //
 //const orderRouter = require('./ecommerce/order');
 //
@@ -201,6 +202,7 @@ app.use(contactRouter);
 app.use(sitemapRouter);
 app.use(articleRouter);
 app.use(analyticsRouter);
+app.use(searchConsoleRouter);
 app.use(newsletterRouter);
 //app.use(updateCacheRouter);
 app.use(generationStaticRouter);

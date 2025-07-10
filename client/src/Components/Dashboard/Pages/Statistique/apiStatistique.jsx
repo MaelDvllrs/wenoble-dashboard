@@ -89,4 +89,45 @@ export const getPageStatistique = async (period, typePage, typeUser ,token) => {
     }
 }
 
+export const getSearchConsoleStatistique = async (period, metric, token) => {
+  try {
+    const response = await Axios.get(`${apiUrl}/getSearchConsoleData`, {
+      params: {
+        period: period,
+        metric: metric
+      },
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Erreur lors de la récupération des données Search Console:', error);
+    throw error;
+  }
+}
+
+export const getSearchConsoleTable = async (type, period, token) => {
+  try {
+    const endpoint =
+      type === 'page'
+        ? `${apiUrl}/getSearchConsolePages`
+        : `${apiUrl}/getSearchConsoleQueries`;
+    const response = await Axios.get(endpoint, {
+      params: { period },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Erreur lors de la récupération du tableau Search Console:', error);
+    throw error;
+  }
+};
+
+
+
 

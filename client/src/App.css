@@ -195,8 +195,13 @@ button{
     font-weight: 500;
 }
 
+.breadCrumbsLink{
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
 .breadCrumbsLink:hover{
-    text-decoration: underline;
+    color: var(--color-text-secondary) !important;
 }
 
 

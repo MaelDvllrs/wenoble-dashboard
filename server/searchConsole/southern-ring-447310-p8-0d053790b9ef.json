@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "southern-ring-447310-p8",
+  "private_key_id": "0d053790b9ef1da6aa5c4ea8507bcc589150758d",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCHEWsZ0HxZFYft\na8YJF8hWA/wQLiI0ZytG7B7/CXXK3R0wu5l7zXflSY/Uke6dx1LHyala0QrYWQ9r\nOOsJZ2Zadsd3vT59Kv55FMEm1ld81E4nJrC1HQf6ydoKHm2GCm4PX/yVcEMN/Cez\nN4HwBHnHLw9tfbyLvTlNf8aAR00BTiBMrbDNlNbahljVvvbBOCWK/hmuVYY2Dy0W\nLrrLewyyluCes8ZWBUBpLn5n7B5mtCJQqbYITAy3ykWBxPY4BFShxD/aOn56KGMc\npQ5Vzewmm/KOrJlALswS3ExmwkJhSYMbU0EX87cVDFboxGDj0CBukgFxBoV+EeW/\nCmBk4JrLAgMBAAECggEAAg19tzK38RKmsjEFHXZDESuWVRieZHV87uL/xZh7Nc4O\nd4MiXgNNYyqvCOf+3F7/HxIthLfQlmEkHtkKmWX85DsR5Pv3SyewHl72YIS5Z6hC\nV836uYXrbSBMNAMqXvMhoRIwYIUIP9opMEwTqXYn86L/dQaIKweBK3BZr/FldjOY\nGxkki8uTfnFaGel7eR6hPY9yzJWEk40k87nas4Pg4ZuTYoT5H0+EWxWJJYy+iDQ7\nFbigP32aynI1ByqRk0zONcoTDPHpuqgyHyJ3sPafIKD4VVGNMhalSWkOlLikfSi0\nMwmru/BFzzpPIpeamKO+HJ8qGJ3MxkyH7JDL7HtLIQKBgQC7fV9rnfRQ3pM4VaH+\nDG6YhHoIbAMxZxN9JPI2BIT/ldVioFsXNtXjfJ9Nyts1iVW15evrDMVLjoFyOclg\nRyyf9LnHhkeuMFDI3vyI/o+xMO0fEGVC3IG4WMQiNdKxZYTyJcI8QgiVar2bT1GK\n109zkVUiVzhYferG2zt0Ozv+TQKBgQC4bEk4m4wk0puY+pDKzOvmbB84UalsLifE\nR+eW7mT8R9Gv1SFCEae85eeMWcCyIYrQq5Y37rZ9SvSnv1j0C/1bl2Cdl45mPxD6\nBwRTHAvUV1Qa33cDNGx3cH76cODcmcpiwrVRh8e59E0Y7Qy/XiaFs8kGObQdjbJf\nYQ2C93d5dwKBgGSx+xOTa+obADqbUztcdfGYBOqNCFH6KC9oLmXwm3WhhU9JDGM1\nYj6hafWf44enUM82wzQkUbo4uTEd9BevYjoud7C/X7Qf4uNfT4ZMIeRqgI/UgG4e\ne9UEZ6JwAc6g1Xwv51fxpyaIg3jsasEEznklLvIYofx09CkFCbNtNNVpAoGAFfmJ\nK/6Uz1ptAehxUkjinv0pJyvL1UEWqfOra7eSPuFL4fiyUs4Jv59hXL7hEBihEsYv\nSxDdm8ZPqqFJNyMqmDxMXdrOM+611iT55fFEk5OoSN9xrecUOZMk/jBvCrokfGoY\n8tMMAGNUwHCWgUL1sh6/CEfd51uX8nd9Bar5CHcCgYBaPyffIEb59AP1n/PvjJSX\nlcDqJUNFAyZl6A/YRsNQxNd72lc+mtAETKMGEmZKuxPU7Gf+KjUy//TUumBfmg4y\n1CMT3pSAb0NgxAaVzapz6i1nBHCeHAh7JTsLS8rmUeebo/AA3Eg95pVZIWNHbkw1\nj4pnDc79Zl8MaExQv73Z7w==\n-----END PRIVATE KEY-----\n",
+  "client_email": "wenoble-dashboard@southern-ring-447310-p8.iam.gserviceaccount.com",
+  "client_id": "101675877061078705666",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/wenoble-dashboard%40southern-ring-447310-p8.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
