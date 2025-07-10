@@ -150,6 +150,27 @@ router.get('/sendBlogInfo', apiKeyMiddleware, async (req, res) => {
     }
 });
 
+
+// Récupérer le slug d'un blog (collection)
+router.get('/sendBlogSlug', apiKeyMiddleware, async (req, res) => {
+    const id_blog = req.id_data;
+    
+    try {
+        const { data, error } = await supabase
+            .from('collection')
+            .select('collection_slug')
+            .eq('id', id_blog)
+            .maybeSingle();
+        if (error) throw error;
+        if (!data) return res.status(403).json({ message: 'Aucun blog trouvé' });
+        return res.json({ slug: data.collection_slug });
+    } catch (err) {
+        console.error('Erreur lors de la récupération du slug du blog :', err);
+        res.status(500).send({ error: err.message });
+    }
+});
+
+
 // Récupérer les infos d'une page de blog par slug
 router.get('/sendBlogInfoSlug', apiKeyMiddleware, async (req, res) => {
     const slug = req.headers.slug;
