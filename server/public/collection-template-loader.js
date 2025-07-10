@@ -209,7 +209,7 @@
         // Ajout de la balise canonical
         const canonicalLink = document.querySelector("link[rel='canonical']") || document.createElement('link');
         canonicalLink.setAttribute('rel', 'canonical');
-        console.log("Collection slug:", collection_slug.body.slug);
+        console.log("Collection slug:", collection_slug.body);
         if (collection_slug.body.slug) {
             canonicalLink.setAttribute('href', `${collection_slug.slug}${slug}`);
         }
