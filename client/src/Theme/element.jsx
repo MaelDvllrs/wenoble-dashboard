@@ -196,9 +196,6 @@ export const SelectFieldSecondary = styled(Select)(({ theme }) => ({
     '& .MuiOutlinedInput-notchedOutline': {
         border: 'none',
     },
-    '& .MuiSvgIcon-root': {
-        color: theme.palette.text.secondary,
-    },
 
     '& .MuiSvgIcon-root': {
         color: theme.palette.text.secondary,
