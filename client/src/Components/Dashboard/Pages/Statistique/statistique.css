@@ -130,7 +130,7 @@
 
 .table-header{
     border-bottom: solid 1px var(--color-text-secondary);
-    color: var(--primary-color);
+    color: var(--color-text-secondary);
 }
 
 
@@ -172,7 +172,7 @@
 
 
 .searchconsole-th {
-  padding: 8px;
+  padding: 1.5rem;
 }
 .searchconsole-th-main {
   text-align: left;
@@ -190,16 +190,16 @@
   background: var(--color-primary-third);
 }
 .searchconsole-td {
-
+  padding: 1.5rem;
   font-size: 0.87rem;
-}
-.searchconsole-td-main {
-  font-size: 0.87rem;
-  text-align: left;
-  max-width: 260px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.searchconsole-td-main {
+  text-align: left;
+  max-width: 260px;
+  color: var(--color-text-primary);
 }
 .searchconsole-td-clicks,
 .searchconsole-td-impr,

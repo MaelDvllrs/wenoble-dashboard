@@ -14,6 +14,10 @@ import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 const columns = {
   query: 'Requête',
   page: 'Page',
+  clicks: 'Clics',
+  impressions: 'Impressions',
+  ctr: 'CTR',
+  position: 'Position',
 };
 
 export const SearchConsoleTab = () => {
@@ -21,13 +25,16 @@ export const SearchConsoleTab = () => {
   const token = Cookies.get('token');
   const [type, setType] = useState('query');
   const [period, setPeriod] = useState('last14days');
-  const [data, setData] = useState([]);
+  const [allData, setAllData] = useState([]); // toutes les lignes
+  const [data, setData] = useState([]); // lignes paginées (pour compatibilité)
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [totalRows, setTotalRows] = useState(0);
   const [tableHeight, setTableHeight] = useState(null);
   const tableContainerRef = useRef(null);
   const rowsPerPage = 10;
+  const [sortColumn, setSortColumn] = useState(null);
+  const [sortDirection, setSortDirection] = useState('desc');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -35,15 +42,18 @@ export const SearchConsoleTab = () => {
       try {
         const json = await getSearchConsoleTable(type, period, token);
         setTotalRows(json.rows ? json.rows.length : 0);
-        setData(json.rows ? json.rows.slice(page * rowsPerPage, (page + 1) * rowsPerPage) : []);
+        setAllData(json.rows || []); // stocke toutes les lignes
+        setData(json.rows ? json.rows.slice(0, rowsPerPage) : []); // pour compatibilité
+        setPage(0); // reset page si changement de filtre
       } catch (e) {
+        setAllData([]);
         setData([]);
         setTotalRows(0);
       }
       setLoading(false);
     };
     fetchData();
-  }, [type, period, token, page]);
+  }, [type, period, token]);
 
   useEffect(() => {
     if (!loading && tableContainerRef.current) {
@@ -53,6 +63,57 @@ export const SearchConsoleTab = () => {
 
   const handlePrev = () => setPage((p) => Math.max(0, p - 1));
   const handleNext = () => setPage((p) => (p + 1) * rowsPerPage < totalRows ? p + 1 : p);
+
+  // Fonction de tri sur toutes les lignes
+  const getSortedData = () => {
+    let arr = [...allData];
+    if (!sortColumn) return arr.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
+    arr.sort((a, b) => {
+      let aValue, bValue;
+      switch (sortColumn) {
+        case 'main':
+          aValue = a.keys[0];
+          bValue = b.keys[0];
+          break;
+        case 'clicks':
+          aValue = a.clicks;
+          bValue = b.clicks;
+          break;
+        case 'impressions':
+          aValue = a.impressions;
+          bValue = b.impressions;
+          break;
+        case 'ctr':
+          aValue = a.ctr;
+          bValue = b.ctr;
+          break;
+        case 'position':
+          aValue = a.position;
+          bValue = b.position;
+          break;
+        default:
+          aValue = a.keys[0];
+          bValue = b.keys[0];
+      }
+      if (typeof aValue === 'string') {
+        return sortDirection === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+      } else {
+        return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+      }
+    });
+    // Pagination sur le résultat trié
+    return arr.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
+  };
+
+  const handleSort = (col) => {
+    if (sortColumn === col) {
+      setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortColumn(col);
+      setSortDirection('desc');
+    }
+    setPage(0); // reset page au tri
+  };
 
   // Calcule la date de fin de la période sélectionnée
   const getLastDate = () => {
@@ -113,24 +174,37 @@ export const SearchConsoleTab = () => {
           <table className='table-statistique'>
             <thead>
               <tr className="table-header searchconsole-table-header">
-                <th className="searchconsole-th searchconsole-th-main">{columns[type]}</th>
-                <th className="searchconsole-th searchconsole-th-clicks">Clics</th>
-                <th className="searchconsole-th searchconsole-th-impr">Impressions</th>
-                <th className="searchconsole-th searchconsole-th-ctr">CTR</th>
-                <th className="searchconsole-th searchconsole-th-pos">Position</th>
+                <th className="searchconsole-th searchconsole-th-main" onClick={() => handleSort('main')} style={{cursor:'pointer'}}>
+                  {columns[type]}
+                  <div className="searchconsole-sort-icon">
+                    {sortColumn === 'main' && (sortDirection === 'asc' ? ' ▲' : ' ▼')}
+                  </div>
+                </th>
+                <th className="searchconsole-th searchconsole-th-clicks" onClick={() => handleSort('clicks')} style={{cursor:'pointer'}}>
+                  Clics{sortColumn === 'clicks' && (sortDirection === 'asc' ? ' ▲' : ' ▼')}
+                </th>
+                <th className="searchconsole-th searchconsole-th-impr" onClick={() => handleSort('impressions')} style={{cursor:'pointer'}}>
+                  Impressions{sortColumn === 'impressions' && (sortDirection === 'asc' ? ' ▲' : ' ▼')}
+                </th>
+                <th className="searchconsole-th searchconsole-th-ctr" onClick={() => handleSort('ctr')} style={{cursor:'pointer'}}>
+                  CTR{sortColumn === 'ctr' && (sortDirection === 'asc' ? ' ▲' : ' ▼')}
+                </th>
+                <th className="searchconsole-th searchconsole-th-pos" onClick={() => handleSort('position')} style={{cursor:'pointer'}}>
+                  Position{sortColumn === 'position' && (sortDirection === 'asc' ? ' ▲' : ' ▼')}
+                </th>
               </tr>
             </thead>
             <tbody>
-              {data.length === 0 ? (
+              {getSortedData().length === 0 ? (
                 <tr><td colSpan={5} className="searchconsole-td searchconsole-td-empty">Aucune donnée</td></tr>
               ) : (
-                data.map((row, i) => (
+                getSortedData().map((row, i) => (
                   <tr key={i} className="searchconsole-row" style={{ borderBottom: `1px solid ${theme.palette.primary.third}` }}>
-                    <td className="searchconsole-td searchconsole-td-main" style={{ textAlign: 'left', padding: 8, color: theme.palette.text.primary, maxWidth: 260, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.keys[0]}</td>
-                    <td className="searchconsole-td searchconsole-td-clicks" style={{ textAlign: 'right', padding: 8 }}>{row.clicks}</td>
-                    <td className="searchconsole-td searchconsole-td-impr" style={{ textAlign: 'right', padding: 8 }}>{row.impressions}</td>
-                    <td className="searchconsole-td searchconsole-td-ctr" style={{ textAlign: 'right', padding: 8 }}>{(Number(row.ctr) * 100).toFixed(2)} %</td>
-                    <td className="searchconsole-td searchconsole-td-pos" style={{ textAlign: 'right', padding: 8 }}>{Number(row.position).toFixed(2)}</td>
+                    <td className="searchconsole-td searchconsole-td-main">{row.keys[0]}</td>
+                    <td className="searchconsole-td searchconsole-td-clicks">{row.clicks}</td>
+                    <td className="searchconsole-td searchconsole-td-impr">{row.impressions}</td>
+                    <td className="searchconsole-td searchconsole-td-ctr">{(Number(row.ctr) * 100).toFixed(2)} %</td>
+                    <td className="searchconsole-td searchconsole-td-pos">{Number(row.position).toFixed(2)}</td>
                   </tr>
                 ))
               )}

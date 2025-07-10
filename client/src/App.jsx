@@ -35,7 +35,9 @@ import Collection from './Components/Dashboard/Pages/modification_site/Collectio
 import ListeCollection from './Components/Dashboard/Pages/modification_site/Collection/listeCollection';
 import CreateElementCollection from './Components/Dashboard/Pages/modification_site/Collection/createElementCollection';
 import EditElementCollection from './Components/Dashboard/Pages/modification_site/Collection/editElementCollection';
-import Statistique from './Components/Dashboard/Pages/Statistique/Statistique';
+import StatistiqueHome from './Components/Dashboard/Pages/Statistique/statistiqueHome';
+import StatistiqueAnalytics from './Components/Dashboard/Pages/Statistique/StatistiqueAnalytics';
+import StatistiqueSearchConsole from './Components/Dashboard/Pages/Statistique/StatistiqueSearchConsole';
 import Actualite from './Components/Dashboard/Pages/Actualite/Actualite';
 import Article from './Components/Dashboard/Pages/Actualite/Article';
 import Update from './Components/Dashboard/Pages/Actualite/Update';
@@ -119,7 +121,9 @@ function App() {
                                     <Route path="/dashboard/modification/collection/:idCollection/createPage" element={<CreateElementCollection />} />
                                     <Route path="/dashboard/modification/collection/:idCollection/editPage/:idCollectionElement" element={<EditElementCollection />} />
                                 </Route>
-                                <Route path="/dashboard/stats" element={<Statistique />} />
+                                <Route path="/dashboard/stats" element={<StatistiqueHome />}/>
+                                <Route path="/dashboard/stats/analytics" element={<StatistiqueAnalytics />} />
+                                <Route path="/dashboard/stats/search-console" element={<StatistiqueSearchConsole />} />
                                 <Route path="/dashboard/contact" element={<ContactList />} />
                                 <Route path="/dashboard/contact/message/:id" element={<ContactMessage />} />
                                 <Route path="/dashboard/ecommerce" element={<AuthorisedRouteEcomm><Ecommerce /></AuthorisedRouteEcomm>}>

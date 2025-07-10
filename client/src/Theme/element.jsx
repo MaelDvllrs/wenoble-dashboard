@@ -1,5 +1,5 @@
 // External libraries
-import React, { useRef, useLayoutEffect, useState } from "react";
+import React, { useRef, useLayoutEffect, useState} from "react";
 
 import TextField from '@mui/material/TextField';
 import { styled } from '@mui/material/styles';
@@ -19,10 +19,15 @@ import 'dayjs/locale/fr';
 import InputAdornment from '@mui/material/InputAdornment';
 import { FiSearch } from "react-icons/fi";
 
+
 // Internal utilities and hooks
 import { useAxisTooltip, useItemTooltip, useMouseTracker } from '@mui/x-charts/ChartsTooltip';
 import { formatTime } from '../utils/numberFormatted';
 import { min } from "date-fns";
+import { color } from "framer-motion";
+
+
+
 
 // Initialize dayjs plugins
 dayjs.extend(customParseFormat);
@@ -173,8 +178,11 @@ export const SelectFieldSecondary = styled(Select)(({ theme }) => ({
     color: theme.palette.text.secondary,
     borderColor: theme.palette.primary.third,
     transition: 'border-color 0.3s ease, background-color 0.3s ease',
+
     '& .MuiSelect-select': {
-        padding: 0,
+        padding: '0 1.8rem 0 0.7rem !important',
+        transition: 'background-color 0.2s ease',
+        marginRight: '0.5rem',
     },
     '& .MuiOutlinedInput-notchedOutline': {
         border: 'none',
@@ -182,6 +190,16 @@ export const SelectFieldSecondary = styled(Select)(({ theme }) => ({
     '& .MuiSvgIcon-root': {
         color: theme.palette.text.secondary,
     },
+
+    '& .MuiSvgIcon-root': {
+        color: theme.palette.text.secondary,
+        right: '8px',
+    },
+
+    '&:hover .MuiSelect-select': {
+        background: theme.palette.primary.third,
+    },
+
 }));
 
 SelectFieldSecondary.defaultProps = {

@@ -8,7 +8,6 @@ import { PiLockBold } from "react-icons/pi";
 import { FaElementor } from "react-icons/fa";
 import { RiDatabase2Fill } from "react-icons/ri";
 
-import { MdArticle } from "react-icons/md";
 import sphere_page from "../../../../assets/background/sphere_page.svg";
 import { SkeletonTotalSize } from "../../../skeleton/skeleton";
 
@@ -336,7 +335,7 @@ return(
                               ) : <div style={{color: "var(--primary-color)", marginLeft:"1rem"}} className='icon_navigation icon_lock'><PiLockBold /></div>
                             }
                           </div>
-                          <div className="button_modificationHome"><MdArrowForwardIos /></div>
+                          <div className="button_modificationHome"><MdArrowForwardIos/></div>
                       </div>
                       <div className="texte_modification" style={{color: theme.palette.text.secondary}}>
                         Transformez vos portfolios photo en un instant ! Ajoutez, supprimez et réorganisez vos images pour créer des galeries captivantes.
@@ -412,7 +411,8 @@ return(
                   </NavLink>
                   <NavLink to={authPage === true ? '/dashboard/modification/page' : '#'} className="modification_box" ref={pageContainerRef} style={{backgroundColor : theme.palette.primary.secondary, boxShadow: theme.palette.shadow.main}}>
                       <div className="modification_title_box" style={{color: theme.palette.text.primary}}>
-                        <div className="modification_title"><FaElementor  className="icon_modifiaction_title"/>
+                        <div className="modification_title">
+                          <FaElementor  className="icon_modifiaction_title"/>
                           <b>Page</b>
                           {
                             authPage === true ? (
