@@ -37,13 +37,15 @@
 
     try {
 
-        const collection_slug = await fetch(`${apiUrl}/api/sendBlogSlug`, {
+        const collection_slug_json = await fetch(`${apiUrl}/api/sendBlogSlug`, {
             method: "GET",
             headers: {
                 'api_key': userKey,
                 'id_data': blogId,
             }
         });
+
+        const collection_slug = await collection_slug_json.json();
 
 
         const collectionInfos = await fetch(`${apiUrl}/api/sendBlogInfoSlug`, {
