@@ -41,7 +41,7 @@
             method: "GET",
             headers: {
                 'api_key': userKey,
-                'id_blog': blogId,
+                'id_data': blogId,
             }
         });
 
