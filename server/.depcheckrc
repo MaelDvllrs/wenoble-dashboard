@@ -1,0 +1,16 @@
+{
+  "ignores": [
+    "@types/*"
+  ],
+  "skip-missing": false,
+  "parsers": {
+    "*.js": ["depcheck-parser-babel"]
+  },
+  "detectors": [
+    "depcheck-detector-require",
+    "depcheck-detector-import"
+  ],
+  "specials": [
+    "depcheck-special-express"
+  ]
+}

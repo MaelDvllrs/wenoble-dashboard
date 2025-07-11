@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { fetchUserInfo, updateUserInfo, changeUserPassword } from './apiAccount'; // Assurez-vous d'avoir ces fonctions dans votre fichier API
+import { fetchUserInfo, updateUserInfo, changeUserPassword } from './apiAccount';
 import { useTheme } from '@mui/material/styles';
 import Cookies from 'js-cookie';
 import {jwtDecode} from 'jwt-decode';
@@ -10,7 +10,6 @@ import './Account.css';
 import Avatar from '@mui/material/Avatar';
 import config from '../../../../config';
 import { compressImage } from '../../../../utils/imageUtils';
-import { SnackbarProvider, enqueueSnackbar } from 'notistack'
 
 
 const Account = () => {
@@ -82,7 +81,6 @@ const Account = () => {
     e.preventDefault();
     const response = await updateUserInfo(userInfoNew, token);
     setMessage(response.message);
-    enqueueSnackbar(`Informations sauvegardée avec succès.`, { variant: 'success' });
     setIsModified(false);
   };
 
@@ -132,7 +130,6 @@ const Account = () => {
       {userInfo === null ? (
         <p>Chargement...</p>
       ) : (
-        <SnackbarProvider maxSnack={3} autoHideDuration={2000}>
         <div className='account-info-container'>
           <div className='account-info-section'>
             <h2>Mon Compte</h2>
@@ -200,7 +197,6 @@ const Account = () => {
             </div>
           )}
         </div>
-        </SnackbarProvider>
       )}
 
       <Modal open={open} onClose={handleClose}>

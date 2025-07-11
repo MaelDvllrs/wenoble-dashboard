@@ -9,7 +9,6 @@ import { FileUploader } from "react-drag-drop-files";
 import { LiaCloudUploadAltSolid } from "react-icons/lia";
 import { useParams } from "react-router-dom";
 import { Reorder } from "framer-motion";
-import { SnackbarProvider, enqueueSnackbar } from 'notistack'
 import { useTheme } from '@mui/material/styles';
 import IconButton from '@mui/material/IconButton';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -107,7 +106,6 @@ const EditPortfolio = () => {
     let order = 1;
     const imagesToSave = [];
 
-  
     fields.forEach((image) => {
       if (image.publicationDate > initialDate) {
         imagesToSave.push(image);
@@ -116,21 +114,16 @@ const EditPortfolio = () => {
     });
 
     try {
-
       for (const image of imagesToSave) {
         try {
           await saveImagesPortfolio(image);
-          enqueueSnackbar(`${image.name} sauvegardée avec succès.`, { variant: 'success' });
         } catch (error) {
           console.error(error);
-          enqueueSnackbar(`Erreur lors de l'enregistrement de ${image.name} `, { variant: 'error' });
         }
       }
-  
       // Attendre que toutes les opérations orderportfolio soient terminées
       const orderPromises = fields.map((image, index) => orderportfolio(index + 1, image.id_photo));
       await Promise.all(orderPromises);
-  
       setChangesMade(false);
       setLoadingSave(false);
       setInitialDate(Date.now());
@@ -138,19 +131,14 @@ const EditPortfolio = () => {
       console.error("Une erreur s'est produite lors de l'enregistrement des images :", error);
       // Gérer l'erreur
     }
-
   };
 
   const handleDelete = async (id_photo, imageName, index) => {
     try {
       await deleteImagePortfolio(id_photo, "portfolio_image", imageName);
       remove(index);
-
-      enqueueSnackbar('Image supprimée avec succès.', { variant: 'success' });
-
     } catch (error) {
       console.error('Erreur lors de la suppression de l\'image :', error);
-      enqueueSnackbar('Erreur lors de la suppression de l\'image.', { variant: 'error' });
     }
   };
 
@@ -168,7 +156,6 @@ const EditPortfolio = () => {
               <DefaultButton type="submit" variant="contained" onClick={ async () => {await handleSave()}}><span>Enregitrer</span></DefaultButton>
           </div>
       </div>
-      <SnackbarProvider maxSnack={3} autoHideDuration={2000}>
       <FileUploader handleChange={handleChange} name="file" types={fileTypes} multiple={true}>
         <div className="DragAndDrop" >
           <span className="logoUploadImage">
@@ -228,7 +215,6 @@ const EditPortfolio = () => {
           </Reorder.Group>
         )}
       </div>
-      </SnackbarProvider>
     </div>
     
   );

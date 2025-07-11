@@ -114,11 +114,9 @@
                 return;
             }
 
-            const blogPromises = [];
-
+            // Traitement séquentiel pour préserver l'ordre
             for (const blog of dataBlog.blog) {
-                const blogPromise = (async () => {
-
+                try {
                     const clone = template.cloneNode(true);
                     clone.removeAttribute("wn-collection-box");
                     
@@ -137,11 +135,11 @@
 
                     if (!data) {
                         console.error("Aucune donnée trouvée pour cette page.");
-                        return null;
+                        continue; // Passer au blog suivant
                     }
 
-                // Parcours tous les éléments qui ont un attribut `wn-*` dans le clone
-                clone.querySelectorAll("[wn-title], [wn-link], [wn-id], [wn-for], [wn-date-published], [wn-image], [wn-richtext], [wn-text], [wn-gallery], [wn-gallery-index],[wn-gallery-modal], [wn-video], [wn-multiReference-wrapper]").forEach(async el => {
+                    // Parcours tous les éléments qui ont un attribut `wn-*` dans le clone
+                    await Promise.all([...clone.querySelectorAll("[wn-title], [wn-link], [wn-id], [wn-for], [wn-date-published], [wn-image], [wn-richtext], [wn-text], [wn-gallery], [wn-gallery-index],[wn-gallery-modal], [wn-video], [wn-multiReference-wrapper]")].map(async el => {
                     
                     if (el.hasAttribute("wn-title")) {
                         el.textContent = blog.collection_element_name;
@@ -415,16 +413,15 @@
                         template.remove();
                     }
 
-                });
+                    }));
                 
-                el.appendChild(clone);
-                return clone;   
-            })();
-
-            blogPromises.push(blogPromise);
+                    // Ajouter le clone au DOM dans l'ordre séquentiel
+                    el.appendChild(clone);
+                    
+                } catch (blogError) {
+                    console.error("Erreur lors du traitement du blog:", blogError);
+                }
             }
-
-            await Promise.all(blogPromises);  
 
             // Supprimer le template original wn-collection-box après clonage
             const originalTemplate = el.querySelector('[wn-collection-box]');

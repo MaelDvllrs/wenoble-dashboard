@@ -5,7 +5,10 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "start": "node index.js",
+    "clean-deps": "node scripts/clean-unused-deps.js",
+    "analyze": "npx depcheck",
+    "security": "npm audit"
   },
   "author": "",
   "license": "ISC",
@@ -14,21 +17,22 @@
     "@supabase/supabase-js": "^2.50.3",
     "axios": "^1.7.4",
     "bcryptjs": "^2.4.3",
+    "body-parser": "^2.2.0",
     "cors": "^2.8.5",
-    "crypto-js": "^4.2.0",
     "csv-writer": "^1.6.0",
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.13",
     "dotenv": "^16.4.5",
+    "draft-js": "^0.11.7",
     "draft-js-export-html": "^1.4.1",
     "eventsource": "^2.0.2",
     "express": "^4.19.1",
+    "googleapis": "^152.0.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
     "mysql": "^2.18.1",
     "resend": "^4.0.0",
     "socket.io": "^4.7.5",
-    "supabase": "^2.30.4",
     "uuid": "^10.0.0",
     "xml2js": "^0.6.2"
   }

@@ -11,13 +11,13 @@
     "dev": "vite",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "host": "vite --host"
+    "host": "vite --host",
+    "clean-deps": "node scripts/clean-unused-deps.js",
+    "analyze": "npx depcheck"
   },
   "dependencies": {
     "@emotion/react": "^11.13.5",
     "@emotion/styled": "^11.13.5",
-    "@ffmpeg/core": "^0.12.6",
-    "@ffmpeg/ffmpeg": "^0.12.10",
     "@mui/icons-material": "^5.15.18",
     "@mui/lab": "^5.0.0-alpha.170",
     "@mui/material": "^5.16.8",
@@ -34,7 +34,6 @@
     "framer-motion": "^11.1.8",
     "js-cookie": "^3.0.5",
     "jwt-decode": "^4.0.0",
-    "notistack": "^3.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-drag-drop-files": "^2.3.10",
@@ -44,13 +43,11 @@
     "react-select": "^5.8.0",
     "react-spring": "^9.7.5",
     "react-world-flags": "^1.6.0",
-    "socket.io-client": "^4.7.5",
     "uuid": "^9.0.1",
     "vite-plugin-svgr": "^4.2.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.66",
-    "@types/react-dom": "^18.2.22",
     "@vitejs/plugin-react": "^4.2.1",
     "eslint": "^8.57.0",
     "eslint-plugin-react": "^7.34.1",

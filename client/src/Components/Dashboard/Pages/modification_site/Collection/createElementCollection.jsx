@@ -13,8 +13,9 @@ import PendingIcon from "@mui/icons-material/Pending";
 import { useTheme } from "@mui/material/styles";
 
 // App
+import { useSnackbar } from '../../../../../Theme/snackbar';
 import config from "../../../../../config";
-import { DefaultButton, SecondaryButton } from '../../../../../Theme/element';
+import { DefaultButton, SecondaryButton,  } from '../../../../../Theme/element';
 import Field from "../Fields/fields";
 import { getCurrentUTCDate } from '../../../../../utils/dateUtils';
 import {
@@ -64,6 +65,9 @@ const CreateElementCollection = () => {
     const [titleFieldMissed , setTitleFieldMissed] = useState(false);
     const [slugFieldMissed , setSlugFieldMissed] = useState(false);
 
+    // ---- useContext ---
+    const { showSnackbar } = useSnackbar();
+
     // --- useEffect ---
     useEffect(() => {    
         Axios.get(`${apiUrl}/getConfigCollection`, {
@@ -75,6 +79,7 @@ const CreateElementCollection = () => {
         }).then((response) => {
             setConfigblog(response.data);
         }).catch((error) => {
+            showSnackbar('error', '[CREA-COLL-001] Erreur lors de la récupération de la configuration de la collection');
             console.error('Erreur lors de la récupération de la du Blog :', error);
         });
     }, [InfoConfigBlog]);
@@ -136,6 +141,7 @@ const CreateElementCollection = () => {
         if (!titleMissed) setTitleFieldMissed(true);
         if (!slugMissed) setSlugFieldMissed(true);
         if (!titleMissed || !slugMissed) {
+            showSnackbar('error', '[CREA-COLL-002] Veuillez remplir les champs obligatoires (titre et slug)');
             setSavingPage(false);
             setDataLoading(false);
             setIsPublishing(false);
@@ -158,7 +164,19 @@ const CreateElementCollection = () => {
             const response = await createBlogPage(idCollection, mainText, date, status, idUser, token);
             const blogPageId = response.id;
             // ENREGISTRER LES TEXTES
-            try { await createTextBlog(blogPageId, otherText, token); } catch (error) { console.error('Erreur lors de la création des textes :', error); return; }
+            try { 
+                await createTextBlog(blogPageId, otherText, token);
+            } catch (error) { 
+                showSnackbar('error', '[CREA-COLL-003] Erreur lors de la création des données');
+                setDataRetrievalStatus(false);
+                setPageGenerationStatus(false);
+                setSitePublishingStatus(false);
+                setSavingPage(false);
+                setIsPublishing(false);
+                console.error('Erreur lors de la création des textes :', error); 
+                return; 
+            }
+
             // ENREGISTRER LES RICHTEXT
             const infoRichText = [];
             blogData.richText.forEach(richText => {
@@ -167,15 +185,86 @@ const CreateElementCollection = () => {
                 const richTextJSON = JSON.stringify(richTextJS);
                 infoRichText.push({richText : richTextJSON, id_config: richText.id_config});
             });
-            try { await createRichTextBlog(blogPageId, infoRichText, token); } catch (error) { console.error('Erreur lors de la création des richtextes :', error); return; }
+            try {
+                await createRichTextBlog(blogPageId, infoRichText, token);
+            } catch (error) {
+                showSnackbar('error', '[CREA-COLL-004] Erreur lors de la création des données');
+                setDataRetrievalStatus(false);
+                setPageGenerationStatus(false);
+                setSitePublishingStatus(false);
+                setSavingPage(false);
+                setIsPublishing(false);
+                console.error('Erreur lors de la création des richtextes :', error);
+                return;
+            }
             // ENREGISTRER LES IMAGE
-            try { await Promise.all(blogData.images.map(async (image) => { await createImageBlog(image, blogPageId, token); })); } catch (error) { console.error(error); return; }
+            try {
+                await Promise.all(
+                    blogData.images.map(async (image) => {
+                        await createImageBlog(image, blogPageId, token);
+                    })
+                );
+            } catch (error) {
+                showSnackbar('error', '[CREA-COLL-005] Erreur lors de la création des données');
+                setDataRetrievalStatus(false);
+                setPageGenerationStatus(false);
+                setSitePublishingStatus(false);
+                setSavingPage(false);
+                setIsPublishing(false);
+                console.error(error);
+                return;
+            }
             //ENREGISTRER LES GALLERIES
-            try { await Promise.all(blogData.gallery.map(async (gallery) => { await createGalleryBlog(gallery, blogPageId, token); })); } catch (error) { console.error(error); return; }
+            try {
+                await Promise.all(
+                    blogData.gallery.map(async (gallery) => {
+                        await createGalleryBlog(gallery, blogPageId, token);
+                    })
+                );
+            } catch (error) {
+                showSnackbar('error', '[CREA-COLL-006] Erreur lors de la création des données');
+                setDataRetrievalStatus(false);
+                setPageGenerationStatus(false);
+                setSitePublishingStatus(false);
+                setSavingPage(false);
+                setIsPublishing(false);
+                console.error(error);
+                return;
+            }
             //ENREGISTRER LES VIDEO
-            try { await Promise.all(blogData.video.map(async (video) => { await createVideoBlog(video, blogPageId, token); })); } catch (error) { console.error(error); return; }
+            try {
+                await Promise.all(
+                    blogData.video.map(async (video) => {
+                        await createVideoBlog(video, blogPageId, token);
+                    })
+                );
+            } catch (error) {
+                showSnackbar('error', '[CREA-COLL-007] Erreur lors de la création des données');
+                setDataRetrievalStatus(false);
+                setPageGenerationStatus(false);
+                setSitePublishingStatus(false);
+                setSavingPage(false);
+                setIsPublishing(false);
+                console.error(error);
+                return;
+            }
             //ENREGISTRER LES MULTIREFERENCE
-            try { await Promise.all(blogData.multiReference.map(async (multiReference) => { await createMultiReferenceBlog(blogPageId, multiReference, token); })); } catch (error) { console.error(error); return; }
+            try {
+                await Promise.all(
+                    blogData.multiReference.map(async (multiReference) => {
+                        await createMultiReferenceBlog(blogPageId, multiReference, token);
+                    })
+                );
+            } catch (error) {
+                showSnackbar('error', '[CREA-COLL-008] Erreur lors de la création des données');
+                setDataRetrievalStatus(false);
+                setPageGenerationStatus(false);
+                setSitePublishingStatus(false);
+                setSavingPage(false);
+                setIsPublishing(false);
+                console.error(error);
+                return;
+            }
             // Générer le site
             if (status === 1) {
                 setDataRetrievalStatus(true);
@@ -190,6 +279,7 @@ const CreateElementCollection = () => {
                     setSavingPage(false);
                     setIsPublishing(false);
                 } catch (error) {
+                    showSnackbar('error', '[CREA-COLL-009] Erreur lors de la génération du site');
                     console.error('Erreur lors de la generation static :', error);
                     setDataRetrievalStatus(false);
                     setPageGenerationStatus(false);
@@ -208,8 +298,11 @@ const CreateElementCollection = () => {
                     }, 1000);
                 }, 1500);
             }
+            showSnackbar('success', 'Création de la collection réussie !');
             navigate(`/dashboard/modification/collection/${idCollection}`);
+            
         } catch (error) {
+            showSnackbar('error', '[CREA-COLL-010] Erreur lors de la création de la collection');
             console.error('Erreur lors de la création de la page : ',error);
             setIsPublishing(false);
             setIsSavingDraft(false);

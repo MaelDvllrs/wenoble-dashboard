@@ -11,7 +11,6 @@ import { updateImagePage, updateTextPage, updateRichTextPage } from './apiPage';
 import { useTheme } from '@mui/material/styles';
 import { convertToRaw } from 'draft-js';
 import CircularProgress from '@mui/material/CircularProgress';
-import { SnackbarProvider,enqueueSnackbar } from 'notistack';
 import Cookies from 'js-cookie';
 
 
@@ -294,54 +293,50 @@ const EditPage = () => {
             return;
         }
         setSavingPage(false);
-        enqueueSnackbar('Page modifiée avec succès.', { variant: 'success' });
     };
 
 
 
     return (
-        <SnackbarProvider maxSnack={3} autoHideDuration={2000}>
-            <div className="Page_creation_Page">
-                {DecodePage.page ? (
-                    <div className="Page_creation_Page">
-                        <div className="header_modification header_page_modification">
-                            <h3 className="titlePage">Modification de : {DecodePage.page[0].page_name}</h3>
-                            <div className="button_save_contain">
-                                <SecondaryButton variant="contained" theme={theme} onClick={() => navigate(`/dashboard/modification/page/${id}`)}>Annuler</SecondaryButton>
-
-                                <DefaultButton type="submit" variant="contained" onClick={async () => { await handleSave(1,0) }}>Enregistrer</DefaultButton>  
-                            </div>
+        <div className="Page_creation_Page">
+            {DecodePage.page ? (
+                <div className="Page_creation_Page">
+                    <div className="header_modification header_page_modification">
+                        <h3 className="titlePage">Modification de : {DecodePage.page[0].page_name}</h3>
+                        <div className="button_save_contain">
+                            <SecondaryButton variant="contained" theme={theme} onClick={() => navigate(`/dashboard/modification/page/${id}`)}>Annuler</SecondaryButton>
+                            <DefaultButton type="submit" variant="contained" onClick={async () => { await handleSave(1,0) }}>Enregistrer</DefaultButton>  
                         </div>
-
-                        <div className="Page_creation_field_contain">
-                            {DecodeConfigPage.page && DecodeConfigPage.page.map((pageItem) => {
-                                const correspondingData = InfoItemspage.data.find(data => data.id_config === pageItem.id_config);
-                                return (
-                                    <div key={pageItem.id_config} className="pageField_contain">
-                                        <p style={{color: theme.palette.text.secondary}}>{pageItem.name}</p>
-                                        <Field 
-                                            id_page={idPage}
-                                            type={pageItem.type} 
-                                            id_config={pageItem.id_config} 
-                                            onChange={handlePageDataChange} 
-                                            dataValue={correspondingData || {}}
-                                            imagefunction={false}
-                                            imageDirectory={config.urlBucketPageImage}
-                                        />
-                                    </div>
-                                );
-                            })}
-                        </div>
-                        {savingPage && (   
-                            <Popup theme={theme}>
-                                <CircularProgress sx={{color:"rgb(5, 65, 183)"}}/>
-                            </Popup>
-                        )}
                     </div>
 
-                ) : null}
-            </div>
-        </SnackbarProvider>
+                    <div className="Page_creation_field_contain">
+                        {DecodeConfigPage.page && DecodeConfigPage.page.map((pageItem) => {
+                            const correspondingData = InfoItemspage.data.find(data => data.id_config === pageItem.id_config);
+                            return (
+                                <div key={pageItem.id_config} className="pageField_contain">
+                                    <p style={{color: theme.palette.text.secondary}}>{pageItem.name}</p>
+                                    <Field 
+                                        id_page={idPage}
+                                        type={pageItem.type} 
+                                        id_config={pageItem.id_config} 
+                                        onChange={handlePageDataChange} 
+                                        dataValue={correspondingData || {}}
+                                        imagefunction={false}
+                                        imageDirectory={config.urlBucketPageImage}
+                                    />
+                                </div>
+                            );
+                        })}
+                    </div>
+                    {savingPage && (   
+                        <Popup theme={theme}>
+                            <CircularProgress sx={{color:"rgb(5, 65, 183)"}}/>
+                        </Popup>
+                    )}
+                </div>
+
+            ) : null}
+        </div>
     );
 };
 

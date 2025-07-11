@@ -1,31 +1,41 @@
-import React from "react"
-import Axios from '../../../../../service/AxiosConfig';
-import { useState, useEffect } from "react";
+// --- React & Libs ---
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import config from "../../../../../config";
-import {jwtDecode} from 'jwt-decode'; 
-import Field from "../Fields/fields";
-import './collection.css'
-import {DefaultButton, RedButton, SecondaryButton, Popup} from '../../../../../Theme/element';
-import SaveIcon from '@mui/icons-material/Save';
-import PublishIcon from '@mui/icons-material/Publish';
+import { jwtDecode } from 'jwt-decode';
 
-import { updateImageBlog, updateBlogPage, updateTextBlog, updateRichTextBlog, updateVideoBlog, updateMultiReferenceBlog, updateGalleryBlog, generateStaticSite } from './apiCollection';
+// --- MUI ---
 import { useTheme } from '@mui/material/styles';
-import { convertToRaw, ContentState, convertFromRaw } from 'draft-js';
-import UnpublishedIcon from '@mui/icons-material/Unpublished';
 import CircularProgress from '@mui/material/CircularProgress';
 import Tooltip from '@mui/material/Tooltip';
-import Cookies from 'js-cookie';
 import Snackbar from '@mui/material/Snackbar';
 import Paper from '@mui/material/Paper';
 import Box from '@mui/material/Box';
 import PendingIcon from '@mui/icons-material/Pending';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import SaveIcon from '@mui/icons-material/Save';
+import UnpublishedIcon from '@mui/icons-material/Unpublished';
+
+// --- App/Utils ---
+import Axios from '../../../../../service/AxiosConfig';
+import config from "../../../../../config";
+import { useSnackbar } from '../../../../../Theme/snackbar';
+import Field from "../Fields/fields";
+import { DefaultButton, RedButton, SecondaryButton, Popup } from '../../../../../Theme/element';
+import { updateImageBlog, updateBlogPage, updateTextBlog, updateRichTextBlog, updateVideoBlog, updateMultiReferenceBlog, updateGalleryBlog, generateStaticSite } from './apiCollection';
 import { deleteBlogPage } from './collectionDeleteUtils';
+import { convertToRaw, ContentState, convertFromRaw } from 'draft-js';
+import Cookies from 'js-cookie';
+import './collection.css';
 
+// --- Helper: format date ---
+function formatDateFR(date) {
+    return new Intl.DateTimeFormat('fr-FR', {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', hour12: false
+    }).format(date);
+}
 
-
+// --- Component ---
 const EditElementCollection = () => {
 
     const theme = useTheme();
@@ -76,7 +86,7 @@ const EditElementCollection = () => {
     const closePopup = () => setIsPopupOpen(false);
 
     
-    const navigate = useNavigate(); // Création de l'instance useNavigate
+    const navigate = useNavigate(); 
 
     const [blogDataConfig, setBlogDataConfig] = useState({
         text: [],
@@ -98,6 +108,12 @@ const EditElementCollection = () => {
         gallery: []
 
     });
+
+
+        // ---- useContext ---
+
+
+    const { showSnackbar } = useSnackbar();
 
     const apiUrl = config.apiUrl;
     const urlBucketCollectionImage = config.urlBucketCollectionImage;
@@ -143,6 +159,7 @@ const EditElementCollection = () => {
 
 
 
+
         const localISOTime = adjustedTime.toISOString().slice(0, 19).replace('T', ' ');
 
 
@@ -172,6 +189,12 @@ const EditElementCollection = () => {
                     const response = await updateTextBlog(idCollectionElement, otherText, token);
 
                 } catch (error) {
+                    showSnackbar('error', '[EDIT-COLL-001] Erreur lors de la sauvegarde des données');
+                    setIsPublishing(false);
+                    setIsSaving(false);
+                    setIsUnpublishing(false);
+                    setIsSavingDraft(false);
+                    setSavingPage(false);
                     console.error('Erreur lors de la création des textes :', error);
                     return;
                 }
@@ -193,6 +216,12 @@ const EditElementCollection = () => {
                   } else if (contentRichText instanceof ContentState) {
                     contentState = contentRichText;
                   } else {
+                    showSnackbar('error', '[EDIT-COLL-002] Erreur lors de la sauvegarde des données');
+                    setIsPublishing(false);
+                    setIsSaving(false);
+                    setIsUnpublishing(false);
+                    setIsSavingDraft(false);
+                    setSavingPage(false);
                     console.error('contentRichText is not a valid ContentState object or raw JSON');
                     return;
                   }
@@ -205,8 +234,14 @@ const EditElementCollection = () => {
                 try {
                   const response = await updateRichTextBlog(idCollectionElement, infoRichText, token);
                 } catch (error) {
-                  console.error('Erreur lors de la création des richtextes :', error);
-                  return;
+                    showSnackbar('error', '[EDIT-COLL-003] Erreur lors de la sauvegarde des données');
+                    setIsPublishing(false);
+                    setIsSaving(false);
+                    setIsUnpublishing(false);
+                    setIsSavingDraft(false);
+                    setSavingPage(false);
+                    console.error('Erreur lors de la création des richtextes :', error);
+                    return;
                 }
               }
 
@@ -222,6 +257,12 @@ const EditElementCollection = () => {
                     }));
 
                 } catch (error) {
+                    showSnackbar('error', '[EDIT-COLL-004] Erreur lors de la sauvegarde des données');
+                    setIsPublishing(false);
+                    setIsSaving(false);
+                    setIsUnpublishing(false);
+                    setIsSavingDraft(false);
+                    setSavingPage(false);
                     console.error(error);
                     return;
                 }
@@ -234,6 +275,12 @@ const EditElementCollection = () => {
                         await updateVideoBlog(video, idCollectionElement, token);
                     }));
                 } catch (error) {
+                    showSnackbar('error', '[EDIT-COLL-005] Erreur lors de la sauvegarde des données');
+                    setIsPublishing(false);
+                    setIsSaving(false);
+                    setIsUnpublishing(false);
+                    setIsSavingDraft(false);
+                    setSavingPage(false);
                     console.error(error);
                     return;
                 }
@@ -247,6 +294,14 @@ const EditElementCollection = () => {
                         await updateMultiReferenceBlog(idCollectionElement, multiReference, token);
                     }));
                 } catch (error) {
+                    // Gérer l'erreur ici
+                    showSnackbar('error', '[EDIT-COLL-006] Erreur lors de la sauvegarde des données');
+                    setIsPublishing(false);
+                    setIsSaving(false);
+                    setIsUnpublishing(false);
+                    setIsSavingDraft(false);
+                    setSavingPage(false);
+
                     console.error(error);
                     return;
                 }
@@ -259,6 +314,12 @@ const EditElementCollection = () => {
                         await updateGalleryBlog(idCollectionElement, gallery, token);
                     }));
                 } catch (error) {
+                    showSnackbar('error', '[EDIT-COLL-007] Erreur lors de la sauvegarde des données');
+                    setIsPublishing(false);
+                    setIsSaving(false);
+                    setIsUnpublishing(false);
+                    setIsSavingDraft(false);
+                    setSavingPage(false);
                     console.error(error);
                     return;
                 }
@@ -305,6 +366,7 @@ const EditElementCollection = () => {
                     setIsUnpublishing(false);
                     setIsSavingDraft(false);
                   } catch (error) {
+                    showSnackbar('error', '[EDIT-COLL-008] Erreur lors de la génération du site');
                     console.error('Erreur lors de la generation static :', error);
                     setIsPublishing(false);
                     setIsSaving(false);
@@ -337,11 +399,13 @@ const EditElementCollection = () => {
                 }, 1500);
 
             }
-
+            
+            // Afficher un message de succès
+            showSnackbar('success', 'Sauvegarde de la collection réussie !');
 
 
         } catch (error) {
-            // Gérer l'erreur ici
+            showSnackbar('error', '[EDIT-COLL-009] Erreur lors de la sauvegarde de la collection');
             console.error('Erreur lors de la création de la page :',error);
             setIsPublishing(false);
             setIsSaving(false);
@@ -439,7 +503,10 @@ const EditElementCollection = () => {
             setRegenerateSiteStatus(false);
             setDeletionCompleted(false);
           }, 1500);
+
+          showSnackbar('success', 'Collection supprimée avec succès !');
         } catch (error) {
+          showSnackbar('error', '[EDIT-COLL-010] Erreur lors de la suppression de la collection');
           console.error('Erreur lors de la suppression de la page :', error);
           setIsDeleting(false);
           setDeletingPublishedPage(false);
@@ -543,6 +610,7 @@ const EditElementCollection = () => {
                         allData.push(response.data[0]); 
                     }
                 } catch (error) {
+                    showSnackbar('error', '[EDIT-COLL-011] Erreur lors de la récupération des données');
                     console.error('Erreur lors de la récupération du texte :', error);
                 }
             }
@@ -564,6 +632,7 @@ const EditElementCollection = () => {
                         allData.push(response.data[0]); 
                     }
                 } catch (error) {
+                    showSnackbar('error', '[EDIT-COLL-012] Erreur lors de la récupération des données');
                     console.error('Erreur lors de la récupération du texte :', error);
                 }
             }
@@ -585,6 +654,7 @@ const EditElementCollection = () => {
                         allData.push(response.data[0]); 
                     }
                 } catch (error) {
+                    showSnackbar('error', '[EDIT-COLL-013] Erreur lors de la récupération des données');
                     console.error('Erreur lors de la récupération du texte :', error);
                 }
             }
@@ -606,6 +676,7 @@ const EditElementCollection = () => {
                         allData.push(response.data[0]); 
                     }
                 } catch (error) {
+                    showSnackbar('error', '[EDIT-COLL-014] Erreur lors de la récupération des données');
                     console.error('Erreur lors de la récupération du texte :', error);
                 }
             }
@@ -627,6 +698,7 @@ const EditElementCollection = () => {
                         allData.push(response.data[0]); 
                     }
                 } catch (error) {
+                    showSnackbar('error', '[EDIT-COLL-015] Erreur lors de la récupération des données');
                     console.error('Erreur lors de la récupération du texte :', error);
                 }
             }
@@ -648,6 +720,7 @@ const EditElementCollection = () => {
                         allData.push(response.data[0]); 
                     }
                 } catch (error) {
+                    showSnackbar('error', '[EDIT-COLL-016] Erreur lors de la récupération des données');
                     console.error('Erreur lors de la récupération du texte :', error);
                 }
             }
@@ -674,6 +747,7 @@ const EditElementCollection = () => {
         }).then((response) => {
             setInfoBlog(response.data);
         }).catch((error) => {
+            showSnackbar('error', '[EDIT-COLL-017] Erreur lors de la récupération de la collection');
             console.error('Erreur lors de la récupération de la page du Blog :', error);
         });
     }, [idCollectionElement, handleSave, isDeleting]);
@@ -694,27 +768,18 @@ const EditElementCollection = () => {
 
         if (DecodeBlog.length !== 0 && !isDeleting) {
             const createDate = new Date(DecodeBlog.blogPage[0].page_blog_create_date);
-            const formattedCreateDate = new Intl.DateTimeFormat('fr-FR', {
-                year: 'numeric', month: '2-digit', day: '2-digit',
-                hour: '2-digit', minute: '2-digit', hour12: false
-            }).format(createDate);
+            const formattedCreateDate = formatDateFR(createDate);
             setFormattedCreateDate(formattedCreateDate);
         
             // Convertir page_blog_update_date
             const updateDate = new Date(DecodeBlog.blogPage[0].page_blog_update_date);
-            const formattedUpdateDate = new Intl.DateTimeFormat('fr-FR', {
-                year: 'numeric', month: '2-digit', day: '2-digit',
-                hour: '2-digit', minute: '2-digit', hour12: false
-            }).format(updateDate);
+            const formattedUpdateDate = formatDateFR(updateDate);
             setFormattedUpdatedDate(formattedUpdateDate);
 
             if (DecodeBlog.blogPage[0].page_blog_publish_date) {
                 const publishDate = new Date(DecodeBlog.blogPage[0].page_blog_publish_date);
 
-                const formattedpublishDate = new Intl.DateTimeFormat('fr-FR', {
-                    year: 'numeric', month: '2-digit', day: '2-digit',
-                    hour: '2-digit', minute: '2-digit', hour12: false
-                }).format(publishDate);
+                const formattedpublishDate = formatDateFR(publishDate);
                 setFormattedPublishedDate(formattedpublishDate);
             } else {
                 setFormattedPublishedDate('Non publié');

@@ -27,6 +27,8 @@ import SortIcon from '@mui/icons-material/Sort';
 import CheckIcon from '@mui/icons-material/Check';
 import ArrowDropDownOutlinedIcon from '@mui/icons-material/ArrowDropDownOutlined';
 import ArrowDropUpOutlinedIcon from '@mui/icons-material/ArrowDropUpOutlined';
+import { Snackbar, Alert } from '@mui/material';
+import MuiAlert from '@mui/material/Alert';
 
 // Internal utilities and hooks
 import { useAxisTooltip, useItemTooltip, useMouseTracker } from '@mui/x-charts/ChartsTooltip';
@@ -708,6 +710,42 @@ export function SortMenu({
     </Menu>
   );
 }
+
+
+
+
+const CustomAlert = styled(Alert)(({ theme, severity }) => ({
+  color: theme.palette.text.primary,
+  borderRadius: 8,
+  fontWeight: 500,
+  fontSize: '1rem',
+  alignItems: 'center',
+  border: severity === 'info' ? `1.5px solid ${theme.palette.primary.main}` : undefined,
+  '.MuiAlert-icon': {
+    color: severity === 'info' ? theme.palette.primary.main : undefined,
+    fontSize: 28,
+  },
+}));
+
+export function GlobalSnackbar({ open, message, type = 'info', onClose, autoHideDuration = 3000 }) {
+  return (
+    <Snackbar
+      open={open}
+      autoHideDuration={autoHideDuration}
+      onClose={onClose}
+      anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+    >
+      <CustomAlert onClose={onClose} severity={type} sx={{ width: '100%' }}>
+        {message}
+      </CustomAlert>
+    </Snackbar>
+  );
+}
+
+
+
+
+
 
 
 

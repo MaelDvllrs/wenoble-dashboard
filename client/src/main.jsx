@@ -7,10 +7,15 @@ import ThemeHandler from './Theme/themeProvider.jsx'
 import './Theme/global.css';
 import '../sw-update'; 
 
+import { SnackbarProvider } from './Theme/snackbar.jsx'; // chemin à adapter
+
+
 
 ReactDOM.createRoot(document.getElementById('root')).render(
     <ThemeHandler>
       <CssBaseline />
+      <SnackbarProvider>
       <App />
+      </SnackbarProvider>
     </ThemeHandler>
 )

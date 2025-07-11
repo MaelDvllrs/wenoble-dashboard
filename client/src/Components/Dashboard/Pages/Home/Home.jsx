@@ -36,6 +36,7 @@ const Home = () => {
                 <div className="breadCrumbs">Dashboard</div>
             </div>
             <div className="gridHome">
+
                 <div className="welcomeMessage" style={{ gridColumn: '1 / span 3', gridRow: '1'}}>
                     <UserStatistique/>
                 </div>

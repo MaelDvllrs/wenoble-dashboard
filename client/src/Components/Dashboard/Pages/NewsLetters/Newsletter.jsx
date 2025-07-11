@@ -7,7 +7,6 @@ import { useTheme } from '@mui/material/styles';
 import IconButton from '@mui/material/IconButton';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
-import { SnackbarProvider, enqueueSnackbar } from 'notistack';
 import { SecondaryButton, SimpleSearchField } from '../../../../Theme/element';
 import config from "../../../../config";
 import { SkeletonBlog } from "../../../skeleton/skeleton";
@@ -77,11 +76,9 @@ const NewsLetters = () => {
                 'Content-Type': 'application/json'
             }
         }).then(() => {
-            enqueueSnackbar('mail supprimée avec succès.', { variant: 'success' });
             setInfoListeMail(InfoListeMail.filter(InfoMail => InfoMail.id_newsletter !== id_newsletter));
         }).catch((error) => {
             console.error('Erreur lors de la récupération des messages :', error);
-            enqueueSnackbar('Erreur lors de la suppression du mail.', { variant: 'error' });
         });
     };
 
@@ -132,7 +129,6 @@ const NewsLetters = () => {
                 }
             })
         )).then(() => {
-            enqueueSnackbar('Sélection supprimée avec succès.', { variant: 'success' });
             // Rafraîchir la liste après suppression
             Axios.get(`${apiUrl}/getNewsletter`, {
                 headers: {
@@ -144,11 +140,9 @@ const NewsLetters = () => {
                 setCheckedMails({});
                 setAllChecked(false);
             }).catch((error) => {
-                enqueueSnackbar('Erreur lors du rafraîchissement de la liste.', { variant: 'error' });
                 console.error('Erreur lors du rafraîchissement des messages :', error);
             });
         }).catch((error) => {
-            enqueueSnackbar('Erreur lors de la suppression.', { variant: 'error' });
             console.error('Erreur lors de la suppression des mails :', error);
         });
     };
@@ -206,39 +200,37 @@ const NewsLetters = () => {
                                 <p style={{ color: theme.palette.text.secondary }} className="Item_portfolio_element message_option_element">Option</p>
                             </div>
                         </div>
-                        <SnackbarProvider maxSnack={3} autoHideDuration={2000}>
-                            <div className="liste_contact_box">
-                                {LoadingMessage ? <SkeletonBlog /> :
-                                    <div className="liste_blog_box">
-                                        {filteredMails.length > 0 ? filteredMails.map((mail, index) => {
-                                            const formattedMessageDate = formatDate(mail.date);
-                                            anchorRefMessageOption.current[index] = anchorRefMessageOption.current[index] || React.createRef();
-                                            return (
-                                                <div key={index} className="Item_Portfolio Item_Blog newsletter-box" style={{ '--hover-background-color': theme.palette.secondary.secondary, color: theme.palette.text.primary }}>
-                                                    <div className="Item_portfolio_element message_name_element">
-                                                        <label className="custom-checkbox" onClick={e => e.stopPropagation()}>
-                                                            <input type="checkbox"
-                                                                checked={!!checkedMails[mail.id_newsletter]}
-                                                                onChange={handleCheckItem(mail.id_newsletter)}
-                                                                onClick={e => e.stopPropagation()}
-                                                            />
-                                                            <span className="checkmark"></span>
-                                                        </label>
-                                                        <p>{mail.mail}</p>
-                                                    </div>
-                                                    <p className="Item_portfolio_element message_date_element">{formattedMessageDate}</p>
-                                                    <div className="Item_portfolio_element message_option_element">
-                                                        <IconButton aria-label="delete" onClick={() => handleDelete(mail.id_newsletter)}>
-                                                            <DeleteOutlineOutlinedIcon style={{ color: theme.palette.text.primary }} />
-                                                        </IconButton>
-                                                    </div>
+                        <div className="liste_contact_box">
+                            {LoadingMessage ? <SkeletonBlog /> :
+                                <div className="liste_blog_box">
+                                    {filteredMails.length > 0 ? filteredMails.map((mail, index) => {
+                                        const formattedMessageDate = formatDate(mail.date);
+                                        anchorRefMessageOption.current[index] = anchorRefMessageOption.current[index] || React.createRef();
+                                        return (
+                                            <div key={index} className="Item_Portfolio Item_Blog newsletter-box" style={{ '--hover-background-color': theme.palette.secondary.secondary, color: theme.palette.text.primary }}>
+                                                <div className="Item_portfolio_element message_name_element">
+                                                    <label className="custom-checkbox" onClick={e => e.stopPropagation()}>
+                                                        <input type="checkbox"
+                                                            checked={!!checkedMails[mail.id_newsletter]}
+                                                            onChange={handleCheckItem(mail.id_newsletter)}
+                                                            onClick={e => e.stopPropagation()}
+                                                        />
+                                                        <span className="checkmark"></span>
+                                                    </label>
+                                                    <p>{mail.mail}</p>
                                                 </div>
-                                            );
-                                        }) : <p style={{ textAlign: 'center', color: theme.palette.text.secondary }}>Aucun mail trouvé</p>}
-                                    </div>
-                                }
-                            </div>
-                        </SnackbarProvider>
+                                                <p className="Item_portfolio_element message_date_element">{formattedMessageDate}</p>
+                                                <div className="Item_portfolio_element message_option_element">
+                                                    <IconButton aria-label="delete" onClick={() => handleDelete(mail.id_newsletter)}>
+                                                        <DeleteOutlineOutlinedIcon style={{ color: theme.palette.text.primary }} />
+                                                    </IconButton>
+                                                </div>
+                                            </div>
+                                        );
+                                    }) : <p style={{ textAlign: 'center', color: theme.palette.text.secondary }}>Aucun mail trouvé</p>}
+                                </div>
+                            }
+                        </div>
                     </div>
                 </div>
             </div>

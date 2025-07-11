@@ -63,6 +63,10 @@ import AdminHome from './Components/Admin/AdminHome';
 import AdminClient from './Components/Admin/Clients/AdminClients';
 import AddClient from './Components/Admin/Clients/AddClient';
 
+
+
+
+
 // Initialize dayjs plugins
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -93,72 +97,71 @@ function App() {
     };
 
 
-
-        return (
+    return (
         <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="fr">
-            <div>                
-                <Router>
-                    <Routes>
-                        {/* Authentication routes */}
-                        <Route path="/" element={<Login />} />
-                        <Route path="/login" element={<Login />} />
-                        <Route path="/register" element={<Register />} />
+                <div>                
+                    <Router>
+                        <Routes>
+                            {/* Authentication routes */}
+                            <Route path="/" element={<Login />} />
+                            <Route path="/login" element={<Login />} />
+                            <Route path="/register" element={<Register />} />
 
-                        {/* Dashboard routes */}
-                        <Route path="/dashboard">
-                            <Route element={<ProtectedRoutesClient><Dashboard /></ProtectedRoutesClient>}>
-                                <Route path="/dashboard/home" element={<Home />} />
-                                <Route path="/dashboard/account" element={<Account />} />
-                                <Route path="/dashboard/modification" element={<ModificationHome />} />
-                                <Route path="/dashboard/modification/portfolio" element={<AuthorisedRoutePortfolio><Portfolio /></AuthorisedRoutePortfolio>}>
-                                    <Route path="/dashboard/modification/portfolio/:id" element={<EditPortfolio />} />
-                                </Route>
-                                <Route path="/dashboard/modification/page" element={<AuthorisedRoutePage><Page /></AuthorisedRoutePage>}>
-                                    <Route path="/dashboard/modification/page/:idPage" element={<EditPage />} />
-                                </Route>
-                                <Route path="/dashboard/modification/collection" element={<AuthorisedRouteBlog><Collection /></AuthorisedRouteBlog>}>
-                                    <Route path="/dashboard/modification/collection/:idCollection" element={<ListeCollection />} />
-                                    <Route path="/dashboard/modification/collection/:idCollection/createPage" element={<CreateElementCollection />} />
-                                    <Route path="/dashboard/modification/collection/:idCollection/editPage/:idCollectionElement" element={<EditElementCollection />} />
-                                </Route>
-                                <Route path="/dashboard/stats" element={<StatistiqueHome />}/>
-                                <Route path="/dashboard/stats/analytics" element={<StatistiqueAnalytics />} />
-                                <Route path="/dashboard/stats/search-console" element={<StatistiqueSearchConsole />} />
-                                <Route path="/dashboard/contact" element={<ContactList />} />
-                                <Route path="/dashboard/contact/message/:id" element={<ContactMessage />} />
-                                <Route path="/dashboard/ecommerce" element={<AuthorisedRouteEcomm><Ecommerce /></AuthorisedRouteEcomm>}>
-                                    <Route path="/dashboard/ecommerce/stats" element={<EcommerceStatistique />} />
-                                    <Route path="/dashboard/ecommerce/product" element={<EcommerceProduct />} />
-                                    <Route path="/dashboard/ecommerce/order" element={<EcommerceOrder />}>
-                                        <Route path="/dashboard/ecommerce/order/pending" element={<EcommerceOrderPending />} />
-                                        <Route path="/dashboard/ecommerce/order/shipping" element={<EcommerceOrderShipping />} />
-                                        <Route path="/dashboard/ecommerce/order/delivered" element={<EcommerceOrderDelivered />} />
-                                        <Route path="/dashboard/ecommerce/order/orderAll" element={<EcommerceOrderAll />} />
+                            {/* Dashboard routes */}
+                            <Route path="/dashboard">
+                                <Route element={<ProtectedRoutesClient><Dashboard /></ProtectedRoutesClient>}>
+                                    <Route path="/dashboard/home" element={<Home />} />
+                                    <Route path="/dashboard/account" element={<Account />} />
+                                    <Route path="/dashboard/modification" element={<ModificationHome />} />
+                                    <Route path="/dashboard/modification/portfolio" element={<AuthorisedRoutePortfolio><Portfolio /></AuthorisedRoutePortfolio>}>
+                                        <Route path="/dashboard/modification/portfolio/:id" element={<EditPortfolio />} />
                                     </Route>
+                                    <Route path="/dashboard/modification/page" element={<AuthorisedRoutePage><Page /></AuthorisedRoutePage>}>
+                                        <Route path="/dashboard/modification/page/:idPage" element={<EditPage />} />
+                                    </Route>
+                                    <Route path="/dashboard/modification/collection" element={<AuthorisedRouteBlog><Collection /></AuthorisedRouteBlog>}>
+                                        <Route path="/dashboard/modification/collection/:idCollection" element={<ListeCollection />} />
+                                        <Route path="/dashboard/modification/collection/:idCollection/createPage" element={<CreateElementCollection />} />
+                                        <Route path="/dashboard/modification/collection/:idCollection/editPage/:idCollectionElement" element={<EditElementCollection />} />
+                                    </Route>
+                                    <Route path="/dashboard/stats" element={<StatistiqueHome />}/>
+                                    <Route path="/dashboard/stats/analytics" element={<StatistiqueAnalytics />} />
+                                    <Route path="/dashboard/stats/search-console" element={<StatistiqueSearchConsole />} />
+                                    <Route path="/dashboard/contact" element={<ContactList />} />
+                                    <Route path="/dashboard/contact/message/:id" element={<ContactMessage />} />
+                                    <Route path="/dashboard/ecommerce" element={<AuthorisedRouteEcomm><Ecommerce /></AuthorisedRouteEcomm>}>
+                                        <Route path="/dashboard/ecommerce/stats" element={<EcommerceStatistique />} />
+                                        <Route path="/dashboard/ecommerce/product" element={<EcommerceProduct />} />
+                                        <Route path="/dashboard/ecommerce/order" element={<EcommerceOrder />}>
+                                            <Route path="/dashboard/ecommerce/order/pending" element={<EcommerceOrderPending />} />
+                                            <Route path="/dashboard/ecommerce/order/shipping" element={<EcommerceOrderShipping />} />
+                                            <Route path="/dashboard/ecommerce/order/delivered" element={<EcommerceOrderDelivered />} />
+                                            <Route path="/dashboard/ecommerce/order/orderAll" element={<EcommerceOrderAll />} />
+                                        </Route>
+                                    </Route>
+                                    <Route path="/dashboard/actu" element={<Actualite />}>
+                                        <Route path="/dashboard/actu/article" element={<Article />} />
+                                        <Route path="/dashboard/actu/update" element={<Update />} />
+                                        <Route path="/dashboard/actu/article/:slug" element={<ArticleTemplate />} />
+                                        <Route path="/dashboard/actu/update/:slug" element={<UpdateTemplate />} />
+                                    </Route>
+                                    <Route path="/dashboard/newsletter" element={<AuthorisedRouteNewsletter><NewsLetters /></AuthorisedRouteNewsletter>} />
+                                    <Route path="/dashboard/academy" element={<Academy />} />
+                                    <Route path="/dashboard/academy/:slug" element={<AcademyTemplate />} />
                                 </Route>
-                                <Route path="/dashboard/actu" element={<Actualite />}>
-                                    <Route path="/dashboard/actu/article" element={<Article />} />
-                                    <Route path="/dashboard/actu/update" element={<Update />} />
-                                    <Route path="/dashboard/actu/article/:slug" element={<ArticleTemplate />} />
-                                    <Route path="/dashboard/actu/update/:slug" element={<UpdateTemplate />} />
-                                </Route>
-                                <Route path="/dashboard/newsletter" element={<AuthorisedRouteNewsletter><NewsLetters /></AuthorisedRouteNewsletter>} />
-                                <Route path="/dashboard/academy" element={<Academy />} />
-                                <Route path="/dashboard/academy/:slug" element={<AcademyTemplate />} />
                             </Route>
-                        </Route>
 
-                        {/* Admin routes */}
-                        <Route path="/dashboard-admin">
-                            <Route element={<ProtectedRouteAdmin><Admin /></ProtectedRouteAdmin>}>
-                                <Route path="/dashboard-admin/home" element={<AdminHome />} />
-                                <Route path="/dashboard-admin/clients" element={<AdminClient />} />
-                                <Route path="/dashboard-admin/clients/add" element={<AddClient />} />
+                            {/* Admin routes */}
+                            <Route path="/dashboard-admin">
+                                <Route element={<ProtectedRouteAdmin><Admin /></ProtectedRouteAdmin>}>
+                                    <Route path="/dashboard-admin/home" element={<AdminHome />} />
+                                    <Route path="/dashboard-admin/clients" element={<AdminClient />} />
+                                    <Route path="/dashboard-admin/clients/add" element={<AddClient />} />
+                                </Route>
                             </Route>
-                        </Route>
-                    </Routes>
-                </Router>
-            </div>
+                        </Routes>
+                    </Router>
+                </div>
         </LocalizationProvider>
     );
 }

@@ -1,0 +1,25 @@
+{
+  "ignores": [
+    "@types/*",
+    "virtual:pwa-register",
+    "html-webpack-plugin", 
+    "clean-webpack-plugin",
+    "react",
+    "react-dom",
+    "@vitejs/plugin-react",
+    "vite",
+    "eslint*"
+  ],
+  "skip-missing": true,
+  "parsers": {
+    "*.js": "es6",
+    "*.jsx": "es6", 
+    "*.ts": "typescript",
+    "*.tsx": "typescript"
+  },
+  "detectors": [
+    "depcheck-detector-require",
+    "depcheck-detector-import",
+    "depcheck-detector-jsx"
+  ]
+}
