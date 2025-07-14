@@ -138,8 +138,10 @@
                         continue; // Passer au blog suivant
                     }
 
-                    // Parcours tous les éléments qui ont un attribut `wn-*` dans le clone
-                    await Promise.all([...clone.querySelectorAll("[wn-title], [wn-link], [wn-id], [wn-for], [wn-date-published], [wn-image], [wn-richtext], [wn-text], [wn-gallery], [wn-gallery-index],[wn-gallery-modal], [wn-video], [wn-multiReference-wrapper]")].map(async el => {
+                    // Parcours tous les éléments qui ont un attribut `wn-*` dans le clone de manière séquentielle
+                    const elementsToProcess = [...clone.querySelectorAll("[wn-title], [wn-link], [wn-id], [wn-for], [wn-date-published], [wn-image], [wn-richtext], [wn-text], [wn-gallery], [wn-gallery-index],[wn-gallery-modal], [wn-video], [wn-multiReference-wrapper]")];
+                    
+                    for (const el of elementsToProcess) {
                     
                     if (el.hasAttribute("wn-title")) {
                         el.textContent = blog.collection_element_name;
@@ -413,7 +415,7 @@
                         template.remove();
                     }
 
-                    }));
+                    } // Fin de la boucle for
                 
                     // Ajouter le clone au DOM dans l'ordre séquentiel
                     el.appendChild(clone);
