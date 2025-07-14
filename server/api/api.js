@@ -211,14 +211,34 @@ router.get('/sendBlogRichText', apiKeyMiddleware, async (req, res) => {
                 try {
                     rawContent = JSON.parse(result.text_json);
                 } catch (e) {
-                    console.error('Erreur lors du parsing JSON sendPageRichText:', e, result.text_json);
+                    console.error('Erreur lors du parsing JSON sendBlogRichText:', e, result.text_json);
                     return { id_config: result.id_config, text_html: '' };
                 }
             } else {
                 rawContent = result.text_json;
             }
             const contentState = convertFromRaw(rawContent);
-            const html = stateToHTML(contentState);
+            const html = stateToHTML(contentState, {
+                entityStyleFn: (entity) => {
+                    const entityType = entity.getType();
+                    if (entityType === 'IMAGE') {
+                        // Ne pas générer automatiquement les balises <img> 
+                        // car elles sont déjà gérées par le contenu
+                        return {};
+                    }
+                    if (entityType === 'LINK') {
+                        const data = entity.getData();
+                        return {
+                            element: 'a',
+                            attributes: {
+                                href: data.url,
+                                target: '_blank',
+                                rel: 'noopener noreferrer'
+                            }
+                        };
+                    }
+                }
+            });
             return { id_config: result.id_config, text_html: html };
         });
         return res.json({ richText: convertedResults });
@@ -397,7 +417,27 @@ router.get('/sendBlogContent', apiKeyMiddleware, async (req, res) => {
                             rawContent = result.text_json;
                         }
                         const contentState = convertFromRaw(rawContent);
-                        const html = stateToHTML(contentState);
+                        const html = stateToHTML(contentState, {
+                            entityStyleFn: (entity) => {
+                                const entityType = entity.getType();
+                                if (entityType === 'IMAGE') {
+                                    // Ne pas générer automatiquement les balises <img> 
+                                    // car elles sont déjà gérées par le contenu
+                                    return {};
+                                }
+                                if (entityType === 'LINK') {
+                                    const data = entity.getData();
+                                    return {
+                                        element: 'a',
+                                        attributes: {
+                                            href: data.url,
+                                            target: '_blank',
+                                            rel: 'noopener noreferrer'
+                                        }
+                                    };
+                                }
+                            }
+                        });
                         return { id_config: result.id_config, text_html: html };
                     });
                     return { type: 'richText', data: convertedResults };
@@ -596,7 +636,27 @@ router.get('/sendPageRichText', apiKeyMiddleware, async (req, res) => {
                 rawContent = result.text_json;
             }
             const contentState = convertFromRaw(rawContent);
-            const html = stateToHTML(contentState);
+            const html = stateToHTML(contentState, {
+                entityStyleFn: (entity) => {
+                    const entityType = entity.getType();
+                    if (entityType === 'IMAGE') {
+                        // Ne pas générer automatiquement les balises <img> 
+                        // car elles sont déjà gérées par le contenu
+                        return {};
+                    }
+                    if (entityType === 'LINK') {
+                        const data = entity.getData();
+                        return {
+                            element: 'a',
+                            attributes: {
+                                href: data.url,
+                                target: '_blank',
+                                rel: 'noopener noreferrer'
+                            }
+                        };
+                    }
+                }
+            });
             return { id_config: result.id_config, text_html: html };
         });
         return res.json({ richText: convertedResults });
