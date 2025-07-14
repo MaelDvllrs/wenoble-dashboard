@@ -422,7 +422,6 @@ const EditElementCollection = () => {
 
 
     const handleBlogDataChange = (data, isDelete = false) => {
-        console.log('handleBlogDataChange', data);
         
         setBlogData(prevData => {
           const newData = { ...prevData };

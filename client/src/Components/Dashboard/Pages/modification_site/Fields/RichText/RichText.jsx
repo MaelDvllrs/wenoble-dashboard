@@ -419,13 +419,23 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
     const file = event.target.files[0];
     if (file) {
       try {
-        // Assurez-vous d'importer compressImage si besoin
-        const compressedFile = await compressImage(file);
+        let fileToUse = file;
+        
+        // Pour les PNG, ne pas compresser pour éviter le rognage automatique
+        if (file.type !== 'image/png') {
+          fileToUse = await compressImage(file);
+        }
+        
+        // Convertir l'image en base64 (système existant)
         const reader = new FileReader();
-        reader.onload = (e) => {
-          const src = e.target.result;
+        reader.onload = () => {
+          const imageSrc = reader.result;
           const contentState = editorState.getCurrentContent();
-          const contentStateWithEntity = contentState.createEntity('IMAGE', 'IMMUTABLE', { src, width: '100%' });
+          const contentStateWithEntity = contentState.createEntity('IMAGE', 'IMMUTABLE', { 
+            src: imageSrc, 
+            width: '100%',
+            alt: file.name || ''
+          });
           const entityKey = contentStateWithEntity.getLastCreatedEntityKey();
           if (!entityKey) {
             console.error('Erreur : entityKey non défini');
@@ -435,12 +445,14 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
           const editorStateWithImage = AtomicBlockUtils.insertAtomicBlock(newEditorState, entityKey, ' ');
           setEditorState(editorStateWithImage);
         };
-        reader.readAsDataURL(compressedFile);
+        reader.readAsDataURL(fileToUse);
       } catch (error) {
-        console.error("Erreur lors de la compression de l'image :", error);
+        console.error("Erreur lors du traitement de l'image :", error);
       }
     }
   };
+
+
 
   const handleRemoveImage = (blockKey) => {
     const contentState = editorState.getCurrentContent();
