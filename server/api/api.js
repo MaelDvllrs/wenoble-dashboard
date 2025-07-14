@@ -222,9 +222,16 @@ router.get('/sendBlogRichText', apiKeyMiddleware, async (req, res) => {
                 entityStyleFn: (entity) => {
                     const entityType = entity.getType();
                     if (entityType === 'IMAGE') {
-                        // Ne pas générer automatiquement les balises <img> 
-                        // car elles sont déjà gérées par le contenu
-                        return {};
+                        // Générer les balises <img> pour les images du RichText
+                        const data = entity.getData();
+                        return {
+                            element: 'img',
+                            attributes: {
+                                src: data.src,
+                                alt: data.alt || '',
+                                style: 'max-width: 100%; height: auto;'
+                            }
+                        };
                     }
                     if (entityType === 'LINK') {
                         const data = entity.getData();
@@ -421,9 +428,16 @@ router.get('/sendBlogContent', apiKeyMiddleware, async (req, res) => {
                             entityStyleFn: (entity) => {
                                 const entityType = entity.getType();
                                 if (entityType === 'IMAGE') {
-                                    // Ne pas générer automatiquement les balises <img> 
-                                    // car elles sont déjà gérées par le contenu
-                                    return {};
+                                    // Générer les balises <img> pour les images du RichText
+                                    const data = entity.getData();
+                                    return {
+                                        element: 'img',
+                                        attributes: {
+                                            src: data.src,
+                                            alt: data.alt || '',
+                                            style: 'max-width: 100%; height: auto;'
+                                        }
+                                    };
                                 }
                                 if (entityType === 'LINK') {
                                     const data = entity.getData();
@@ -640,9 +654,16 @@ router.get('/sendPageRichText', apiKeyMiddleware, async (req, res) => {
                 entityStyleFn: (entity) => {
                     const entityType = entity.getType();
                     if (entityType === 'IMAGE') {
-                        // Ne pas générer automatiquement les balises <img> 
-                        // car elles sont déjà gérées par le contenu
-                        return {};
+                        // Générer les balises <img> pour les images du RichText
+                        const data = entity.getData();
+                        return {
+                            element: 'img',
+                            attributes: {
+                                src: data.src,
+                                alt: data.alt || '',
+                                style: 'max-width: 100%; height: auto;'
+                            }
+                        };
                     }
                     if (entityType === 'LINK') {
                         const data = entity.getData();
