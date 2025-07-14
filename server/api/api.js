@@ -221,18 +221,6 @@ router.get('/sendBlogRichText', apiKeyMiddleware, async (req, res) => {
             const html = stateToHTML(contentState, {
                 entityStyleFn: (entity) => {
                     const entityType = entity.getType();
-                    if (entityType === 'IMAGE') {
-                        // Générer les balises <img> pour les images du RichText
-                        const data = entity.getData();
-                        return {
-                            element: 'img',
-                            attributes: {
-                                src: data.src,
-                                alt: data.alt || '',
-                                style: 'max-width: 100%; height: auto;'
-                            }
-                        };
-                    }
                     if (entityType === 'LINK') {
                         const data = entity.getData();
                         return {
@@ -244,6 +232,8 @@ router.get('/sendBlogRichText', apiKeyMiddleware, async (req, res) => {
                             }
                         };
                     }
+                    // Pour les images, on laisse Draft.js générer automatiquement les <figure>
+                    return undefined;
                 }
             });
             return { id_config: result.id_config, text_html: html };
@@ -427,18 +417,6 @@ router.get('/sendBlogContent', apiKeyMiddleware, async (req, res) => {
                         const html = stateToHTML(contentState, {
                             entityStyleFn: (entity) => {
                                 const entityType = entity.getType();
-                                if (entityType === 'IMAGE') {
-                                    // Générer les balises <img> pour les images du RichText
-                                    const data = entity.getData();
-                                    return {
-                                        element: 'img',
-                                        attributes: {
-                                            src: data.src,
-                                            alt: data.alt || '',
-                                            style: 'max-width: 100%; height: auto;'
-                                        }
-                                    };
-                                }
                                 if (entityType === 'LINK') {
                                     const data = entity.getData();
                                     return {
@@ -450,6 +428,8 @@ router.get('/sendBlogContent', apiKeyMiddleware, async (req, res) => {
                                         }
                                     };
                                 }
+                                // Pour les images, on laisse Draft.js générer automatiquement les <figure>
+                                return undefined;
                             }
                         });
                         return { id_config: result.id_config, text_html: html };
@@ -653,18 +633,6 @@ router.get('/sendPageRichText', apiKeyMiddleware, async (req, res) => {
             const html = stateToHTML(contentState, {
                 entityStyleFn: (entity) => {
                     const entityType = entity.getType();
-                    if (entityType === 'IMAGE') {
-                        // Générer les balises <img> pour les images du RichText
-                        const data = entity.getData();
-                        return {
-                            element: 'img',
-                            attributes: {
-                                src: data.src,
-                                alt: data.alt || '',
-                                style: 'max-width: 100%; height: auto;'
-                            }
-                        };
-                    }
                     if (entityType === 'LINK') {
                         const data = entity.getData();
                         return {
@@ -676,6 +644,8 @@ router.get('/sendPageRichText', apiKeyMiddleware, async (req, res) => {
                             }
                         };
                     }
+                    // Pour les images, on laisse Draft.js générer automatiquement les <figure>
+                    return undefined;
                 }
             });
             return { id_config: result.id_config, text_html: html };
