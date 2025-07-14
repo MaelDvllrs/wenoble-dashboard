@@ -221,6 +221,21 @@ router.get('/sendBlogRichText', apiKeyMiddleware, async (req, res) => {
             const html = stateToHTML(contentState, {
                 entityStyleFn: (entity) => {
                     const entityType = entity.getType();
+                    if (entityType === 'IMAGE') {
+                        // Gérer manuellement les images PNG pour éviter la duplication
+                        const data = entity.getData();
+                        if (data.src && data.src.toLowerCase().includes('.png')) {
+                            return {
+                                element: 'img',
+                                attributes: {
+                                    src: data.src,
+                                    alt: data.alt || '',
+                                    style: 'max-width: 100%; height: auto;'
+                                }
+                            };
+                        }
+                        return undefined; // Laisser Draft.js gérer les autres formats
+                    }
                     if (entityType === 'LINK') {
                         const data = entity.getData();
                         return {
@@ -232,7 +247,22 @@ router.get('/sendBlogRichText', apiKeyMiddleware, async (req, res) => {
                             }
                         };
                     }
-                    // Pour les images, on laisse Draft.js générer automatiquement les <figure>
+                    return undefined;
+                },
+                blockStyleFn: (block) => {
+                    // Empêcher la génération automatique de figure pour les PNG
+                    if (block.getType() === 'atomic') {
+                        const entityKey = block.getEntityAt(0);
+                        if (entityKey) {
+                            const entity = contentState.getEntity(entityKey);
+                            if (entity.getType() === 'IMAGE') {
+                                const data = entity.getData();
+                                if (data.src && data.src.toLowerCase().includes('.png')) {
+                                    return { element: 'div', style: { display: 'none' } };
+                                }
+                            }
+                        }
+                    }
                     return undefined;
                 }
             });
@@ -417,6 +447,21 @@ router.get('/sendBlogContent', apiKeyMiddleware, async (req, res) => {
                         const html = stateToHTML(contentState, {
                             entityStyleFn: (entity) => {
                                 const entityType = entity.getType();
+                                if (entityType === 'IMAGE') {
+                                    // Gérer manuellement les images PNG pour éviter la duplication
+                                    const data = entity.getData();
+                                    if (data.src && data.src.toLowerCase().includes('.png')) {
+                                        return {
+                                            element: 'img',
+                                            attributes: {
+                                                src: data.src,
+                                                alt: data.alt || '',
+                                                style: 'max-width: 100%; height: auto;'
+                                            }
+                                        };
+                                    }
+                                    return undefined; // Laisser Draft.js gérer les autres formats
+                                }
                                 if (entityType === 'LINK') {
                                     const data = entity.getData();
                                     return {
@@ -428,7 +473,22 @@ router.get('/sendBlogContent', apiKeyMiddleware, async (req, res) => {
                                         }
                                     };
                                 }
-                                // Pour les images, on laisse Draft.js générer automatiquement les <figure>
+                                return undefined;
+                            },
+                            blockStyleFn: (block) => {
+                                // Empêcher la génération automatique de figure pour les PNG
+                                if (block.getType() === 'atomic') {
+                                    const entityKey = block.getEntityAt(0);
+                                    if (entityKey) {
+                                        const entity = contentState.getEntity(entityKey);
+                                        if (entity.getType() === 'IMAGE') {
+                                            const data = entity.getData();
+                                            if (data.src && data.src.toLowerCase().includes('.png')) {
+                                                return { element: 'div', style: { display: 'none' } };
+                                            }
+                                        }
+                                    }
+                                }
                                 return undefined;
                             }
                         });
@@ -633,6 +693,21 @@ router.get('/sendPageRichText', apiKeyMiddleware, async (req, res) => {
             const html = stateToHTML(contentState, {
                 entityStyleFn: (entity) => {
                     const entityType = entity.getType();
+                    if (entityType === 'IMAGE') {
+                        // Gérer manuellement les images PNG pour éviter la duplication
+                        const data = entity.getData();
+                        if (data.src && data.src.toLowerCase().includes('.png')) {
+                            return {
+                                element: 'img',
+                                attributes: {
+                                    src: data.src,
+                                    alt: data.alt || '',
+                                    style: 'max-width: 100%; height: auto;'
+                                }
+                            };
+                        }
+                        return undefined; // Laisser Draft.js gérer les autres formats
+                    }
                     if (entityType === 'LINK') {
                         const data = entity.getData();
                         return {
@@ -644,7 +719,22 @@ router.get('/sendPageRichText', apiKeyMiddleware, async (req, res) => {
                             }
                         };
                     }
-                    // Pour les images, on laisse Draft.js générer automatiquement les <figure>
+                    return undefined;
+                },
+                blockStyleFn: (block) => {
+                    // Empêcher la génération automatique de figure pour les PNG
+                    if (block.getType() === 'atomic') {
+                        const entityKey = block.getEntityAt(0);
+                        if (entityKey) {
+                            const entity = contentState.getEntity(entityKey);
+                            if (entity.getType() === 'IMAGE') {
+                                const data = entity.getData();
+                                if (data.src && data.src.toLowerCase().includes('.png')) {
+                                    return { element: 'div', style: { display: 'none' } };
+                                }
+                            }
+                        }
+                    }
                     return undefined;
                 }
             });
