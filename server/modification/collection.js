@@ -1443,14 +1443,11 @@ router.delete('/deleteCollectionElement', authenticateToken, async (req, res) =>
           .from('collection_field_image')
           .select('src_image')
           .eq('collection_element_id', idBlogPage)
-          .eq('id_config', id_config);
+          .eq('id_config', id_config)
+          .maybeSingle();
         if (imgError && imgError.code !== 'PGRST116') throw imgError;
-        if (imgData && imgData.length > 0) {
-          for (const img of imgData) {
-            if (img.src_image) {
-              await supabase.storage.from('collection-images').remove([img.src_image]);
-            }
-          }
+        if (imgData && imgData.src_image) {
+          await supabase.storage.from('collection-images').remove([imgData.src_image]);
         }
         const { error: delError } = await supabase
           .from('collection_field_image')
@@ -1463,14 +1460,11 @@ router.delete('/deleteCollectionElement', authenticateToken, async (req, res) =>
           .from('collection_field_video')
           .select('src_video')
           .eq('collection_element_id', idBlogPage)
-          .eq('id_config', id_config);
+          .eq('id_config', id_config)
+          .maybeSingle();
         if (vidError && vidError.code !== 'PGRST116') throw vidError;
-        if (vidData && vidData.length > 0) {
-          for (const vid of vidData) {
-            if (vid.src_video) {
-              await supabase.storage.from('collection-video').remove([vid.src_video]);
-            }
-          }
+        if (vidData && vidData.src_video) {
+          await supabase.storage.from('collection-video').remove([vidData.src_video]);
         }
         const { error: delError } = await supabase
           .from('collection_field_video')
@@ -1483,17 +1477,14 @@ router.delete('/deleteCollectionElement', authenticateToken, async (req, res) =>
           .from('collection_field_gallery')
           .select('gallery')
           .eq('collection_element_id', idBlogPage)
-          .eq('id_config', id_config);
+          .eq('id_config', id_config)
+          .maybeSingle();
         if (galError && galError.code !== 'PGRST116') throw galError;
-        if (galData && galData.length > 0) {
-          for (const galItem of galData) {
-            if (galItem.gallery) {
-              let galleryArr = [];
-              try { galleryArr = JSON.parse(galItem.gallery); } catch {}
-              for (const img of galleryArr) {
-                await supabase.storage.from('collection-gallery').remove([img.src_photo]);
-              }
-            }
+        if (galData && galData.gallery) {
+          let galleryArr = [];
+          try { galleryArr = JSON.parse(galData.gallery); } catch {}
+          for (const img of galleryArr) {
+            await supabase.storage.from('collection-gallery').remove([img.src_photo]);
           }
         }
         const { error: delError } = await supabase
