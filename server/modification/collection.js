@@ -1326,11 +1326,14 @@ router.delete('/deleteCollectionData', authenticateToken, async (req, res) => {
           .from('collection_field_image')
           .select('src_image')
           .eq('collection_element_id', id_blog_page)
-          .eq('id_config', id_config)
-          .single();
+          .eq('id_config', id_config);
         if (imgError) throw imgError;
-        if (imgData && imgData.src_image) {
-          await supabase.storage.from('collection-images').remove([imgData.src_image]);
+        if (imgData && imgData.length > 0) {
+          for (const img of imgData) {
+            if (img.src_image) {
+              await supabase.storage.from('collection-images').remove([img.src_image]);
+            }
+          }
         }
         await supabase
           .from('collection_field_image')
@@ -1343,11 +1346,14 @@ router.delete('/deleteCollectionData', authenticateToken, async (req, res) => {
           .from('collection_field_video')
           .select('src_video')
           .eq('collection_element_id', id_blog_page)
-          .eq('id_config', id_config)
-          .single();
+          .eq('id_config', id_config);
         if (vidError) throw vidError;
-        if (vidData && vidData.src_video) {
-          await supabase.storage.from('collection-video').remove([vidData.src_video]);
+        if (vidData && vidData.length > 0) {
+          for (const vid of vidData) {
+            if (vid.src_video) {
+              await supabase.storage.from('collection-video').remove([vid.src_video]);
+            }
+          }
         }
         await supabase
           .from('collection_field_video')
@@ -1397,21 +1403,24 @@ router.delete('/deleteCollectionElement', authenticateToken, async (req, res) =>
           .from('collection_field_richtext')
           .select('text_json')
           .eq('collection_element_id', idBlogPage)
-          .eq('id_config', id_config)
-          .single();
+          .eq('id_config', id_config);
         if (richError && richError.code !== 'PGRST116') throw richError;
-        if (richData && richData.text_json) {
-          let entityMap = {};
-          try {
-            const content = JSON.parse(richData.text_json);
-            entityMap = content.entityMap || {};
-          } catch {}
-          const images = Object.keys(entityMap)
-            .filter(key => entityMap[key].type === 'IMAGE')
-            .map(key => entityMap[key].data.src);
-          for (const url of images) {
-            const name = url.split('/').pop();
-            await supabase.storage.from('collection-richtext-images').remove([name]);
+        if (richData && richData.length > 0) {
+          for (const richItem of richData) {
+            if (richItem.text_json) {
+              let entityMap = {};
+              try {
+                const content = JSON.parse(richItem.text_json);
+                entityMap = content.entityMap || {};
+              } catch {}
+              const images = Object.keys(entityMap)
+                .filter(key => entityMap[key].type === 'IMAGE')
+                .map(key => entityMap[key].data.src);
+              for (const url of images) {
+                const name = url.split('/').pop();
+                await supabase.storage.from('collection-richtext-images').remove([name]);
+              }
+            }
           }
         }
         const { error: delError } = await supabase
@@ -1432,11 +1441,14 @@ router.delete('/deleteCollectionElement', authenticateToken, async (req, res) =>
           .from('collection_field_image')
           .select('src_image')
           .eq('collection_element_id', idBlogPage)
-          .eq('id_config', id_config)
-          .single();
+          .eq('id_config', id_config);
         if (imgError && imgError.code !== 'PGRST116') throw imgError;
-        if (imgData && imgData.src_image) {
-          await supabase.storage.from('collection-images').remove([imgData.src_image]);
+        if (imgData && imgData.length > 0) {
+          for (const img of imgData) {
+            if (img.src_image) {
+              await supabase.storage.from('collection-images').remove([img.src_image]);
+            }
+          }
         }
         const { error: delError } = await supabase
           .from('collection_field_image')
@@ -1449,11 +1461,14 @@ router.delete('/deleteCollectionElement', authenticateToken, async (req, res) =>
           .from('collection_field_video')
           .select('src_video')
           .eq('collection_element_id', idBlogPage)
-          .eq('id_config', id_config)
-          .single();
+          .eq('id_config', id_config);
         if (vidError && vidError.code !== 'PGRST116') throw vidError;
-        if (vidData && vidData.src_video) {
-          await supabase.storage.from('collection-video').remove([vidData.src_video]);
+        if (vidData && vidData.length > 0) {
+          for (const vid of vidData) {
+            if (vid.src_video) {
+              await supabase.storage.from('collection-video').remove([vid.src_video]);
+            }
+          }
         }
         const { error: delError } = await supabase
           .from('collection_field_video')
@@ -1466,14 +1481,17 @@ router.delete('/deleteCollectionElement', authenticateToken, async (req, res) =>
           .from('collection_field_gallery')
           .select('gallery')
           .eq('collection_element_id', idBlogPage)
-          .eq('id_config', id_config)
-          .single();
+          .eq('id_config', id_config);
         if (galError && galError.code !== 'PGRST116') throw galError;
-        if (galData && galData.gallery) {
-          let galleryArr = [];
-          try { galleryArr = JSON.parse(galData.gallery); } catch {}
-          for (const img of galleryArr) {
-            await supabase.storage.from('collection-gallery').remove([img.src_photo]);
+        if (galData && galData.length > 0) {
+          for (const galItem of galData) {
+            if (galItem.gallery) {
+              let galleryArr = [];
+              try { galleryArr = JSON.parse(galItem.gallery); } catch {}
+              for (const img of galleryArr) {
+                await supabase.storage.from('collection-gallery').remove([img.src_photo]);
+              }
+            }
           }
         }
         const { error: delError } = await supabase
