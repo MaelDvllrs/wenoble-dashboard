@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useTheme } from '@mui/material/styles';
+import { useWebsite } from '../../../../Context/WebsiteContext';
 import MenuItem from '@mui/material/MenuItem';
 import { SelectField, CustomAxisTooltip } from '../../../../Theme/element';
 import { LineHighlightPlot } from '@mui/x-charts/LineChart';
@@ -23,6 +24,7 @@ import './statistique.css';
 export const PlatformCategorieStatistique = () => {
   const token = Cookies.get('token'); 
   const theme = useTheme();
+  const { selectedWebsite, websiteLoading } = useWebsite();
   const [platformCategorieStatistique, setPlatformCategorieStatistique] = useState(null);
   const [platformCategorie, setPlatformCategorie] = useState([]);
   const [values, setValues] = useState([]);
@@ -50,13 +52,26 @@ export const PlatformCategorieStatistique = () => {
 
 
   useEffect(() => {
-    const fetchUserStatistique = async () => {
-      const userData = await getPlatformCategorieStatistique(period, typePlatform, typeUser, token);
-      setPlatformCategorieStatistique(userData);
-      setLoading(true);
+    const fetchPlatformCategorieStatistique = async () => {
+      if (!selectedWebsite?.id) {
+        console.log('Aucun site web sélectionné');
+        setLoading(false);
+        return;
+      }
+      
+      setLoading(false); // Réinitialiser le loading lors du changement
+      
+      try {
+        const userData = await getPlatformCategorieStatistique(period, typePlatform, typeUser, selectedWebsite.id, token);
+        setPlatformCategorieStatistique(userData);
+        setLoading(true);
+      } catch (error) {
+        console.error('Erreur lors de la récupération des statistiques de plateforme/catégorie:', error);
+        setLoading(false);
+      }
     };
-    fetchUserStatistique();
-  }, [period, typePlatform, typeUser, token]);
+    fetchPlatformCategorieStatistique();
+  }, [period, typePlatform, typeUser, token, selectedWebsite]);
 
  
   useEffect(() => {
@@ -123,110 +138,120 @@ export const PlatformCategorieStatistique = () => {
   ]
 
   return (
-    <div className="statistique-container" style={{ boxShadow: theme.palette.shadow.main, backgroundColor: theme.palette.primary.main }}>
-        <div className='select-stat-container'>
-          <SelectFieldSecondary
-            id="period-select"
-            value={typeUser}
-            onChange={handleChangeTypeUser}
-            theme={theme}
-          >
-            {Object.entries(labelUser).map(([value, { label }]) => (
-              <MenuItem key={value} value={value}>
-                {label}
-              </MenuItem>
-            ))}
-          </SelectFieldSecondary>
-          <p style={{marginRight:"1rem"}}>par</p>
-          <SelectFieldSecondary
-              id="period-select"
-              value={typePlatform}
-              onChange={handleChangeTypePlatform}
-              theme={theme}
-          >
-              {Object.entries(labelMap).map(([value, { label }]) => (
-                  <MenuItem key={value} value={value}>
-                      {label}
-                  </MenuItem>
-              ))}
-          </SelectFieldSecondary>
-          <Tooltip title={labelMap[typePlatform].description} placement="right">
-            <InfoOutlinedIcon className='icon-select-stat-container' style={{color: theme.palette.text.secondary}}/>
-          </Tooltip>
-        </div>
-        {!loading ? (
+    <>
+      {websiteLoading || !selectedWebsite ? (
+        <div className="statistique-container" style={{ boxShadow: theme.palette.shadow.main, backgroundColor: theme.palette.primary.main }}>
           <div className='loading-message-stats'>
             <CircularProgress sx={{color:"#2ec96d"}}/>
           </div>
-        ) : (
-          platformCategorieStatistique && platformCategorieStatistique.data.length > 0 ? (
-            <ResponsiveChartContainer
-              series={series}
-              height={300}
-              sx={{
-                "& .MuiPieArc-series-auto-generated-id-0":{
-                  stroke: theme.palette.primary.main,
-                },
-                // bottomAxis Line Styles
-                 "& .MuiChartsAxis-bottom .MuiChartsAxis-line":{
-                    stroke:"none",
-                 },
-    
-                 // leftAxis Line Styles
-                 "& .MuiChartsAxis-left .MuiChartsAxis-line":{
-                    stroke:"none",
-                 },
-                 "& .MuiChartsAxis-tick":{
-                    stroke:"none !important", 
-                 },
-    
-              }}
-            >
-              <PiePlot />
-              <ChartsLegend
-                direction="row"
-                position={{
-                  horizontal: 'middle', 
-                  vertical: 'bottom',
-                }}
-                itemMarkHeight={10}
-                itemMarkWidth={10}
-              />
-    
-    
-              {dataLoaded && (
-                <CustomAxisTooltip
-                  themeColor={theme}
-                  type='item'
-                  unite='country'
-                />
-              )}
-              <LineHighlightPlot/>
-            </ResponsiveChartContainer>
-          ) : (
-            <div className='no-data-message-stats'>
-              <PiSmileyMeltingFill style={{ fontSize: 50, color: theme.palette.text.primary }} />
-              Aucune donnée disponible.
+        </div>
+      ) : (
+        <div className="statistique-container" style={{ boxShadow: theme.palette.shadow.main, backgroundColor: theme.palette.primary.main }}>
+            <div className='select-stat-container'>
+              <SelectFieldSecondary
+                id="period-select"
+                value={typeUser}
+                onChange={handleChangeTypeUser}
+                theme={theme}
+              >
+                {Object.entries(labelUser).map(([value, { label }]) => (
+                  <MenuItem key={value} value={value}>
+                    {label}
+                  </MenuItem>
+                ))}
+              </SelectFieldSecondary>
+              <p style={{marginRight:"1rem"}}>par</p>
+              <SelectFieldSecondary
+                  id="period-select"
+                  value={typePlatform}
+                  onChange={handleChangeTypePlatform}
+                  theme={theme}
+              >
+                  {Object.entries(labelMap).map(([value, { label }]) => (
+                      <MenuItem key={value} value={value}>
+                          {label}
+                      </MenuItem>
+                  ))}
+              </SelectFieldSecondary>
+              <Tooltip title={labelMap[typePlatform].description} placement="right">
+                <InfoOutlinedIcon className='icon-select-stat-container' style={{color: theme.palette.text.secondary}}/>
+              </Tooltip>
             </div>
-          )
-        )}
-        <SelectField
-            id="period-select"
-            value={period}
-            onChange={handleChange}
-            theme={theme}
-        >
-            <MenuItem value={'today'}>Aujourd'hui</MenuItem>
-            <MenuItem value={'yesterday'}>Hier</MenuItem>
-            <MenuItem value={'last7days'}>Les 7 derniers jours</MenuItem>
-            <MenuItem value={'last14days'}>Les 14 derniers jours</MenuItem>
-            <MenuItem value={'last30days'}>Les 30 derniers jours</MenuItem>
-            <MenuItem value={'last90days'}>Les 90 derniers jours</MenuItem>
-            <MenuItem value={'last365days'}>Les 12 derniers mois</MenuItem>
-        </SelectField>
+            {!loading ? (
+              <div className='loading-message-stats'>
+                <CircularProgress sx={{color:"#2ec96d"}}/>
+              </div>
+            ) : (
+              platformCategorieStatistique && platformCategorieStatistique.data.length > 0 ? (
+                <ResponsiveChartContainer
+                  series={series}
+                  height={300}
+                  sx={{
+                    "& .MuiPieArc-series-auto-generated-id-0":{
+                      stroke: theme.palette.primary.main,
+                    },
+                    // bottomAxis Line Styles
+                     "& .MuiChartsAxis-bottom .MuiChartsAxis-line":{
+                        stroke:"none",
+                     },
+        
+                     // leftAxis Line Styles
+                     "& .MuiChartsAxis-left .MuiChartsAxis-line":{
+                        stroke:"none",
+                     },
+                     "& .MuiChartsAxis-tick":{
+                        stroke:"none !important", 
+                     },
+        
+                  }}
+                >
+                  <PiePlot />
+                  <ChartsLegend
+                    direction="row"
+                    position={{
+                      horizontal: 'middle', 
+                      vertical: 'bottom',
+                    }}
+                    itemMarkHeight={10}
+                    itemMarkWidth={10}
+                  />
+        
+        
+                  {dataLoaded && (
+                    <CustomAxisTooltip
+                      themeColor={theme}
+                      type='item'
+                      unite='country'
+                    />
+                  )}
+                  <LineHighlightPlot/>
+                </ResponsiveChartContainer>
+              ) : (
+                <div className='no-data-message-stats'>
+                  <PiSmileyMeltingFill style={{ fontSize: 50, color: theme.palette.text.primary }} />
+                  Aucune donnée disponible.
+                </div>
+              )
+            )}
+            <SelectField
+                id="period-select"
+                value={period}
+                onChange={handleChange}
+                theme={theme}
+            >
+                <MenuItem value={'today'}>Aujourd'hui</MenuItem>
+                <MenuItem value={'yesterday'}>Hier</MenuItem>
+                <MenuItem value={'last7days'}>Les 7 derniers jours</MenuItem>
+                <MenuItem value={'last14days'}>Les 14 derniers jours</MenuItem>
+                <MenuItem value={'last30days'}>Les 30 derniers jours</MenuItem>
+                <MenuItem value={'last90days'}>Les 90 derniers jours</MenuItem>
+                <MenuItem value={'last365days'}>Les 12 derniers mois</MenuItem>
+            </SelectField>
 
-      
-    </div>
+          
+        </div>
+      )}
+    </>
   );
 };
 

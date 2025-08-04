@@ -4,6 +4,7 @@ import Cookies from 'js-cookie';
 import { jwtDecode } from 'jwt-decode';
 import { NavLink, useParams } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
+import { useWebsite } from '../../../../Context/WebsiteContext';
 import IconButton from '@mui/material/IconButton';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
@@ -11,12 +12,14 @@ import { SecondaryButton, SimpleSearchField } from '../../../../Theme/element';
 import config from "../../../../config";
 import { SkeletonBlog } from "../../../skeleton/skeleton";
 import { formatDate } from "../../../../utils/dateUtils";
+import { useSnackbar } from '../../../../Theme/snackbar';
 import '../modification_site/Portfolio/portfolio.css';
 import './newsletter.css';
 
 const NewsLetters = () => {
     // --- Hooks & Theme ---
     const theme = useTheme();
+    const { selectedWebsite, loading: websiteLoading } = useWebsite();
     const { id } = useParams();
     const token = Cookies.get('token');
     const anchorRefMessageOption = useRef([]);
@@ -31,24 +34,53 @@ const NewsLetters = () => {
     // --- Constants ---
     const apiUrl = config.apiUrl;
 
+    // --- Snackbar Hook ---
+    const { showSnackbar } = useSnackbar();
+
     // --- Effects ---
-    useEffect(() => {
-        Axios.get(`${apiUrl}/getNewsletter`, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        }).then((response) => {
+    const fetchNewsletters = async () => {
+        if (!selectedWebsite?.id || websiteLoading) {
+            console.log('Aucun site web sélectionné ou en cours de chargement');
+            setInfoListeMail([]);
+            setLoadingMessage(false);
+            return;
+        }
+
+        setLoadingMessage(true);
+        try {
+            const response = await Axios.get(`${apiUrl}/getNewsletter`, {
+                params: {
+                    websiteId: selectedWebsite.id
+                },
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
             setInfoListeMail(jwtDecode(response.data).mail);
             setLoadingMessage(false);
-        }).catch((error) => {
+        } catch (error) {
+            showSnackbar('error', '[NEWSLET-001] Erreur lors de la récupération des newsletters');
             console.error('Erreur lors de la récupération des messages :', error);
-        });
-    }, [id]);
+            setLoadingMessage(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchNewsletters();
+    }, [selectedWebsite, websiteLoading]);
 
     // --- Handlers & Functions ---
     const handleExport = () => {
+        if (!selectedWebsite?.id) {
+            showSnackbar('error', 'Aucun site web sélectionné');
+            return;
+        }
+
         Axios.get(`${apiUrl}/exportNewsletter`, {
+            params: {
+                websiteId: selectedWebsite.id
+            },
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
@@ -63,21 +95,33 @@ const NewsLetters = () => {
             document.body.appendChild(link);
             link.click();
             link.remove();
+            showSnackbar('success', 'Export des newsletters réussi');
         }).catch((error) => {
+            showSnackbar('error', '[NEWSLET-002] Erreur lors de l\'export des newsletters');
             console.error('Erreur lors de la récupération des mail :', error);
         });
     };
 
     const handleDelete = (id_newsletter) => {
+        if (!selectedWebsite?.id) {
+            showSnackbar('error', 'Aucun site web sélectionné');
+            return;
+        }
+
         Axios.delete(`${apiUrl}/deleteNewsletter`, {
-            data: { id_newsletter },
+            data: { 
+                id_newsletter,
+                websiteId: selectedWebsite.id
+            },
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             }
         }).then(() => {
+            showSnackbar('success', 'Newsletter supprimée avec succès');
             setInfoListeMail(InfoListeMail.filter(InfoMail => InfoMail.id_newsletter !== id_newsletter));
         }).catch((error) => {
+            showSnackbar('error', '[NEWSLET-003] Erreur lors de la suppression de la newsletter');
             console.error('Erreur lors de la récupération des messages :', error);
         });
     };
@@ -116,33 +160,35 @@ const NewsLetters = () => {
         : [];
 
     const handleDeleteSelected = () => {
+        if (!selectedWebsite?.id) {
+            showSnackbar('error', 'Aucun site web sélectionné');
+            return;
+        }
+
         const selectedIds = Object.entries(checkedMails)
             .filter(([id, checked]) => checked)
             .map(([id]) => id);
         if (selectedIds.length === 0) return;
         Promise.all(selectedIds.map(id_newsletter =>
             Axios.delete(`${apiUrl}/deleteNewsletter`, {
-                data: { id_newsletter },
+                data: { 
+                    id_newsletter,
+                    websiteId: selectedWebsite.id
+                },
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 }
             })
+
         )).then(() => {
             // Rafraîchir la liste après suppression
-            Axios.get(`${apiUrl}/getNewsletter`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            }).then((response) => {
-                setInfoListeMail(jwtDecode(response.data).mail);
-                setCheckedMails({});
-                setAllChecked(false);
-            }).catch((error) => {
-                console.error('Erreur lors du rafraîchissement des messages :', error);
-            });
+            fetchNewsletters();
+            setCheckedMails({});
+            setAllChecked(false);
+            showSnackbar('success', 'Sélection supprimée avec succès');
         }).catch((error) => {
+            showSnackbar('error', '[NEWSLET-005] Erreur lors de la suppression des newsletters');
             console.error('Erreur lors de la suppression des mails :', error);
         });
     };

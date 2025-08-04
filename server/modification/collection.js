@@ -11,6 +11,7 @@ const axios = require('axios');
 
 const { supabaseServer } = require('../supabase');
 const { authenticateToken } = require('../middleware/authToken');
+const { checkUserWebsiteAccess } = require('../website/website');
 const { id } = require('date-fns/locale/id');
 const { da } = require('date-fns/locale/da');
 
@@ -27,6 +28,24 @@ const idBlogArticleArray = process.env.idBlogArticle ? process.env.idBlogArticle
 
 const checkIdInArray = (id) => {
   return idBlogArticleArray.includes(id);
+};
+
+// Fonction helper pour récupérer le website_id d'une collection
+const getCollectionWebsiteId = async (supabase, collectionId) => {
+  const { data, error } = await supabase
+    .from('collection')
+    .select('website_id')
+    .eq('id', collectionId)
+    .single();
+    
+  if (error) {
+    if (error.code === 'PGRST116') {
+      return null;
+    }
+    throw error;
+  }
+  
+  return data.website_id;
 };
 
 
@@ -60,7 +79,6 @@ const createNotification = async (id, title, dateSend, slug) => {
             IdElement: slug
           }
         });
-        console.log('Notification créée :', response.data);
       } catch (error) {
         console.error('Erreur lors de la création de la notification :', error);
       }
@@ -72,18 +90,32 @@ const createNotification = async (id, title, dateSend, slug) => {
 
 
 
-// Récupérer les collections (blogs) d'un utilisateur
-router.get('/getCollection', authenticateToken, async (req, res) => {
+// ========== ENDPOINTS POUR LA GESTION DES COLLECTIONS ==========
 
+
+// Récupérer les collections d'un utilisateur (via ses sites web)
+router.get('/getCollection', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.idUser;
+    const websiteId = req.query.websiteId; // Le site web sélectionné par l'utilisateur
     const token = req.headers['authorization']?.split(' ')[1];
     const supabase = supabaseServer(token);
 
+    if (!websiteId) {
+      return res.status(400).send({ error: 'websiteId est requis' });
+    }
+
+    // Vérifier l'accès de l'utilisateur au site web
+    const { hasAccess } = await checkUserWebsiteAccess(supabase, userId, websiteId);
+    if (!hasAccess) {
+      return res.status(403).send({ error: 'Vous n\'avez pas accès à ce site web' });
+    }
+
+    // Récupérer les collections du site web
     const { data, error } = await supabase
       .from('collection')
       .select('id, collection_name')
-      .eq('user_id', userId);
+      .eq('website_id', websiteId);
     
     if (error) throw error;
     
@@ -103,18 +135,15 @@ router.get('/getListeCollection', authenticateToken, async (req, res) => {
     const token = req.headers['authorization']?.split(' ')[1];
     const supabase = supabaseServer(token);
     
-    // Vérifier les droits d'accès
-    const { data: blogData, error: blogError } = await supabase
-      .from('collection')
-      .select('user_id')
-      .eq('id', sentIdBlog)
-      .single();
-      
-    if (blogError) throw blogError;
+    // Récupérer le website_id de la collection et vérifier les droits d'accès
+    const websiteId = await getCollectionWebsiteId(supabase, sentIdBlog);
+    if (!websiteId) {
+      return res.status(404).send('Collection non trouvée.');
+    }
 
-    
-    if (userId !== blogData.user_id) {
-      return res.status(403).send('Vous n\'avez pas les droits pour accéder à ce blog.');
+    const { hasAccess } = await checkUserWebsiteAccess(supabase, userId, websiteId);
+    if (!hasAccess) {
+      return res.status(403).send('Vous n\'avez pas les droits pour accéder à cette collection.');
     }
     
     // Récupérer la liste des pages
@@ -135,31 +164,91 @@ router.get('/getListeCollection', authenticateToken, async (req, res) => {
 });
 
 
+
+
 // Récupérer la configuration d'un blog
 router.get('/getConfigCollection', authenticateToken, async (req, res) => {
   try {
-    const sentIdBlog = req.query.IdBlog;
+    const collectionId = req.query.collectionId || req.query.IdBlog; // Support des deux paramètres pour compatibilité
+    const userId = req.user.idUser;
     const token = req.headers['authorization']?.split(' ')[1];
     const supabase = supabaseServer(token);
 
-    
+    if (!collectionId) {
+      return res.status(400).send({ error: 'collectionId est requis' });
+    }
+
+    // Récupérer le website_id de la collection et vérifier les droits d'accès
+    const websiteId = await getCollectionWebsiteId(supabase, collectionId);
+    if (!websiteId) {
+      return res.status(404).send({ error: 'Collection non trouvée' });
+    }
+
+    const { hasAccess } = await checkUserWebsiteAccess(supabase, userId, websiteId);
+    if (!hasAccess) {
+      return res.status(403).send({ error: 'Vous n\'avez pas les droits pour accéder à cette collection' });
+    }
+
+    // Récupérer la configuration des champs
     const { data, error } = await supabase
       .from('collection_config')
       .select('id, tab_field, name_field, description_field, collection_id_ref, multiline_text')
-      .eq('collection_id', sentIdBlog)
+      .eq('collection_id', collectionId)
       .order('id', { ascending: true });
       
     if (error) throw error;
     
-    const blogConfigCrypt = jwt.sign({ blogConfig: data }, secretKey);
-    res.send(blogConfigCrypt);
+    // Retourner les données directement pour compatibilité avec editCollection.jsx
+    res.send({ data });
   } catch (error) {
     console.error('Erreur lors de la récupération de la configuration du blog:', error);
     res.status(500).send({ error: error.message });
   }
 });
 
+// Récupérer une collection par son ID
+router.get('/getCollectionById', authenticateToken, async (req, res) => {
+  try {
+    const collectionId = req.query.collectionId;
+    const userId = req.user.idUser;
+    const token = req.headers['authorization']?.split(' ')[1];
+    const supabase = supabaseServer(token);
 
+    if (!collectionId) {
+      return res.status(400).send({ error: 'collectionId est requis' });
+    }
+
+    // Récupérer le website_id de la collection et vérifier les droits d'accès
+    const websiteId = await getCollectionWebsiteId(supabase, collectionId);
+    if (!websiteId) {
+      return res.status(404).send({ error: 'Collection non trouvée' });
+    }
+
+    const { hasAccess } = await checkUserWebsiteAccess(supabase, userId, websiteId);
+    if (!hasAccess) {
+      return res.status(403).send({ error: 'Collection non trouvée ou accès non autorisé' });
+    }
+
+    // Récupérer la collection
+    const { data, error } = await supabase
+      .from('collection')
+      .select('id, collection_name, collection_slug, website_id, created_at, updated_at')
+      .eq('id', collectionId)
+      .single();
+      
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return res.status(404).send({ error: 'Collection non trouvée' });
+      }
+      throw error;
+    }
+    
+    res.send({ data });
+  } catch (error) {
+    console.error('Erreur lors de la récupération de la collection:', error);
+    res.status(500).send({ error: error.message });
+  }
+});
 
 // Récupérer les références de collection
 router.get('/getCollectionRef', authenticateToken, async (req, res) => {
@@ -195,6 +284,7 @@ router.post('/createCollectionElement', authenticateToken, async (req, res) => {
   try {
     const token = req.headers['authorization']?.split(' ')[1];
     const supabase = supabaseServer(token);
+    const userId = req.user.idUser;
 
     const id = req.body.params.id;
     const title = req.body.params.mainText[0].value;
@@ -203,8 +293,10 @@ router.post('/createCollectionElement', authenticateToken, async (req, res) => {
     const status = req.body.params.status;
     
     let publishDate = null;
+    let publishedBy = null;
     if (status === 1) {
       publishDate = date;
+      publishedBy = userId;
     }
     
     // Insérer la nouvelle page
@@ -217,7 +309,10 @@ router.post('/createCollectionElement', authenticateToken, async (req, res) => {
         collection_element_status: status,
         collection_element_create_date: date,
         collection_element_update_date: date,
-        collection_element_publish_date: publishDate
+        collection_element_publish_date: publishDate,
+        created_by: userId,
+        updated_by: userId,
+        published_by: publishedBy
       })
       .select('id');
       
@@ -699,10 +794,6 @@ router.post('/createMultiReferenceCollection', authenticateToken, async (req, re
 
 
 
-
-
-
-
 //
 router.get('/getCollectionElement', authenticateToken, async (req, res) => {
   try {
@@ -710,7 +801,7 @@ router.get('/getCollectionElement', authenticateToken, async (req, res) => {
     const token = req.headers['authorization']?.split(' ')[1];
     const supabase = supabaseServer(token);
 
-    // Utilisation de Supabase pour récupérer les données
+    // Utilisation de Supabase pour récupérer les données avec les informations utilisateur
     const { data, error } = await supabase
       .from('collection_element')
       .select(`
@@ -719,7 +810,13 @@ router.get('/getCollectionElement', authenticateToken, async (req, res) => {
         collection_element_status,
         collection_element_create_date, 
         collection_element_update_date, 
-        collection_element_publish_date
+        collection_element_publish_date,
+        created_by,
+        updated_by,
+        published_by,
+        creator:created_by(username),
+        updater:updated_by(username),
+        publisher:published_by(username)
       `)
       .eq('id', sentIdBlogPage)
       .single();
@@ -738,7 +835,10 @@ router.get('/getCollectionElement', authenticateToken, async (req, res) => {
       status: data.collection_element_status,
       page_blog_create_date: data.collection_element_create_date,
       page_blog_update_date: data.collection_element_update_date,
-      page_blog_publish_date: data.collection_element_publish_date
+      page_blog_publish_date: data.collection_element_publish_date,
+      created_by_username: data.creator?.username || 'Utilisateur inconnu',
+      updated_by_username: data.updater?.username || 'Utilisateur inconnu',
+      published_by_username: data.publisher?.username || null
     }];
     
     const blogPageCrypt = jwt.sign({ blogPage }, secretKey);
@@ -958,15 +1058,21 @@ router.post('/updateCollectionElement', authenticateToken, async (req, res) => {
 
     const token = req.headers['authorization']?.split(' ')[1];
     const supabase = supabaseServer(token);
+    const userId = req.user.idUser;
 
     let updateFields = {
       collection_element_name: title,
       collection_element_slug: slug,
       collection_element_status: status,
-      collection_element_update_date: date
+      collection_element_update_date: date,
+      updated_by: userId
     };
+    
     if (setPublishDate === 1) {
       updateFields.collection_element_publish_date = (status === 1) ? date : null;
+      if (status === 1) {
+        updateFields.published_by = userId;
+      }
     }
 
     const { error } = await supabase
@@ -1499,7 +1605,385 @@ router.delete('/deleteCollectionElement', authenticateToken, async (req, res) =>
 
 
 
+// Créer une nouvelle collection principale
+router.post('/createCollectionMain', authenticateToken, async (req, res) => {
+  try {
+    const { collection_name, collection_slug, website_id } = req.body;
+    const token = req.headers['authorization']?.split(' ')[1];
+    const supabase = supabaseServer(token);
+    const userId = req.user.idUser;
+
+    // Vérifier que l'utilisateur a accès au site web
+    const { hasAccess } = await checkUserWebsiteAccess(supabase, userId, website_id);
+    if (!hasAccess) {
+      return res.status(403).send({ error: 'Vous n\'avez pas les droits pour créer une collection sur ce site web' });
+    }
+
+    // Vérifier que le slug n'existe pas déjà pour ce site web
+    const { data: existing, error: checkError } = await supabase
+      .from('collection')
+      .select('id')
+      .eq('collection_slug', collection_slug)
+      .eq('website_id', website_id)
+      .maybeSingle();
+
+    if (checkError) throw checkError;
+
+    if (existing) {
+      return res.status(400).send({ error: 'Une collection avec ce slug existe déjà sur ce site web' });
+    }
+
+    // Créer la collection
+    const { data, error } = await supabase
+      .from('collection')
+      .insert({
+        collection_name,
+        collection_slug,
+        website_id,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+      
+    if (error) throw error;
+    
+    res.send({ message: 'Collection créée avec succès', id: data.id });
+  } catch (error) {
+    console.error('Erreur lors de la création de la collection:', error);
+    res.status(500).send({ error: error.message });
+  }
+});
+
+// Créer la configuration d'une collection
+router.post('/createCollectionConfig', authenticateToken, async (req, res) => {
+  try {
+    const { collection_id, config_fields } = req.body;
+    const token = req.headers['authorization']?.split(' ')[1];
+    const supabase = supabaseServer(token);
+    const userId = req.user.idUser;
+
+    // Récupérer le website_id de la collection et vérifier les droits d'accès
+    const websiteId = await getCollectionWebsiteId(supabase, collection_id);
+    if (!websiteId) {
+      return res.status(404).send({ error: 'Collection non trouvée' });
+    }
+
+    const { hasAccess } = await checkUserWebsiteAccess(supabase, userId, websiteId);
+    if (!hasAccess) {
+      return res.status(403).send({ error: 'Vous n\'avez pas les droits pour configurer cette collection' });
+    }
+
+    // Insérer la configuration des champs
+    const configToInsert = config_fields.map((field, index) => ({
+      collection_id: parseInt(collection_id),
+      tab_field: field.tab_field,
+      name_field: field.name_field,
+      description_field: field.description_field || '',
+      collection_id_ref: field.collection_id_ref || null,
+      multiline_text: field.multiline_text || false,
+      field_order: index
+    }));
+
+    const { data, error } = await supabase
+      .from('collection_config')
+      .insert(configToInsert)
+      .select();
+      
+    if (error) throw error;
+    
+    res.send({ message: 'Configuration créée avec succès', data });
+  } catch (error) {
+    console.error('Erreur lors de la création de la configuration:', error);
+    res.status(500).send({ error: error.message });
+  }
+});
 
 
+
+// Récupérer la configuration d'une collection par son ID
+router.get('/getCollectionConfigById', authenticateToken, async (req, res) => {
+  try {
+    const collectionId = req.query.collectionId;
+    const userId = req.user.idUser;
+    const token = req.headers['authorization']?.split(' ')[1];
+    const supabase = supabaseServer(token);
+
+    if (!collectionId) {
+      return res.status(400).send({ error: 'collectionId est requis' });
+    }
+
+    // Récupérer le website_id de la collection et vérifier les droits d'accès
+    const websiteId = await getCollectionWebsiteId(supabase, collectionId);
+    if (!websiteId) {
+      return res.status(404).send({ error: 'Collection non trouvée' });
+    }
+
+    const { hasAccess } = await checkUserWebsiteAccess(supabase, userId, websiteId);
+    if (!hasAccess) {
+      return res.status(403).send({ error: 'Vous n\'avez pas les droits pour accéder à cette collection' });
+    }
+    
+    // Récupérer la configuration des champs
+    const { data, error } = await supabase
+      .from('collection_config')
+      .select('id, tab_field, name_field, description_field, collection_id_ref, multiline_text')
+      .eq('collection_id', collectionId)
+      .order('id', { ascending: true });
+      
+    if (error) throw error;
+    
+    res.send({ config_fields: data });
+  } catch (error) {
+    console.error('Erreur lors de la récupération de la configuration de la collection:', error);
+    res.status(500).send({ error: error.message });
+  }
+});
+
+// Mettre à jour une collection
+router.post('/updateCollection', authenticateToken, async (req, res) => {
+  try {
+    const { collectionId, collection_name, collection_slug } = req.body;
+    const userId = req.user.idUser;
+    const token = req.headers['authorization']?.split(' ')[1];
+    const supabase = supabaseServer(token);
+
+    if (!collectionId) {
+      return res.status(400).send({ error: 'collectionId est requis' });
+    }
+
+    // Récupérer le website_id de la collection et vérifier les droits d'accès
+    const websiteId = await getCollectionWebsiteId(supabase, collectionId);
+    if (!websiteId) {
+      return res.status(404).send({ error: 'Collection non trouvée' });
+    }
+
+    const { hasAccess } = await checkUserWebsiteAccess(supabase, userId, websiteId);
+    if (!hasAccess) {
+      return res.status(403).send({ error: 'Vous n\'avez pas les droits pour modifier cette collection' });
+    }
+
+    // Mettre à jour la collection
+    const { data, error } = await supabase
+      .from('collection')
+      .update({
+        collection_name,
+        collection_slug,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', collectionId)
+      .select();
+      
+    if (error) throw error;
+    
+    res.send({ message: 'Collection mise à jour avec succès', data });
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour de la collection:', error);
+    res.status(500).send({ error: error.message });
+  }
+});
+
+// Mettre à jour la configuration d'une collection
+router.post('/updateCollectionConfig', authenticateToken, async (req, res) => {
+  try {
+    const { collectionId, config_fields } = req.body;
+    const userId = req.user.idUser;
+    const token = req.headers['authorization']?.split(' ')[1];
+    const supabase = supabaseServer(token);
+
+    if (!collectionId) {
+      return res.status(400).send({ error: 'collectionId est requis' });
+    }
+
+    // Récupérer le website_id de la collection et vérifier les droits d'accès
+    const websiteId = await getCollectionWebsiteId(supabase, collectionId);
+    if (!websiteId) {
+      return res.status(404).send({ error: 'Collection non trouvée' });
+    }
+
+    const { hasAccess } = await checkUserWebsiteAccess(supabase, userId, websiteId);
+    if (!hasAccess) {
+      return res.status(403).send({ error: 'Vous n\'avez pas les droits pour modifier cette collection' });
+    }
+
+    // Récupérer la configuration actuelle
+    const { data: existingFields, error: fetchError } = await supabase
+      .from('collection_config')
+      .select('*')
+      .eq('collection_id', collectionId);
+      
+    if (fetchError) throw fetchError;
+
+    const existingFieldsMap = new Map(existingFields.map(field => [field.id, field]));
+    const newFieldIds = new Set(config_fields.filter(field => field.id && !field.id.toString().startsWith('field_')).map(field => field.id));
+    
+    // 1. Supprimer les champs qui ne sont plus présents
+    const fieldsToDelete = existingFields.filter(field => !newFieldIds.has(field.id));
+    for (const field of fieldsToDelete) {
+      const { error: deleteError } = await supabase
+        .from('collection_config')
+        .delete()
+        .eq('id', field.id);
+      if (deleteError) throw deleteError;
+    }
+
+    // 2. Traiter chaque champ de la nouvelle configuration
+    const updatedFields = [];
+    for (const field of config_fields) {
+      const fieldData = {
+        collection_id: collectionId,
+        tab_field: field.tab_field,
+        name_field: field.name_field,
+        description_field: field.description_field || '',
+        collection_id_ref: field.collection_id_ref || null,
+        multiline_text: field.multiline_text || false,
+      };
+
+      if (field.id && !field.id.toString().startsWith('field_') && existingFieldsMap.has(field.id)) {
+        // Champ existant - mise à jour
+        const { data: updatedField, error: updateError } = await supabase
+          .from('collection_config')
+          .update(fieldData)
+          .eq('id', field.id)
+          .select()
+          .single();
+        if (updateError) throw updateError;
+        updatedFields.push(updatedField);
+      } else {
+        // Nouveau champ - insertion
+        const { data: newField, error: insertError } = await supabase
+          .from('collection_config')
+          .insert(fieldData)
+          .select()
+          .single();
+        if (insertError) throw insertError;
+        updatedFields.push(newField);
+      }
+    }
+    
+    res.send({ message: 'Configuration mise à jour avec succès', data: updatedFields });
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour de la configuration:', error);
+    res.status(500).send({ error: error.message });
+  }
+});
+
+// Vérifier si un champ est utilisé par des éléments de collection
+router.get('/checkFieldUsage', authenticateToken, async (req, res) => {
+  const { collectionId, fieldId } = req.query;
+  const token = req.headers['authorization']?.split(' ')[1];
+  const supabase = supabaseServer(token);
+
+  if (!collectionId || !fieldId) {
+    return res.status(400).json({ error: 'collectionId et fieldId sont requis' });
+  }
+
+  try {
+    // D'abord, récupérer le type de champ pour savoir dans quelle table chercher
+    const { data: fieldConfig, error: fieldError } = await supabase
+      .from('collection_config')
+      .select('tab_field')
+      .eq('id', fieldId)
+      .single();
+
+    if (fieldError) {
+      console.error('Erreur lors de la récupération du type de champ:', fieldError);
+      return res.status(500).json({ error: 'Erreur lors de la récupération du type de champ' });
+    }
+
+    if (!fieldConfig) {
+      return res.status(404).json({ error: 'Champ non trouvé' });
+    }
+
+    const fieldType = fieldConfig.tab_field;
+    let elementsWithField = [];
+    let tableName = '';
+
+    // Vérifier dans la table appropriée selon le type de champ
+    switch (fieldType) {
+      case 'text':
+        tableName = 'collection_field_text';
+        const { data: textData, error: textError } = await supabase
+          .from('collection_field_text')
+          .select('collection_element_id')
+          .eq('id_config', fieldId);
+        if (textError) throw textError;
+        elementsWithField = textData || [];
+        break;
+
+      case 'richText':
+        tableName = 'collection_field_richtext';
+        const { data: richTextData, error: richTextError } = await supabase
+          .from('collection_field_richtext')
+          .select('collection_element_id')
+          .eq('id_config', fieldId);
+        if (richTextError) throw richTextError;
+        elementsWithField = richTextData || [];
+        break;
+
+      case 'image':
+        tableName = 'collection_field_image';
+        const { data: imageData, error: imageError } = await supabase
+          .from('collection_field_image')
+          .select('collection_element_id')
+          .eq('id_config', fieldId);
+        if (imageError) throw imageError;
+        elementsWithField = imageData || [];
+        break;
+
+      case 'gallery':
+        tableName = 'collection_field_gallery';
+        const { data: galleryData, error: galleryError } = await supabase
+          .from('collection_field_gallery')
+          .select('collection_element_id')
+          .eq('id_config', fieldId);
+        if (galleryError) throw galleryError;
+        elementsWithField = galleryData || [];
+        break;
+
+      case 'video':
+        tableName = 'collection_field_video';
+        const { data: videoData, error: videoError } = await supabase
+          .from('collection_field_video')
+          .select('collection_element_id')
+          .eq('id_config', fieldId);
+        if (videoError) throw videoError;
+        elementsWithField = videoData || [];
+        break;
+
+      case 'multiReference':
+        tableName = 'collection_field_multireference';
+        const { data: multiRefData, error: multiRefError } = await supabase
+          .from('collection_field_multireference')
+          .select('collection_element_id')
+          .eq('id_config', fieldId);
+        if (multiRefError) throw multiRefError;
+        elementsWithField = multiRefData || [];
+        break;
+
+      default:
+        return res.status(400).json({ 
+          error: `Type de champ non supporté: ${fieldType}` 
+        });
+    }
+
+    const hasUsage = elementsWithField && elementsWithField.length > 0;
+    const elementCount = hasUsage ? elementsWithField.length : 0;
+
+    res.json({
+      hasUsage,
+      elementCount,
+      fieldType,
+      tableName,
+      message: hasUsage 
+        ? `${elementCount} élément(s) de collection utilise(nt) ce champ dans la table ${tableName}`
+        : `Aucun élément ne fait référence à ce champ (vérification dans ${tableName})`
+    });
+
+  } catch (error) {
+    console.error('Erreur lors de la vérification du champ:', error);
+    res.status(500).json({ error: 'Erreur serveur lors de la vérification du champ' });
+  }
+});
 
 module.exports = router;

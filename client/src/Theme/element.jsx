@@ -1,5 +1,6 @@
 // External libraries
-import React, { useRef, useLayoutEffect, useState} from "react";
+import React, { useRef, useLayoutEffect, useState } from 'react';
+import ReactSelect from 'react-select';
 
 import TextField from '@mui/material/TextField';
 import { styled } from '@mui/material/styles';
@@ -27,6 +28,7 @@ import SortIcon from '@mui/icons-material/Sort';
 import CheckIcon from '@mui/icons-material/Check';
 import ArrowDropDownOutlinedIcon from '@mui/icons-material/ArrowDropDownOutlined';
 import ArrowDropUpOutlinedIcon from '@mui/icons-material/ArrowDropUpOutlined';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { Snackbar, Alert } from '@mui/material';
 import MuiAlert from '@mui/material/Alert';
 
@@ -35,6 +37,7 @@ import { useAxisTooltip, useItemTooltip, useMouseTracker } from '@mui/x-charts/C
 import { formatTime } from '../utils/numberFormatted';
 import { min } from "date-fns";
 import { color } from "framer-motion";
+import { pad } from 'crypto-js';
 
 
 
@@ -143,18 +146,20 @@ export const SearchFieldSmall = styled(TextField)(({ theme, variant }) => ({
 export const SelectField = styled(Select)(({ theme }) => ({
     color: theme.palette.text.primary,
     borderColor: theme.palette.primary.third,
-    transition: 'border-color 0.3s ease, background-color 0.3s ease',
+    borderRadius: '0.5rem',
     '& .MuiSelect-select': {
         padding: '0.5rem 0.8rem',
+        borderRadius: '0.5rem',
     },
     '& .MuiOutlinedInput-notchedOutline': {
         borderColor: theme.palette.primary.third,
     },
     '&:hover .MuiOutlinedInput-notchedOutline': {
-        borderColor: theme.palette.text.secondary,
+        borderColor: theme.palette.primary.third,
     },
     '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
         borderColor: theme.palette.primary.third,
+        borderWidth: '1px',
     },
     '& .MuiSvgIcon-root': {
         color: theme.palette.text.primary,
@@ -274,11 +279,15 @@ export const SecondaryButton = styled(Button)(({ theme }) => ({
 
 export const RedButton = styled(Button)(({ theme }) => ({
     '&.MuiButton-root': {
-        backgroundColor: theme.palette.error.main,
-        color: '#ffffff',
+        color: theme.palette.text.primary,
+        padding: '0.15rem 0.5rem 0.05rem 0.5rem',
+        boxShadow: theme.palette.shadow.main,
+        backgroundColor: 'transparent',
     },
     '&:hover': {
         backgroundColor: theme.palette.error.dark,
+        color: "#ffffff",
+        boxShadow: theme.palette.shadow.secondary,
     },
 }));
 
@@ -450,6 +459,96 @@ export function SimpleInputField({ value, onChange, placeholder = "", theme, ...
     </div>
   );
 }
+
+// Composant Select pour Multi-référence réutilisable
+export const MultiReferenceSelect = ({ 
+    options = [], 
+    value, 
+    onChange, 
+    isMulti = false, 
+    placeholder = "Sélectionner...", 
+    theme,
+    className = "select_multiRef",
+    ...props 
+}) => {
+    return (
+        <ReactSelect
+            options={options}
+            value={value}
+            onChange={onChange}
+            isMulti={isMulti}
+            placeholder={placeholder}
+            className={className}
+            styles={{
+                control: (provided) => ({
+                    ...provided,
+                    backgroundColor: theme?.palette?.primary?.main || '#ffffff',
+                    borderColor: theme?.palette?.primary?.third || '#e0e0e0',
+                    boxShadow: 'none',
+                    borderRadius: '0.5rem',
+                    "&:hover": {
+                        borderColor: theme?.palette?.primary?.third|| '#1976d2',
+                    },
+                }),
+                input: (provided) => ({
+                    ...provided,
+                    color: theme?.palette?.text?.primary || '#000000',
+                }),
+                option: (provided, state) => ({
+                    ...provided,
+                    color: theme?.palette?.text?.primary || '#000000',
+                    backgroundColor: state.isSelected 
+                        ? theme?.palette?.primary?.secondary || '#e3f2fd'
+                        : theme?.palette?.background?.default || '#ffffff',
+                    '&:hover': {
+                        backgroundColor: theme?.palette?.primary?.main || '#f5f5f5',
+                        color: theme?.palette?.text?.primary || '#000000',
+                    },
+                }),
+                menu: (provided) => ({
+                    ...provided,
+                    backgroundColor: theme?.palette?.background?.default || '#ffffff',
+                    border: `1px solid ${theme?.palette?.primary?.third || '#e0e0e0'}`,
+                    borderRadius: '0.5rem',
+                }),
+                placeholder: (provided) => ({
+                    ...provided,
+                    color: theme?.palette?.text?.secondary || "#AAAAAA",
+                }),
+                singleValue: (provided) => ({
+                    ...provided,
+                    color: theme?.palette?.text?.primary || '#000000',
+                }),
+                multiValue: (provided) => ({
+                    ...provided,
+                    backgroundColor: theme?.palette?.primary?.secondary || '#e3f2fd',
+                    borderRadius: '0.25rem',
+                }),
+                multiValueLabel: (provided) => ({
+                    ...provided,
+                    color: theme?.palette?.text?.primary || '#000000',
+                }),
+                multiValueRemove: (provided) => ({
+                    ...provided,
+                    color: theme?.palette?.text?.primary || '#000000',
+                    ':hover': {
+                        backgroundColor: theme?.palette?.error?.main || '#f44336',
+                        color: '#ffffff',
+                    },
+                }),
+                dropdownIndicator: (provided) => ({
+                    ...provided,
+                    color: theme?.palette?.text?.secondary || '#666666',
+                }),
+                clearIndicator: (provided) => ({
+                    ...provided,
+                    color: theme?.palette?.text?.secondary || '#666666',
+                }),
+            }}
+            {...props}
+        />
+    );
+};
 
 // Utility functions
 export const notificationTitle = (type) => {
@@ -739,6 +838,124 @@ export function GlobalSnackbar({ open, message, type = 'info', onClose, autoHide
         {message}
       </CustomAlert>
     </Snackbar>
+  );
+}
+
+// Composant d'icône de copie réutilisable
+export function CopyButton({ textToCopy, successMessage = 'Copié dans le presse-papiers', errorMessage = 'Erreur lors de la copie', onSuccess, onError, size = 'small', iconSize = '0.8rem', sx = {}, ...props }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+      setCopied(true);
+      if (onSuccess) {
+        onSuccess(successMessage);
+      }
+      // Reset l'état après 2 secondes
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error('Erreur lors de la copie:', error);
+      if (onError) {
+        onError(errorMessage);
+      }
+    }
+  };
+
+  return (
+    <IconButton
+      onClick={handleCopy}
+      size="small"
+      title={copied ? "Copié !" : "Copier"}
+      sx={{
+        color: theme => theme.palette.text.secondary,
+        transition: 'all 0.2s ease-in-out',
+        '&:hover': {
+          color: theme => theme.palette.text.primary,
+        },
+        padding: '4px', // Réduit encore plus la taille du bouton
+        ...sx
+      }}
+      {...props}
+    >
+      {copied ? <CheckIcon sx={{ fontSize: iconSize }} /> : <ContentCopyIcon sx={{ fontSize: iconSize }} />}
+    </IconButton>
+  );
+}
+
+// Composant de champ de copie cliquable réutilisable
+export function CopyField({ 
+  textToCopy, 
+  displayText, 
+  successMessage = 'Copié dans le presse-papiers', 
+  errorMessage = 'Erreur lors de la copie', 
+  onSuccess, 
+  onError, 
+  iconSize = '0.8rem',
+  className = '',
+  style = {},
+  ...props 
+}) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+      setCopied(true);
+      if (onSuccess) {
+        onSuccess(successMessage);
+      }
+      // Reset l'état après 2 secondes
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error('Erreur lors de la copie:', error);
+      if (onError) {
+        onError(errorMessage);
+      }
+    }
+  };
+
+  return (
+    <div 
+      className={`input_text_blog copy-input-container ${className}`}
+      onClick={handleCopy}
+      style={{
+        cursor: 'pointer',
+        transition: 'all 0.2s ease-in-out',
+        userSelect: 'none',
+        ...style
+      }}
+      title={copied ? "Copié !" : "Cliquer pour copier"}
+      {...props}
+    >
+      <span style={{ flex: 1 }}>
+        {displayText || textToCopy}
+      </span>
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center',
+        marginLeft: '0.5rem',
+        opacity: copied ? 1 : 0.7,
+        transition: 'opacity 0.2s ease-in-out'
+      }}>
+        {copied ? (
+          <CheckIcon 
+            sx={{ 
+              fontSize: iconSize, 
+              color: 'var(--primary-color)',
+              transition: 'all 0.2s ease-in-out'
+            }} 
+          />
+        ) : (
+          <ContentCopyIcon 
+            sx={{ 
+              fontSize: iconSize,
+              transition: 'all 0.2s ease-in-out'
+            }} 
+          />
+        )}
+      </div>
+    </div>
   );
 }
 

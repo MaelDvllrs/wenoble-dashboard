@@ -1,0 +1,27 @@
+.workspace-list{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding-left: 1px;
+    padding-right: 1px;
+    overflow: auto;
+    height: calc(100% - 3rem);
+}
+
+.workspace-item{
+    box-shadow: var(--color-shadow-main);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    position: relative;
+    background-color: var(--color-primary-main);
+}
+
+.workspace-selector-current {
+    font-size: 0.75rem;
+    background-color: var(--color-secondary-main);
+    color: var(--color-primary-main);
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+
+}

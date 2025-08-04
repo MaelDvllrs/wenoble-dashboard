@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useTheme } from '@mui/material/styles';
+import { useWebsite } from '../../../../Context/WebsiteContext';
 import MenuItem from '@mui/material/MenuItem';
 import { SelectField, CustomAxisTooltip, SelectFieldSecondary } from '../../../../Theme/element';
 import { LineHighlightPlot, LinePlot } from '@mui/x-charts/LineChart';
@@ -29,6 +30,7 @@ import './statistique.css';
 export const SearchConsoleStatistique = () => {
   const token = Cookies.get('token');
   const theme = useTheme();
+  const { selectedWebsite, websiteLoading } = useWebsite();
   const [userStatistique, setUserStatistique] = useState(null);
   const [dates, setDates] = useState([]);
   const [values, setValues] = useState([]);
@@ -47,13 +49,25 @@ export const SearchConsoleStatistique = () => {
 
   useEffect(() => {
     const fetchStatistique = async () => {
-      setLoading(false);
-      const data = await getSearchConsoleStatistique(period, typeMetric, token);
-      setUserStatistique(data);
-      setLoading(true);
+      if (!selectedWebsite?.id) {
+        console.log('Aucun site web sélectionné');
+        setLoading(false);
+        return;
+      }
+      
+      setLoading(false); // Réinitialiser le loading lors du changement
+      
+      try {
+        const data = await getSearchConsoleStatistique(period, typeMetric, token, selectedWebsite.id);
+        setUserStatistique(data);
+        setLoading(true);
+      } catch (error) {
+        console.error('Erreur lors de la récupération des statistiques Search Console:', error);
+        setLoading(false);
+      }
     };
     fetchStatistique();
-  }, [period, typeMetric, token]);
+  }, [period, typeMetric, token, selectedWebsite]);
 
   useEffect(() => {
     if (userStatistique && userStatistique.rows) {
@@ -114,154 +128,164 @@ export const SearchConsoleStatistique = () => {
   ];
 
   return (
-    <div className="statistique-container" style={{ boxShadow: theme.palette.shadow.main, backgroundColor: theme.palette.primary.main, minHeight: 320, width: '100%' }}>
-      <div className='select-stat-container'>
-        <SelectFieldSecondary
-          id="metric-select"
-          value={typeMetric}
-          onChange={handleChangeTypeMetric}
-          theme={theme}
-        >
-          {Object.entries(labelMap).map(([value, { label }]) => (
-            <MenuItem key={value} value={value}>
-              {label}
-            </MenuItem>
-          ))}
-        </SelectFieldSecondary>
-        <Tooltip title={labelMap[typeMetric].description} placement="right">
-          <InfoOutlinedIcon className='icon-select-stat-container' style={{color: theme.palette.text.secondary}}/>
-        </Tooltip>
-      </div>
-
-      {userStatistique && (
-        <div className='total-statistique'>
-          <p className='info-statistique'>
-            {typeMetric === 'ctr'
-              ? `${(Number(totalValues) * 100).toFixed(2)} %`
-              : typeMetric === 'position'
-                ? Number(totalValues).toFixed(2)
-                : formatNumber(totalValues)
-            }
-          </p>
-        </div>
-      )}
-
-      {!loading ? (
-        <div className='loading-message-stats' style={{ minHeight: 220, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-          <CircularProgress sx={{color:"#2ec96d"}}/>
+    <>
+      {websiteLoading || !selectedWebsite ? (
+        <div className="statistique-container" style={{ boxShadow: theme.palette.shadow.main, backgroundColor: theme.palette.primary.main, minHeight: 320, width: '100%' }}>
+          <div className='loading-message-stats' style={{ minHeight: 220, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+            <CircularProgress sx={{color:"#2ec96d"}}/>
+          </div>
         </div>
       ) : (
-        userStatistique && userStatistique.rows && userStatistique.rows.length > 0 ? (
-          <div style={{ minHeight: 220, width: '100%' }}>
-            <ResponsiveChartContainer
-              series={series}
-              xAxis={[
-                {
-                  id: 'date',
-                  data: dates,
-                  scaleType: 'band',
-                },
-              ]}
-              yAxis={[
-                {
-                  id: 'value',
-                  scaleType: 'linear',
-                  // max: maxValue, // On retire le max pour laisser l'axe s'adapter
-                },
-              ]}
-              sx={{
-                "& .MuiLineElement-series-auto-generated-id-1":{
-                    strokeDasharray: "10 5",
-                    strokeWidth: "1",
-                },
-                "& .MuiChartsLegend-series-auto-generated-id-1 .MuiChartsLegend-mark":{
-                    strokeWidth: "2",
-                    strokeDasharray: "6",
-                    stroke: "#2ec96d",
-                    fill: "none",
-                },
-                "& .MuiChartsAxis-bottom .MuiChartsAxis-line":{
-                  stroke:"none",
-                },
-                "& .MuiChartsAxis-left .MuiChartsAxis-line":{
-                  stroke:"none",
-                },
-                "& .MuiChartsAxis-tick":{
-                  stroke:"none !important", 
-                },
-                "& .MuiHighlightElement-root":{
-                  transition: "transform 0.1s ease-in-out",
-                },
-              }}
+        <div className="statistique-container" style={{ boxShadow: theme.palette.shadow.main, backgroundColor: theme.palette.primary.main, minHeight: 320, width: '100%' }}>
+          <div className='select-stat-container'>
+            <SelectFieldSecondary
+              id="metric-select"
+              value={typeMetric}
+              onChange={handleChangeTypeMetric}
+              theme={theme}
             >
-              <LinePlot />
-              <ChartsXAxis
-                label=""
-                position="bottom"
-                axisId="date"
-                tickLabelStyle={{ fontSize: 10 }}
-              />
-              <ChartsYAxis
-                label=""
-                position="left"
-                axisId="value"
-                tickLabelStyle={{ fontSize: 10 }}
-                sx={{
-                  [`& .${axisClasses.label}`]: {
-                    transform: 'translateX(-5px)',
-                  },
-                }}
-              />
-              <ChartsGrid 
-                horizontal 
-                sx={{
-                    "& .MuiChartsGrid-line": {
-                        stroke: theme.palette.primary.third,
-                        opacity: 0.2,
-                    },
-                    }}  
-              />
-              <CustomAxisTooltip  
-                themeColor={theme} 
-                type='axes'
-                typeMetric={typeMetric}
-              />
-              <LineHighlightPlot />
-              <ChartsLegend
-                direction="row"
-                position={{
-                  horizontal: 'right', 
-                  vertical: 'top',
-                }}
-                labelStyle={{fontSize: 10}}
-                itemMarkHeight={2}
-                itemMarkWidth={20}
-              />
-            </ResponsiveChartContainer>
+              {Object.entries(labelMap).map(([value, { label }]) => (
+                <MenuItem key={value} value={value}>
+                  {label}
+                </MenuItem>
+              ))}
+            </SelectFieldSecondary>
+            <Tooltip title={labelMap[typeMetric].description} placement="right">
+              <InfoOutlinedIcon className='icon-select-stat-container' style={{color: theme.palette.text.secondary}}/>
+            </Tooltip>
           </div>
-        ) : (
-          <div className='no-data-message-stats' style={{ minHeight: 220, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-            <PiSmileyMeltingFill style={{ fontSize: 50, color: theme.palette.text.primary }} />
-            Aucune donnée disponible.
-          </div>
-        )
-      )}
 
-      <SelectField
-        id="period-select"
-        value={period}
-        onChange={handleChange}
-        theme={theme}
-      >
-        <MenuItem value={'today'}>Aujourd'hui</MenuItem>
-        <MenuItem value={'yesterday'}>Hier</MenuItem>
-        <MenuItem value={'last7days'}>Les 7 derniers jours</MenuItem>
-        <MenuItem value={'last14days'}>Les 14 derniers jours</MenuItem>
-        <MenuItem value={'last30days'}>Les 30 derniers jours</MenuItem>
-        <MenuItem value={'last90days'}>Les 90 derniers jours</MenuItem>
-        <MenuItem value={'last365days'}>Les 12 derniers mois</MenuItem>
-      </SelectField>
-    </div>
+          {userStatistique && (
+            <div className='total-statistique'>
+              <p className='info-statistique'>
+                {typeMetric === 'ctr'
+                  ? `${(Number(totalValues) * 100).toFixed(2)} %`
+                  : typeMetric === 'position'
+                    ? Number(totalValues).toFixed(2)
+                    : formatNumber(totalValues)
+                }
+              </p>
+            </div>
+          )}
+
+          {!loading ? (
+            <div className='loading-message-stats' style={{ minHeight: 220, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+              <CircularProgress sx={{color:"#2ec96d"}}/>
+            </div>
+          ) : (
+            userStatistique && userStatistique.rows && userStatistique.rows.length > 0 ? (
+              <div style={{ minHeight: 220, width: '100%' }}>
+                <ResponsiveChartContainer
+                  series={series}
+                  xAxis={[
+                    {
+                      id: 'date',
+                      data: dates,
+                      scaleType: 'band',
+                    },
+                  ]}
+                  yAxis={[
+                    {
+                      id: 'value',
+                      scaleType: 'linear',
+                      // max: maxValue, // On retire le max pour laisser l'axe s'adapter
+                    },
+                  ]}
+                  sx={{
+                    "& .MuiLineElement-series-auto-generated-id-1":{
+                        strokeDasharray: "10 5",
+                        strokeWidth: "1",
+                    },
+                    "& .MuiChartsLegend-series-auto-generated-id-1 .MuiChartsLegend-mark":{
+                        strokeWidth: "2",
+                        strokeDasharray: "6",
+                        stroke: "#2ec96d",
+                        fill: "none",
+                    },
+                    "& .MuiChartsAxis-bottom .MuiChartsAxis-line":{
+                      stroke:"none",
+                    },
+                    "& .MuiChartsAxis-left .MuiChartsAxis-line":{
+                      stroke:"none",
+                    },
+                    "& .MuiChartsAxis-tick":{
+                      stroke:"none !important", 
+                    },
+                    "& .MuiHighlightElement-root":{
+                      transition: "transform 0.1s ease-in-out",
+                    },
+                  }}
+                >
+                  <LinePlot />
+                  <ChartsXAxis
+                    label=""
+                    position="bottom"
+                    axisId="date"
+                    tickLabelStyle={{ fontSize: 10 }}
+                  />
+                  <ChartsYAxis
+                    label=""
+                    position="left"
+                    axisId="value"
+                    tickLabelStyle={{ fontSize: 10 }}
+                    sx={{
+                      [`& .${axisClasses.label}`]: {
+                        transform: 'translateX(-5px)',
+                      },
+                    }}
+                  />
+                  <ChartsGrid 
+                    horizontal 
+                    sx={{
+                        "& .MuiChartsGrid-line": {
+                            stroke: theme.palette.primary.third,
+                            opacity: 0.2,
+                        },
+                        }}  
+                  />
+                  <CustomAxisTooltip  
+                    themeColor={theme} 
+                    type='axes'
+                    typeMetric={typeMetric}
+                  />
+                  <LineHighlightPlot />
+                  <ChartsLegend
+                    direction="row"
+                    position={{
+                      horizontal: 'right', 
+                      vertical: 'top',
+                    }}
+                    labelStyle={{fontSize: 10}}
+                    itemMarkHeight={2}
+                    itemMarkWidth={20}
+                  />
+                </ResponsiveChartContainer>
+              </div>
+            ) : (
+              <div className='no-data-message-stats' style={{ minHeight: 220, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+                <PiSmileyMeltingFill style={{ fontSize: 50, color: theme.palette.text.primary }} />
+                Aucune donnée disponible.
+              </div>
+            )
+          )}
+
+          <SelectField
+            id="period-select"
+            value={period}
+            onChange={handleChange}
+            theme={theme}
+          >
+            <MenuItem value={'today'}>Aujourd'hui</MenuItem>
+            <MenuItem value={'yesterday'}>Hier</MenuItem>
+            <MenuItem value={'last7days'}>Les 7 derniers jours</MenuItem>
+            <MenuItem value={'last14days'}>Les 14 derniers jours</MenuItem>
+            <MenuItem value={'last30days'}>Les 30 derniers jours</MenuItem>
+            <MenuItem value={'last90days'}>Les 90 derniers jours</MenuItem>
+            <MenuItem value={'last365days'}>Les 12 derniers mois</MenuItem>
+          </SelectField>
+        </div>
+      )}
+    </>
   );
 };
 

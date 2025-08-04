@@ -22,6 +22,12 @@ import { IsAuthenticated, IsAuthenticatedAdmin } from './Auth/ProtectedRoutes';
 // Authorization
 import { AuthorisedRoutePortfolio, AuthorisedRoutePage, AuthorisedRouteBlog, AuthorisedRouteEcomm, AuthorisedRouteNewsletter } from './Authorisation/Authorisation';
 
+// Context
+import { WebsiteProvider } from './Context/WebsiteContext';
+import { WorkspaceProvider } from './Context/WorkspaceContext';
+
+
+
 // Dashboard components
 import Dashboard from './Components/Dashboard/Dashboard';
 import Home from './Components/Dashboard/Pages/Home/Home';
@@ -32,6 +38,8 @@ import EditPortfolio from './Components/Dashboard/Pages/modification_site/Portfo
 import Page from './Components/Dashboard/Pages/modification_site/Page/page';
 import EditPage from './Components/Dashboard/Pages/modification_site/Page/EditPage';
 import Collection from './Components/Dashboard/Pages/modification_site/Collection/collection';
+import CreateCollection from './Components/Dashboard/Pages/modification_site/Collection/createCollection';
+import EditCollection from './Components/Dashboard/Pages/modification_site/Collection/editCollection';
 import ListeCollection from './Components/Dashboard/Pages/modification_site/Collection/listeCollection';
 import CreateElementCollection from './Components/Dashboard/Pages/modification_site/Collection/createElementCollection';
 import EditElementCollection from './Components/Dashboard/Pages/modification_site/Collection/editElementCollection';
@@ -56,6 +64,10 @@ import EcommerceOrderAll from './Components/Dashboard/Pages/Ecommerce/EcommerceO
 import NewsLetters from './Components/Dashboard/Pages/NewsLetters/Newsletter';
 import Academy from './Components/Dashboard/Pages/Academy/Academy';
 import AcademyTemplate from './Components/Dashboard/Pages/Academy/AcademyTemplate';
+import CreateWebsite from './Components/Dashboard/Pages/website/createWebsite';
+import EditWebsite from './Components/Dashboard/Pages/website/editWebsite';
+import WebsiteList from './Components/Dashboard/Pages/website/WebsiteList';
+import WorkspaceManager from './Components/Dashboard/Pages/workspace/WorkspaceManager';
 
 // Admin components
 import Admin from './Components/Admin/Admin';
@@ -72,6 +84,10 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 
 function App() {
+
+    // Get the current theme
+
+
     // Protected routes for clients
     const ProtectedRoutesClient = ({ children }) => {
         const dataAuth = IsAuthenticated();
@@ -99,8 +115,10 @@ function App() {
 
     return (
         <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="fr">
-                <div>                
-                    <Router>
+            <WorkspaceProvider>
+                <WebsiteProvider>
+                    <div>                
+                        <Router>
                         <Routes>
                             {/* Authentication routes */}
                             <Route path="/" element={<Login />} />
@@ -112,6 +130,7 @@ function App() {
                                 <Route element={<ProtectedRoutesClient><Dashboard /></ProtectedRoutesClient>}>
                                     <Route path="/dashboard/home" element={<Home />} />
                                     <Route path="/dashboard/account" element={<Account />} />
+                                    <Route path="/dashboard/workspace" element={<WorkspaceManager />} />
                                     <Route path="/dashboard/modification" element={<ModificationHome />} />
                                     <Route path="/dashboard/modification/portfolio" element={<AuthorisedRoutePortfolio><Portfolio /></AuthorisedRoutePortfolio>}>
                                         <Route path="/dashboard/modification/portfolio/:id" element={<EditPortfolio />} />
@@ -120,6 +139,8 @@ function App() {
                                         <Route path="/dashboard/modification/page/:idPage" element={<EditPage />} />
                                     </Route>
                                     <Route path="/dashboard/modification/collection" element={<AuthorisedRouteBlog><Collection /></AuthorisedRouteBlog>}>
+                                        <Route path="/dashboard/modification/collection/createCollection" element={<CreateCollection />} />
+                                        <Route path="/dashboard/modification/collection/:idCollection/editCollection" element={<EditCollection />} />
                                         <Route path="/dashboard/modification/collection/:idCollection" element={<ListeCollection />} />
                                         <Route path="/dashboard/modification/collection/:idCollection/createPage" element={<CreateElementCollection />} />
                                         <Route path="/dashboard/modification/collection/:idCollection/editPage/:idCollectionElement" element={<EditElementCollection />} />
@@ -148,6 +169,9 @@ function App() {
                                     <Route path="/dashboard/newsletter" element={<AuthorisedRouteNewsletter><NewsLetters /></AuthorisedRouteNewsletter>} />
                                     <Route path="/dashboard/academy" element={<Academy />} />
                                     <Route path="/dashboard/academy/:slug" element={<AcademyTemplate />} />
+                                    <Route path="/dashboard/websites" element={<WebsiteList />} />
+                                    <Route path="/dashboard/website/create" element={<CreateWebsite />} />
+                                    <Route path="/dashboard/website/:id/settings" element={<EditWebsite />} />
                                 </Route>
                             </Route>
 
@@ -162,6 +186,8 @@ function App() {
                         </Routes>
                     </Router>
                 </div>
+            </WebsiteProvider>
+            </WorkspaceProvider>
         </LocalizationProvider>
     );
 }

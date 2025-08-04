@@ -3,6 +3,7 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const { supabaseServer } = require('../supabase');
 const { authenticateToken } = require('../middleware/authToken');
+const { checkUserWebsiteAccess } = require('../website/website');
 
 require('dotenv').config();
 
@@ -19,25 +20,37 @@ router.get('/getSizeItem',authenticateToken, async (req, res) => {
     const token = req.headers.authorization?.split(' ')[1];
     const supabase = supabaseServer(token);
 
-    const idUser = req.user.idUser;
-    if (!idUser) {
-        return res.status(400).send({ error: 'Le paramètre id_user est requis.' });
+    const websiteId = req.query.websiteId;
+    const userId = req.user.idUser;
+
+
+    if (!websiteId) {
+        return res.status(400).json({ error: 'Website ID is required' });
     }
+
     try {
+        // Vérifier l'accès de l'utilisateur au site web
+        const hasAccess = await checkUserWebsiteAccess(supabase, userId, websiteId);
+        if (!hasAccess) {
+            return res.status(403).json({ error: 'Accès non autorisé à ce site web' });
+        }
+
         // Portfolio images
         const { data: portfolioPhotos } = await supabase
             .from('photo_portfolio')
             .select('size, portfolio:id_portfolio')
             .in('portfolio', (
-                (await supabase.from('portfolio').select('id_portfolio').eq('user_id', idUser)).data?.map(p => p.id_portfolio) || []
+                (await supabase.from('portfolio').select('id_portfolio').eq('website_id', websiteId)).data?.map(p => p.id_portfolio) || []
             ));
+        
         // Page images
         const { data: pagePhotos } = await supabase
             .from('page_photo')
             .select('size, page:id_page')
             .in('page', (
-                (await supabase.from('page').select('id_page').eq('user_id', idUser)).data?.map(p => p.id_page) || []
+                (await supabase.from('page').select('id').eq('website_id', websiteId)).data?.map(p => p.id) || []
             ));
+        
         // Collection images
         const { data: collectionImages } = await supabase
             .from('collection_field_image')
@@ -47,7 +60,7 @@ router.get('/getSizeItem',authenticateToken, async (req, res) => {
                     .from('collection_element')
                     .select('id, collection_id')
                     .in('collection_id', (
-                        (await supabase.from('collection').select('id').eq('user_id', idUser)).data?.map(c => c.id) || []
+                        (await supabase.from('collection').select('id').eq('website_id', websiteId)).data?.map(c => c.id) || []
                     ))
                 ).data?.map(ce => ce.id) || []
             ));
@@ -60,7 +73,7 @@ router.get('/getSizeItem',authenticateToken, async (req, res) => {
                     .from('collection_element')
                     .select('id, collection_id')
                     .in('collection_id', (
-                        (await supabase.from('collection').select('id').eq('user_id', idUser)).data?.map(c => c.id) || []
+                        (await supabase.from('collection').select('id').eq('website_id', websiteId)).data?.map(c => c.id) || []
                     ))
                 ).data?.map(ce => ce.id) || []
             ));
@@ -73,7 +86,7 @@ router.get('/getSizeItem',authenticateToken, async (req, res) => {
                     .from('collection_element')
                     .select('id, collection_id')
                     .in('collection_id', (
-                        (await supabase.from('collection').select('id').eq('user_id', idUser)).data?.map(c => c.id) || []
+                        (await supabase.from('collection').select('id').eq('website_id', websiteId)).data?.map(c => c.id) || []
                     ))
                 ).data?.map(ce => ce.id) || []
             ));
@@ -86,7 +99,7 @@ router.get('/getSizeItem',authenticateToken, async (req, res) => {
                     .from('collection_element')
                     .select('id, collection_id')
                     .in('collection_id', (
-                        (await supabase.from('collection').select('id').eq('user_id', idUser)).data?.map(c => c.id) || []
+                        (await supabase.from('collection').select('id').eq('website_id', websiteId)).data?.map(c => c.id) || []
                     ))
                 ).data?.map(ce => ce.id) || []
             ));
@@ -104,8 +117,8 @@ router.get('/getSizeItem',authenticateToken, async (req, res) => {
 
         res.send({ totalSize });
     } catch (err) {
-        console.log(err);
-        res.send({ error: err.message });
+        console.error('Erreur lors de la récupération de la taille:', err);
+        res.status(500).json({ error: err.message });
     }
 });
 

@@ -41,7 +41,6 @@ const CreateElementCollection = () => {
 
     // --- States principaux ---
     // Données de config et de formulaire
-    const [InfoConfigBlog, setConfigblog] = useState([]);
     const [DecodeConfigblog, setDecodeConfigblog] = useState([]);
     const [slugValue, setSlugValue] = useState('');
     const [blogData, setBlogData] = useState({
@@ -77,19 +76,13 @@ const CreateElementCollection = () => {
               'Content-Type': 'application/json'
             }
         }).then((response) => {
-            setConfigblog(response.data);
+            // L'API retourne maintenant les données directement, plus besoin de JWT
+            setDecodeConfigblog(response.data);
         }).catch((error) => {
             showSnackbar('error', '[CREA-COLL-001] Erreur lors de la récupération de la configuration de la collection');
             console.error('Erreur lors de la récupération de la du Blog :', error);
         });
-    }, [InfoConfigBlog]);
-
-    useEffect(() => {
-        if(InfoConfigBlog !== null && typeof InfoConfigBlog === 'string'){
-            const decodedConfig = jwtDecode(InfoConfigBlog);
-            setDecodeConfigblog(decodedConfig);
-        }
-    }, [InfoConfigBlog]);
+    }, []);
 
     // --- Fonctions utilitaires ---
     const handleBlogDataChange = (data, isDelete = false) => {
@@ -347,7 +340,7 @@ const CreateElementCollection = () => {
                     <p className="missed_field_text">Champs obligatoires</p>
                 )}
                 <div className="line_horizontal" style={{backgroundColor: theme.palette.primary.third}}></div>
-                {DecodeConfigblog.blogConfig && DecodeConfigblog.blogConfig.map((blogItem) => (
+                {DecodeConfigblog.data && DecodeConfigblog.data.map((blogItem) => (
                   <div key={blogItem.id} className="blogField_contain">
                     <p className="blogField_name">{blogItem.name_field}</p>
                     <p className="blogField_description">{blogItem.description_field}</p>

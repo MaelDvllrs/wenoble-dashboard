@@ -5,12 +5,15 @@ import {jwtDecode} from 'jwt-decode';
 import { Outlet, NavLink, useNavigate, useParams } from 'react-router-dom';
 import { DefaultButton, SecondaryButton, RedButton} from '../../../../../Theme/element';
 import { useTheme } from '@mui/material/styles';
+import { useWebsite } from '../../../../../Context/WebsiteContext';
 import './listeCollection.css'
 import '../Portfolio/portfolio.css';
 import config from "../../../../../config";
 import AddIcon from '@mui/icons-material/Add';
 import { SkeletonBlog } from "../../../../skeleton/skeleton";
 import { formatDate } from "../../../../../utils/dateUtils";
+import { useSnackbar } from '../../../../../Theme/snackbar';
+
 import { PiSmileyMeltingFill } from "react-icons/pi";
 import { RiDatabase2Fill } from "react-icons/ri";
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
@@ -24,6 +27,7 @@ import Box from '@mui/material/Box';
 import PendingIcon from '@mui/icons-material/Pending';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import Snackbar from '@mui/material/Snackbar';
+import SettingsIcon from '@mui/icons-material/Settings';
 
 
 
@@ -54,31 +58,37 @@ const ListeCollection = () => {
     const [regenerateSiteStatus, setRegenerateSiteStatus] = useState(false);
     const [deletionCompleted, setDeletionCompleted] = useState(false);
 
+
+    const { showSnackbar } = useSnackbar();
+    
+
     const navigate = useNavigate();
-    const idUser = jwtDecode(token).idUser;
+    const { selectedWebsite, loading: websiteLoading } = useWebsite();
 
     useEffect(() => {    
+        if (!selectedWebsite || websiteLoading) return;
 
-            const user = Cookies.get('token');
-            const decodedUser = jwtDecode(user);
-    
-            Axios.get(`${apiUrl}/getListeCollection`, {
-                params: {
-                    IdBlog: idCollection,
-                    idUser: decodedUser.idUser,
-                },
-                headers: {
-                  'Authorization': `Bearer ${token}`,
-                  'Content-Type': 'application/json'
+        const user = Cookies.get('token');
+        const decodedUser = jwtDecode(user);
+
+        Axios.get(`${apiUrl}/getListeCollection`, {
+            params: {
+                IdBlog: idCollection,
+                websiteId: selectedWebsite.id, // Utiliser websiteId au lieu de idUser
+            },
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
                 }
             }).then((response) => {
                 setInfoblog(jwtDecode(response.data));
                 setLoadingBlog(false);
             }).catch((error) => {
+                showSnackbar('error', '[LIST-COLL-001] Erreur lors de la récupération des collections');
                 console.error('Erreur lors de la récupération de la du Blog :', error);
             });
             
-    }, [idCollection]);
+    }, [idCollection, selectedWebsite, websiteLoading]);
 
     // Fonction pour cocher/décocher toutes les cases
     const handleCheckAll = (e) => {
@@ -182,6 +192,7 @@ const ListeCollection = () => {
                             skipRegenerate: true
                           });
                         } catch (e) {
+                          showSnackbar('error', '[LIST-COLL-002] Erreur lors de la suprressions des collections');
                           console.error('Erreur suppression page', page.id, e);
                         }
                       }
@@ -191,6 +202,7 @@ const ListeCollection = () => {
                           await generateStaticSite(token);
                           setTimeout(() => setDeletionCompleted(true), 800);
                         } catch (e) {
+                          showSnackbar('error', '[LIST-COLL-003] Erreur lors de la suppressions des collections');
                           console.error('Erreur lors de la régénération du site', e);
                         }
                       } else {
@@ -215,12 +227,13 @@ const ListeCollection = () => {
                         setDeleteDataStatus(false);
                         setRegenerateSiteStatus(false);
                         setDeletionCompleted(false);
+                        showSnackbar('success', 'Sélection supprimée avec succès');
                       }).catch((error) => {
                         setIsDeleting(false);
                         setDeleteDataStatus(false);
                         setRegenerateSiteStatus(false);
                         setDeletionCompleted(false);
-                        console.error('Erreur lors du refresh du Blog :', error);
+                        showSnackbar('error', '[LIST-COLL-004] Erreur lors de la récupération des collections');
                       });
                     }}>
                       Confirmer
@@ -298,9 +311,7 @@ const ListeCollection = () => {
             </>
           )}
             <div className="modification_action_wrapper">
-              <div className="button_save_contain">
-                    <NavLink to={'createPage'} ><DefaultButton type="submit" variant="contained"><AddIcon/>Créer Page</DefaultButton></NavLink>
-              </div>
+              
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <SimpleSearchField
                   value={searchValue}
@@ -310,8 +321,6 @@ const ListeCollection = () => {
                 />
                 {atLeastOneChecked && (
                   <SecondaryButton
-                    variant="contained"
-                    color="error"
                     onClick={() => setShowConfirm(true)}
                   >
                     <DeleteOutlineOutlinedIcon style={{ marginRight: 4 , color: theme.palette.text.secondary}} fontSize='small'/>
@@ -323,6 +332,15 @@ const ListeCollection = () => {
                     ? `${Object.values(checkedItems).filter(Boolean).length} / ${filteredBlogList.length} sélectionné(s)`
                     : `${filteredBlogList.length} item(s)`}
                 </span>
+              </div>
+              <NavLink to={'editCollection'}>
+                <SecondaryButton>
+                  <SettingsIcon style={{ marginRight: 4 , color: theme.palette.text.secondary}} fontSize='small'/>
+                    Options
+                </SecondaryButton>
+              </NavLink>
+              <div className="button_save_contain">
+                    <NavLink to={'createPage'} ><DefaultButton type="submit" variant="contained"><AddIcon fontSize="small"/>Créer Page</DefaultButton></NavLink>
               </div>
             </div>
 

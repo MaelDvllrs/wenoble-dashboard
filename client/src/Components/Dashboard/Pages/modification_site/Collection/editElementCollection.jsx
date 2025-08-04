@@ -44,7 +44,6 @@ const EditElementCollection = () => {
     
     const idUser = jwtDecode(token).idUser;
 
-    const [InfoConfigBlog, setConfigblog] = useState([]);
     const [DecodeConfigblog, setDecodeConfigblog] = useState([]);
 
     const [InfoBlog, setInfoBlog] = useState([]);
@@ -56,6 +55,11 @@ const EditElementCollection = () => {
     const [formattedCreateDate, setFormattedCreateDate] = useState('');
     const [formattedUpdatedDate, setFormattedUpdatedDate] = useState('');
     const [formattedPublishedDate, setFormattedPublishedDate] = useState('');
+    
+    // États pour les noms d'utilisateurs
+    const [createdByUsername, setCreatedByUsername] = useState('');
+    const [updatedByUsername, setUpdatedByUsername] = useState('');
+    const [publishedByUsername, setPublishedByUsername] = useState('');
 
 
     const [deletedItems, setDeletedItems] = useState([]);
@@ -521,7 +525,6 @@ const EditElementCollection = () => {
 
 
     useEffect(() => {    
-    
         Axios.get(`${apiUrl}/getConfigCollection`, {
             params: {
                 IdBlog: idCollection,
@@ -531,24 +534,17 @@ const EditElementCollection = () => {
               'Content-Type': 'application/json'
             }
         }).then((response) => {
-            setConfigblog(response.data);
+            // L'API retourne maintenant les données directement, plus besoin de JWT
+            setDecodeConfigblog(response.data);
         }).catch((error) => {
             console.error('Erreur lors de la récupération de la du Blog :', error);
         });
-    }, [InfoConfigBlog]);
-
-
-    useEffect(() => {
-        if(InfoConfigBlog !== null && typeof InfoConfigBlog === 'string'){
-            const decodedConfig = jwtDecode(InfoConfigBlog);
-            setDecodeConfigblog(decodedConfig);
-        }
-    }, [InfoConfigBlog]);
+    }, []);
 
 
 
     useEffect(() => {
-        DecodeConfigblog.blogConfig && DecodeConfigblog.blogConfig.map((blogItem) => {
+        DecodeConfigblog.data && DecodeConfigblog.data.map((blogItem) => {
             if (blogItem.tab_field === 'image') {
                 setBlogDataConfig(prevData => ({
                     ...prevData,
@@ -783,6 +779,11 @@ const EditElementCollection = () => {
             } else {
                 setFormattedPublishedDate('Non publié');
             }
+
+            // Définir les noms d'utilisateurs
+            setCreatedByUsername(DecodeBlog.blogPage[0].created_by_username || 'Utilisateur inconnu');
+            setUpdatedByUsername(DecodeBlog.blogPage[0].updated_by_username || 'Utilisateur inconnu');
+            setPublishedByUsername(DecodeBlog.blogPage[0].published_by_username || '');
         }
         
     }, [DecodeBlog])
@@ -860,7 +861,7 @@ const EditElementCollection = () => {
                       <Field fieldValue={DecodeBlog.blogPage[0]} type='text' id_config="slug" onChange={handleBlogDataChange} slugValue={slugValue}/>
                     </div>
                     <div className="line_horizontal" style={{backgroundColor: theme.palette.primary.third}}></div>
-                    {DecodeConfigblog.blogConfig && DecodeConfigblog.blogConfig.map((blogItem) => {
+                    {DecodeConfigblog.data && DecodeConfigblog.data.map((blogItem) => {
                         // Trouver les données correspondantes dans InfoBlogPage.data, s'il y en a
                         const correspondingData = InfoBlogPage.data.find(data => data.id_config === blogItem.id);
 
@@ -892,14 +893,25 @@ const EditElementCollection = () => {
                     <div className="blogField_contain">
                       <p className="blogField_name">Date de création :</p>
                       <p className="blogDate">{formattedCreateDate}</p>
+                      <p className="blogUser" style={{ color: theme.palette.text.secondary, fontSize: '0.8rem', marginTop: '0.2rem' }}>
+                        Créé par : <span style={{ color: theme.palette.text.primary }}>{createdByUsername}</span>
+                      </p>
                     </div>
                     <div className="blogField_contain">
                       <p className="blogField_name">Date de modificaction :</p>
                       <p className="blogDate">{formattedUpdatedDate}</p>
+                      <p className="blogUser" style={{ color: theme.palette.text.secondary, fontSize: '0.8rem', marginTop: '0.2rem' }}>
+                        Modifié par : <span style={{ color: theme.palette.text.primary }}>{updatedByUsername}</span>
+                      </p>
                     </div>
                     <div className="blogField_contain">
                       <p className="blogField_name">Date de Publication :</p>
                       <p className="blogDate">{formattedPublishedDate}</p>
+                      {publishedByUsername && formattedPublishedDate !== 'Non publié' && (
+                        <p className="blogUser" style={{ color: theme.palette.text.secondary, fontSize: '0.8rem', marginTop: '0.2rem' }}>
+                          Publié par : <span style={{ color: theme.palette.text.primary }}>{publishedByUsername}</span>
+                        </p>
+                      )}
                     </div>
                     <div className="line_horizontal" style={{backgroundColor: theme.palette.primary.third}}></div>
                     <RedButton className="delete_button_blog" variant="contained" theme={theme} onClick={openPopup}>Supprimer</RedButton>

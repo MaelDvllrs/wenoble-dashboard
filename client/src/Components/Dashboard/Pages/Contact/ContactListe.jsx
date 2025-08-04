@@ -5,10 +5,12 @@ import Cookies from 'js-cookie';
 import {jwtDecode} from 'jwt-decode'; 
 import { NavLink,  useParams, Link } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
+import { useWebsite } from '../../../../Context/WebsiteContext';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import '../modification_site/Portfolio/portfolio.css';
 import './Contact.css';
 import config from "../../../../config";
+import { useSnackbar } from '../../../../Theme/snackbar';
 import { SkeletonBlog } from "../../../skeleton/skeleton";
 import { formatDate } from "../../../../utils/dateUtils";
 import IconButton from '@mui/material/IconButton';
@@ -22,6 +24,7 @@ import { SecondaryButton, SimpleSearchField } from "../../../../Theme/element";
 const ContactList = () => {
 
     const theme = useTheme();
+    const { selectedWebsite, loading: websiteLoading } = useWebsite();
 
     const token = Cookies.get('token');
     const [InfoListeMessage, setInfoListeMessage] = useState([]);
@@ -37,6 +40,9 @@ const ContactList = () => {
     const [checkedMessages, setCheckedMessages] = useState({});
     const [allChecked, setAllChecked] = useState(false);
     const [searchValue, setSearchValue] = useState('');
+
+    const { showSnackbar } = useSnackbar();
+
 
 
     const handleOpenMessageMenu = (event, index) => {
@@ -74,11 +80,17 @@ const ContactList = () => {
     };
 
     const handleDeleteSelected = () => {
+        if (!selectedWebsite?.id) {
+            showSnackbar('error', 'Aucun site web sélectionné');
+            return;
+        }
+
         const selectedMessages = Object.keys(checkedMessages).filter(id => checkedMessages[id]);
         if (selectedMessages.length === 0) return;
         Axios.delete(`${apiUrl}/deleteMessage`, {
             params: {
-                idMessage: selectedMessages.join(',')
+                idMessage: selectedMessages.join(','),
+                websiteId: selectedWebsite.id
             },
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -86,42 +98,48 @@ const ContactList = () => {
             }
         }).then(() => {
             // Rafraîchir la liste des messages après la suppression
-            Axios.get(`${apiUrl}/getMessage`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'multipart/form-data'
-                }
-            }).then((response) => {
-                setInfoListeMessage(jwtDecode(response.data));
-                setCheckedMessages({});
-                setAllChecked(false);
-            }).catch((error) => {
-                console.error('Erreur lors du rafraîchissement des messages :', error);
-            });
+            fetchMessages();
+            setCheckedMessages({});
+            setAllChecked(false);
+            showSnackbar('success', 'Messages supprimés avec succès');
         }).catch((error) => {
+            showSnackbar('error', '[CONT-LIST-002] Erreur lors de la suppression des messages');
             console.error('Erreur lors de la suppression des messages :', error);
         });
     };
 
 
-    useEffect(() => {    
+    const fetchMessages = async () => {
+        if (!selectedWebsite?.id || websiteLoading) {
+            console.log('Aucun site web sélectionné ou en cours de chargement');
+            setInfoListeMessage([]);
+            setLoadingMessage(false);
+            return;
+        }
 
-            const user = Cookies.get('token');
-            const decodedUser = jwtDecode(user);
-    
-            Axios.get(`${apiUrl}/getMessage`, {
+        setLoadingMessage(true);
+        try {
+            const response = await Axios.get(`${apiUrl}/getMessage`, {
+                params: {
+                    websiteId: selectedWebsite.id
+                },
                 headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'multipart/form-data'
-            }
-            }).then((response) => {
-                setInfoListeMessage(jwtDecode(response.data));
-                setLoadingMessage(false);
-            }).catch((error) => {
-                console.error('Erreur lors de la récupération des messages :', error);
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
             });
-            
-    }, [id]);
+            setInfoListeMessage(jwtDecode(response.data));
+            setLoadingMessage(false);
+        } catch (error) {
+            showSnackbar('error', '[CONT-LIST-003] Erreur lors de la récupération des messages');
+            console.error('Erreur lors de la récupération des messages :', error);
+            setLoadingMessage(false);
+        }
+    };
+
+    useEffect(() => {    
+        fetchMessages();
+    }, [selectedWebsite, websiteLoading]);
 
 
     // Détermine si au moins une case est cochée

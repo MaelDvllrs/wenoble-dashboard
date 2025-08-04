@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import axios from '../service/AxiosConfig';
 import Cookies from 'js-cookie';
 import { Navigate } from 'react-router-dom';
+import { useWebsite } from '../Context/WebsiteContext';
 import config from '../config';
 
 // Constants
 const apiUrl = config.apiUrl;
 
 // Helper function for authorization
-const fetchAuthorization = async (type, setVerify, setAuthorized) => {
+const fetchAuthorization = async (type, websiteId, setVerify, setAuthorized) => {
     try {
         const token = Cookies.get('token');
         if (!token) {
@@ -16,7 +17,18 @@ const fetchAuthorization = async (type, setVerify, setAuthorized) => {
             throw new Error('Token not found');
         }
 
-        const response = await axios.post(`${apiUrl}/getAuthorisation`, { token, type });
+        if (!websiteId) {
+            console.log('Aucun site web sélectionné pour vérifier les autorisations');
+            setVerify(true);
+            setAuthorized(false);
+            return;
+        }
+
+        const response = await axios.post(`${apiUrl}/getAuthorisation`, { 
+            token, 
+            type,
+            websiteId 
+        });
 
         if (response.data.success) {
             setVerify(true);
@@ -24,6 +36,8 @@ const fetchAuthorization = async (type, setVerify, setAuthorized) => {
         setAuthorized(response.data.authorisation);
     } catch (error) {
         console.error('Authorization error:', error);
+        setVerify(true);
+        setAuthorized(false);
     }
 };
 
@@ -31,10 +45,16 @@ const fetchAuthorization = async (type, setVerify, setAuthorized) => {
 const useAuthorization = (type) => {
     const [verifyAuthorization, setVerifyAuthorization] = useState(false);
     const [isAuthorized, setIsAuthorized] = useState(false);
+    const { selectedWebsite } = useWebsite();
 
     useEffect(() => {
-        fetchAuthorization(type, setVerifyAuthorization, setIsAuthorized);
-    }, [type]);
+        if (selectedWebsite?.id) {
+            fetchAuthorization(type, selectedWebsite.id, setVerifyAuthorization, setIsAuthorized);
+        } else {
+            setVerifyAuthorization(true);
+            setIsAuthorized(false);
+        }
+    }, [type, selectedWebsite]);
 
     return { isAuthorized, verifyAuthorization };
 };
@@ -74,13 +94,19 @@ export const AuthorisedRouteNewsletter = ({ children }) => (
 );
 
 // Utility function for checking authorization
-export const checkAuthorization = async (authType) => {
+export const checkAuthorization = async (authType, websiteId) => {
     const token = Cookies.get('token');
+
+    if (!websiteId) {
+        console.log('Aucun site web sélectionné pour vérifier les autorisations');
+        return false;
+    }
 
     try {
         const response = await axios.post(`${apiUrl}/getAuthorisation`, {
             token,
-            type: authType
+            type: authType,
+            websiteId: websiteId
         }, {
             headers: {
                 'Authorization': `Bearer ${token}`,

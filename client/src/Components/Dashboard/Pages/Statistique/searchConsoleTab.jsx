@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useTheme } from '@mui/material/styles';
+import { useWebsite } from '../../../../Context/WebsiteContext';
 import MenuItem from '@mui/material/MenuItem';
 import { SecondaryButton, SelectFieldSecondary, SortMenu } from '../../../../Theme/element';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -26,6 +27,7 @@ export const SearchConsoleTab = () => {
   // --- Hooks & States ---
   const theme = useTheme();
   const token = Cookies.get('token');
+  const { selectedWebsite, websiteLoading } = useWebsite();
   const [type, setType] = useState('query');
   const [period, setPeriod] = useState('last14days');
   const [allData, setAllData] = useState([]); // toutes les lignes
@@ -55,20 +57,30 @@ export const SearchConsoleTab = () => {
   // --- Data Fetching ---
   useEffect(() => {
     const fetchData = async () => {
+      if (!selectedWebsite?.id) {
+        console.log('Aucun site web sélectionné');
+        setLoading(false);
+        setAllData([]);
+        setTotalRows(0);
+        return;
+      }
+      
       setLoading(true);
+      
       try {
-        const json = await getSearchConsoleTable(type, period, token);
+        const json = await getSearchConsoleTable(type, period, token, selectedWebsite.id);
         setTotalRows(json.rows ? json.rows.length : 0);
         setAllData(json.rows || []);
         setPage(0);
       } catch (e) {
+        console.error('Erreur lors de la récupération des données Search Console:', e);
         setAllData([]);
         setTotalRows(0);
       }
       setLoading(false);
     };
     fetchData();
-  }, [type, period, token]);
+  }, [type, period, token, selectedWebsite]);
 
   // --- UI: Table Height ---
   useEffect(() => {
@@ -190,147 +202,157 @@ export const SearchConsoleTab = () => {
 
   // --- Rendu UI ---
   return (
-    <div className="statistique-container search-tab-statistique" style={{ boxShadow: theme.palette.shadow.main, backgroundColor: theme.palette.primary.main, minHeight: 320, width: '100%', padding: 24 }}>
-      <div className='select-stat-container select-stat-container-tab' style={{gap: 16}}>
-        <SelectFieldSecondary
-          id="type-select"
-          value={type}
-          onChange={e => setType(e.target.value)}
-          theme={theme}
-        >
-          <MenuItem value="query">Requêtes</MenuItem>
-          <MenuItem value="page">Pages</MenuItem>
-        </SelectFieldSecondary>
-        <SelectFieldSecondary
-          id="period-select"
-          value={period}
-          onChange={e => setPeriod(e.target.value)}
-          theme={theme}
-        >
-          <MenuItem value={'today'}>Aujourd'hui</MenuItem>
-          <MenuItem value={'yesterday'}>Hier</MenuItem>
-          <MenuItem value={'last7days'}>7 jours</MenuItem>
-          <MenuItem value={'last14days'}>14 jours</MenuItem>
-          <MenuItem value={'last30days'}>30 jours</MenuItem>
-          <MenuItem value={'last90days'}>90 jours</MenuItem>
-          <MenuItem value={'last365days'}>12 mois</MenuItem>
-        </SelectFieldSecondary>
-        <SecondaryButton
-          variant="contained"
-          onClick={handleOpenSortMenu}
-          sx={{
-            border: appliedSorts.length > 0 ? '1px solid var(--primary-color)' : '1px solid transparent',
-            color: appliedSorts.length > 0 ? 'var(--primary-color)' : theme.palette.text.primary,
-            background: appliedSorts.length > 0 ? 'rgba(46,201,109,0.08)' : 'transparent',
-            transition: 'all 0.2s',
-            minWidth: 0,
-            padding: '0.2rem 0.7rem',
-            gap: 1,
-            '& .MuiButton-root': {
-              boxShadow: theme.palette.shadow.main,
-            },
-          }}
-        >
-          <SortIcon fontSize='small' sx={{ color: appliedSorts.length > 0 ? 'var(--primary-color)' : theme.palette.text.secondary, mr: 0.5 }} />
-          <span>
-            {appliedSorts.length === 0
-              ? 'Trier'
-              : `Trier par ${appliedSorts.length} règle${appliedSorts.length > 1 ? 's' : ''}`}
-          </span>
-        </SecondaryButton>
-        <SortMenu
-          anchorEl={sortMenuAnchor}
-          open={Boolean(sortMenuAnchor)}
-          onClose={handleCloseSortMenu}
-          options={sortOptions}
-          sorts={pendingSorts}
-          addColumn={addColumn}
-          setAddColumn={col => {
-            setAddColumn(col);
-            if (col) handleAddSortColumn(col);
-          }}
-          onAddSort={handleValidateSorts}
-          onRemoveSort={handleRemoveSort}
-          onToggleSortDir={handleToggleSortDir}
-          theme={theme}
-        />
-      </div>
-      {loading ? (
-        <div className='loading-table-container' style={tableHeight ? { minHeight: tableHeight } : {}}>
-          <CircularProgress sx={{ color: '#2ec96d' }} />
+    <>
+      {websiteLoading || !selectedWebsite ? (
+        <div className="statistique-container search-tab-statistique" style={{ boxShadow: theme.palette.shadow.main, backgroundColor: theme.palette.primary.main, minHeight: 320, width: '100%', padding: 24 }}>
+          <div className='loading-table-container' style={{ minHeight: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <CircularProgress sx={{ color: '#2ec96d' }} />
+          </div>
         </div>
       ) : (
-        <div className='table-container' ref={tableContainerRef}>
-          <table className='table-statistique'>
-            <thead>
-              <tr className="table-header searchconsole-table-header">
-                <th className="searchconsole-th searchconsole-th-main" onClick={() => handleSort('main')} style={{cursor:'pointer'}}>
-                  {columns[type]}
-                  <div className="searchconsole-sort-icon">
-                    {appliedSorts.length > 0 && appliedSorts[0].key === 'main' && (appliedSorts[0].dir === 'asc' ? <ArrowDropUpOutlinedIcon /> : <ArrowDropDownOutlinedIcon />)}
-                  </div>
-                </th>
-                <th className="searchconsole-th searchconsole-th-clicks" onClick={() => handleSort('clicks')} style={{cursor:'pointer'}}>
-                  Clics
-                  <div className="searchconsole-sort-icon">
-                    {appliedSorts.length > 0 && appliedSorts[0].key === 'clicks' && (appliedSorts[0].dir === 'asc' ? <ArrowDropUpOutlinedIcon /> : <ArrowDropDownOutlinedIcon />)}
-                  </div>
-                </th>
-                <th className="searchconsole-th searchconsole-th-impr" onClick={() => handleSort('impressions')} style={{cursor:'pointer'}}>
-                  Impressions
-                  <div className="searchconsole-sort-icon">
-                    {appliedSorts.length > 0 && appliedSorts[0].key === 'impressions' && (appliedSorts[0].dir === 'asc' ? <ArrowDropUpOutlinedIcon /> : <ArrowDropDownOutlinedIcon />)}
-                  </div>
-                </th>
-                <th className="searchconsole-th searchconsole-th-ctr" onClick={() => handleSort('ctr')} style={{cursor:'pointer'}}>
-                  CTR
-                  <div className="searchconsole-sort-icon">
-                    {appliedSorts.length > 0 && appliedSorts[0].key === 'ctr' && (appliedSorts[0].dir === 'asc' ? <ArrowDropUpOutlinedIcon /> : <ArrowDropDownOutlinedIcon />)}
-                  </div>
-                </th>
-                <th className="searchconsole-th searchconsole-th-pos" onClick={() => handleSort('position')} style={{cursor:'pointer'}}>
-                  Position
-                  <div className="searchconsole-sort-icon">
-                    {appliedSorts.length > 0 && appliedSorts[0].key === 'position' && (appliedSorts[0].dir === 'asc' ? <ArrowDropUpOutlinedIcon /> : <ArrowDropDownOutlinedIcon />)}
-                  </div>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {getSortedData().length === 0 ? (
-                <tr><td colSpan={5} className="searchconsole-td searchconsole-td-empty">Aucune donnée</td></tr>
-              ) : (
-                getSortedData().map((row, i) => (
-                  <tr key={i} className="searchconsole-row" style={{ borderBottom: `1px solid ${theme.palette.primary.third}` }}>
-                    <td className="searchconsole-td searchconsole-td-main">{row.keys[0]}</td>
-                    <td className="searchconsole-td searchconsole-td-clicks">{row.clicks}</td>
-                    <td className="searchconsole-td searchconsole-td-impr">{row.impressions}</td>
-                    <td className="searchconsole-td searchconsole-td-ctr">{(Number(row.ctr) * 100).toFixed(2)} %</td>
-                    <td className="searchconsole-td searchconsole-td-pos">{Number(row.position).toFixed(2)}</td>
+        <div className="statistique-container search-tab-statistique" style={{ boxShadow: theme.palette.shadow.main, backgroundColor: theme.palette.primary.main, minHeight: 320, width: '100%', padding: 24 }}>
+          <div className='select-stat-container select-stat-container-tab' style={{gap: 16}}>
+            <SelectFieldSecondary
+              id="type-select"
+              value={type}
+              onChange={e => setType(e.target.value)}
+              theme={theme}
+            >
+              <MenuItem value="query">Requêtes</MenuItem>
+              <MenuItem value="page">Pages</MenuItem>
+            </SelectFieldSecondary>
+            <SelectFieldSecondary
+              id="period-select"
+              value={period}
+              onChange={e => setPeriod(e.target.value)}
+              theme={theme}
+            >
+              <MenuItem value={'today'}>Aujourd'hui</MenuItem>
+              <MenuItem value={'yesterday'}>Hier</MenuItem>
+              <MenuItem value={'last7days'}>7 jours</MenuItem>
+              <MenuItem value={'last14days'}>14 jours</MenuItem>
+              <MenuItem value={'last30days'}>30 jours</MenuItem>
+              <MenuItem value={'last90days'}>90 jours</MenuItem>
+              <MenuItem value={'last365days'}>12 mois</MenuItem>
+            </SelectFieldSecondary>
+            <SecondaryButton
+              variant="contained"
+              onClick={handleOpenSortMenu}
+              sx={{
+                border: appliedSorts.length > 0 ? '1px solid var(--primary-color)' : '1px solid transparent',
+                color: appliedSorts.length > 0 ? 'var(--primary-color)' : theme.palette.text.primary,
+                background: appliedSorts.length > 0 ? 'rgba(46,201,109,0.08)' : 'transparent',
+                transition: 'all 0.2s',
+                minWidth: 0,
+                padding: '0.2rem 0.7rem',
+                gap: 1,
+                '& .MuiButton-root': {
+                  boxShadow: theme.palette.shadow.main,
+                },
+              }}
+            >
+              <SortIcon fontSize='small' sx={{ color: appliedSorts.length > 0 ? 'var(--primary-color)' : theme.palette.text.secondary, mr: 0.5 }} />
+              <span>
+                {appliedSorts.length === 0
+                  ? 'Trier'
+                  : `Trier par ${appliedSorts.length} règle${appliedSorts.length > 1 ? 's' : ''}`}
+              </span>
+            </SecondaryButton>
+            <SortMenu
+              anchorEl={sortMenuAnchor}
+              open={Boolean(sortMenuAnchor)}
+              onClose={handleCloseSortMenu}
+              options={sortOptions}
+              sorts={pendingSorts}
+              addColumn={addColumn}
+              setAddColumn={col => {
+                setAddColumn(col);
+                if (col) handleAddSortColumn(col);
+              }}
+              onAddSort={handleValidateSorts}
+              onRemoveSort={handleRemoveSort}
+              onToggleSortDir={handleToggleSortDir}
+              theme={theme}
+            />
+          </div>
+          {loading ? (
+            <div className='loading-table-container' style={tableHeight ? { minHeight: tableHeight } : {}}>
+              <CircularProgress sx={{ color: '#2ec96d' }} />
+            </div>
+          ) : (
+            <div className='table-container' ref={tableContainerRef}>
+              <table className='table-statistique'>
+                <thead>
+                  <tr className="table-header searchconsole-table-header">
+                    <th className="searchconsole-th searchconsole-th-main" onClick={() => handleSort('main')} style={{cursor:'pointer'}}>
+                      {columns[type]}
+                      <div className="searchconsole-sort-icon">
+                        {appliedSorts.length > 0 && appliedSorts[0].key === 'main' && (appliedSorts[0].dir === 'asc' ? <ArrowDropUpOutlinedIcon /> : <ArrowDropDownOutlinedIcon />)}
+                      </div>
+                    </th>
+                    <th className="searchconsole-th searchconsole-th-clicks" onClick={() => handleSort('clicks')} style={{cursor:'pointer'}}>
+                      Clics
+                      <div className="searchconsole-sort-icon">
+                        {appliedSorts.length > 0 && appliedSorts[0].key === 'clicks' && (appliedSorts[0].dir === 'asc' ? <ArrowDropUpOutlinedIcon /> : <ArrowDropDownOutlinedIcon />)}
+                      </div>
+                    </th>
+                    <th className="searchconsole-th searchconsole-th-impr" onClick={() => handleSort('impressions')} style={{cursor:'pointer'}}>
+                      Impressions
+                      <div className="searchconsole-sort-icon">
+                        {appliedSorts.length > 0 && appliedSorts[0].key === 'impressions' && (appliedSorts[0].dir === 'asc' ? <ArrowDropUpOutlinedIcon /> : <ArrowDropDownOutlinedIcon />)}
+                      </div>
+                    </th>
+                    <th className="searchconsole-th searchconsole-th-ctr" onClick={() => handleSort('ctr')} style={{cursor:'pointer'}}>
+                      CTR
+                      <div className="searchconsole-sort-icon">
+                        {appliedSorts.length > 0 && appliedSorts[0].key === 'ctr' && (appliedSorts[0].dir === 'asc' ? <ArrowDropUpOutlinedIcon /> : <ArrowDropDownOutlinedIcon />)}
+                      </div>
+                    </th>
+                    <th className="searchconsole-th searchconsole-th-pos" onClick={() => handleSort('position')} style={{cursor:'pointer'}}>
+                      Position
+                      <div className="searchconsole-sort-icon">
+                        {appliedSorts.length > 0 && appliedSorts[0].key === 'position' && (appliedSorts[0].dir === 'asc' ? <ArrowDropUpOutlinedIcon /> : <ArrowDropDownOutlinedIcon />)}
+                      </div>
+                    </th>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                </thead>
+                <tbody>
+                  {getSortedData().length === 0 ? (
+                    <tr><td colSpan={5} className="searchconsole-td searchconsole-td-empty">Aucune donnée</td></tr>
+                  ) : (
+                    getSortedData().map((row, i) => (
+                      <tr key={i} className="searchconsole-row" style={{ borderBottom: `1px solid ${theme.palette.primary.third}` }}>
+                        <td className="searchconsole-td searchconsole-td-main">{row.keys[0]}</td>
+                        <td className="searchconsole-td searchconsole-td-clicks">{row.clicks}</td>
+                        <td className="searchconsole-td searchconsole-td-impr">{row.impressions}</td>
+                        <td className="searchconsole-td searchconsole-td-ctr">{(Number(row.ctr) * 100).toFixed(2)} %</td>
+                        <td className="searchconsole-td searchconsole-td-pos">{Number(row.position).toFixed(2)}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <div className='table-footer'>
+            <span>
+                Données disponibles jusqu'au : {getLastDate().format('DD/MM/YYYY')}
+            </span>
+            <div className='table-footer-info'>
+                <span>{totalRows === 0 ? '0' : `${page * rowsPerPage + 1} - ${Math.min((page + 1) * rowsPerPage, totalRows)} sur ${totalRows}`}</span>
+                <div className='table-footer-buttons'>
+                    <button className='table-arrow-button' onClick={handlePrev} disabled={page === 0}>
+                        <ArrowBackIosRoundedIcon fontSize='16'/>
+                    </button>   
+                    <button className='table-arrow-button' onClick={handleNext} disabled={(page + 1) * rowsPerPage >= totalRows}>
+                        <ArrowForwardIosRoundedIcon fontSize='16'/>
+                    </button>
+                </div>
+            </div>
+          </div>
         </div>
       )}
-      <div className='table-footer'>
-        <span>
-            Données disponibles jusqu'au : {getLastDate().format('DD/MM/YYYY')}
-        </span>
-        <div className='table-footer-info'>
-            <span>{totalRows === 0 ? '0' : `${page * rowsPerPage + 1} - ${Math.min((page + 1) * rowsPerPage, totalRows)} sur ${totalRows}`}</span>
-            <div className='table-footer-buttons'>
-                <button className='table-arrow-button' onClick={handlePrev} disabled={page === 0}>
-                    <ArrowBackIosRoundedIcon fontSize='16'/>
-                </button>   
-                <button className='table-arrow-button' onClick={handleNext} disabled={(page + 1) * rowsPerPage >= totalRows}>
-                    <ArrowForwardIosRoundedIcon fontSize='16'/>
-                </button>
-            </div>
-        </div>
-      </div>
-    </div>
+    </>
   );
 };
 

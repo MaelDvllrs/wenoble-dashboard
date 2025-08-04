@@ -1,20 +1,25 @@
 import React from "react"
 import Axios from 'axios';
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Cookies from 'js-cookie';
 import {jwtDecode} from 'jwt-decode'; 
-import { NavLink,  useParams } from 'react-router-dom';
+import { NavLink,  useParams, useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
+import { useWebsite } from '../../../../Context/WebsiteContext';
 import '../modification_site/Portfolio/portfolio.css';
 import './Contact.css';
 import config from "../../../../config";
 import { formatDate } from "../../../../utils/dateUtils";
 import EmailIcon from '@mui/icons-material/Email';
 import { DefaultButton } from "../../../../Theme/element";
+import { useSnackbar } from '../../../../Theme/snackbar';
 
 const ContactMessage = () => {
 
     const theme = useTheme();
+    const { selectedWebsite, loading: websiteLoading } = useWebsite();
+    const navigate = useNavigate();
+    const initialWebsiteId = useRef(null);
 
 
     const [InfoDetailMessage, setInfoDetailMessage] = useState([]);
@@ -23,22 +28,50 @@ const ContactMessage = () => {
 
     const token = Cookies.get('token');
 
-    useEffect(() => {        
-            Axios.get(`${apiUrl}/getMessageDetail`, {
-                params: {
-                    idMessage: id,
-                },
-                headers: {
-                  'Authorization': `Bearer ${token}`,
-                  'Content-Type': 'application/json'
-                }
-            }).then((response) => {
+    const { showSnackbar } = useSnackbar();
+
+
+    useEffect(() => {
+        const fetchMessageDetail = async () => {
+            if (!selectedWebsite?.id || websiteLoading || !id) {
+                console.log('Site web non sélectionné, en cours de chargement, ou ID de message manquant');
+                return;
+            }
+
+            try {
+                const response = await Axios.get(`${apiUrl}/getMessageDetail`, {
+                    params: {
+                        idMessage: id,
+                        websiteId: selectedWebsite.id
+                    },
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
                 setInfoDetailMessage(jwtDecode(response.data));
-            }).catch((error) => {
-                console.error('Erreur lors de la récupération des messages :', error);
-            });
-            
-    }, [id]);
+            } catch (error) {
+                showSnackbar('error', '[CONT-MESS-001] Erreur lors de la récupération du message');
+                console.error('Erreur lors de la récupération du message :', error);
+            }
+        };
+
+        fetchMessageDetail();
+    }, [id, selectedWebsite, websiteLoading]);
+
+    // Redirection vers la liste des contacts quand le site web change
+    useEffect(() => {
+        // Stocker l'ID du site web initial au premier chargement
+        if (!websiteLoading && selectedWebsite?.id && initialWebsiteId.current === null) {
+            initialWebsiteId.current = selectedWebsite.id;
+            return;
+        }
+        
+        // Rediriger seulement si le site web change après le chargement initial
+        if (!websiteLoading && selectedWebsite?.id && initialWebsiteId.current !== null && initialWebsiteId.current !== selectedWebsite.id) {
+            navigate('/dashboard/contact');
+        }
+    }, [selectedWebsite?.id, websiteLoading, navigate]);
 
 
 
