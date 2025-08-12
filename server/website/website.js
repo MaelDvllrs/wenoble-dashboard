@@ -326,7 +326,6 @@ router.post('/createWebsite', authenticateToken, async (req, res) => {
   try {
     const { website_name, website_slug, workspace_id, visibility = 'workspace' } = req.body;
 
-    console.log(req.body);
     const userId = req.user.idUser;
     const token = req.headers['authorization']?.split(' ')[1];
     const supabase = supabaseServer(token);
@@ -555,7 +554,14 @@ router.delete('/deleteWebsite', authenticateToken, async (req, res) => {
       return res.status(403).send({ error: 'Vous devez être administrateur pour supprimer ce site web' });
     }
 
-    // Supprimer le site web (les contraintes de clé étrangère supprimeront automatiquement les relations)
+    const { error: userWebsitesDeleteError } = await supabase
+      .from('user_websites')
+      .delete()
+      .eq('website_id', websiteId);
+      
+    if (userWebsitesDeleteError) throw userWebsitesDeleteError;
+      
+    // Supprimer le site web (les contraintes de clé étrangère supprimeront automatiquement les relations restantes)
     const { error } = await supabase
       .from('websites')
       .delete()

@@ -615,7 +615,7 @@ const Dashboard = () => {
                 >
                     {/* Sélecteur de site web */}
                     <div className='website-selector'>
-            <IconButton 
+                        <IconButton 
                             className='website-selector-button'
                             onClick={handleOpenWebsiteMenu} 
                             ref={websiteMenuRef}
@@ -739,7 +739,6 @@ const Dashboard = () => {
                             </Popper>
                         </ClickAwayListener>
                     </div>
-                    
                     <div className='navigation'>
                         <NavLink key="home" to='/dashboard/home' className={({ isActive }) => (isActive ? 'menuDashboard menuActive' : 'menuDashboard')}>
                             <AnimatePresence initial={false}>
@@ -749,7 +748,7 @@ const Dashboard = () => {
                                 </motion.div>
                             </AnimatePresence>
                         </NavLink>
-                        <div className='menu_title'><p className='menu_title_text' style={{color: theme.palette.text.primary}}>GÉRER MON SITE</p></div>
+                        <div className='line-sidebar'></div>
                         <NavLink key="modification" to='/dashboard/modification' className={({ isActive }) => (isActive ? 'menuDashboard menuActive' : 'menuDashboard')}>
                             <AnimatePresence initial={false}>
                                 <motion.div className={isSidebarOpen ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
@@ -764,7 +763,7 @@ const Dashboard = () => {
                                     <motion.div animate={{marginRight: isSidebarOpen ? "0.5rem" : "0rem"}} className='icon_navigation'><ShoppingCartOutlinedIcon fontSize='small'/></motion.div>
                                     <motion.span className={isSidebarOpen ? "menu_text_open" : "menu_text_close"}>E-commerce</motion.span>
                                     {
-                                        ecommAuth === true || isSidebarOpen !== false ? (
+                                        ecommAuth === true || isSidebarOpen === false ? (
                                             null
                                         ) : <motion.div animate={{marginRight: isSidebarOpen ? "1.5rem" : "0rem", marginLeft: isSidebarOpen ? "1rem" : "0.5rem"}} style={{color: theme.palette.text.secondary}} className='icon_navigation icon_lock'><PiLockBold /></motion.div>
                                     }
@@ -793,7 +792,7 @@ const Dashboard = () => {
                                     <motion.div animate={{marginRight: isSidebarOpen ? "0.5rem" : "0rem"}} className='icon_navigation'><NewspaperOutlinedIcon fontSize='small'/></motion.div>
                                     <motion.span className={isSidebarOpen ? "menu_text_open" : "menu_text_close"}>Newsletter</motion.span>
                                     {
-                                        newsAuth === true || isSidebarOpen !== false ? (
+                                        newsAuth === true || isSidebarOpen === false ? (
                                             null
                                         ) : <motion.div animate={{marginRight: isSidebarOpen ? "1.5rem" : "0rem", marginLeft: isSidebarOpen ? "1rem" : "0.5rem"}} style={{color: theme.palette.text.secondary}} className='icon_navigation icon_lock'><PiLockBold /></motion.div>
                                     }
@@ -801,7 +800,7 @@ const Dashboard = () => {
                             </AnimatePresence>
 
                         </NavLink>
-                        <div className='menu_title'><p className='menu_title_text' style={{color: theme.palette.text.primary}}>WENOBLE</p></div>
+                        <div className='line-sidebar'></div>
                         <NavLink key="actu" to='/dashboard/actu/' className={({ isActive }) => (isActive ? 'menuDashboard menuActive' : 'menuDashboard')}>
                             <AnimatePresence initial={false}>
                                 <motion.div className={isSidebarOpen ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>

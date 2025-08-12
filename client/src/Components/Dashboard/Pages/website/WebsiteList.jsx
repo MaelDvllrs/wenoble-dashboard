@@ -41,7 +41,7 @@ const WebsiteList = () => {
   const handleDelete = async () => {
     setLoading(true);
     try {
-      await Axios.delete(`${apiUrl}/api/website/deleteWebsite?websiteId=${deleteModal.websiteId}`, {
+      await Axios.delete(`${apiUrl}/deleteWebsite?websiteId=${deleteModal.websiteId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
