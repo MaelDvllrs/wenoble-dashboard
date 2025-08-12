@@ -28,13 +28,15 @@ import PendingIcon from '@mui/icons-material/Pending';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import Snackbar from '@mui/material/Snackbar';
 import SettingsIcon from '@mui/icons-material/Settings';
+import {  PiGearSixBold } from "react-icons/pi";
+
 
 
 
 const ListeCollection = () => {
 
     const theme = useTheme();
-    const token = Cookies.get('token')
+  const token = Cookies.get('token')
 
     const [InfoListeblog, setInfoblog] = useState([]);
     const apiUrl = config.apiUrl;
@@ -197,9 +199,9 @@ const ListeCollection = () => {
                         }
                       }
                       setRegenerateSiteStatus(atLeastOnePublished);
-                      if (atLeastOnePublished) {
+            if (atLeastOnePublished) {
                         try {
-                          await generateStaticSite(token);
+              await generateStaticSite(token, selectedWebsite?.id);
                           setTimeout(() => setDeletionCompleted(true), 800);
                         } catch (e) {
                           showSnackbar('error', '[LIST-COLL-003] Erreur lors de la suppressions des collections');
@@ -334,13 +336,22 @@ const ListeCollection = () => {
                 </span>
               </div>
               <NavLink to={'editCollection'}>
-                <SecondaryButton>
-                  <SettingsIcon style={{ marginRight: 4 , color: theme.palette.text.secondary}} fontSize='small'/>
-                    Options
+                <SecondaryButton
+                  startIcon={<PiGearSixBold size={14}/>}
+                >
+                  Options
                 </SecondaryButton>
               </NavLink>
               <div className="button_save_contain">
-                    <NavLink to={'createPage'} ><DefaultButton type="submit" variant="contained"><AddIcon fontSize="small"/>Créer Page</DefaultButton></NavLink>
+                    <NavLink to={'createPage'} >
+                      <DefaultButton 
+                        type="submit" 
+                        variant="contained"
+                        startIcon={<AddIcon/>}
+                      >
+                        Créer Page
+                      </DefaultButton>
+                    </NavLink>
               </div>
             </div>
 

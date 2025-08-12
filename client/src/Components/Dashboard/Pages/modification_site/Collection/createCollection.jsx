@@ -367,15 +367,6 @@ const CreateCollection = () => {
                 <>
             <div className="header_modification header_page_modification">
                 <h3 className="titlePage">Nouvelle collection</h3>
-                <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '1rem',
-                    fontSize: '0.9rem',
-                    color: theme.palette.text.secondary 
-                }}>
-                    Site: <strong style={{ color: theme.palette.text.primary }}>{selectedWebsite.website_name}</strong>
-                </div>
                 <div className="actions-section">
                     <SecondaryButton    
                         variant="outlined"
@@ -395,12 +386,12 @@ const CreateCollection = () => {
                     </SecondaryButton>
                     <DefaultButton
                         variant="contained"
-                        startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon  />}
+                        startIcon={loading ? <CircularProgress size={12} sx={{ color: 'white' }} /> : undefined}
                         onClick={createCollection}
                         disabled={loading}
                         sx={{ backgroundColor: theme.palette.primary.main }}
                     >
-                        {loading ? 'Création...' : 'Créer'}
+                        Créer
                     </DefaultButton>
                 </div>
             </div>
@@ -537,11 +528,10 @@ const CreateCollection = () => {
                                                 </SecondaryButton>
                                                 <DefaultButton
                                                     variant="contained"
-                                                    startIcon={<SaveIcon />}
                                                     onClick={saveNewField}
                                                     sx={{ backgroundColor: theme.palette.primary.main }}
                                                 >
-                                                    Enregistrer
+                                                    Valider
                                                 </DefaultButton>
                                             </div>
                                             </div>
@@ -778,11 +768,10 @@ const CreateCollection = () => {
                                         </SecondaryButton>
                                         <DefaultButton
                                             variant="contained"
-                                            startIcon={<SaveIcon />}
                                             onClick={saveNewField}
                                             sx={{ backgroundColor: theme.palette.primary.main }}
                                         >
-                                            Enregistrer
+                                            Valider
                                         </DefaultButton>
                                     </div>
                                 </div>

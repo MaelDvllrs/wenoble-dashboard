@@ -102,6 +102,7 @@ const WorkspaceManager = () => {
             setCurrentWorkspaceForMembers(workspace);
             setMembersModalOpen(true);
         } catch (error) {
+            console.log(error)
             showSnackbar('error', 'Erreur lors du chargement des membres');
         }
     };

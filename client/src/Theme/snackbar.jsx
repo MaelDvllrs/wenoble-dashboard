@@ -9,6 +9,7 @@ export const SnackbarContext = createContext();
 
 export const useSnackbar = () => useContext(SnackbarContext);
 
+
 const CustomAlert = styled(Alert)(({ theme, severity }) => ({
   width: '100%',
   fontSize: '1rem',

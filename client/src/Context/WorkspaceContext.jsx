@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import Cookies from 'js-cookie';
 import config from '../config';
 import Axios from '../service/AxiosConfig';
@@ -17,6 +17,7 @@ export const useWorkspace = () => {
 };
 
 export const WorkspaceProvider = ({ children }) => {
+  const MIN_SKELETON_MS = 150; // durée minimale pour voir le skeleton (anti flicker)
   const [workspaces, setWorkspaces] = useState(() => {
     // Restaurer les workspaces depuis le localStorage
     try {
@@ -36,16 +37,61 @@ export const WorkspaceProvider = ({ children }) => {
     }
   });
   const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true); // pour le tout premier cycle réseau
   const [error, setError] = useState(null);
   const { showSnackbar } = useSnackbar();
-  const token = Cookies.get('token');
+  // Gestion du token (détection dynamique des changements de session)
+  const [authToken, setAuthToken] = useState(() => Cookies.get('token') || null);
+  const previousUserIdRef = useRef(null);
+  const pollingRef = useRef(null);
+  const mountedRef = useRef(true);
   const apiUrl = config.apiUrl;
 
-  // Charger les workspaces de l'utilisateur
-  const loadWorkspaces = async () => {
+  // Extraction de l'ID utilisateur depuis le JWT (supabase ou custom)
+  const extractUserIdFromToken = (token) => {
+    if (!token) return null;
     try {
-      setLoading(true);
+      const base64 = token.split('.')[1];
+      if (!base64) return null;
+      const json = JSON.parse(atob(base64.replace(/-/g, '+').replace(/_/g, '/')));
+      return json.sub || json.user_id || json.id || json.uid || null;
+    } catch {
+      return null;
+    }
+  };
+
+  // Polling léger (toutes les 1.5s) pour détecter changement du cookie token
+  useEffect(() => {
+    pollingRef.current = setInterval(() => {
+      const current = Cookies.get('token') || null;
+      setAuthToken(prev => (prev !== current ? current : prev));
+    }, 1500);
+    return () => {
+      mountedRef.current = false;
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, []);
+
+  // Charger les workspaces de l'utilisateur
+  const loadWorkspaces = async (opts = {}) => {
+    const token = authToken; // always read latest
+  const fetchStart = performance.now();
+    try {
+      // Ne déclencher l'état loading (skeleton) que si aucun workspace sélectionné (cold start) ou si on force
+      if (initialLoading || !selectedWorkspace || opts.forceReset) {
+        setLoading(true);
+      }
       setError(null);
+
+      if (!token) {
+        // Pas connecté
+        setWorkspaces([]);
+        setSelectedWorkspace(null);
+        localStorage.removeItem('workspaces');
+        localStorage.removeItem('selectedWorkspace');
+        localStorage.removeItem('selectedWorkspaceId');
+        return;
+      }
 
       const response = await Axios.get(`${apiUrl}/getUserWorkspaces`, {
         headers: {
@@ -53,20 +99,35 @@ export const WorkspaceProvider = ({ children }) => {
         }
       });
 
-      if (response.data && response.data.workspaces) {
+  if (response.data && response.data.workspaces) {
         const newWorkspaces = response.data.workspaces;
         setWorkspaces(newWorkspaces);
+        // Détection changement d'utilisateur: si l'ancien selectedWorkspace n'appartient pas à la liste, on réinitialise plus bas
         
         // Sauvegarder dans le localStorage
         localStorage.setItem('workspaces', JSON.stringify(newWorkspaces));
         
-        // Sélectionner le workspace par défaut ou le premier disponible
-        const defaultWorkspace = newWorkspaces.find(w => w.is_default) || newWorkspaces[0];
-        if (defaultWorkspace && !selectedWorkspace) {
-          setSelectedWorkspace(defaultWorkspace);
-          localStorage.setItem('selectedWorkspaceId', defaultWorkspace.id.toString());
-          localStorage.setItem('selectedWorkspace', JSON.stringify(defaultWorkspace));
+        // Sélectionner le workspace par défaut ou le premier disponible quand:
+        // - aucun workspace sélectionné
+        // - ou l'utilisateur a changé
+        // - ou le workspace sélectionné n'existe plus
+        const userId = extractUserIdFromToken(token);
+  const previousUserId = previousUserIdRef.current;
+        const selectedStillExists = selectedWorkspace && newWorkspaces.some(w => w.id === selectedWorkspace.id);
+  const isUserChange = previousUserId !== null && previousUserId !== userId; // ne compte pas comme changement si premier chargement
+  if (!selectedStillExists || isUserChange || !selectedWorkspace || opts.forceReset) {
+          const defaultWorkspace = newWorkspaces.find(w => w.is_default) || newWorkspaces[0];
+          if (defaultWorkspace) {
+            setSelectedWorkspace(defaultWorkspace);
+            localStorage.setItem('selectedWorkspaceId', defaultWorkspace.id.toString());
+            localStorage.setItem('selectedWorkspace', JSON.stringify(defaultWorkspace));
+          } else {
+            setSelectedWorkspace(null);
+            localStorage.removeItem('selectedWorkspaceId');
+            localStorage.removeItem('selectedWorkspace');
+          }
         }
+        previousUserIdRef.current = userId; // mémoriser user courant
       } else {
         setWorkspaces([]);
         localStorage.removeItem('workspaces');
@@ -76,13 +137,21 @@ export const WorkspaceProvider = ({ children }) => {
       setError(error.response?.data?.error || 'Erreur lors du chargement des workspaces');
       setWorkspaces([]);
     } finally {
+      const elapsed = performance.now() - fetchStart;
+      if (elapsed < MIN_SKELETON_MS) {
+        if (loading) {
+          await new Promise(r => setTimeout(r, MIN_SKELETON_MS - elapsed));
+        }
+      }
       setLoading(false);
+  if (initialLoading) setInitialLoading(false);
     }
   };
 
   // Créer un nouveau workspace
   const createWorkspace = async (workspaceData) => {
     try {
+      const token = authToken;
       const response = await Axios.post(`${apiUrl}/createWorkspace`, workspaceData, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -106,6 +175,7 @@ export const WorkspaceProvider = ({ children }) => {
   // Mettre à jour un workspace
   const updateWorkspace = async (workspaceData) => {
     try {
+      const token = authToken;
       const response = await Axios.post(`${apiUrl}/updateWorkspace`, workspaceData, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -135,6 +205,7 @@ export const WorkspaceProvider = ({ children }) => {
   // Supprimer un workspace
   const deleteWorkspace = async (workspaceId) => {
     try {
+      const token = authToken;
       await Axios.delete(`${apiUrl}/deleteWorkspace?workspaceId=${workspaceId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -170,6 +241,7 @@ export const WorkspaceProvider = ({ children }) => {
   // Récupérer les sites web d'un workspace
   const getWorkspaceWebsites = async (workspaceId) => {
     try {
+      const token = authToken;
       const response = await Axios.get(`${apiUrl}/getWorkspaceWebsites?workspaceId=${workspaceId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -185,6 +257,7 @@ export const WorkspaceProvider = ({ children }) => {
 
   // Récupérer les membres d'un workspace
   const getWorkspaceMembers = async (workspaceId) => {
+    const token = authToken;
     try {
       const response = await Axios.get(`${apiUrl}/getWorkspaceMembers?workspaceId=${workspaceId}`, {
         headers: {
@@ -202,6 +275,7 @@ export const WorkspaceProvider = ({ children }) => {
   // Ajouter un utilisateur à un workspace
   const addUserToWorkspace = async (workspaceId, userEmail, role = 'member') => {
     try {
+      const token = authToken;
       const response = await Axios.post(`${apiUrl}/addUserToWorkspace`, {
         workspace_id: workspaceId,
         user_email: userEmail,
@@ -225,57 +299,37 @@ export const WorkspaceProvider = ({ children }) => {
 
   // Initialisation au montage du composant
   useEffect(() => {
+    const token = authToken;
+    const currentUserId = extractUserIdFromToken(token);
+    const previousUserId = previousUserIdRef.current;
+    const isFirstLoadForUser = previousUserId === null && currentUserId;
+
     if (token) {
-      // Si nous avons des données en cache et un workspace sélectionné, ne pas afficher le loading
-      if (workspaces.length > 0 && selectedWorkspace) {
-        setLoading(false);
+      // Ne mettre loading à true ici que pour un cold start
+      if (initialLoading && !selectedWorkspace) {
+        setLoading(true);
       }
-      
-      loadWorkspaces();
+      if (initialLoading) setInitialLoading(true);
+      if (previousUserId && previousUserId !== currentUserId) {
+        setWorkspaces([]);
+        setSelectedWorkspace(null);
+        localStorage.removeItem('workspaces');
+        localStorage.removeItem('selectedWorkspace');
+        localStorage.removeItem('selectedWorkspaceId');
+      }
+      loadWorkspaces({ forceReset: previousUserId !== null && previousUserId !== currentUserId && !isFirstLoadForUser });
     } else {
-      // Pas de token, nettoyer le localStorage
+      previousUserIdRef.current = null;
       localStorage.removeItem('workspaces');
       localStorage.removeItem('selectedWorkspace');
       localStorage.removeItem('selectedWorkspaceId');
       setWorkspaces([]);
       setSelectedWorkspace(null);
       setLoading(false);
+  if (initialLoading) setInitialLoading(false);
     }
-  }, [token]);
-
-  // Mettre à jour le workspace sélectionné quand les workspaces sont chargés
-  useEffect(() => {
-    if (workspaces.length > 0) {
-      let workspaceToSelect = selectedWorkspace;
-      
-      // Vérifier si le workspace sélectionné existe encore dans la liste
-      if (selectedWorkspace) {
-        const stillExists = workspaces.find(w => w.id === selectedWorkspace.id);
-        if (!stillExists) {
-          workspaceToSelect = null;
-        }
-      }
-      
-      // Si pas de workspace sélectionné valide, en chercher un
-      if (!workspaceToSelect) {
-        const savedWorkspaceId = localStorage.getItem('selectedWorkspaceId');
-        
-        if (savedWorkspaceId) {
-          workspaceToSelect = workspaces.find(w => w.id.toString() === savedWorkspaceId);
-        }
-        
-        if (!workspaceToSelect) {
-          workspaceToSelect = workspaces.find(w => w.is_default) || workspaces[0];
-        }
-        
-        if (workspaceToSelect) {
-          setSelectedWorkspace(workspaceToSelect);
-          localStorage.setItem('selectedWorkspaceId', workspaceToSelect.id.toString());
-          localStorage.setItem('selectedWorkspace', JSON.stringify(workspaceToSelect));
-        }
-      }
-    }
-  }, [workspaces]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authToken]);
 
   // Synchroniser les changements de workspaces avec le localStorage
   useEffect(() => {
@@ -297,10 +351,11 @@ export const WorkspaceProvider = ({ children }) => {
     workspaces,
     selectedWorkspace,
     loading,
+  initialLoading,
     error,
     
     // Actions
-    loadWorkspaces,
+  loadWorkspaces, // utilise authToken interne
     createWorkspace,
     updateWorkspace,
     deleteWorkspace,
@@ -310,7 +365,8 @@ export const WorkspaceProvider = ({ children }) => {
     addUserToWorkspace,
     
     // Fonction helper
-    refreshWorkspaces: loadWorkspaces // Alias pour la compatibilité
+  refreshWorkspaces: () => loadWorkspaces({ forceReset: false }),
+  currentUserId: extractUserIdFromToken(authToken)
   };
 
   return (

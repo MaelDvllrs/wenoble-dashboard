@@ -53,6 +53,7 @@ import ArticleTemplate from './Components/Dashboard/Pages/Actualite/ArticleTempl
 import UpdateTemplate from './Components/Dashboard/Pages/Actualite/UpdateTemplate';
 import ContactList from './Components/Dashboard/Pages/Contact/ContactListe';
 import ContactMessage from './Components/Dashboard/Pages/Contact/ContactMessage';
+import ContactSettings from './Components/Dashboard/Pages/Contact/ContactSettings';
 import Ecommerce from './Components/Dashboard/Pages/Ecommerce/EcommerceHome';
 import EcommerceStatistique from './Components/Dashboard/Pages/Ecommerce/EcommerceStatistique';
 import EcommerceProduct from './Components/Dashboard/Pages/Ecommerce/EcommerceProduct';
@@ -74,6 +75,7 @@ import Admin from './Components/Admin/Admin';
 import AdminHome from './Components/Admin/AdminHome';
 import AdminClient from './Components/Admin/Clients/AdminClients';
 import AddClient from './Components/Admin/Clients/AddClient';
+
 
 
 
@@ -149,6 +151,7 @@ function App() {
                                     <Route path="/dashboard/stats/analytics" element={<StatistiqueAnalytics />} />
                                     <Route path="/dashboard/stats/search-console" element={<StatistiqueSearchConsole />} />
                                     <Route path="/dashboard/contact" element={<ContactList />} />
+                                    <Route path="/dashboard/contact/settings" element={<ContactSettings />} />
                                     <Route path="/dashboard/contact/message/:id" element={<ContactMessage />} />
                                     <Route path="/dashboard/ecommerce" element={<AuthorisedRouteEcomm><Ecommerce /></AuthorisedRouteEcomm>}>
                                         <Route path="/dashboard/ecommerce/stats" element={<EcommerceStatistique />} />

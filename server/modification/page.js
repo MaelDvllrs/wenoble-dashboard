@@ -80,7 +80,7 @@ router.get('/getPageDetail',authenticateToken, async (req, res) => {
     }
 
     // Vérifier l'accès de l'utilisateur au site web de cette page
-    const hasAccess = await checkUserWebsiteAccess(userId, pageData.website_id, supabase);
+    const hasAccess = await checkUserWebsiteAccess(supabase, userId, pageData.website_id);
     if (!hasAccess) {
       return res.status(403).json({ error: 'Accès non autorisé à cette page' });
     }
@@ -118,7 +118,7 @@ router.get('/getConfigPage',authenticateToken, async (req, res) => {
     }
 
     // Vérifier l'accès de l'utilisateur au site web
-    const hasAccess = await checkUserWebsiteAccess(userId, pageData.website_id, supabase);
+    const hasAccess = await checkUserWebsiteAccess(supabase, userId, pageData.website_id);
     if (!hasAccess) {
       return res.status(403).json({ error: 'Accès non autorisé à cette page' });
     }
@@ -164,7 +164,7 @@ router.get('/getImagePage',authenticateToken, async (req, res) => {
     }
 
     // Vérifier l'accès de l'utilisateur au site web
-    const hasAccess = await checkUserWebsiteAccess(userId, pageData.website_id, supabase);
+    const hasAccess = await checkUserWebsiteAccess(supabase, userId, pageData.website_id);
     if (!hasAccess) {
       return res.status(403).json({ error: 'Accès non autorisé à cette page' });
     }
@@ -218,7 +218,7 @@ router.get('/getPageTexte',authenticateToken, async (req, res) => {
     }
 
     // Vérifier l'accès de l'utilisateur au site web
-    const hasAccess = await checkUserWebsiteAccess(userId, pageData.website_id, supabase);
+    const hasAccess = await checkUserWebsiteAccess(supabase, userId, pageData.website_id);
     if (!hasAccess) {
       return res.status(403).json({ error: 'Accès non autorisé à cette page' });
     }
@@ -264,7 +264,7 @@ router.get('/getPageRichText',authenticateToken, async (req, res) => {
     }
 
     // Vérifier l'accès de l'utilisateur au site web
-    const hasAccess = await checkUserWebsiteAccess(userId, pageData.website_id, supabase);
+    const hasAccess = await checkUserWebsiteAccess(supabase, userId, pageData.website_id);
     if (!hasAccess) {
       return res.status(403).json({ error: 'Accès non autorisé à cette page' });
     }
@@ -366,6 +366,8 @@ router.post('/updateTextPage',authenticateToken, async (req, res) => {
     return res.status(400).json({ error: 'ID de page requis' });
   }
 
+  console.log(id_page)
+
   try {
     // Récupérer la page pour vérifier le website_id
     const { data: pageData, error: pageError } = await supabase
@@ -380,7 +382,7 @@ router.post('/updateTextPage',authenticateToken, async (req, res) => {
     }
 
     // Vérifier l'accès de l'utilisateur au site web
-    const hasAccess = await checkUserWebsiteAccess(userId, pageData.website_id, supabase);
+    const hasAccess = await checkUserWebsiteAccess(supabase, userId, pageData.website_id);
     if (!hasAccess) {
       return res.status(403).json({ error: 'Accès non autorisé à cette page' });
     }
@@ -393,6 +395,7 @@ router.post('/updateTextPage',authenticateToken, async (req, res) => {
         .eq('id_page', id_page)
     );
     await Promise.all(updatePromises);
+    console.log('text mis a jour')
     res.status(200).send('Textes mis à jour avec succès');
   } catch (err) {
     console.error('Erreur lors de la mise à jour du texte de la page :', err);
@@ -431,7 +434,7 @@ router.post('/updateRichTextPage',authenticateToken, async (req, res) => {
     }
 
     // Vérifier l'accès de l'utilisateur au site web
-    const hasAccess = await checkUserWebsiteAccess(userId, pageData.website_id, supabase);
+    const hasAccess = await checkUserWebsiteAccess(supabase, userId, pageData.website_id);
     if (!hasAccess) {
       return res.status(403).json({ error: 'Accès non autorisé à cette page' });
     }
@@ -505,7 +508,7 @@ router.post('/updateImagesPage',authenticateToken, uploadUpdateImage.single('ima
     }
 
     // Vérifier l'accès de l'utilisateur au site web
-    const hasAccess = await checkUserWebsiteAccess(userId, pageData.website_id, supabase);
+    const hasAccess = await checkUserWebsiteAccess(supabase, userId, pageData.website_id);
     if (!hasAccess) {
       return res.status(403).json({ error: 'Accès non autorisé à cette page' });
     }
@@ -576,7 +579,7 @@ router.post('/updateAltPage' ,authenticateToken, async (req, res) => {
     }
 
     // Vérifier l'accès de l'utilisateur au site web
-    const hasAccess = await checkUserWebsiteAccess(userId, pageData.website_id, supabase);
+    const hasAccess = await checkUserWebsiteAccess(supabase, userId, pageData.website_id);
     if (!hasAccess) {
       return res.status(403).json({ error: 'Accès non autorisé à cette page' });
     }
@@ -622,7 +625,7 @@ router.delete('/deletePageData',authenticateToken, async (req, res) => {
     }
 
     // Vérifier l'accès de l'utilisateur au site web
-    const hasAccess = await checkUserWebsiteAccess(userId, pageData.website_id, supabase);
+    const hasAccess = await checkUserWebsiteAccess(supabase, userId, pageData.website_id);
     if (!hasAccess) {
       return res.status(403).json({ error: 'Accès non autorisé à cette page' });
     }
@@ -679,7 +682,7 @@ router.post('/createPage', authenticateToken, async (req, res) => {
 
   try {
     // Vérifier l'accès de l'utilisateur au site web
-    const hasAccess = await checkUserWebsiteAccess(userId, website_id, supabase);
+    const hasAccess = await checkUserWebsiteAccess(supabase, userId, pageData.website_id);
     if (!hasAccess) {
       return res.status(403).json({ error: 'Accès non autorisé à ce site web' });
     }
@@ -766,7 +769,7 @@ router.post('/updatePage', authenticateToken, async (req, res) => {
     }
 
     // Vérifier l'accès de l'utilisateur au site web
-    const hasAccess = await checkUserWebsiteAccess(userId, pageData.website_id, supabase);
+    const hasAccess = await checkUserWebsiteAccess(supabase, userId, pageData.website_id);
     if (!hasAccess) {
       return res.status(403).json({ error: 'Accès non autorisé à cette page' });
     }
@@ -831,7 +834,7 @@ router.delete('/deletePage', authenticateToken, async (req, res) => {
     }
 
     // Vérifier l'accès de l'utilisateur au site web
-    const hasAccess = await checkUserWebsiteAccess(userId, pageData.website_id, supabase);
+    const hasAccess = await checkUserWebsiteAccess(supabase, userId, pageData.website_id);
     if (!hasAccess) {
       return res.status(403).json({ error: 'Accès non autorisé à cette page' });
     }

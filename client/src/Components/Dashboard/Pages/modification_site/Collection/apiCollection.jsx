@@ -482,9 +482,9 @@ export const updateGalleryBlog = async (id, gallery, token) => {
 };
 
 
-export const generateStaticSite = async (token) => {
+export const generateStaticSite = async (token, websiteId) => {
     try {
-        const response = await Axios.post(`${apiUrl}/generateSite`, {}, {
+        const response = await Axios.post(`${apiUrl}/generateSite`, { websiteId }, {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
@@ -492,11 +492,10 @@ export const generateStaticSite = async (token) => {
         });
         return response.data;
     } catch (error) {
-        // Retourne un objet avec un statut d'échec au lieu de propager l'erreur
         return {
             success: false,
             error: "Static site generation failed but continuing execution",
             details: error.message
         };
-    }  
-}
+    }
+};

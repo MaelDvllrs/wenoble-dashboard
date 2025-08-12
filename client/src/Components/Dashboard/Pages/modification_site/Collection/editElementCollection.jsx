@@ -1,5 +1,5 @@
 // --- React & Libs ---
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { jwtDecode } from 'jwt-decode';
 
@@ -26,6 +26,7 @@ import { deleteBlogPage } from './collectionDeleteUtils';
 import { convertToRaw, ContentState, convertFromRaw } from 'draft-js';
 import Cookies from 'js-cookie';
 import './collection.css';
+import { WebsiteContext } from '../../../../../Context/WebsiteContext';
 
 // --- Helper: format date ---
 function formatDateFR(date) {
@@ -118,6 +119,7 @@ const EditElementCollection = () => {
 
 
     const { showSnackbar } = useSnackbar();
+    const { selectedWebsite } = useContext(WebsiteContext);
 
     const apiUrl = config.apiUrl;
     const urlBucketCollectionImage = config.urlBucketCollectionImage;
@@ -356,7 +358,7 @@ const EditElementCollection = () => {
                     setTimeout(() => {
                       setPageGenerationStatus(true);
                     }, 1000);
-                    await generateStaticSite(token);
+                    await generateStaticSite(token, selectedWebsite?.id);
                     setTimeout(() => {
                       setSitePublishingStatus(true);
                     }, 1000);
@@ -835,13 +837,21 @@ const EditElementCollection = () => {
                         <SecondaryButton variant="contained" theme={theme} onClick={() => navigate(`/dashboard/modification/collection/${idCollection}`)} disabled={isPublishing || isSaving || isUnpublishing || isSavingDraft}>Annuler</SecondaryButton>
                         {
                             DecodeBlog.blogPage[0].status === true ? (
-                                <DefaultButton type="submit" variant="contained" onClick={async () => { await handleSave(1,0) }} disabled={isSaving || isPublishing || isUnpublishing || isSavingDraft}>
-                                    {isSaving && <CircularProgress size={16} sx={{color: theme.palette.text.primary, marginRight: 1}}/>}
+                                <DefaultButton 
+                                    type="submit" 
+                                    variant="contained" 
+                                    onClick={async () => { await handleSave(1,0) }} disabled={isSaving || isPublishing || isUnpublishing || isSavingDraft}
+                                    startIcon={isSaving ? <CircularProgress size={12} sx={{ color: 'white' }} /> : undefined}
+                                >
                                     Enregistrer
                                 </DefaultButton>  
                             ) : (
-                                <DefaultButton type="submit" variant="contained" onClick={async () => { await handleSave(1,1) }} disabled={isPublishing || isSaving || isUnpublishing || isSavingDraft}>
-                                    {isPublishing && <CircularProgress size={16} sx={{color: theme.palette.text.primary, marginRight: 1}}/>}
+                                <DefaultButton 
+                                    type="submit"  
+                                    variant="contained" 
+                                    onClick={async () => { await handleSave(1,1) }} disabled={isPublishing || isSaving || isUnpublishing || isSavingDraft}
+                                    startIcon={isPublishing ? <CircularProgress size={12} sx={{ color: 'white' }} /> : undefined}
+                                >
                                     Publier
                                 </DefaultButton>
                             )

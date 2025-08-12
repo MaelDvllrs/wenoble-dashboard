@@ -134,28 +134,20 @@ export const WebsiteProvider = ({ children }) => {
         const fetchWorkspaceWebsites = async () => {
             const currentWorkspaceId = selectedWorkspace?.id;
             
-            console.log('useEffect triggered:', { 
-                token: !!token, 
-                currentWorkspaceId, 
-                lastWorkspaceId, 
-                workspaceLoading 
-            });
+
             
             // Ne faire l'appel que si le token existe, les workspaces sont chargés, et que l'ID du workspace a changé
             if (!token) {
-                console.log('No token, skipping');
                 return;
             }
 
             // Attendre que les workspaces soient chargés
             if (workspaceLoading) {
-                console.log('Workspaces still loading, skipping');
                 return;
             }
 
             // Si aucun workspace sélectionné, nettoyer
             if (!currentWorkspaceId) {
-                console.log('No workspace selected, cleaning up');
                 setWebsites([]);
                 setSelectedWebsite(null);
                 localStorage.removeItem('selectedWebsiteId');
@@ -165,11 +157,9 @@ export const WebsiteProvider = ({ children }) => {
 
             // Éviter l'appel si c'est le même workspace (utiliser une ref pour éviter la boucle)
             if (currentWorkspaceId === lastWorkspaceId) {
-                console.log('Same workspace, skipping API call');
                 return;
             }
             
-            console.log(`Workspace changed: ${lastWorkspaceId} -> ${currentWorkspaceId}`);
             setLoading(true);
             
             try {
@@ -181,11 +171,9 @@ export const WebsiteProvider = ({ children }) => {
                 });
                 
                 if (response.data && response.data.websites) {
-                    console.log('Raw websites data:', response.data.websites);
                     
                     // Nettoyer et dédupliquer les données
                     const cleanedWebsites = cleanWebsitesData(response.data.websites);
-                    console.log('Cleaned websites:', cleanedWebsites);
                     
                     setWebsites(cleanedWebsites);
                     // Sauvegarder dans le localStorage
@@ -195,7 +183,6 @@ export const WebsiteProvider = ({ children }) => {
                     if (cleanedWebsites.length > 0) {
                         // Si on change de workspace, sélectionner le premier site du nouveau workspace
                         if (lastWorkspaceId && lastWorkspaceId !== currentWorkspaceId) {
-                            console.log('Workspace changed, selecting first website');
                             setSelectedWebsite(cleanedWebsites[0]);
                             localStorage.setItem('selectedWebsiteId', cleanedWebsites[0].id.toString());
                             localStorage.setItem('selectedWebsite', JSON.stringify(cleanedWebsites[0]));
@@ -205,11 +192,9 @@ export const WebsiteProvider = ({ children }) => {
                             const savedWebsite = cleanedWebsites.find(site => site.id.toString() === savedWebsiteId);
                             
                             if (savedWebsite) {
-                                console.log('Found saved website:', savedWebsite.website_name);
                                 setSelectedWebsite(savedWebsite);
                                 localStorage.setItem('selectedWebsite', JSON.stringify(savedWebsite));
                             } else {
-                                console.log('No saved website, selecting first');
                                 setSelectedWebsite(cleanedWebsites[0]);
                                 localStorage.setItem('selectedWebsiteId', cleanedWebsites[0].id.toString());
                                 localStorage.setItem('selectedWebsite', JSON.stringify(cleanedWebsites[0]));
@@ -224,7 +209,6 @@ export const WebsiteProvider = ({ children }) => {
                     // Mettre à jour lastWorkspaceId APRÈS avoir traité les données
                     setLastWorkspaceId(currentWorkspaceId);
                 } else {
-                    console.log('No websites data in response');
                 }
             } catch (error) {
                 console.error('Erreur lors de la récupération des sites web:', error);
@@ -261,7 +245,6 @@ export const WebsiteProvider = ({ children }) => {
             return;
         }
         
-        console.log(`Refreshing websites for workspace: ${targetWorkspaceId}`);
         setLoading(true);
         
         try {

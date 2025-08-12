@@ -20,27 +20,28 @@ const supabase = createClient(
 
 const apiKeyMiddleware = async (req, res, next) => {
     const apiKey = req.headers['api_key'];
-    const id_data = req.headers['id_data'];
-    const ids = req.headers['ids'];
-    
+    const id_data = req.headers['id_data']; // identifiant principal passé par le client (collection_id, page_id, etc.)
+    const ids = req.headers['ids']; // liste éventuelle d'IDs séparés par des virgules
+
     if (!apiKey) {
-        return res.status(401).json({ message: 'Clé API ou ID de data manquant.' });
+        return res.status(401).json({ message: 'Clé API manquante.' });
     }
-    
+
     try {
-        // Vérification de la clé API avec l'instance Supabase service
-        const { data, error } = await supabase
-            .from('users')
-            .select('id')
+        // La clé API est désormais stockée sur la table "websites"
+        const { data: website, error } = await supabase
+            .from('websites')
+            .select('id, api_key')
             .eq('api_key', apiKey)
             .maybeSingle();
-            
+
         if (error) throw error;
-        
-        if (!data) {
-            return res.status(403).json({ message: 'Clé API invalide pour api.' });
+        if (!website) {
+            return res.status(403).json({ message: 'Clé API invalide.' });
         }
-        
+
+        // Exposer l'id du site pour les routes si besoin futur
+        req.website_id = website.id;
         req.id_data = id_data;
         req.ids = ids;
         next();
@@ -107,7 +108,6 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
     const colone = req.query.colone || 'collection_element_publish_date';
     const joinTable = req.query.joinTable || 'collection_element';
     const configs = req.query.configs || null;
-
 
     try {
         let query = supabase

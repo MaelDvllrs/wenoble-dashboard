@@ -447,12 +447,12 @@ const EditCollection = () => {
                     </SecondaryButton>
                     <DefaultButton
                         variant="contained"
-                        startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon  />}
+                        startIcon={loading ? <CircularProgress size={12} sx={{ color: 'white' }} /> : undefined}
                         onClick={saveCollection}
                         disabled={loading}
                         sx={{ backgroundColor: theme.palette.primary.main }}
                     >
-                        {loading ? 'Sauvegarde...' : 'Enregistrer'}
+                        Enregistrer
                     </DefaultButton>
                 </div>
             </div>
@@ -606,11 +606,10 @@ const EditCollection = () => {
                                                 </SecondaryButton>
                                                 <DefaultButton
                                                     variant="contained"
-                                                    startIcon={<SaveIcon />}
                                                     onClick={saveNewField}
                                                     sx={{ backgroundColor: theme.palette.primary.main }}
                                                 >
-                                                    Enregistrer
+                                                    Valider
                                                 </DefaultButton>
                                             </div>
                                             </div>
@@ -847,11 +846,10 @@ const EditCollection = () => {
                                         </SecondaryButton>
                                         <DefaultButton
                                             variant="contained"
-                                            startIcon={<SaveIcon />}
                                             onClick={saveNewField}
                                             sx={{ backgroundColor: theme.palette.primary.main }}
                                         >
-                                            Enregistrer
+                                            Valider
                                         </DefaultButton>
                                     </div>
                                 </div>

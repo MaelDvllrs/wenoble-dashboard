@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Axios from "axios";
 import Cookies from "js-cookie";
@@ -30,9 +30,11 @@ import {
 } from './apiCollection';
 import { convertToRaw } from 'draft-js';
 import './collection.css';
+import { useWebsite } from '../../../../../Context/WebsiteContext';
 
 const CreateElementCollection = () => {
     const theme = useTheme();
+    const { selectedWebsite } = useWebsite();
     const navigate = useNavigate();
     const token = Cookies.get('token');
     const idUser = jwtDecode(token).idUser;
@@ -263,7 +265,7 @@ const CreateElementCollection = () => {
                 setDataRetrievalStatus(true);
                 try {
                     setTimeout(() => { setPageGenerationStatus(true); }, 1000);
-                    await generateStaticSite(token);
+                    await generateStaticSite(token, selectedWebsite?.id);
                     setTimeout(() => { setSitePublishingStatus(true); }, 1000);
                     await new Promise(resolve => setTimeout(resolve, 2000));
                     setDataRetrievalStatus(false);

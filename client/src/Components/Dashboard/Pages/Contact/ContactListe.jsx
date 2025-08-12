@@ -3,7 +3,7 @@ import Axios from 'axios';
 import { useState, useEffect, useRef } from "react";
 import Cookies from 'js-cookie';
 import {jwtDecode} from 'jwt-decode'; 
-import { NavLink,  useParams, Link } from 'react-router-dom';
+import { NavLink,  useParams, Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import { useWebsite } from '../../../../Context/WebsiteContext';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
@@ -20,10 +20,13 @@ import Grow from '@mui/material/Grow';
 import EmailIcon from '@mui/icons-material/Email';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import { SecondaryButton, SimpleSearchField } from "../../../../Theme/element";
+import { PiLockBold, PiUserBold, PiGearSixBold, PiPowerBold, PiChatCircleDotsBold, PiBellBold,  PiPlusBold } from "react-icons/pi";
+
 
 const ContactList = () => {
 
     const theme = useTheme();
+    const navigate = useNavigate();
     const { selectedWebsite, loading: websiteLoading } = useWebsite();
 
     const token = Cookies.get('token');
@@ -189,6 +192,17 @@ const ContactList = () => {
                                 ? `${filteredMessages.filter(m => checkedMessages[m.id_message]).length} / ${filteredMessages.length} sélectionné(s)`
                                 : `${filteredMessages.length} item(s)`}
                             </span>
+
+                            <SecondaryButton
+                              variant="outlined"
+                              size="small"
+                              sx={{
+                                height:'2rem'
+                              }}
+                              onClick={() => navigate('/dashboard/contact/settings')}
+                            >
+                                <PiGearSixBold/>
+                            </SecondaryButton>
                           </div>
                         </div>
                         <div className="Item_menu_contact">

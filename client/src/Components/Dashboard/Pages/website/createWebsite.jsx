@@ -132,7 +132,7 @@ const CreateWebsite = () => {
                     <span> / </span>
                     <NavLink 
                         className={'breadCrumbsLink'}
-                        to="/dashboard/website"
+                        to="/dashboard/websites"
                         style={{ textDecoration: 'none', color: 'inherit' }}
                     >
                         Sites Web
@@ -153,7 +153,7 @@ const CreateWebsite = () => {
                                 <div className="actions-section">
                                     <SecondaryButton
                                         variant="outlined"
-                                        onClick={() => navigate('/dashboard/website')}
+                                        onClick={() => navigate('/dashboard/websites')}
                                         disabled={loading}
                                     >
                                         Annuler
@@ -162,9 +162,9 @@ const CreateWebsite = () => {
                                         variant="contained"
                                         onClick={handleCreateWebsite}
                                         disabled={loading || !websiteName.trim() || !websiteSlug.trim() || !selectedWorkspaceId || !isAdminOfSelectedWorkspace()}
-                                        sx={{ backgroundColor: theme.palette.primary.main }}
+                                        startIcon={loading ? <CircularProgress size={12} sx={{ color: 'white' }} /> : undefined}
                                     >
-                                        {loading ? 'Création...' : 'Créer'}
+                                        Créer
                                     </DefaultButton>
                                 </div>
                             </div>

@@ -12,6 +12,29 @@ import { useSnackbar } from '../../../../Theme/snackbar';
 import { WebsiteContext } from '../../../../Context/WebsiteContext';
 import { WorkspaceContext } from '../../../../Context/WorkspaceContext';
 import { DefaultButton, SecondaryButton, RedButton, SelectField, DefaultSwitch } from '../../../../Theme/element';
+// Reuse static site generation util from collection pages
+import { generateStaticSite } from '../modification_site/Collection/apiCollection';
+
+// Small local badge component for publishing steps
+const StatusBadge = ({ label, active }) => {
+  return (
+    <span
+      style={{
+        background: active ? '#4caf50' : '#888',
+        color: '#fff',
+        padding: '4px 10px',
+        borderRadius: '12px',
+        fontSize: '12px',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '6px',
+        transition: 'background .3s'
+      }}
+    >
+      {active ? '✓' : '…'} {label}
+    </span>
+  );
+};
 
 const EditWebsite = () => {
   const theme = useTheme();
@@ -55,6 +78,11 @@ const EditWebsite = () => {
   // États de chargement
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  // Publication state
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [dataRetrievalStatus, setDataRetrievalStatus] = useState(false);
+  const [pageGenerationStatus, setPageGenerationStatus] = useState(false);
+  const [sitePublishingStatus, setSitePublishingStatus] = useState(false);
 
   // Charger les données du site web
   useEffect(() => {
@@ -168,7 +196,7 @@ const EditWebsite = () => {
   const handleSaveFeatures = async () => {
     setLoading(true);
     try {
-      await Axios.put(`${apiUrl}/api/website-features/${id}`, 
+      await Axios.put(`${apiUrl}/website-features/${id}`, 
         { features },
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
@@ -371,6 +399,7 @@ const EditWebsite = () => {
             <div className="creation-website-header">
               <h3 className="titlePage">Paramètres du site</h3>
               <div className="actions-section">
+                
                 <SecondaryButton
                   variant="outlined"
                   onClick={() => navigate('/dashboard/websites')}
@@ -378,8 +407,49 @@ const EditWebsite = () => {
                 >
                   Retour
                 </SecondaryButton>
+                <DefaultButton
+                  onClick={async () => {
+                    if (isPublishing) return;
+                    setIsPublishing(true);
+                    setDataRetrievalStatus(true);
+                    try {
+                      // Simulate step progression similar to collection element publishing
+                      setTimeout(() => setPageGenerationStatus(true), 800);
+                      const res = await generateStaticSite(token, website.id);
+                      setTimeout(() => setSitePublishingStatus(true), 1600);
+                      // Give user time to view all green statuses
+                      await new Promise(r => setTimeout(r, 2600));
+                      if (res?.success === false) {
+                        showSnackbar('warning', "La génération du site a rencontré un problème partiel");
+                      } else {
+                        showSnackbar('success', 'Site généré avec succès');
+                      }
+                    } catch (e) {
+                      console.error('Erreur publication site:', e);
+                      showSnackbar('error', 'Erreur lors de la génération du site');
+                    } finally {
+                      setDataRetrievalStatus(false);
+                      setPageGenerationStatus(false);
+                      setSitePublishingStatus(false);
+                      setIsPublishing(false);
+                    }
+                  }}
+                  disabled={loading || isPublishing}
+                  startIcon={isPublishing ? <CircularProgress size={12} sx={{ color: 'white' }} /> : undefined}
+                >
+                  {isPublishing ? 'Publication...' : 'Publier'}
+                </DefaultButton>
               </div>
             </div>
+
+            {/* Publication status badges */}
+            {isPublishing && (
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+                <StatusBadge label="Récupération des données" active={dataRetrievalStatus} />
+                <StatusBadge label="Génération des pages" active={pageGenerationStatus} />
+                <StatusBadge label="Publication du site" active={sitePublishingStatus} />
+              </div>
+            )}
 
             <div className="creation-site-wrapper-info">
               {/* Informations générales */}
@@ -438,8 +508,9 @@ const EditWebsite = () => {
                 <DefaultButton 
                   onClick={handleSaveWebsiteInfo}
                   disabled={loading}
+                  startIcon={loading ? <CircularProgress size={12} sx={{ color: 'white' }} /> : undefined}
                 >
-                  {loading ? <CircularProgress size={20} /> : 'Enregistrer'}
+                  Enregistrer
                 </DefaultButton>
               </div>
 
@@ -486,8 +557,9 @@ const EditWebsite = () => {
                     <DefaultButton 
                       onClick={handleAddUser}
                       disabled={loading || !selectedUserId || workspaceMembers.length === 0}
+                      startIcon={loading ? <CircularProgress size={12} sx={{ color: 'white' }} /> : undefined}
                     >
-                      {loading ? <CircularProgress size={20} /> : 'Ajouter'}
+                      Ajouter
                     </DefaultButton>
                   </div>
                 </div>
@@ -510,9 +582,9 @@ const EditWebsite = () => {
                       <tbody>
                         {users.map((user) => (
                           <tr key={user.id}>
-                            <td>{user.email}</td>
-                            <td>{user.first_name} {user.last_name}</td>
-                            <td>
+                            <td className='website-user-td'>{user.email}</td>
+                            <td className='website-user-td'>{user.first_name} {user.last_name}</td>
+                            <td className='website-user-td'>
                               <span className={`website-selector-role ${user.role}`}>
                                 {user.role}
                               </span>
@@ -603,8 +675,9 @@ const EditWebsite = () => {
                   <DefaultButton 
                     onClick={handleSaveFeatures}
                     disabled={loading}
+                    startIcon={loading ? <CircularProgress size={12} sx={{ color: 'white' }} /> : undefined}
                   >
-                    {loading ? <CircularProgress size={20} /> : 'Enregistrer'}
+                    Enregistrer
                   </DefaultButton>
                 </div>
               </div>

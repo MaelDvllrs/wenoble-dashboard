@@ -29,6 +29,7 @@ const searchConsoleRouter = require('./searchConsole/googleSearchConsole');
 //
 const sendEmailRouter = require('./contact/sendEmail');
 const contactRouter = require('./contact/contact');
+const contactEmailRouter = require('./contact/contactEmail');
 const newsletterRouter = require('./newsletter/newsletter');
 const signUpNewsletterRouter = require('./newsletter/signUpNewsletter');  
 //
@@ -202,6 +203,7 @@ app.use(workspaceRouter);
 app.use(limitSizeRouter);
 //app.use(orderRouter);
 app.use(contactRouter);
+app.use(contactEmailRouter);
 //app.use(clientRouter);
 app.use(sitemapRouter);
 app.use(articleRouter);

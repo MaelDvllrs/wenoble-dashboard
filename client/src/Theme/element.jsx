@@ -244,18 +244,22 @@ export const DefaultButton = styled(Button)(({ theme }) => ({
     '&.MuiButton-root': {
         backgroundColor: "var(--primary-color)",
         color: 'rgba(255, 255, 255, 0.8)',
-        fontSize: '0.8rem',
-        padding: '0.15rem 0.5rem 0.05rem 0.5rem',
+        fontSize: '0.9rem',
+        padding: '0.15rem 0.5rem 0.15rem 0.5rem',
         boxShadow: 'none',
+        textTransform: 'none',
+        
     },
     '&:hover': {
         backgroundColor: "var(--primary-color-hover)",
     },
     '&.Mui-disabled': {
-        backgroundColor: "var(--primary-color)",
-        color: 'rgba(255,255,255,0.4)',
-        opacity: 0.7,
+        opacity: 0.8,
         cursor: 'not-allowed',
+    },
+    '& .MuiButton-startIcon': {
+        marginLeft: '0',
+        marginRight: '0.5rem'
     },
 }));
 
@@ -263,26 +267,32 @@ export const SecondaryButton = styled(Button)(({ theme }) => ({
     '&.MuiButton-root': {
         backgroundColor: "transparent",
         color: theme.palette.text.primary,
-        fontSize: '0.8rem',
-        padding: '0.15rem 0.5rem 0.05rem 0.5rem',
+        fontSize: '0.9rem',
+        padding: '0.15rem 0.5rem 0.15rem 0.5rem',
         boxShadow: theme.palette.shadow.main,
+        textTransform: 'none',
         minWidth: '0',
     },
     '&:hover': {
         boxShadow: theme.palette.shadow.secondary,
     },
     '&.Mui-disabled': {
-        opacity: 0.7,
+        opacity: 0.8,
         cursor: 'not-allowed',
+    },
+    '& .MuiButton-startIcon': {
+        marginLeft: '0',
+        marginRight: '0.5rem'
     },
 }));
 
 export const RedButton = styled(Button)(({ theme }) => ({
     '&.MuiButton-root': {
         color: theme.palette.text.primary,
-        padding: '0.15rem 0.5rem 0.05rem 0.5rem',
+        padding: '0.15rem 0.5rem 0.15rem 0.5rem',
         boxShadow: theme.palette.shadow.main,
         backgroundColor: 'transparent',
+        textTransform: 'none',
     },
     '&:hover': {
         backgroundColor: theme.palette.error.dark,

@@ -14,7 +14,7 @@ import { supabase } from '../../service/supabaseAuth';
 // Icons
 import { BsChevronCompactDown } from "react-icons/bs";
 
-import { PiLockBold, PiUserBold, PiGearSixBold, PiPowerBold, PiChatCircleDotsBold, PiBellBold, PiFunnelSimpleBold, PiPlusBold } from "react-icons/pi";
+import { PiSidebarSimpleLight, PiLockBold, PiUserBold, PiGearSixBold, PiPowerBold, PiChatCircleDotsBold, PiBellBold,  PiPlusBold } from "react-icons/pi";
 import { LuMoon, LuSun } from "react-icons/lu";
 import CreateOutlinedIcon from '@mui/icons-material/CreateOutlined';
 import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined';
@@ -28,11 +28,13 @@ import LanguageIcon from '@mui/icons-material/Language';
 import ExitToAppRoundedIcon from '@mui/icons-material/ExitToAppRounded';
 import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore';
 import WorkspacesIcon from '@mui/icons-material/Workspaces';
+import CheckIcon from '@mui/icons-material/Check';
+
 // Internal imports
 import './Dashboard.css';
 import Logo from '../../assets/icon/logo.svg?react';
 import config from '../../config';
-import { SkeletonProfile } from '../skeleton/skeleton';
+import { SkeletonProfile, SkeletonMenuList, SkeletonFullSelector } from '../skeleton/skeleton';
 import ThemeContext from '../../Theme/themeContext';
 import { notificationTitle, notificationLink } from '../../Theme/element';
 import { checkAuthorization } from '../../Authorisation/Authorisation';
@@ -60,14 +62,17 @@ const Dashboard = () => {
     const [openNotif, setOpenNotif] = useState(false);
     const [notifications, setNotifications] = useState([]);
     const [notifRead, setNotifRead] = useState(false);
-    const [open_menu, setopen_menu] = useState(true);
+    // Sidebar mode: 'open' (always expanded), 'closed' (always collapsed), 'hover' (expand on hover)
+    const [menuMode, setMenuMode] = useState('open');
+    const [hoveringSidebar, setHoveringSidebar] = useState(false);
+    const isSidebarOpen = menuMode === 'open' || (menuMode === 'hover' && hoveringSidebar);
     
     // Website selector from context
     const { websites, selectedWebsite, loading: loadingWebsites, selectWebsite, refreshWebsites } = useWebsite();
     const [openWebsiteMenu, setOpenWebsiteMenu] = useState(false);
 
     // Workspace selector from context
-    const { workspaces, selectedWorkspace, loading: loadingWorkspaces, selectWorkspace } = useWorkspace();
+    const { workspaces, selectedWorkspace, loading: loadingWorkspaces, initialLoading: initialWorkspaceLoading, selectWorkspace } = useWorkspace();
     const [openWorkspaceMenu, setOpenWorkspaceMenu] = useState(false);
     const [openUserMenu, setOpenUserMenu] = useState(false);
 
@@ -80,6 +85,7 @@ const Dashboard = () => {
     const workspaceMenuRef = useRef(null);
     const workspaceMenuSidebarRef = useRef(null);
     const userMenuRef = useRef(null);
+    const sidebarModeRef = useRef(null);
 
     // Effects
     useEffect(() => {
@@ -189,6 +195,10 @@ const Dashboard = () => {
 
     const handleOpenNotif = (event) => {
         event.stopPropagation();
+        // Fermer les autres poppers avant d'ouvrir celui-ci
+        setOpenWebsiteMenu(false);
+        setOpenWorkspaceMenu(false);
+        setOpenUserMenu(false);
         setOpenNotif((prevOpen) => !prevOpen);
     };
 
@@ -206,13 +216,33 @@ const Dashboard = () => {
         navigateTo('/');
     };
 
-    const toggle_menu = () => {
-        setopen_menu(!open_menu);
+    // Sidebar mode popper
+    const [openSidebarModeMenu, setOpenSidebarModeMenu] = useState(false);
+    const handleOpenSidebarModeMenu = (e) => {
+        e.stopPropagation();
+        setOpenSidebarModeMenu(prev => !prev);
+    };
+    const handleCloseSidebarModeMenu = () => setOpenSidebarModeMenu(false);
+    const handleSelectSidebarMode = (mode) => {
+        setMenuMode(mode);
+        setOpenSidebarModeMenu(false);
+    };
+
+    // Fonction pour fermer tous les poppers
+    const closeAllPoppers = () => {
+        setOpenWebsiteMenu(false);
+        setOpenWorkspaceMenu(false);
+        setOpenUserMenu(false);
+        setOpenNotif(false);
     };
 
     // Gestion du menu des sites web
     const handleOpenWebsiteMenu = (event) => {
         event.stopPropagation();
+        // Fermer les autres poppers avant d'ouvrir celui-ci
+        setOpenWorkspaceMenu(false);
+        setOpenUserMenu(false);
+        setOpenNotif(false);
         setOpenWebsiteMenu((prevOpen) => !prevOpen);
     };
 
@@ -232,7 +262,7 @@ const Dashboard = () => {
 
     const handleWebsiteSettings = () => {
         if (selectedWebsite) {
-            navigateTo(`/dashboard/website/${selectedWebsite.id}/settings`);
+            navigateTo(`/dashboard/websites`);
             setOpenWebsiteMenu(false);
         }
     };
@@ -240,6 +270,10 @@ const Dashboard = () => {
     // Gestion du menu des workspaces
     const handleOpenWorkspaceMenu = (event) => {
         event.stopPropagation();
+        // Fermer les autres poppers avant d'ouvrir celui-ci
+        setOpenWebsiteMenu(false);
+        setOpenUserMenu(false);
+        setOpenNotif(false);
         setOpenWorkspaceMenu((prevOpen) => !prevOpen);
     };
 
@@ -262,6 +296,10 @@ const Dashboard = () => {
     // Gestion du menu utilisateur
     const handleOpenUserMenu = (event) => {
         event.stopPropagation();
+        // Fermer les autres poppers avant d'ouvrir celui-ci
+        setOpenWebsiteMenu(false);
+        setOpenWorkspaceMenu(false);
+        setOpenNotif(false);
         setOpenUserMenu((prevOpen) => !prevOpen);
     };
 
@@ -295,6 +333,115 @@ const Dashboard = () => {
         <div className='dashboard_header' style={{backgroundColor: theme.palette.primary.main, boxShadow : theme.palette.shadow.main}}>
             <div className='header_box left'>
                 <Logo className="logo" alt="logo" style={{color: theme.palette.text.primary}}/>
+                <div className='workspace-selector'>
+                                        <IconButton 
+                        className='workspace-selector-button'
+                        onClick={handleOpenWorkspaceMenu} 
+                        ref={workspaceMenuSidebarRef}
+                        sx={{ 
+                            color: theme.palette.text.primary,
+                            padding: '0.5rem !important'
+                         }}
+                        aria-disabled={loadingWorkspaces}
+                    >
+                    { (initialWorkspaceLoading || loadingWorkspaces) ? (
+                        <SkeletonFullSelector />
+                    ) : (
+                        <>
+                            <WorkspacesIcon fontSize='small' style={{color: theme.palette.text.secondary}}/>
+                            <span className='workspace-selector-text'>
+                                <b>{selectedWorkspace ? selectedWorkspace.workspace_name : 'Aucun workspace'}</b>
+                            </span>
+                            {selectedWorkspace && (
+                                <span className={`workspace-selector-role ${selectedWorkspace.user_role}`}>
+                                    {selectedWorkspace.user_role}
+                                </span>
+                            )}
+                            <UnfoldMoreIcon className='icon' style={{color: theme.palette.text.secondary}} />
+                        </>
+                    )}
+                    </IconButton>
+                    
+                    <ClickAwayListener onClickAway={handleCloseWorkspaceMenu}>
+                        <Popper 
+                            open={openWorkspaceMenu} 
+                            anchorEl={workspaceMenuSidebarRef.current} 
+                            transition 
+                            placement="bottom-start" 
+                            style={{zIndex: 100}}
+                        >
+                            {({ TransitionProps }) => (
+                                <Grow {...TransitionProps} timeout={350}>
+                                    <div className='dashboard_case_empty user_menu_case' style={{
+                                        backgroundColor: theme.palette.primary.main, 
+                                        minWidth: '280px'
+                                    }}>
+                                        {/* En-tête avec infos workspace */}
+                                        <div className='user_menu_header'>
+                                            <div className='user_info_section'>
+                                                <div className='user_profile_info'>
+                                                    <div className='user_details'>
+                                                        <div className='user_name_large' style={{ color: theme.palette.text.primary }}>
+                                                            <b>Workspaces</b>
+                                                        </div>
+                                                        <div className='user_email' style={{ color: theme.palette.text.secondary }}>
+                                                            Sélectionner un workspace
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="line_horizontal" style={{ backgroundColor: theme.palette.primary.third }}></div>
+                                        
+                                        {/* Liste des workspaces */}
+                                        <div className='user_menu_actions'>
+                                            {loadingWorkspaces ? (
+                                                <SkeletonMenuList lines={4} />
+                                            ) : workspaces.length === 0 ? (
+                                                <div className='user_action_item' style={{ color: theme.palette.text.secondary }}>
+                                                    Aucun workspace disponible
+                                                </div>
+                                            ) : (
+                                                workspaces.map((workspace) => (
+                                                    <div
+                                                        key={workspace.id}
+                                                        className={`user_action_item ${selectedWorkspace?.id === workspace.id ? 'selected' : ''}`}
+                                                        onClick={() => handleSelectWorkspace(workspace)}
+                                                        style={{
+                                                            color: theme.palette.text.primary
+                                                        }}
+                                                    >
+                                                        <div className='button-selector'>
+                                                            <div><b>{workspace.workspace_name}</b></div>
+                                                            <div style={{ color: theme.palette.text.secondary, fontSize: '0.8rem' }}>
+                                                                {workspace.user_role}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            )}
+                                            
+                                            <div className="line_horizontal" style={{ backgroundColor: theme.palette.primary.third }}></div>
+                                            
+                                            {/* Actions */}
+                                            {selectedWorkspace && (
+                                                <div 
+                                                    className='user_action_item'
+                                                    onClick={handleWorkspaceSettings}
+                                                    style={{ color: theme.palette.text.primary }}
+                                                >
+                                                    <PiGearSixBold className='action_icon' />
+                                                    <span>Gérer les workspaces</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </Grow>
+                            )}
+                        </Popper>
+                    </ClickAwayListener>
+                </div>
             </div>
             <div className='header_box right'>
                 <Checkbox key='theme' style={{ color: theme.palette.text.primary }} checked={isDark} onChange={toggleTheme} icon={<LuMoon className='icon' />} checkedIcon={<LuSun  className='icon'/>}/>
@@ -460,32 +607,51 @@ const Dashboard = () => {
         </div>
         <div className='dashboard_wrapper'>
             <AnimatePresence initial={false}>
-                <motion.div className="menu_dashboard" animate={{width: open_menu ? "15rem" : "3rem"}} style={{backgroundColor: theme.palette.primary.main, boxShadow : theme.palette.shadow.main}}>
+                <motion.div 
+                    className="menu_dashboard" 
+                    animate={{width: isSidebarOpen ? "15rem" : "4rem"}} 
+                    style={{backgroundColor: theme.palette.primary.main, boxShadow : theme.palette.shadow.main}}
+                    onMouseEnter={() => setHoveringSidebar(true)}
+                    onMouseLeave={() => setHoveringSidebar(false)}
+                >
                     {/* Sélecteur de site web */}
                     <div className='website-selector'>
-                        <IconButton 
+            <IconButton 
                             className='website-selector-button'
                             onClick={handleOpenWebsiteMenu} 
                             ref={websiteMenuRef}
                             sx={{ 
                                 color: theme.palette.text.primary, 
-                                padding: '0.5rem !important'
+                                padding: '0.5rem !important',
+                                display: 'flex !important',
+                                justifyContent: isSidebarOpen ? 'space-between !important' : 'center !important',
+                                width: isSidebarOpen ? '100% !important' : '2.3rem !important'
                             }}
                             disabled={loadingWebsites}
                         >
-                            <div>
+                            
+                        {loadingWebsites ? (
+                            <SkeletonFullSelector />
+                        ) : (
+                            <>
+                                <LanguageIcon fontSize='small' style={{color: theme.palette.text.secondary}}/>
+                                { isSidebarOpen && (
+                                    <div className='website-info-button'>
+                                        <span className='website-selector-text'>
+                                            <b>{selectedWebsite ? selectedWebsite.website_name : 'Aucun site sélectionné'}</b>
+                                        </span>
+                                        {selectedWebsite && (
+                                            <span className={`website-selector-role ${selectedWebsite.user_role}`}>
+                                                {selectedWebsite.user_role}
+                                            </span>
+                                        )}
+                                        <UnfoldMoreIcon className='icon' style={{color: theme.palette.text.secondary}} />
+                                    </div>
+                                )}
                                 
-                            </div>
-                            <LanguageIcon fontSize='small' style={{color: theme.palette.text.secondary}}/>
-                            <span className='website-selector-text'>
-                                <b>{selectedWebsite ? selectedWebsite.website_name : 'Aucun site sélectionné'}</b>   
-                            </span>
-                            {selectedWebsite && (
-                                <span className={`website-selector-role ${selectedWebsite.user_role}`}>
-                                    {selectedWebsite.user_role}
-                                </span>
-                            )}
-                            <UnfoldMoreIcon className='icon' style={{color: theme.palette.text.secondary}} />
+                            </>
+                        )}
+    
                         </IconButton>
                         
                         <ClickAwayListener onClickAway={handleCloseWebsiteMenu}>
@@ -498,71 +664,76 @@ const Dashboard = () => {
                             >
                                 {({ TransitionProps }) => (
                                     <Grow {...TransitionProps} timeout={350}>
-                                        <div className='dashboard_case_empty website_menu_case' style={{
+                                        <div className='dashboard_case_empty user_menu_case' style={{
                                             backgroundColor: theme.palette.primary.main, 
-                                            minWidth: '250px'
+                                            minWidth: '280px'
                                         }}>
-                                            <div className='website_menu_title_contain'>
-                                                <p style={{ color: theme.palette.text.primary }}>
-                                                    <b>Sélectionner un site</b>
-                                                </p>
+                                            {/* En-tête avec infos site web */}
+                                            <div className='user_menu_header'>
+                                                <div className='user_info_section'>
+                                                    <div className='user_profile_info'>
+                                                        
+                                                        <div className='user_details'>
+                                                            <div className='user_name_large' style={{ color: theme.palette.text.primary }}>
+                                                                <b>Sites web</b>
+                                                            </div>
+                                                            <div className='user_email' style={{ color: theme.palette.text.secondary }}>
+                                                                Sélectionner un site
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
+                                            
                                             <div className="line_horizontal" style={{ backgroundColor: theme.palette.primary.third }}></div>
 
                                             {/* Liste des sites */}
-                                            <div className='website_list_contain'>
+                                            <div className='user_menu_actions'>
                                                 {loadingWebsites ? (
-                                                    <div className='website_item' style={{ color: theme.palette.text.secondary }}>
-                                                        Chargement...
-                                                    </div>
+                                                    <SkeletonMenuList lines={4} />
                                                 ) : websites.length === 0 ? (
-                                                    <div className='website_item' style={{ color: theme.palette.text.secondary }}>
+                                                    <div className='user_action_item' style={{ color: theme.palette.text.secondary }}>
                                                         Aucun site web disponible
                                                     </div>
                                                 ) : (
                                                     websites.map((website) => (
                                                         <div
                                                             key={website.id}
-                                                            className={`website_item ${selectedWebsite?.id === website.id ? 'selected' : ''}`}
+                                                            className={`user_action_item ${selectedWebsite?.id === website.id ? 'selected' : ''}`}
                                                             onClick={() => handleSelectWebsite(website)}
                                                             style={{
                                                                 color: theme.palette.text.primary
                                                             }}
                                                         >
-                                                            <div className='website_info'>
-                                                                <div className='website_name'>{website.website_name}</div>
-                                                                <div className='website_role' style={{ color: theme.palette.text.secondary }}>
+                                                            <div className='button-selector'>
+                                                                <div><b>{website.website_name}</b></div>
+                                                                <div style={{ color: theme.palette.text.secondary, fontSize: '0.8rem' }}>
                                                                     {website.user_role}
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     ))
                                                 )}
-                                            </div>
-                                            
-                                            <div className="line_horizontal" style={{ backgroundColor: theme.palette.primary.third }}></div>
-                                            
-                                            {/* Actions */}
-                                            <div className='website_actions_contain'>
+                                                
+                                                <div className="line_horizontal" style={{ backgroundColor: theme.palette.primary.third }}></div>
+                                                
+                                                {/* Actions */}
                                                 <div 
-                                                    className='website_action_item'
+                                                    className='user_action_item'
                                                     onClick={handleCreateWebsite}
                                                     style={{ color: theme.palette.text.primary }}
                                                 >
                                                     <PiPlusBold className='action_icon' />
                                                     <span>Créer un nouveau site</span>
                                                 </div>
-
-                                                {selectedWebsite && selectedWebsite.user_role === 'admin' && (
-                                                    <div 
-                                                        className='website_action_item'
-                                                        onClick={handleWebsiteSettings}
-                                                        style={{ color: theme.palette.text.primary }}
-                                                    >
-                                                        <PiGearSixBold className='action_icon' />
-                                                        <span>Paramètres du site</span>
-                                                    </div>
-                                                )}
+                                                <div 
+                                                    className='user_action_item'
+                                                    onClick={handleWebsiteSettings}
+                                                    style={{ color: theme.palette.text.primary }}
+                                                >
+                                                    <PiGearSixBold className='action_icon' />
+                                                    <span>Gérer les sites</span>
+                                                </div>
                                             </div>
                                         </div>
                                     </Grow>
@@ -570,200 +741,146 @@ const Dashboard = () => {
                             </Popper>
                         </ClickAwayListener>
                     </div>
-                    <div className='workspace-selector'>
-                        <IconButton 
-                            className='workspace-selector-button'
-                            onClick={handleOpenWorkspaceMenu} 
-                            ref={workspaceMenuSidebarRef}
-                            sx={{ 
-                                color: theme.palette.text.primary,
-                                padding: '0.5rem !important'
-                             }}
-                            disabled={loadingWorkspaces}
-                        >
-                            <WorkspacesIcon fontSize='small' style={{color: theme.palette.text.secondary}}/>
-                            <span className='workspace-selector-text'>
-                                <b>{selectedWorkspace ? selectedWorkspace.workspace_name : 'Aucun workspace'}</b>   
-                            </span>
-                            <UnfoldMoreIcon className='icon' style={{color: theme.palette.text.secondary}} />
-                        </IconButton>
-                        
-                        <ClickAwayListener onClickAway={handleCloseWorkspaceMenu}>
-                            <Popper 
-                                open={openWorkspaceMenu} 
-                                anchorEl={workspaceMenuSidebarRef.current} 
-                                transition 
-                                placement="bottom-start" 
-                                style={{zIndex: 100}}
-                            >
-                                {({ TransitionProps }) => (
-                                    <Grow {...TransitionProps} timeout={350}>
-                                        <div className='dashboard_case_empty workspace_menu_case' style={{
-                                            backgroundColor: theme.palette.primary.main, 
-                                            minWidth: '250px'
-                                        }}>
-                                            <div className='workspace_menu_title_contain'>
-                                                <p style={{ color: theme.palette.text.primary }}>
-                                                    <b>Sélectionner un workspace</b>
-                                                </p>
-                                            </div>
-                                            <div className="line_horizontal" style={{ backgroundColor: theme.palette.primary.third }}></div>
-
-                                            {/* Liste des workspaces */}
-                                            <div className='workspace_list_contain'>
-                                                {loadingWorkspaces ? (
-                                                    <div className='workspace_item' style={{ color: theme.palette.text.secondary }}>
-                                                        Chargement...
-                                                    </div>
-                                                ) : workspaces.length === 0 ? (
-                                                    <div className='workspace_item' style={{ color: theme.palette.text.secondary }}>
-                                                        Aucun workspace disponible
-                                                    </div>
-                                                ) : (
-                                                    workspaces.map((workspace) => (
-                                                        <div
-                                                            key={workspace.id}
-                                                            className={`workspace_item ${selectedWorkspace?.id === workspace.id ? 'selected' : ''}`}
-                                                            onClick={() => handleSelectWorkspace(workspace)}
-                                                            style={{
-                                                                color: theme.palette.text.primary
-                                                            }}
-                                                        >
-                                                            <div className='workspace_info'>
-                                                                <div className='workspace_name'><b>{workspace.workspace_name}</b></div>
-                                                                <div className='workspace_role' style={{ color: theme.palette.text.secondary }}>
-                                                                    {workspace.user_role}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    ))
-                                                )}
-                                            </div>
-                                            
-                                            <div className="line_horizontal" style={{ backgroundColor: theme.palette.primary.third }}></div>
-                                            
-                                            {/* Actions */}
-                                            <div className='workspace_actions_contain'>
-                                                {selectedWorkspace && (
-                                                    <div 
-                                                        className='workspace_action_item'
-                                                        onClick={handleWorkspaceSettings}
-                                                        style={{ color: theme.palette.text.primary }}
-                                                    >
-                                                        <PiGearSixBold className='action_icon' />
-                                                        <span>Gérer les workspaces</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </Grow>
-                                )}
-                            </Popper>
-                        </ClickAwayListener>
-                    </div>
+                    
                     <div className='navigation'>
-                        <NavLink key="home" to='/dashboard/home' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
+                        <NavLink key="home" to='/dashboard/home' className={({ isActive }) => (isActive ? 'menuDashboard menuActive' : 'menuDashboard')}>
                             <AnimatePresence initial={false}>
-                                <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
-                                    <motion.div animate={{marginRight: open_menu ? "0.5rem" : "0rem"}} className='icon_navigation'><HomeOutlinedIcon fontSize='small'/></motion.div>
-                                    <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Accueil</motion.span>
-                                </motion.div>
-                            </AnimatePresence>
-                        </NavLink>
-                        <NavLink key="websites" to='/dashboard/websites' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
-                            <AnimatePresence initial={false}>
-                                <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
-                                    <motion.div animate={{marginRight: open_menu ? "0.5rem" : "0rem"}} className='icon_navigation'><LanguageIcon fontSize='small'/></motion.div>
-                                    <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Sites web</motion.span>
+                                <motion.div className={isSidebarOpen ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
+                                    <motion.div animate={{marginRight: isSidebarOpen ? "0.5rem" : "0rem"}} className='icon_navigation'><HomeOutlinedIcon fontSize='small'/></motion.div>
+                                    <motion.span className={isSidebarOpen ? "menu_text_open" : "menu_text_close"}>Accueil</motion.span>
                                 </motion.div>
                             </AnimatePresence>
                         </NavLink>
                         <div className='menu_title'><p className='menu_title_text' style={{color: theme.palette.text.primary}}>GÉRER MON SITE</p></div>
-                        <NavLink key="modification" to='/dashboard/modification' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
+                        <NavLink key="modification" to='/dashboard/modification' className={({ isActive }) => (isActive ? 'menuDashboard menuActive' : 'menuDashboard')}>
                             <AnimatePresence initial={false}>
-                                <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
-                                    <motion.div animate={{marginRight: open_menu ? "0.5rem" : "0rem"}} className='icon_navigation'><CreateOutlinedIcon fontSize='small'/></motion.div>
-                                    <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Modifications</motion.span>
+                                <motion.div className={isSidebarOpen ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
+                                    <motion.div animate={{marginRight: isSidebarOpen ? "0.5rem" : "0rem"}} className='icon_navigation'><CreateOutlinedIcon fontSize='small'/></motion.div>
+                                    <motion.span className={isSidebarOpen ? "menu_text_open" : "menu_text_close"}>Modifications</motion.span>
                                 </motion.div>
                             </AnimatePresence>
                         </NavLink>
-                        <NavLink key="ecommerce" to={ecommAuth === true ? '/dashboard/ecommerce' : '#'} className={({ isActive, ecommAuth }) => (isActive, ecommAuth ? 'menuActive' : '')}>
+                        <NavLink key="ecommerce" to={ecommAuth === true ? '/dashboard/ecommerce' : '#'} className={({ isActive, ecommAuth }) => (isActive, ecommAuth ? 'menuDashboard menuActive' : 'menuDashboard')}>
                             <AnimatePresence initial={false}>
-                                <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
-                                    <motion.div animate={{marginRight: open_menu ? "0.5rem" : "0rem"}} className='icon_navigation'><ShoppingCartOutlinedIcon fontSize='small'/></motion.div>
-                                    <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>E-commerce</motion.span>
+                                <motion.div className={isSidebarOpen ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
+                                    <motion.div animate={{marginRight: isSidebarOpen ? "0.5rem" : "0rem"}} className='icon_navigation'><ShoppingCartOutlinedIcon fontSize='small'/></motion.div>
+                                    <motion.span className={isSidebarOpen ? "menu_text_open" : "menu_text_close"}>E-commerce</motion.span>
                                     {
-                                        ecommAuth === true ? (
+                                        ecommAuth === true || isSidebarOpen !== false ? (
                                             null
-                                        ) : <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem", marginLeft: open_menu ? "1rem" : "0.5rem"}} style={{color: theme.palette.text.secondary}} className='icon_navigation icon_lock'><PiLockBold /></motion.div>
+                                        ) : <motion.div animate={{marginRight: isSidebarOpen ? "1.5rem" : "0rem", marginLeft: isSidebarOpen ? "1rem" : "0.5rem"}} style={{color: theme.palette.text.secondary}} className='icon_navigation icon_lock'><PiLockBold /></motion.div>
                                     }
                                 </motion.div>
                             </AnimatePresence>
                         </NavLink>
-                        <NavLink key="stats" to='/dashboard/stats' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
+                        <NavLink key="stats" to='/dashboard/stats' className={({ isActive }) => (isActive ? 'menuDashboard menuActive' : 'menuDashboard')}>
                             <AnimatePresence initial={false}>
-                                <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
-                                    <motion.div animate={{marginRight: open_menu ? "0.5rem" : "0rem"}} className='icon_navigation'><EqualizerOutlinedIcon fontSize='small'/></motion.div>
-                                    <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Statistiques</motion.span>
+                                <motion.div className={isSidebarOpen ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
+                                    <motion.div animate={{marginRight: isSidebarOpen ? "0.5rem" : "0rem"}} className='icon_navigation'><EqualizerOutlinedIcon fontSize='small'/></motion.div>
+                                    <motion.span className={isSidebarOpen ? "menu_text_open" : "menu_text_close"}>Statistiques</motion.span>
                                 </motion.div>
                             </AnimatePresence>
                         </NavLink>
-                        <NavLink key="contact" to='/dashboard/contact' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
+                        <NavLink key="contact" to='/dashboard/contact' className={({ isActive }) => (isActive ? 'menuDashboard menuActive' : 'menuDashboard')}>
                             <AnimatePresence initial={false}>
-                                <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
-                                    <motion.div animate={{marginRight: open_menu ? "0.5rem" : "0rem"}} className='icon_navigation'><PiChatCircleDotsBold  /></motion.div>
-                                    <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Contacts</motion.span>
+                                <motion.div className={isSidebarOpen ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
+                                    <motion.div animate={{marginRight: isSidebarOpen ? "0.5rem" : "0rem"}} className='icon_navigation'><PiChatCircleDotsBold  /></motion.div>
+                                    <motion.span className={isSidebarOpen ? "menu_text_open" : "menu_text_close"}>Contacts</motion.span>
                                 </motion.div>
                             </AnimatePresence>
                         </NavLink>
-                        <NavLink key="newsletter" to={newsAuth === true ? '/dashboard/newsletter' : '#'} className={({ isActive }) => (isActive && newsAuth === true ? 'menuActive' : '')}>
+                        <NavLink key="newsletter" to={newsAuth === true ? '/dashboard/newsletter' : '#'} className={({ isActive }) => (isActive && newsAuth === true ? 'menuDashboard menuActive' : 'menuDashboard')}>
                             <AnimatePresence initial={false}>
-                                <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
-                                    <motion.div animate={{marginRight: open_menu ? "0.5rem" : "0rem"}} className='icon_navigation'><NewspaperOutlinedIcon fontSize='small'/></motion.div>
-                                    <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Newsletter</motion.span>
+                                <motion.div className={isSidebarOpen ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
+                                    <motion.div animate={{marginRight: isSidebarOpen ? "0.5rem" : "0rem"}} className='icon_navigation'><NewspaperOutlinedIcon fontSize='small'/></motion.div>
+                                    <motion.span className={isSidebarOpen ? "menu_text_open" : "menu_text_close"}>Newsletter</motion.span>
                                     {
-                                        newsAuth === true ? (
+                                        newsAuth === true || isSidebarOpen !== false ? (
                                             null
-                                        ) : <motion.div animate={{marginRight: open_menu ? "1.5rem" : "0rem", marginLeft: open_menu ? "1rem" : "0.5rem"}} style={{color: theme.palette.text.secondary}} className='icon_navigation icon_lock'><PiLockBold /></motion.div>
+                                        ) : <motion.div animate={{marginRight: isSidebarOpen ? "1.5rem" : "0rem", marginLeft: isSidebarOpen ? "1rem" : "0.5rem"}} style={{color: theme.palette.text.secondary}} className='icon_navigation icon_lock'><PiLockBold /></motion.div>
                                     }
                                 </motion.div>
                             </AnimatePresence>
 
                         </NavLink>
                         <div className='menu_title'><p className='menu_title_text' style={{color: theme.palette.text.primary}}>WENOBLE</p></div>
-                        <NavLink key="actu" to='/dashboard/actu/' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
+                        <NavLink key="actu" to='/dashboard/actu/' className={({ isActive }) => (isActive ? 'menuDashboard menuActive' : 'menuDashboard')}>
                             <AnimatePresence initial={false}>
-                                <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
-                                    <motion.div animate={{marginRight: open_menu ? "0.5rem" : "0rem"}} className='icon_navigation'><ArticleOutlinedIcon fontSize='small'/></motion.div>
-                                    <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Actualités</motion.span>
+                                <motion.div className={isSidebarOpen ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
+                                    <motion.div animate={{marginRight: isSidebarOpen ? "0.5rem" : "0rem"}} className='icon_navigation'><ArticleOutlinedIcon fontSize='small'/></motion.div>
+                                    <motion.span className={isSidebarOpen ? "menu_text_open" : "menu_text_close"}>Actualités</motion.span>
                                 </motion.div>
                             </AnimatePresence>
                         </NavLink>
-                        <NavLink key="academy" to='/dashboard/academy' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
+                        <NavLink key="academy" to='/dashboard/academy' className={({ isActive }) => (isActive ? 'menuDashboard menuActive' : 'menuDashboard')}>
                             <AnimatePresence initial={false}>
-                                <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
-                                    <motion.div animate={{marginRight: open_menu ? "0.5rem" : "0rem"}} className='icon_navigation'><SchoolOutlinedIcon fontSize='small'/></motion.div>
-                                    <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Academy</motion.span>
+                                <motion.div className={isSidebarOpen ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
+                                    <motion.div animate={{marginRight: isSidebarOpen ? "0.5rem" : "0rem"}} className='icon_navigation'><SchoolOutlinedIcon fontSize='small'/></motion.div>
+                                    <motion.span className={isSidebarOpen ? "menu_text_open" : "menu_text_close"}>Academy</motion.span>
                                 </motion.div>
                             </AnimatePresence>
                         </NavLink>
-                        <NavLink key="probleme" to='/dashboard/problem' className={({ isActive }) => (isActive ? 'menuActive' : '')}>
+                        <NavLink key="probleme" to='/dashboard/problem' className={({ isActive }) => (isActive ? 'menuDashboard menuActive' : 'menuDashboard')}>
                             <AnimatePresence initial={false}>
-                                <motion.div className={open_menu ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
-                                    <motion.div animate={{marginRight: open_menu ? "0.5rem" : "0rem"}} className='icon_navigation'><HelpOutlineOutlinedIcon fontSize='small'/></motion.div>
-                                    <motion.span className={open_menu ? "menu_text_open" : "menu_text_close"}>Un problème ?</motion.span>
+                                <motion.div className={isSidebarOpen ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
+                                    <motion.div animate={{marginRight: isSidebarOpen ? "0.5rem" : "0rem"}} className='icon_navigation'><HelpOutlineOutlinedIcon fontSize='small'/></motion.div>
+                                    <motion.span className={isSidebarOpen ? "menu_text_open" : "menu_text_close"}>Un problème ?</motion.span>
                                 </motion.div>
                             </AnimatePresence>
                         </NavLink>
                                 
                     </div>
                     <div className='menu_footer'>
-                        <Checkbox key='menu' style={{ color: theme.palette.text.primary }} checked={open_menu} onChange={toggle_menu} icon={<ExitToAppRoundedIcon className='icon' style={{color: theme.palette.text.secondary}}/>} checkedIcon={<ExitToAppRoundedIcon className='icon' style={{color: theme.palette.text.secondary, transform: 'rotate(180deg)'}}/>}/>
+                        <IconButton 
+                            ref={sidebarModeRef} 
+                            onClick={handleOpenSidebarModeMenu} 
+                            sx={{ color: theme.palette.text.primary, padding: '0.35rem !important' }}
+                        >
+                            <PiSidebarSimpleLight className='icon' style={{color: theme.palette.text.secondary}}/>
+                        </IconButton>
+                        <ClickAwayListener onClickAway={handleCloseSidebarModeMenu}>
+                            <Popper 
+                                open={openSidebarModeMenu} 
+                                anchorEl={sidebarModeRef.current} 
+                                transition 
+                                placement="top-start" 
+                                style={{zIndex: 120}}
+                            >
+                                {({ TransitionProps }) => (
+                                    <Grow {...TransitionProps} timeout={250}>
+                                        <div className='dashboard_case_empty user_menu_case' style={{ backgroundColor: theme.palette.primary.main, minWidth: '13rem' }}>
+                                            <div className='user_menu_header'>
+                                                <div className='user_details'>
+                                                    <div style={{ color: theme.palette.text.primary, fontSize: '0.85rem' }}>
+                                                        <b>Mode sidebar</b>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="line_horizontal" style={{ backgroundColor: theme.palette.primary.third }}></div>
+                                            <div className='user_menu_actions'>
+                                                <div className={"user_action_item action-side-bar" + (menuMode === 'open' ? ' selected' : '')} onClick={() => handleSelectSidebarMode('open')} style={{ color: theme.palette.text.primary }}>
+                                                    Ouvert
+                                                    {menuMode === 'open' ? <CheckIcon fontSize='small'/> : ''}
+                                                </div>
+                                                <div className={"user_action_item action-side-bar" + (menuMode === 'closed' ? ' selected' : '')} onClick={() => handleSelectSidebarMode('closed')} style={{ color: theme.palette.text.primary }}>
+                                                    Fermé
+                                                    {menuMode === 'closed' ? <CheckIcon fontSize='small'/> : ''}
+                                                </div>
+                                                <div className={"user_action_item action-side-bar" + (menuMode === 'hover' ? ' selected' : '')} onClick={() => handleSelectSidebarMode('hover')} style={{ color: theme.palette.text.primary }}>
+                                                    Ouvrir au survol
+                                                    {menuMode === 'hover' ? <CheckIcon fontSize='small'/> : ''}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </Grow>
+                                )}
+                            </Popper>
+                        </ClickAwayListener>
                     </div>
                 </motion.div>
             </AnimatePresence>
             <AnimatePresence initial={false}>
-                <motion.div className='dashboard_page' animate={{width : open_menu ? "calc(100% - 15rem)" : "calc(100% - 3rem)"}}>
+                <motion.div className='dashboard_page' animate={{width : isSidebarOpen ? "calc(100% - 15rem)" : "calc(100% - 4rem)"}}>
                     <div className='dashboard_section principal'>
                         <Outlet />
                     </div>

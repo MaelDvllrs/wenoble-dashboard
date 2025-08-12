@@ -1056,6 +1056,8 @@ router.post('/updateCollectionElement', authenticateToken, async (req, res) => {
     const status = req.body.params.status;
     const setPublishDate = req.body.params.setpublishDate;
 
+    console.log("updateCollectionElement", id, title, slug, date, status, setPublishDate);
+
     const token = req.headers['authorization']?.split(' ')[1];
     const supabase = supabaseServer(token);
     const userId = req.user.idUser;
