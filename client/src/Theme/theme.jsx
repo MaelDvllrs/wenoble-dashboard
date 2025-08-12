@@ -30,6 +30,7 @@ const DARK_THEME = createTheme({
             blue: 'rgb(146, 166, 255)',
             yellow: 'rgb(255, 253, 146)',
             red: 'rgb(255, 0, 0)',
+            purple: 'rgba(227, 27, 227, 1)',
         },
 
         shadow: {
@@ -57,12 +58,12 @@ const LIGHT_THEME = createTheme({
         primary: {
             main: 'rgb(246, 247, 248)',
             secondary: 'rgba(255, 255, 255, 1)',
-            third: 'rgba(203, 203, 203, 1)'
+            third: 'rgba(240, 240, 240, 1)'
         },
         secondary: {
             main: 'rgba(20, 20, 20, 1)',
             secondary: 'rgba(229, 229, 229, 1)',
-            third: 'rgba(233, 233, 233, 1)'
+            third: 'rgba(240, 240, 240, 1)'
         },
 
         colors: {
@@ -70,6 +71,7 @@ const LIGHT_THEME = createTheme({
             blue: 'rgb(0, 46, 252)',
             yellow: 'rgb(187, 184, 0)',
             red: 'rgb(255, 0, 0)',
+            purple: 'rgba(149, 0, 149, 1)',
         },
 
         shadow: {

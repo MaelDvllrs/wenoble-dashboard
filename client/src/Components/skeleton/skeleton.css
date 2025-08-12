@@ -65,3 +65,45 @@
 .skeleton_blog{
     height: 3rem;
 }
+
+/* Selector skeleton */
+.skeleton-selector {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+}
+.skeleton-selector-name {
+    width: 8rem;
+    height: 1.2rem;
+}
+.skeleton-selector-role {
+    width: 3rem;
+    height: 1rem;
+    border-radius: 6px;
+}
+
+/* Menu list skeleton */
+.skeleton-menu-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 0.25rem 0.5rem;
+}
+.skeleton-menu-line {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+.skeleton-menu-text {
+    width: 70%;
+    height: 1rem;
+}
+
+/* Full selector single block skeleton */
+.skeleton-full-block-wrapper { width:100%; display:flex; }
+.skeleton-full-block {
+    width: 100% !important;
+    height: 2.2rem !important; /* proche hauteur du bouton */
+    border-radius: 8px !important;
+}

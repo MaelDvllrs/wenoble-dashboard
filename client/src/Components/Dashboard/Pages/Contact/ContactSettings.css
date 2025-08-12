@@ -1,0 +1,102 @@
+/* Styles spécifiques pour ContactSettings */
+
+.contact-settings-wrapper {
+    width: 100%;
+  max-width: 50rem;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.contact-settings-section {
+  margin-bottom: 1.5rem;
+}
+
+.emails-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+
+
+.email-item .MuiFormControlLabel-root {
+  margin: 0;
+}
+
+.email-item .MuiSwitch-root {
+  margin-left: 0.5rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .contact-settings-wrapper {
+    padding: 0.5rem;
+  }
+  
+  .email-item {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 1rem;
+  }
+  
+  .email-item > div:last-child {
+    align-self: stretch;
+    justify-content: space-between;
+  }
+}
+
+/* Custom checkbox styles pour harmoniser avec le design existant */
+.custom-checkbox {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.custom-checkbox input {
+  display: none;
+}
+
+.checkmark {
+  height: 20px;
+  width: 20px;
+  border: 2px solid var(--text-secondary);
+  border-radius: 3px;
+  margin-right: 8px;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.custom-checkbox:hover .checkmark {
+  border-color: var(--primary-color);
+}
+
+.custom-checkbox input:checked ~ .checkmark {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.custom-checkbox input:checked ~ .checkmark:after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 6px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+
+.contact-settings-principal{
+    display: flex;
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    background-color: #22ff991e;
+    color: var(--color-green);
+    border: 0.5px solid var(--color-green);
+    border-radius: 12px;
+
+}

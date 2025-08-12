@@ -5,6 +5,7 @@ const keys = require('./API-ANALYTICS-39ab7998278f.json');
 const dayjs = require('dayjs');
 const { supabaseServer } = require('../supabase');
 const { authenticateToken } = require('../middleware/authToken');
+const { checkUserWebsiteAccess } = require('../website/website');
 
 
 
@@ -80,24 +81,42 @@ const getDateRange = (period) => {
 router.get('/getUserAnalytics',authenticateToken, async (req, res) => {
   const token = req.headers['authorization']?.split(' ')[1];
   const supabase = supabaseServer(token);
-  const id_user = req.user.idUser
-  const period = req.query.period
-  const typeUser = req.query.typeUser
+  const userId = req.user.idUser;
+  const period = req.query.period;
+  const typeUser = req.query.typeUser;
+  const websiteId = req.query.websiteId;
 
-  // Supabase : récupération analytic_id
-  const { data, error } = await supabase
-    .from('users')
-    .select('analytic_id')
-    .eq('id', id_user)
-    .single();
-  if (error || !data) {
-    console.error('Supabase error:', error);
-    return res.status(404).send('Site not found');
+  if (!websiteId) {
+    return res.status(400).json({ error: 'Website ID est requis' });
   }
-  const analytic_id = data.analytic_id;
-  const dateRange = getDateRange(period);
 
   try {
+    // Vérifier l'accès de l'utilisateur au site web
+    const hasAccess = await checkUserWebsiteAccess(supabase, userId, websiteId);
+    if (!hasAccess) {
+      return res.status(403).json({ error: 'Accès non autorisé à ce site web' });
+    }
+
+    // Récupération analytic_id depuis la table websites
+    const { data, error } = await supabase
+      .from('websites')
+      .select('analytic_id')
+      .eq('id', websiteId)
+      .single();
+    
+    if (error || !data) {
+      console.error('Supabase error:', error);
+      return res.status(404).send('Site non trouvé');
+    }
+    
+    const analytic_id = data.analytic_id;
+    
+    if (!analytic_id) {
+      return res.status(404).json({ error: 'Aucun ID Analytics configuré pour ce site web' });
+    }
+
+    const dateRange = getDateRange(period);
+
     const [response] = await analyticsDataClient.runReport({
       property: `properties/${analytic_id}`,
       dateRanges: [
@@ -146,21 +165,41 @@ router.get('/getUserAnalytics',authenticateToken, async (req, res) => {
 router.get('/getEventAnalytics',authenticateToken, async (req, res) => {
   const token = req.headers['authorization']?.split(' ')[1];
   const supabase = supabaseServer(token);
-  const id_user = req.user.idUser
-  const period = req.query.period
-  // Supabase : récupération analytic_id
-  const { data, error } = await supabase
-    .from('users')
-    .select('analytic_id')
-    .eq('id', id_user)
-    .single();
-  if (error || !data) {
-    console.error('Supabase error:', error);
-    return res.status(404).send('Site not found');
+  const userId = req.user.idUser;
+  const period = req.query.period;
+  const websiteId = req.query.websiteId;
+
+  if (!websiteId) {
+    return res.status(400).json({ error: 'Website ID est requis' });
   }
-  const analytic_id = data.analytic_id;
-  const dateRange = getDateRange(period);
+
   try {
+    // Vérifier l'accès de l'utilisateur au site web
+    const hasAccess = await checkUserWebsiteAccess(supabase, userId, websiteId);
+    if (!hasAccess) {
+      return res.status(403).json({ error: 'Accès non autorisé à ce site web' });
+    }
+
+    // Récupération analytic_id depuis la table websites
+    const { data, error } = await supabase
+      .from('websites')
+      .select('analytic_id')
+      .eq('id', websiteId)
+      .single();
+    
+    if (error || !data) {
+      console.error('Supabase error:', error);
+      return res.status(404).send('Site non trouvé');
+    }
+    
+    const analytic_id = data.analytic_id;
+    
+    if (!analytic_id) {
+      return res.status(404).json({ error: 'Aucun ID Analytics configuré pour ce site web' });
+    }
+
+    const dateRange = getDateRange(period);
+    
     const [response] = await analyticsDataClient.runReport({
       property: `properties/${analytic_id}`,
       dateRanges: [
@@ -187,24 +226,44 @@ router.get('/getEventAnalytics',authenticateToken, async (req, res) => {
 router.get('/getLocationAnalytics',authenticateToken, async (req, res) => {
   const token = req.headers['authorization']?.split(' ')[1];
   const supabase = supabaseServer(token);  
-  const id_user = req.user.idUser
-  const period = req.query.period
-  const typeLocation = req.query.typeLocation 
-  const locationID = req.query.locationID
-  const typeUser = req.query.typeUser
-  // Supabase : récupération analytic_id
-  const { data, error } = await supabase
-    .from('users')
-    .select('analytic_id')
-    .eq('id', id_user)
-    .single();
-  if (error || !data) {
-    console.error('Supabase error:', error);
-    return res.status(404).send('Site not found');
+  const userId = req.user.idUser;
+  const period = req.query.period;
+  const typeLocation = req.query.typeLocation;
+  const locationID = req.query.locationID;
+  const typeUser = req.query.typeUser;
+  const websiteId = req.query.websiteId;
+
+  if (!websiteId) {
+    return res.status(400).json({ error: 'Website ID est requis' });
   }
-  const analytic_id = data.analytic_id;
-  const dateRange = getDateRange(period);
+
   try {
+    // Vérifier l'accès de l'utilisateur au site web
+    const hasAccess = await checkUserWebsiteAccess(supabase, userId, websiteId);
+    if (!hasAccess) {
+      return res.status(403).json({ error: 'Accès non autorisé à ce site web' });
+    }
+
+    // Récupération analytic_id depuis la table websites
+    const { data, error } = await supabase
+      .from('websites')
+      .select('analytic_id')
+      .eq('id', websiteId)
+      .single();
+    
+    if (error || !data) {
+      console.error('Supabase error:', error);
+      return res.status(404).send('Site non trouvé');
+    }
+    
+    const analytic_id = data.analytic_id;
+    
+    if (!analytic_id) {
+      return res.status(404).json({ error: 'Aucun ID Analytics configuré pour ce site web' });
+    }
+
+    const dateRange = getDateRange(period);
+    
     const [response] = await analyticsDataClient.runReport({
       property: `properties/${analytic_id}`,
       dateRanges: [
@@ -231,23 +290,43 @@ router.get('/getLocationAnalytics',authenticateToken, async (req, res) => {
 router.get('/getPlateformCategorieAnalytics',authenticateToken, async (req, res) => {
   const token = req.headers['authorization']?.split(' ')[1];
   const supabase = supabaseServer(token);
-  const id_user = req.user.idUser
-  const period = req.query.period
-  const typePlatform = req.query.typePlatform
-  const typeUser = req.query.typeUser
-  // Supabase : récupération analytic_id
-  const { data, error } = await supabase
-    .from('users')
-    .select('analytic_id')
-    .eq('id', id_user)
-    .single();
-  if (error || !data) {
-    console.error('Supabase error:', error);
-    return res.status(404).send('Site not found');
+  const userId = req.user.idUser;
+  const period = req.query.period;
+  const typePlatform = req.query.typePlatform;
+  const typeUser = req.query.typeUser;
+  const websiteId = req.query.websiteId;
+
+  if (!websiteId) {
+    return res.status(400).json({ error: 'Website ID est requis' });
   }
-  const analytic_id = data.analytic_id;
-  const dateRange = getDateRange(period);
+
   try {
+    // Vérifier l'accès de l'utilisateur au site web
+    const hasAccess = await checkUserWebsiteAccess(supabase, userId, websiteId);
+    if (!hasAccess) {
+      return res.status(403).json({ error: 'Accès non autorisé à ce site web' });
+    }
+
+    // Récupération analytic_id depuis la table websites
+    const { data, error } = await supabase
+      .from('websites')
+      .select('analytic_id')
+      .eq('id', websiteId)
+      .single();
+    
+    if (error || !data) {
+      console.error('Supabase error:', error);
+      return res.status(404).send('Site non trouvé');
+    }
+    
+    const analytic_id = data.analytic_id;
+    
+    if (!analytic_id) {
+      return res.status(404).json({ error: 'Aucun ID Analytics configuré pour ce site web' });
+    }
+
+    const dateRange = getDateRange(period);
+    
     const [response] = await analyticsDataClient.runReport({
       property: `properties/${analytic_id}`,
       dateRanges: [
@@ -273,23 +352,43 @@ router.get('/getPlateformCategorieAnalytics',authenticateToken, async (req, res)
 router.get('/getPageAnalytics',authenticateToken, async (req, res) => {
   const token = req.headers['authorization']?.split(' ')[1];
   const supabase = supabaseServer(token);
-  const id_user = req.user.idUser
-  const period = req.query.period
-  const typePage = req.query.typePage 
-  const typeUser = req.query.typeUser
-  // Supabase : récupération analytic_id
-  const { data, error } = await supabase
-    .from('users')
-    .select('analytic_id')
-    .eq('id', id_user)
-    .single();
-  if (error || !data) {
-    console.error('Supabase error:', error);
-    return res.status(404).send('Site not found');
+  const userId = req.user.idUser;
+  const period = req.query.period;
+  const typePage = req.query.typePage;
+  const typeUser = req.query.typeUser;
+  const websiteId = req.query.websiteId;
+
+  if (!websiteId) {
+    return res.status(400).json({ error: 'Website ID est requis' });
   }
-  const analytic_id = data.analytic_id;
-  const dateRange = getDateRange(period);
+
   try {
+    // Vérifier l'accès de l'utilisateur au site web
+    const hasAccess = await checkUserWebsiteAccess(supabase, userId, websiteId);
+    if (!hasAccess) {
+      return res.status(403).json({ error: 'Accès non autorisé à ce site web' });
+    }
+
+    // Récupération analytic_id depuis la table websites
+    const { data, error } = await supabase
+      .from('websites')
+      .select('analytic_id')
+      .eq('id', websiteId)
+      .single();
+    
+    if (error || !data) {
+      console.error('Supabase error:', error);
+      return res.status(404).send('Site non trouvé');
+    }
+    
+    const analytic_id = data.analytic_id;
+    
+    if (!analytic_id) {
+      return res.status(404).json({ error: 'Aucun ID Analytics configuré pour ce site web' });
+    }
+
+    const dateRange = getDateRange(period);
+    
     const [response] = await analyticsDataClient.runReport({
       property: `properties/${analytic_id}`,
       dateRanges: [

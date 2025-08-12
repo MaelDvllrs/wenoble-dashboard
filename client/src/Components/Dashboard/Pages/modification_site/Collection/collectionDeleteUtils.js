@@ -64,7 +64,7 @@ export async function deleteBlogPage({
       if (!skipRegenerate) {
         onStatus('regenerating');
         if (generateStaticSite) {
-          await generateStaticSite(token);
+          await generateStaticSite(token, params?.websiteId);
         }
         await new Promise(resolve => setTimeout(resolve, 1000));
       } else {

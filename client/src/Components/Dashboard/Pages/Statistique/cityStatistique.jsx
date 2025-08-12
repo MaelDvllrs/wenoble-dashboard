@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useTheme } from '@mui/material/styles';
+import { useWebsite } from '../../../../Context/WebsiteContext';
 import MenuItem from '@mui/material/MenuItem';
 import { SelectField, CustomAxisTooltip, SelectFieldSecondary } from '../../../../Theme/element';
 import { LineHighlightPlot } from '@mui/x-charts/LineChart';
@@ -25,6 +26,7 @@ import './statistique.css';
 export const CityStatistique = () => {
   const token = Cookies.get('token'); 
   const theme = useTheme();
+  const { selectedWebsite, loading: websiteLoading } = useWebsite();
   const [locationStatistique, setLocationStatistique] = useState(null);
   const [location, setLocation] = useState([]);
   const [typeLocation, setTypeLocation] = useState('city');
@@ -50,12 +52,20 @@ export const CityStatistique = () => {
 
   useEffect(() => {
     const fetchLocationStatistique = async () => {
-      const locationData = await getLocationStatistique(period, typeLocation, labelMap[typeLocation].locationID, typeUser, token);
-      setLocationStatistique(locationData);
-      setLoading(true);
+      if (!selectedWebsite || websiteLoading) return;
+      
+      setLoading(false);
+      try {
+        const locationData = await getLocationStatistique(period, typeLocation, labelMap[typeLocation].locationID, typeUser, selectedWebsite.id, token);
+        setLocationStatistique(locationData);
+        setLoading(true);
+      } catch (error) {
+        console.error('Erreur lors de la récupération des statistiques de localisation:', error);
+        setLoading(true);
+      }
     };
     fetchLocationStatistique();
-  }, [period, typeLocation, typeUser, token]);
+  }, [period, typeLocation, typeUser, selectedWebsite, websiteLoading]);
 
  
   useEffect(() => {
@@ -100,36 +110,45 @@ export const CityStatistique = () => {
 
   return (
     <div className="statistique-container" style={{ boxShadow: theme.palette.shadow.main, backgroundColor: theme.palette.primary.main }}>
-        <div className='select-stat-container'>  
-        <SelectFieldSecondary
-            id="period-select"
-            value={typeUser}
-            onChange={handleChangeTypeUser}
-            theme={theme}
-        >
-            {Object.entries(labelUser).map(([value, { label }]) => (
-                <MenuItem key={value} value={value}>
-                    {label}
-                </MenuItem>
-            ))}
-        </SelectFieldSecondary>
-        <p style={{marginRight:"1rem"}}>par</p>
-        <SelectFieldSecondary
-            id="period-select"
-            value={typeLocation}
-            onChange={handleChangeTypeLocation}
-            theme={theme}
-        >
-            {Object.entries(labelMap).map(([value, { label }]) => (
-                <MenuItem key={value} value={value}>
-                    {label}
-                </MenuItem>
-            ))}
-        </SelectFieldSecondary>
-        <Tooltip title={labelMap[typeLocation].description} placement="right">
-            <InfoOutlinedIcon className='icon-select-stat-container' style={{color: theme.palette.text.secondary}}/>
-        </Tooltip>
-      </div>
+        {!selectedWebsite || websiteLoading ? (
+          <div className='loading-message-stats'>
+            <CircularProgress sx={{color:"#2ec96d"}}/>
+            <p style={{ color: theme.palette.text.secondary, marginTop: '1rem' }}>
+              {websiteLoading ? 'Chargement...' : 'Veuillez sélectionner un site web'}
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className='select-stat-container'>  
+            <SelectFieldSecondary
+                id="period-select"
+                value={typeUser}
+                onChange={handleChangeTypeUser}
+                theme={theme}
+            >
+                {Object.entries(labelUser).map(([value, { label }]) => (
+                    <MenuItem key={value} value={value}>
+                        {label}
+                    </MenuItem>
+                ))}
+            </SelectFieldSecondary>
+            <p style={{marginRight:"1rem"}}>par</p>
+            <SelectFieldSecondary
+                id="period-select"
+                value={typeLocation}
+                onChange={handleChangeTypeLocation}
+                theme={theme}
+            >
+                {Object.entries(labelMap).map(([value, { label }]) => (
+                    <MenuItem key={value} value={value}>
+                        {label}
+                    </MenuItem>
+                ))}
+            </SelectFieldSecondary>
+            <Tooltip title={labelMap[typeLocation].description} placement="right">
+                <InfoOutlinedIcon className='icon-select-stat-container' style={{color: theme.palette.text.secondary}}/>
+            </Tooltip>
+          </div>
 
         {!loading ? (
           <div className='loading-message-stats'>
@@ -217,26 +236,23 @@ export const CityStatistique = () => {
         )
        )}
 
-        <SelectField
-            id="period-select"
-            value={period}
-            onChange={handleChange}
-            theme={theme}
-        >
-            <MenuItem value={'today'}>Aujourd'hui</MenuItem>
-            <MenuItem value={'yesterday'}>Hier</MenuItem>
-            <MenuItem value={'last7days'}>Les 7 derniers jours</MenuItem>
-            <MenuItem value={'last14days'}>Les 14 derniers jours</MenuItem>
-            <MenuItem value={'last30days'}>Les 30 derniers jours</MenuItem>
-            <MenuItem value={'last90days'}>Les 90 derniers jours</MenuItem>
-            <MenuItem value={'last365days'}>Les 12 derniers mois</MenuItem>
-        </SelectField>
-
+            <SelectField
+                id="period-select"
+                value={period}
+                onChange={handleChange}
+                theme={theme}
+            >
+                <MenuItem value={'today'}>Aujourd'hui</MenuItem>
+                <MenuItem value={'yesterday'}>Hier</MenuItem>
+                <MenuItem value={'last7days'}>Les 7 derniers jours</MenuItem>
+                <MenuItem value={'last14days'}>Les 14 derniers jours</MenuItem>
+                <MenuItem value={'last30days'}>Les 30 derniers jours</MenuItem>
+                <MenuItem value={'last90days'}>Les 90 derniers jours</MenuItem>
+                <MenuItem value={'last365days'}>Les 12 derniers mois</MenuItem>
+            </SelectField>
+          </>
+        )}
       
     </div>
   );
 };
-
-
-
-

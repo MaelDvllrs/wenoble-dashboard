@@ -7,7 +7,7 @@ import ThemeHandler from './Theme/themeProvider.jsx'
 import './Theme/global.css';
 import '../sw-update'; 
 
-import { SnackbarProvider } from './Theme/snackbar.jsx'; // chemin à adapter
+import { SnackbarProvider } from './Theme/snackbar.jsx';
 
 
 

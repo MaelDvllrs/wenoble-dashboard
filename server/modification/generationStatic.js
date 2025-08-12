@@ -49,32 +49,34 @@ const { supabaseServer } = require('../supabase');
 
 router.post('/generateSite', authenticateToken, async (req, res) => {
   const token = req.headers['authorization']?.split(' ')[1];
-  const userId = req.user.idUser;
+  const websiteId = req.body.websiteId;
   const supabase = supabaseServer(token);
-  console.log('Démarrage de la génération statique pour l\'utilisateur:', userId);
+  console.log('Démarrage de la génération statique pour le site:', websiteId);
 
-  if (!userId) {
-    return res.status(400).send({ error: 'Le paramètre user_id est requis.' });
+
+
+  if (!websiteId) {
+    return res.status(400).send({ error: 'Le paramètre websiteId est requis.' });
   }
 
   try {
-    // 1. Récupérer le chemin du dossier projet depuis la table users
-    const { data: userData, error: userError } = await supabase
-      .from('users')
+    // 1. Récupérer le chemin du dossier projet depuis la table websites
+    const { data: websiteData, error: websiteError } = await supabase
+      .from('websites')
       .select('folder_project')
-      .eq('id', userId)
+      .eq('id', websiteId)
       .maybeSingle();
-    if (userError) throw userError;
-    if (!userData || !userData.folder_project) {
-      return res.status(404).send({ error: 'Utilisateur ou chemin projet non trouvé.' });
+    if (websiteError) throw websiteError;
+    if (!websiteData || !websiteData.folder_project) {
+      return res.status(404).send({ error: 'Site web ou chemin projet non trouvé.' });
     }
-    const siteDir = userData.folder_project;
+    const siteDir = websiteData.folder_project;
 
-    // 2. Récupérer les collections de l'utilisateur
+    // 2. Récupérer les collections du site web
     const { data: collections, error: collectionsError } = await supabase
       .from('collection')
       .select('id, collection_slug')
-      .eq('user_id', userId)
+      .eq('website_id', websiteId)
       .not('collection_slug', 'is', null);
     if (collectionsError) throw collectionsError;
 

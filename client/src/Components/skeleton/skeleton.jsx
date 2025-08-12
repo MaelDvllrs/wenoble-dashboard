@@ -232,3 +232,44 @@ export const SkeletonTotalSize = () => {
         </div>
     );
 }
+
+// Skeleton complet pour un sélecteur (icône gauche + zone texte + flèche droite)
+export const SkeletonFullSelector = () => (
+    <div className="skeleton-full-block-wrapper">
+        <Skeleton animation="wave" variant="rounded" className="skeleton-full-block" />
+    </div>
+);
+// Skeleton pour sélecteurs (workspace / website)
+export const SkeletonSelector = ({ showRole = true }) => {
+    const [visible, setVisible] = useState(false);
+    useEffect(() => {
+        const timer = setTimeout(() => setVisible(true), 150);
+        return () => clearTimeout(timer);
+    }, []);
+    if (!visible) return null;
+    return (
+        <div className="skeleton-selector">
+            <Skeleton animation="wave" variant="text" className="skeleton-selector-name" />
+            {showRole && <Skeleton animation="wave" variant="rounded" className="skeleton-selector-role" />}
+        </div>
+    );
+};
+
+// Skeleton pour listes dans menus déroulants
+export const SkeletonMenuList = ({ lines = 3 }) => {
+    const [visible, setVisible] = useState(false);
+    useEffect(() => {
+        const timer = setTimeout(() => setVisible(true), 120);
+        return () => clearTimeout(timer);
+    }, []);
+    if (!visible) return null;
+    return (
+        <div className="skeleton-menu-list">
+            {Array.from({ length: lines }).map((_, i) => (
+                <div key={i} className="skeleton-menu-line">
+                    <Skeleton animation="wave" variant="text" className="skeleton-menu-text" />
+                </div>
+            ))}
+        </div>
+    );
+};

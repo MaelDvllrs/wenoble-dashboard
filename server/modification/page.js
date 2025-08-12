@@ -7,6 +7,7 @@ const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
 const { supabaseServer } = require('../supabase');
 const { authenticateToken } = require('../middleware/authToken');
+const { checkUserWebsiteAccess } = require('../website/website');
 
 
 
@@ -22,50 +23,106 @@ router.get('/getPage',authenticateToken, async (req, res) => {
   const token = req.headers.authorization?.split(' ')[1];
   const supabase = supabaseServer(token);
 
-  const sentUserId = req.user.idUser;
+  const websiteId = req.query.websiteId;
+  const userId = req.user.idUser;
+
+  if (!websiteId) {
+    return res.status(400).json({ error: 'Website ID is required' });
+  }
+
   try {
-    // On suppose que sentUserId est le user_id (UUID) de Supabase
+
+    // Vérifier l'accès de l'utilisateur au site web
+    const hasAccess = await checkUserWebsiteAccess(supabase, userId, websiteId);
+    if (!hasAccess) {
+      return res.status(403).json({ error: 'Accès non autorisé à ce site web' });
+    }
+
+    // Récupérer les pages du site web
     const { data, error } = await supabase
       .from('page')
-      .select('id, page_name')
-      .eq('user_id', sentUserId);
+      .select('id, page_name, website_id')
+      .eq('website_id', websiteId);
+    
     if (error) throw error;
+    
     const pageCrypt = jwt.sign({ page: data }, secretKey);
     res.send(pageCrypt);
   } catch (error) {
-    res.send({ error: error.message });
+    console.error('Erreur lors de la récupération des pages:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 
-// GET page details by id (id_page devient id)
+// GET page details by id
 router.get('/getPageDetail',authenticateToken, async (req, res) => {
   const token = req.headers.authorization?.split(' ')[1];
   const supabase = supabaseServer(token);
 
   const pageId = req.query.IdPage;
+  const userId = req.user.idUser;
+
+  if (!pageId) {
+    return res.status(400).json({ error: 'Page ID is required' });
+  }
+
   try {
-    const { data, error } = await supabase
+    // Récupérer la page avec son website_id
+    const { data: pageData, error: pageError } = await supabase
       .from('page')
-      .select('*')
+      .select('*, website_id')
       .eq('id', pageId)
       .single();
-    if (error) throw error;
-    const pageCrypt = jwt.sign({ page: [data] }, secretKey);
+    
+    if (pageError) throw pageError;
+    if (!pageData) {
+      return res.status(404).json({ error: 'Page non trouvée' });
+    }
+
+    // Vérifier l'accès de l'utilisateur au site web de cette page
+    const hasAccess = await checkUserWebsiteAccess(supabase, userId, pageData.website_id);
+    if (!hasAccess) {
+      return res.status(403).json({ error: 'Accès non autorisé à cette page' });
+    }
+
+    const pageCrypt = jwt.sign({ page: [pageData] }, secretKey);
     res.send(pageCrypt);
   } catch (error) {
     res.send({ error: error.message });
   }
 });
 
-// GET config for a page (id_page devient id)
+// GET config for a page
 router.get('/getConfigPage',authenticateToken, async (req, res) => {
   const token = req.headers.authorization?.split(' ')[1];
   const supabase = supabaseServer(token);
 
-
-
   const pageId = req.query.IdPage;
+  const userId = req.user.idUser;
+
+  if (!pageId) {
+    return res.status(400).json({ error: 'Page ID is required' });
+  }
+
   try {
+    // Récupérer la page pour vérifier le website_id
+    const { data: pageData, error: pageError } = await supabase
+      .from('page')
+      .select('website_id')
+      .eq('id', pageId)
+      .single();
+
+    if (pageError) throw pageError;
+    if (!pageData) {
+      return res.status(404).json({ error: 'Page non trouvée' });
+    }
+
+    // Vérifier l'accès de l'utilisateur au site web
+    const hasAccess = await checkUserWebsiteAccess(supabase, userId, pageData.website_id);
+    if (!hasAccess) {
+      return res.status(403).json({ error: 'Accès non autorisé à cette page' });
+    }
+
     const { data, error } = await supabase
       .from('page_config')
       .select('*')
@@ -80,15 +137,38 @@ router.get('/getConfigPage',authenticateToken, async (req, res) => {
   }
 });
 
-// GET images for a page (id_page devient id)
+// GET images for a page
 router.get('/getImagePage',authenticateToken, async (req, res) => {
   const token = req.headers.authorization?.split(' ')[1];
   const supabase = supabaseServer(token);
 
   const sentIdPage = req.query.IdPage;
   const sentIdConfig = req.query.IdConfig;
+  const userId = req.user.idUser;
+
+  if (!sentIdPage) {
+    return res.status(400).json({ error: 'Page ID is required' });
+  }
 
   try {
+    // Récupérer la page pour vérifier le website_id
+    const { data: pageData, error: pageError } = await supabase
+      .from('page')
+      .select('website_id')
+      .eq('id', sentIdPage)
+      .single();
+
+    if (pageError) throw pageError;
+    if (!pageData) {
+      return res.status(404).json({ error: 'Page non trouvée' });
+    }
+
+    // Vérifier l'accès de l'utilisateur au site web
+    const hasAccess = await checkUserWebsiteAccess(supabase, userId, pageData.website_id);
+    if (!hasAccess) {
+      return res.status(403).json({ error: 'Accès non autorisé à cette page' });
+    }
+
     const { data, error } = await supabase
       .from('page_photo')
       .select('id_config, src_image, name_image, alt_image, size')
@@ -118,10 +198,31 @@ router.get('/getPageTexte',authenticateToken, async (req, res) => {
 
   const pageId = req.query.IdPage;
   const idConfig = req.query.IdConfig;
+  const userId = req.user.idUser;
+
   if (!pageId) {
     return res.status(400).send("L'id de la page est manquant.");
   }
+
   try {
+    // Récupérer la page pour vérifier le website_id
+    const { data: pageData, error: pageError } = await supabase
+      .from('page')
+      .select('website_id')
+      .eq('id', pageId)
+      .single();
+
+    if (pageError) throw pageError;
+    if (!pageData) {
+      return res.status(404).json({ error: 'Page non trouvée' });
+    }
+
+    // Vérifier l'accès de l'utilisateur au site web
+    const hasAccess = await checkUserWebsiteAccess(supabase, userId, pageData.website_id);
+    if (!hasAccess) {
+      return res.status(403).json({ error: 'Accès non autorisé à cette page' });
+    }
+
     const { data, error } = await supabase
       .from('page_text')
       .select('text, id_text, id_config')
@@ -139,6 +240,7 @@ router.get('/getPageRichText',authenticateToken, async (req, res) => {
   
   const pageId = req.query.IdPage;
   const idConfig = req.query.IdConfig;
+  const userId = req.user.idUser;
 
   const token = req.headers.authorization?.split(' ')[1];
   const supabase = supabaseServer(token);
@@ -147,7 +249,26 @@ router.get('/getPageRichText',authenticateToken, async (req, res) => {
   if (!pageId) {
     return res.status(400).send("L'id de la page est manquant.");
   }
+
   try {
+    // Récupérer la page pour vérifier le website_id
+    const { data: pageData, error: pageError } = await supabase
+      .from('page')
+      .select('website_id')
+      .eq('id', pageId)
+      .single();
+
+    if (pageError) throw pageError;
+    if (!pageData) {
+      return res.status(404).json({ error: 'Page non trouvée' });
+    }
+
+    // Vérifier l'accès de l'utilisateur au site web
+    const hasAccess = await checkUserWebsiteAccess(supabase, userId, pageData.website_id);
+    if (!hasAccess) {
+      return res.status(403).json({ error: 'Accès non autorisé à cette page' });
+    }
+
     const { data, error } = await supabase
       .from('page_richtext')
       .select('text_json, id_richtext, id_config')
@@ -239,7 +360,33 @@ router.post('/updateTextPage',authenticateToken, async (req, res) => {
 
   const id_page = req.body.params.idPage;
   const text = req.body.params.text;
+  const userId = req.user.idUser;
+
+  if (!id_page) {
+    return res.status(400).json({ error: 'ID de page requis' });
+  }
+
+  console.log(id_page)
+
   try {
+    // Récupérer la page pour vérifier le website_id
+    const { data: pageData, error: pageError } = await supabase
+      .from('page')
+      .select('website_id')
+      .eq('id', id_page)
+      .single();
+
+    if (pageError) throw pageError;
+    if (!pageData) {
+      return res.status(404).json({ error: 'Page non trouvée' });
+    }
+
+    // Vérifier l'accès de l'utilisateur au site web
+    const hasAccess = await checkUserWebsiteAccess(supabase, userId, pageData.website_id);
+    if (!hasAccess) {
+      return res.status(403).json({ error: 'Accès non autorisé à cette page' });
+    }
+
     const updatePromises = text.map(item =>
       supabase
         .from('page_text')
@@ -248,6 +395,7 @@ router.post('/updateTextPage',authenticateToken, async (req, res) => {
         .eq('id_page', id_page)
     );
     await Promise.all(updatePromises);
+    console.log('text mis a jour')
     res.status(200).send('Textes mis à jour avec succès');
   } catch (err) {
     console.error('Erreur lors de la mise à jour du texte de la page :', err);
@@ -266,7 +414,31 @@ router.post('/updateRichTextPage',authenticateToken, async (req, res) => {
 
   const id_page = req.body.params.idPage;
   const richtext = req.body.params.richtext;
+  const userId = req.user.idUser;
+
+  if (!id_page) {
+    return res.status(400).json({ error: 'ID de page requis' });
+  }
+
   try {
+    // Récupérer la page pour vérifier le website_id
+    const { data: pageData, error: pageError } = await supabase
+      .from('page')
+      .select('website_id')
+      .eq('id', id_page)
+      .single();
+
+    if (pageError) throw pageError;
+    if (!pageData) {
+      return res.status(404).json({ error: 'Page non trouvée' });
+    }
+
+    // Vérifier l'accès de l'utilisateur au site web
+    const hasAccess = await checkUserWebsiteAccess(supabase, userId, pageData.website_id);
+    if (!hasAccess) {
+      return res.status(403).json({ error: 'Accès non autorisé à cette page' });
+    }
+
     const updatePromises = richtext.map(item =>
       supabase
         .from('page_richtext')
@@ -277,6 +449,7 @@ router.post('/updateRichTextPage',authenticateToken, async (req, res) => {
     await Promise.all(updatePromises);
     res.status(200).send('Textes mis à jour avec succès');
   } catch (err) {
+    console.error('Erreur lors de la mise à jour du richtext de la page :', err);
     res.status(500).send({ error: err.message });
   }
 });
@@ -310,11 +483,36 @@ router.post('/updateImagesPage',authenticateToken, uploadUpdateImage.single('ima
   const name = req.body.name;
   const alt = req.body.alt;
   const size = req.body.size;
+  const userId = req.user.idUser;
+  
   const extension = path.extname(req.file.filename);
   const id_photo = path.basename(req.file.filename, extension);
   const src_image = id_photo + extension;
   const filePath = req.file.path;
+
+  if (!id_page) {
+    return res.status(400).json({ error: 'ID de page requis' });
+  }
+
   try {
+    // Récupérer la page pour vérifier le website_id
+    const { data: pageData, error: pageError } = await supabase
+      .from('page')
+      .select('website_id')
+      .eq('id', id_page)
+      .single();
+
+    if (pageError) throw pageError;
+    if (!pageData) {
+      return res.status(404).json({ error: 'Page non trouvée' });
+    }
+
+    // Vérifier l'accès de l'utilisateur au site web
+    const hasAccess = await checkUserWebsiteAccess(supabase, userId, pageData.website_id);
+    if (!hasAccess) {
+      return res.status(403).json({ error: 'Accès non autorisé à cette page' });
+    }
+
     // Récupérer l'ancienne image (si existe)
     const { data: oldData, error: oldError } = await supabase
       .from('page_photo')
@@ -361,10 +559,31 @@ router.post('/updateAltPage' ,authenticateToken, async (req, res) => {
   const id_page = req.body.params.pageId;
   const alt = req.body.params.alt;
   const id_config = req.body.params.id_config;
+  const userId = req.user.idUser;
 
-
+  if (!id_page) {
+    return res.status(400).json({ error: 'ID de page requis' });
+  }
 
   try {
+    // Récupérer la page pour vérifier le website_id
+    const { data: pageData, error: pageError } = await supabase
+      .from('page')
+      .select('website_id')
+      .eq('id', id_page)
+      .single();
+
+    if (pageError) throw pageError;
+    if (!pageData) {
+      return res.status(404).json({ error: 'Page non trouvée' });
+    }
+
+    // Vérifier l'accès de l'utilisateur au site web
+    const hasAccess = await checkUserWebsiteAccess(supabase, userId, pageData.website_id);
+    if (!hasAccess) {
+      return res.status(403).json({ error: 'Accès non autorisé à cette page' });
+    }
+
     const { error } = await supabase
       .from('page_photo')
       .update({ alt_image: alt })
@@ -383,11 +602,34 @@ router.post('/updateAltPage' ,authenticateToken, async (req, res) => {
 router.delete('/deletePageData',authenticateToken, async (req, res) => {
   const id_page = req.body.id_page;
   const data = req.body.data;
+  const userId = req.user.idUser;
 
   const token = req.headers.authorization?.split(' ')[1];
   const supabase = supabaseServer(token);
 
+  if (!id_page) {
+    return res.status(400).json({ error: 'ID de page requis' });
+  }
+
   try {
+    // Récupérer la page pour vérifier le website_id
+    const { data: pageData, error: pageError } = await supabase
+      .from('page')
+      .select('website_id')
+      .eq('id', id_page)
+      .single();
+
+    if (pageError) throw pageError;
+    if (!pageData) {
+      return res.status(404).json({ error: 'Page non trouvée' });
+    }
+
+    // Vérifier l'accès de l'utilisateur au site web
+    const hasAccess = await checkUserWebsiteAccess(supabase, userId, pageData.website_id);
+    if (!hasAccess) {
+      return res.status(403).json({ error: 'Accès non autorisé à cette page' });
+    }
+
     for (const element of data) {
       const id_config = element.id_config;
       const type = element.type;
@@ -423,6 +665,248 @@ router.delete('/deletePageData',authenticateToken, async (req, res) => {
     res.status(200).send('Données supprimées avec succès');
   } catch (error) {
     res.status(500).send({ error: error.message });
+  }
+});
+
+// CREATE new page
+router.post('/createPage', authenticateToken, async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  const supabase = supabaseServer(token);
+
+  const { page_name, page_slug, website_id, config_fields } = req.body;
+  const userId = req.user.idUser;
+
+  if (!page_name || !page_slug || !website_id) {
+    return res.status(400).json({ error: 'Nom de page, slug et website ID sont requis' });
+  }
+
+  try {
+    // Vérifier l'accès de l'utilisateur au site web
+    const hasAccess = await checkUserWebsiteAccess(supabase, userId, pageData.website_id);
+    if (!hasAccess) {
+      return res.status(403).json({ error: 'Accès non autorisé à ce site web' });
+    }
+
+    // Vérifier que le slug est unique pour ce site web
+    const { data: existingPage, error: checkError } = await supabase
+      .from('page')
+      .select('id')
+      .eq('page_slug', page_slug)
+      .eq('website_id', website_id)
+      .single();
+
+    if (checkError && checkError.code !== 'PGRST116') throw checkError;
+    if (existingPage) {
+      return res.status(400).json({ error: 'Ce slug existe déjà pour ce site web' });
+    }
+
+    // Créer la page principale
+    const { data: pageData, error: pageError } = await supabase
+      .from('page')
+      .insert({
+        page_name,
+        page_slug,
+        website_id,
+        created_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (pageError) throw pageError;
+
+    // Créer la configuration des champs si fournie
+    if (config_fields && config_fields.length > 0) {
+      const configInserts = config_fields.map((field, index) => ({
+        id_page: pageData.id,
+        id_config: index + 1,
+        name_field: field.name_field,
+        description_field: field.description_field || '',
+        tab_field: field.tab_field,
+        multiline_text: field.multiline_text || false
+      }));
+
+      const { error: configError } = await supabase
+        .from('page_config')
+        .insert(configInserts);
+
+      if (configError) throw configError;
+    }
+
+    res.status(201).json({ 
+      message: 'Page créée avec succès', 
+      page: pageData 
+    });
+
+  } catch (error) {
+    console.error('Erreur lors de la création de la page:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// UPDATE page
+router.post('/updatePage', authenticateToken, async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  const supabase = supabaseServer(token);
+
+  const { page_id, page_name, page_slug } = req.body;
+  const userId = req.user.idUser;
+
+  if (!page_id || !page_name || !page_slug) {
+    return res.status(400).json({ error: 'ID de page, nom et slug sont requis' });
+  }
+
+  try {
+    // Récupérer la page pour vérifier le website_id
+    const { data: pageData, error: pageError } = await supabase
+      .from('page')
+      .select('website_id')
+      .eq('id', page_id)
+      .single();
+
+    if (pageError) throw pageError;
+    if (!pageData) {
+      return res.status(404).json({ error: 'Page non trouvée' });
+    }
+
+    // Vérifier l'accès de l'utilisateur au site web
+    const hasAccess = await checkUserWebsiteAccess(supabase, userId, pageData.website_id);
+    if (!hasAccess) {
+      return res.status(403).json({ error: 'Accès non autorisé à cette page' });
+    }
+
+    // Vérifier que le nouveau slug est unique (si différent)
+    const { data: existingPage, error: checkError } = await supabase
+      .from('page')
+      .select('id')
+      .eq('page_slug', page_slug)
+      .eq('website_id', pageData.website_id)
+      .neq('id', page_id)
+      .single();
+
+    if (checkError && checkError.code !== 'PGRST116') throw checkError;
+    if (existingPage) {
+      return res.status(400).json({ error: 'Ce slug existe déjà pour ce site web' });
+    }
+
+    // Mettre à jour la page
+    const { error: updateError } = await supabase
+      .from('page')
+      .update({
+        page_name,
+        page_slug,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', page_id);
+
+    if (updateError) throw updateError;
+
+    res.status(200).json({ message: 'Page mise à jour avec succès' });
+
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour de la page:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// DELETE page
+router.delete('/deletePage', authenticateToken, async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  const supabase = supabaseServer(token);
+
+  const { page_id } = req.body;
+  const userId = req.user.idUser;
+
+  if (!page_id) {
+    return res.status(400).json({ error: 'ID de page requis' });
+  }
+
+  try {
+    // Récupérer la page pour vérifier le website_id
+    const { data: pageData, error: pageError } = await supabase
+      .from('page')
+      .select('website_id')
+      .eq('id', page_id)
+      .single();
+
+    if (pageError) throw pageError;
+    if (!pageData) {
+      return res.status(404).json({ error: 'Page non trouvée' });
+    }
+
+    // Vérifier l'accès de l'utilisateur au site web
+    const hasAccess = await checkUserWebsiteAccess(supabase, userId, pageData.website_id);
+    if (!hasAccess) {
+      return res.status(403).json({ error: 'Accès non autorisé à cette page' });
+    }
+
+    // Supprimer d'abord les données liées (images, textes, etc.)
+    // Images
+    const { data: images, error: imgSelectError } = await supabase
+      .from('page_photo')
+      .select('src_image')
+      .eq('id_page', page_id);
+
+    if (imgSelectError && imgSelectError.code !== 'PGRST116') throw imgSelectError;
+
+    if (images && images.length > 0) {
+      const imagesToDelete = images.filter(img => img.src_image).map(img => img.src_image);
+      if (imagesToDelete.length > 0) {
+        await supabase.storage.from('page-image').remove(imagesToDelete);
+      }
+      
+      const { error: imgDeleteError } = await supabase
+        .from('page_photo')
+        .delete()
+        .eq('id_page', page_id);
+      
+      if (imgDeleteError) throw imgDeleteError;
+    }
+
+    // Supprimer les textes
+    const { error: textDeleteError } = await supabase
+      .from('page_text')
+      .delete()
+      .eq('id_page', page_id);
+    
+    if (textDeleteError && textDeleteError.code !== 'PGRST116') throw textDeleteError;
+
+    // Supprimer les textes riches
+    const { error: richTextDeleteError } = await supabase
+      .from('page_richtext')
+      .delete()
+      .eq('id_page', page_id);
+    
+    if (richTextDeleteError && richTextDeleteError.code !== 'PGRST116') throw richTextDeleteError;
+
+    // Supprimer les vidéos
+    const { error: videoDeleteError } = await supabase
+      .from('page_video')
+      .delete()
+      .eq('id_page', page_id);
+    
+    if (videoDeleteError && videoDeleteError.code !== 'PGRST116') throw videoDeleteError;
+
+    // Supprimer la configuration
+    const { error: configDeleteError } = await supabase
+      .from('page_config')
+      .delete()
+      .eq('id_page', page_id);
+    
+    if (configDeleteError && configDeleteError.code !== 'PGRST116') throw configDeleteError;
+
+    // Enfin, supprimer la page elle-même
+    const { error: pageDeleteError } = await supabase
+      .from('page')
+      .delete()
+      .eq('id', page_id);
+
+    if (pageDeleteError) throw pageDeleteError;
+
+    res.status(200).json({ message: 'Page supprimée avec succès' });
+
+  } catch (error) {
+    console.error('Erreur lors de la suppression de la page:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 

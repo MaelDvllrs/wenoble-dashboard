@@ -45,6 +45,7 @@
 
 .editor-container{
     border: none;
+    font-size: 0.9rem;
     border-radius: 0.5rem;
     min-height: 10rem;
     position: relative;
@@ -435,7 +436,8 @@
     padding: 0.5rem;
     width: 100%;
     font-family: "Montserrat", sans-serif !important;
-    font-size: 1rem;
+    font-size: 0.9rem;
+    font-weight: 500;
     resize: vertical;
     box-shadow: var(--color-shadow-main);
     background-color: var(--color-primary-main);
@@ -448,6 +450,44 @@
     outline: none;
 }
 
+/* Amélioration UX pour le champ de copie cliquable */
+.copy-input-container:hover {
+    box-shadow: var(--color-shadow-secondary);
+
+}
+
+.copy-input-container:hover .MuiSvgIcon-root {
+    opacity: 1 !important;
+}
+
+.copy-input-container{
+    font-size: 0.8rem;
+    background-color: var(--color-primary-third);
+    padding-bottom: 0.2rem;
+    padding-top: 0.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    overflow: visible;
+}
+
+/* Animation pour le feedback de copie */
+.copy-input-container .copy-success {
+    animation: copySuccess 0.3s ease-in-out;
+}
+
+@keyframes copySuccess {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Style pour les champs de copie en lecture seule */
+.copy-input-container[readonly] {
+    background-color: var(--color-primary-secondary);
+    border-style: dashed;
+}
+
 .flex_image{
     align-items: normal;
     gap: 1rem;
@@ -455,7 +495,6 @@
 
 
 .select_multiRef{
-    box-shadow: var(--color-shadow-main);
     border-radius: 0.5rem;
 }
 

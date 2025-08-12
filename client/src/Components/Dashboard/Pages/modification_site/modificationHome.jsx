@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react"
 import { NavLink } from "react-router-dom"
 import { useTheme } from '@mui/material/styles';
+import { useWebsite } from '../../../../Context/WebsiteContext';
 import "./modificationHome.css"
 import Axios from 'axios';
 import { MdImportContacts, MdArrowForwardIos } from "react-icons/md";
@@ -31,38 +32,49 @@ const ModificationHome = () => {
 const token = Cookies.get('token');
 const apiUrl = config.apiUrl;
 const theme = useTheme();
+const { selectedWebsite, loading: websiteLoading } = useWebsite();
 const [sizeTotal, setSizeTotal] = useState(0);
-const [threshold, setThreshold] = useState(1); 
+const [threshold, setThreshold] = useState(1);
+const [sizeLoading, setSizeLoading] = useState(false); 
 
 
 const [authPortfolio, setauthPortfolio] = useState(0);
 useEffect(() => {
   const fetchPortAuth = async () => {
-    const isAuthorized = await checkAuthorization('auth_portfolio');
+    if (!selectedWebsite?.id || websiteLoading) {
+      return;
+    }
+    const isAuthorized = await checkAuthorization('auth_portfolio', selectedWebsite.id);
     setauthPortfolio(isAuthorized);
   };
   fetchPortAuth();
-}, []);
+}, [selectedWebsite, websiteLoading]);
 
 
 const [authPage, setauthPage] = useState(0);
 useEffect(() => {
-  const fetchPortAuth = async () => {
-    const isAuthorized = await checkAuthorization('auth_page');
+  const fetchPageAuth = async () => {
+    if (!selectedWebsite?.id || websiteLoading) {
+      return;
+    }
+    const isAuthorized = await checkAuthorization('auth_page', selectedWebsite.id);
     setauthPage(isAuthorized);
   };
-  fetchPortAuth();
-}, [])
+  fetchPageAuth();
+}, [selectedWebsite, websiteLoading]);
 
 
 const [authBlog, setauthBlog] = useState(0);
 useEffect(() => {
-  const fetchPortAuth = async () => {
-    const isAuthorized = await checkAuthorization('auth_blog');
+  const fetchBlogAuth = async () => {
+    if (!selectedWebsite?.id || websiteLoading) {
+      return;
+    }
+    const isAuthorized = await checkAuthorization('auth_blog', selectedWebsite.id);
     setauthBlog(isAuthorized);
   };
-  fetchPortAuth();
-}, [])
+  fetchBlogAuth();
+}, [selectedWebsite, websiteLoading]);
 
 
 
@@ -268,10 +280,13 @@ useEffect(() => {
 
 useEffect(() => {
   const getTotalSize = async () => {
+    if (!selectedWebsite || websiteLoading) return;
+    
+    setSizeLoading(true);
     try {
       const response = await Axios.get(`${apiUrl}/getSizeItem`, {
           params: {
-            token: token,
+            websiteId: selectedWebsite?.id,
           },
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -287,10 +302,12 @@ useEffect(() => {
       setThreshold(newThreshold)
     } catch (error) {
         console.error('Erreur lors de la récupération de la taille totale :', error);
+    } finally {
+      setSizeLoading(false);
     }
   };
   getTotalSize();
-},[]);
+},[selectedWebsite, websiteLoading]);
 
 
 
@@ -299,12 +316,12 @@ return(
         <div className="breadCrumbs"><NavLink style={{color: theme.palette.text.primary}} className={"breadCrumbsLink"} to={'/dashboard/home'}>Dashboard</NavLink> &gt; Modification</div>
         <div className="modification_contain">
           {
-            (authPortfolio === true || authPage === true || authBlog === true) && (
+            (authPortfolio === true || authPage === true || authBlog === true) && selectedWebsite && (
               <div className="dashboard_case_empty limit_size_contain" style={{backgroundColor : theme.palette.primary.secondary, boxShadow: theme.palette.shadow.main}}>
-                <h3 className="title_contain">Espace utilisé</h3>
+                <h3 className="title_contain">Espace utilisé - {selectedWebsite.website_name}</h3>
                 <div className="limit_size_info_contain">
                   {
-                    sizeTotal ? (
+                    sizeTotal && !sizeLoading ? (
                       <div>
                         <div className="limit_size_text">{sizeTotal} / {threshold} Go</div>
                         <div className="limit_size_bar" style={{backgroundColor:theme.palette.secondary.secondary}}>

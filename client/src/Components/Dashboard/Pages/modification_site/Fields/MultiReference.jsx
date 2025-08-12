@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import Select from 'react-select';
 import Axios from 'axios';
 import config from '../../../../../config';
 import Cookies from 'js-cookie';
+import { MultiReferenceSelect } from '../../../../../Theme/element';
 
 
 const MultiReference = ({ id_blog_page,type, id_config, onChange, slugValue, fieldValue, dataValue, id_collection_ref, theme }) => {
@@ -79,62 +79,17 @@ const MultiReference = ({ id_blog_page,type, id_config, onChange, slugValue, fie
 
   return (
     <div>
-      <Select 
-        onChange={(selectedOption) => handleChangeMultiRef(selectedOption.map(option => ({ value: option.value, label: option.label })))}                              
+      <MultiReferenceSelect
         options={optionMultiRef}
-        isMulti
-        className='select_multiRef'
         value={optionDefault}
-        styles={{
-          control: (provided) => ({
-            ...provided,
-            backgroundColor: theme.palette.primary.main,
-            borderColor: theme.palette.primary.main,
-            boxShadow: 'none',
-            borderRadius: '0.5rem',
-            "&:hover": {
-              borderColor: theme.palette.primary.secondary, // Couleur de bordure lors du survol
-            },
-          }),
-          input: (provided) => ({
-            ...provided,
-            color: theme.palette.text.primary,
-          }),
-          option: (provided, state) => ({
-            ...provided,
-            color: theme.palette.text.primary,
-            backgroundColor: state.isSelected ? theme.palette.primary.secondary : theme.palette.background.default,
-            '&:hover': {
-              backgroundColor: theme.palette.primary.main,
-              color: theme.palette.text.primary,
-            },
-          }),
-          menu: (provided) => ({
-            ...provided,
-            backgroundColor: theme.palette.background.default, 
-          }),
-          placeholder: (provided) => ({
-            ...provided,
-            color: "#AAAAAA",
-            value: "Séléctionner..." 
-          }),
-          multiValue: (provided) => ({
-            ...provided,
-            backgroundColor: theme.palette.primary.secondary,
-          }),
-          multiValueLabel: (provided) => ({
-            ...provided,
-            color: theme.palette.text.primary,
-          }),
-          multiValueRemove: (provided) => ({ 
-            ...provided,
-            color: theme.palette.text.primary,
-            ':hover': {
-              backgroundColor: theme.palette.primary.main,
-              color: theme.palette.text.primary,
-            },
-          }),
-        }}
+        onChange={(selectedOption) => handleChangeMultiRef(selectedOption.map(option => ({ 
+          value: option.value, 
+          label: option.label 
+        })))}
+        isMulti={true}
+        placeholder="Sélectionner..."
+        theme={theme}
+        className="select_multiRef"
       />                             
     </div>
   );

@@ -4,6 +4,7 @@ const cors = require('cors');
 const keys = require('./southern-ring-447310-p8-0d053790b9ef'); 
 const { supabaseServer } = require('../supabase');
 const { authenticateToken } = require('../middleware/authToken');
+const { checkUserWebsiteAccess } = require('../website/website');
 const dayjs = require('dayjs');
 
 const router = express.Router();
@@ -64,21 +65,32 @@ async function getSearchConsoleClient() {
 router.get('/getSearchConsoleData', authenticateToken, async (req, res) => {
   const token = req.headers['authorization']?.split(' ')[1];
   const supabase = supabaseServer(token);
-  const id_user = req.user.idUser;
+  const userId = req.user.idUser;
+  const websiteId = req.query.websiteId;
   const period = req.query.period || 'last7days';
   const metric = req.query.metric || 'clicks';
 
-  // Récupère le domaine dans la BDD
+  if (!websiteId) {
+    return res.status(400).json({ error: 'websiteId is required' });
+  }
+
+  // Vérifier l'accès de l'utilisateur au site web
+  const hasAccess = await checkUserWebsiteAccess(supabase, userId, websiteId);
+  if (!hasAccess) {
+    return res.status(403).json({ error: 'Access denied to this website' });
+  }
+
+  // Récupère l'URL du site web depuis la table websites
   const { data, error } = await supabase
-    .from('users')
-    .select('website')
-    .eq('id', id_user)
+    .from('websites')
+    .select('website_slug')
+    .eq('id', websiteId)
     .single();
   if (error || !data) {
-    return res.status(404).send('Domaine non trouvé');
+    return res.status(404).send('Site web non trouvé');
   }
   // Utilisation dynamique du siteUrl depuis la BDD
-  let siteUrl = data.website;
+  let siteUrl = data.website_slug;
   // Si la propriété Search Console est de type "Domaine", il faut utiliser le format sc-domain:example.com
   // On détecte si c'est un domaine nu (pas d'http, pas de slash)
   if (siteUrl && !siteUrl.startsWith('http')) {
@@ -112,18 +124,30 @@ router.get('/getSearchConsoleData', authenticateToken, async (req, res) => {
 router.get('/getSearchConsoleQueries', authenticateToken, async (req, res) => {
   const token = req.headers['authorization']?.split(' ')[1];
   const supabase = supabaseServer(token);
-  const id_user = req.user.idUser;
+  const userId = req.user.idUser;
+  const websiteId = req.query.websiteId;
   const period = req.query.period || 'last7days';
-  // Récupère le domaine dans la BDD
+
+  if (!websiteId) {
+    return res.status(400).json({ error: 'websiteId is required' });
+  }
+
+  // Vérifier l'accès de l'utilisateur au site web
+  const hasAccess = await checkUserWebsiteAccess(supabase, userId, websiteId);
+  if (!hasAccess) {
+    return res.status(403).json({ error: 'Access denied to this website' });
+  }
+
+  // Récupère l'URL du site web depuis la table websites
   const { data, error } = await supabase
-    .from('users')
-    .select('website')
-    .eq('id', id_user)
+    .from('websites')
+    .select('website_slug')
+    .eq('id', websiteId)
     .single();
   if (error || !data) {
-    return res.status(404).send('Domaine non trouvé');
+    return res.status(404).send('Site web non trouvé');
   }
-  let siteUrl = data.website;
+  let siteUrl = data.website_slug;
   if (siteUrl && !siteUrl.startsWith('http')) {
     siteUrl = `sc-domain:${siteUrl.replace(/\/$/, '')}`;
   } else if (siteUrl) {
@@ -153,18 +177,30 @@ router.get('/getSearchConsoleQueries', authenticateToken, async (req, res) => {
 router.get('/getSearchConsolePages', authenticateToken, async (req, res) => {
   const token = req.headers['authorization']?.split(' ')[1];
   const supabase = supabaseServer(token);
-  const id_user = req.user.idUser;
+  const userId = req.user.idUser;
+  const websiteId = req.query.websiteId;
   const period = req.query.period || 'last7days';
-  // Récupère le domaine dans la BDD
+
+  if (!websiteId) {
+    return res.status(400).json({ error: 'websiteId is required' });
+  }
+
+  // Vérifier l'accès de l'utilisateur au site web
+  const hasAccess = await checkUserWebsiteAccess(supabase, userId, websiteId);
+  if (!hasAccess) {
+    return res.status(403).json({ error: 'Access denied to this website' });
+  }
+
+  // Récupère l'URL du site web depuis la table websites
   const { data, error } = await supabase
-    .from('users')
-    .select('website')
-    .eq('id', id_user)
+    .from('websites')
+    .select('website_slug')
+    .eq('id', websiteId)
     .single();
   if (error || !data) {
-    return res.status(404).send('Domaine non trouvé');
+    return res.status(404).send('Site web non trouvé');
   }
-  let siteUrl = data.website;
+  let siteUrl = data.website_slug;
   if (siteUrl && !siteUrl.startsWith('http')) {
     siteUrl = `sc-domain:${siteUrl.replace(/\/$/, '')}`;
   } else if (siteUrl) {

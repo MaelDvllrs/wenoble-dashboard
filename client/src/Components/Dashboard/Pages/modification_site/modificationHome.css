@@ -227,11 +227,11 @@
 .modification_action_wrapper{
     display: flex;
     align-items: center;
-    justify-content: left;
+    justify-content: right;
     gap: 1rem;
     width: 100%;
     margin-bottom: 1rem;
-    padding-left: 1rem;
+    padding-right: 1rem;
 }
 
 

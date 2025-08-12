@@ -22,20 +22,24 @@ const apiKeyMiddleware = async (req, res, next) => {
     const html = req.body.html;
 
     if (!apiKey) {
-        return res.status(401).json({ message: 'Clé API ou ID de data manquant.' });
+        return res.status(401).json({ message: 'Clé API manquante.' });
     }
 
-    // Supabase : vérification de la clé API
+    // Supabase : vérification de la clé API dans la table websites
     const { data, error } = await supabase
-        .from('users')
-        .select('id')
+        .from('websites')
+        .select('id, workspace_id')
         .eq('api_key', apiKey)
         .maybeSingle();
+    
     if (error) {
         return res.status(500).json({ error: error.message });
     }
+    
     if (data) {
         req.apiKey = apiKey;
+        req.websiteId = data.id;
+        req.workspaceId = data.workspace_id;
         req.subject = subject;
         req.html = html;
         req.emailSender = emailSender;
@@ -52,6 +56,8 @@ const EMAIL_LOCK_TIMEOUT = 10 * 1000;
 
 router.post('/sendEmail', apiKeyMiddleware, async (req, res) => {
     const apiKey = req.apiKey;
+    const websiteId = req.websiteId;
+    const workspaceId = req.workspaceId;
     const subject = req.subject;
     const html = req.html;
     const emailSender = req.emailSender;
@@ -70,35 +76,35 @@ router.post('/sendEmail', apiKeyMiddleware, async (req, res) => {
     const serverUrl = process.env.SERVER_URL;
 
     try {
-        // Récupérer l'utilisateur par cle_api
-        const { data: userData, error: userError } = await supabase
-            .from('users')
-            .select('id')
-            .eq('api_key', apiKey)
-            .maybeSingle();
-        if (userError || !userData) {
-            emailLocks.delete(emailSender);
-            console.error('Erreur lors de la récupération de l\'utilisateur:', userError);
-            return res.status(404).json({ error: 'Utilisateur non trouvé' });
-        }
-        const user_id = userData.id;
+        // Récupérer les emails configurés pour le site web
+        const { data: emailsData, error: emailsError } = await supabase
+            .from('website_email')
+            .select('email')
+            .eq('website_id', websiteId)
+            .eq('is_active', true)
+            .order('is_primary', { ascending: false })
+            .order('created_at', { ascending: true });
 
-        // Récupérer l'email via l'API Auth Admin
-        const { data: authData, error: authError } = await supabase.auth.admin.getUserById(user_id);
-            
-        if (authError || !authData || !authData.user) {
+        if (emailsError) {
             emailLocks.delete(emailSender);
-            console.error('Erreur lors de la récupération de l\'email:', authError);
-            return res.status(404).json({ error: 'Email utilisateur non trouvé' });
+            console.error('Erreur lors de la récupération des emails:', emailsError);
+            return res.status(500).json({ error: 'Erreur lors de la récupération des emails configurés' });
         }
-        
-        const to = authData.user.email;
+
+        if (!emailsData || emailsData.length === 0) {
+            emailLocks.delete(emailSender);
+            console.error('Aucun email configuré pour ce site web');
+            return res.status(404).json({ error: 'Aucun email destinataire configuré pour ce site web' });
+        }
+
+        // Récupérer tous les emails actifs pour ce site web
+        const recipientEmails = emailsData.map(row => row.email);
 
         // Insérer le message dans contact_website
         const { error: insertError, data: insertData } = await supabase
             .from('contact_website')
             .insert({
-                user_id,
+                website_id: websiteId,
                 mail_sender: emailSender,
                 subject,
                 html,
@@ -111,29 +117,44 @@ router.post('/sendEmail', apiKeyMiddleware, async (req, res) => {
         }
         const insertedId = insertData && insertData[0] && insertData[0].id_message;
 
-        // Notification
-        await axios(`${serverUrl}/createNotification`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            data: {
-                IdUsers: [user_id],
-                Type: 'message',
-                Date: dateSend,
-                Message: `Message de ${emailSender} - ${subject}`,
-                IdElement: insertedId
-            }
-        }).then((response) => {
-            console.log('Notification créée :', response.data);
-        }).catch((error) => {
-            console.error('Erreur lors de la création de la notification :', error);
-        });
+        // Récupérer tous les utilisateurs ayant accès à ce site web avec les rôles admin ou editor
+        const { data: usersData, error: usersError } = await supabase
+            .from('user_workspaces')
+            .select('user_id')
+            .eq('workspace_id', workspaceId)
+            .in('role', ['admin', 'editor']);
 
-        // Envoi de l'email
+        if (usersError) {
+            console.error('Erreur lors de la récupération des utilisateurs:', usersError);
+        }
+
+        const userIds = usersData ? usersData.map(row => row.user_id) : [];
+
+        // Notification pour tous les utilisateurs admin/editor ayant accès au workspace du site web
+        if (userIds.length > 0) {
+            await axios(`${serverUrl}/createNotification`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                data: {
+                    IdUsers: userIds,
+                    Type: 'message',
+                    Date: dateSend,
+                    Message: `Message de ${emailSender} - ${subject}`,
+                    IdElement: insertedId
+                }
+            }).then((response) => {
+                console.log('Notification créée :', response.data);
+            }).catch((error) => {
+                console.error('Erreur lors de la création de la notification :', error);
+            });
+        }
+
+        // Envoi de l'email à tous les destinataires configurés
         const { data, error } = await resend.emails.send({
             from: process.env.EMAIL_WEBSITE,
-            to: [to],
+            to: recipientEmails,
             subject: subject,
             html: html,
         });
@@ -144,9 +165,14 @@ router.post('/sendEmail', apiKeyMiddleware, async (req, res) => {
         }
 
         emailLocks.delete(emailSender);
-        res.status(200).json({ message: 'Email sent successfully', data });
+        res.status(200).json({ 
+            message: 'Email sent successfully', 
+            data,
+            recipients: recipientEmails.length 
+        });
     } catch (err) {
         emailLocks.delete(emailSender);
+        console.error('Erreur lors de l\'envoi de l\'email:', err);
         res.status(500).json({ error: err.message });
     }
 });

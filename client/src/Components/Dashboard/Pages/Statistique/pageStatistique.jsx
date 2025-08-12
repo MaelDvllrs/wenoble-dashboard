@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useTheme } from '@mui/material/styles';
+import { useWebsite } from '../../../../Context/WebsiteContext';
 import MenuItem from '@mui/material/MenuItem';
 import { SelectField, CustomAxisTooltip, SelectFieldSecondary } from '../../../../Theme/element';
 import { LineHighlightPlot } from '@mui/x-charts/LineChart';
@@ -25,6 +26,7 @@ import './statistique.css';
 export const PageStatistique = () => {
   const token = Cookies.get('token'); 
   const theme = useTheme();
+  const { selectedWebsite, loading: websiteLoading } = useWebsite();
   const [pageStatistique, setPageStatistique] = useState(null);
   const [page, setPage] = useState([]);
   const [typePage, setTypePage] = useState('pageTitle');
@@ -50,12 +52,20 @@ export const PageStatistique = () => {
 
   useEffect(() => {
     const fetchPageStatistique = async () => {
-      const pageData = await getPageStatistique(period, typePage, typeUser, token);
-      setPageStatistique(pageData);
-      setLoading(true);
+      if (!selectedWebsite || websiteLoading) return;
+      
+      setLoading(false);
+      try {
+        const pageData = await getPageStatistique(period, typePage, typeUser, selectedWebsite.id, token);
+        setPageStatistique(pageData);
+        setLoading(true);
+      } catch (error) {
+        console.error('Erreur lors de la récupération des statistiques de page:', error);
+        setLoading(true);
+      }
     };
     fetchPageStatistique();
-  }, [period, typePage, typeUser, token]);
+  }, [period, typePage, typeUser, selectedWebsite, websiteLoading]);
 
   
 
@@ -110,38 +120,47 @@ export const PageStatistique = () => {
 
   return (
     <div className="statistique-container" style={{ boxShadow: theme.palette.shadow.main, backgroundColor: theme.palette.primary.main }}>
-        <div className='select-stat-container'>  
-        <SelectFieldSecondary
-            id="period-select"
-            value={typeUser}
-            onChange={handleChangeTypeUser}
-            theme={theme}
-        >
-            {Object.entries(labelUser).map(([value, { label }]) => (
-                <MenuItem key={value} value={value}>
-                    {label}
-                </MenuItem>
-            ))}
-        </SelectFieldSecondary>
-        <p style={{marginRight:"1rem"}}>par</p>
-        <SelectFieldSecondary
-            id="period-select"
-            value={typePage}
-            onChange={handleChangeTypePage}
-            theme={theme}
-        >
-            {Object.entries(labelMap).map(([value, { label }]) => (
-                <MenuItem key={value} value={value}>
-                    {label}
-                </MenuItem>
-            ))}
-        </SelectFieldSecondary>
-        
-        
-        <Tooltip title={labelMap[typePage].description} placement="right">
-            <InfoOutlinedIcon className='icon-select-stat-container' style={{color: theme.palette.text.secondary}}/>
-        </Tooltip>
-      </div>
+        {!selectedWebsite || websiteLoading ? (
+          <div className='loading-message-stats'>
+            <CircularProgress sx={{color:"#2ec96d"}}/>
+            <p style={{ color: theme.palette.text.secondary, marginTop: '1rem' }}>
+              {websiteLoading ? 'Chargement...' : 'Veuillez sélectionner un site web'}
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className='select-stat-container'>  
+            <SelectFieldSecondary
+                id="period-select"
+                value={typeUser}
+                onChange={handleChangeTypeUser}
+                theme={theme}
+            >
+                {Object.entries(labelUser).map(([value, { label }]) => (
+                    <MenuItem key={value} value={value}>
+                        {label}
+                    </MenuItem>
+                ))}
+            </SelectFieldSecondary>
+            <p style={{marginRight:"1rem"}}>par</p>
+            <SelectFieldSecondary
+                id="period-select"
+                value={typePage}
+                onChange={handleChangeTypePage}
+                theme={theme}
+            >
+                {Object.entries(labelMap).map(([value, { label }]) => (
+                    <MenuItem key={value} value={value}>
+                        {label}
+                    </MenuItem>
+                ))}
+            </SelectFieldSecondary>
+            
+            
+            <Tooltip title={labelMap[typePage].description} placement="right">
+                <InfoOutlinedIcon className='icon-select-stat-container' style={{color: theme.palette.text.secondary}}/>
+            </Tooltip>
+          </div>
         
         {!loading ? (
           <div className='loading-message-stats'>
@@ -226,7 +245,7 @@ export const PageStatistique = () => {
               Aucune donnée disponible.
             </div>
           )
-        )}
+          )}
 
         <SelectField
             id="period-select"
@@ -242,12 +261,10 @@ export const PageStatistique = () => {
             <MenuItem value={'last90days'}>Les 90 derniers jours</MenuItem>
             <MenuItem value={'last365days'}>Les 12 derniers mois</MenuItem>
         </SelectField>
-
-      
+        </>
+        )}
     </div>
   );
 };
-
-
 
 

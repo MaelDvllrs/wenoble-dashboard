@@ -4,12 +4,13 @@ import config from '../../../../config';
 const apiUrl = config.apiUrl; 
 
 
-export const getStatistique = async (period, typeUser, token) => {
+export const getStatistique = async (period, typeUser, websiteId, token) => {
     try {
         const response = await Axios.get(`${apiUrl}/getUserAnalytics`, {
             params: {
                 period: period,
-                typeUser: typeUser
+                typeUser: typeUser,
+                websiteId: websiteId
             },
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -23,8 +24,27 @@ export const getStatistique = async (period, typeUser, token) => {
       }
 }
 
+export const getEventStatistique = async (period, websiteId, token) => {
+  try {
+      const response = await Axios.get(`${apiUrl}/getEventAnalytics`, {
+          params: {
+              period: period,
+              websiteId: websiteId
+          },
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+      });
+      return response;
+    } catch (error) {
+      console.error('Erreur lors de la récupération des données d\'événements analytics:', error);
+      throw error;
+    }
+}
 
-export const getLocationStatistique = async (period, typeLocation, locationID, typeUser, token) => {
+
+export const getLocationStatistique = async (period, typeLocation, locationID, typeUser, websiteId, token) => {
   try {
   
       const response = await Axios.get(`${apiUrl}/getLocationAnalytics`, {
@@ -32,7 +52,8 @@ export const getLocationStatistique = async (period, typeLocation, locationID, t
               period: period,
               typeLocation: typeLocation,
               locationID: locationID,
-              typeUser: typeUser
+              typeUser: typeUser,
+              websiteId: websiteId
           },
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -46,14 +67,15 @@ export const getLocationStatistique = async (period, typeLocation, locationID, t
     }
 }
 
-export const getPlatformCategorieStatistique = async (period, typePlatform, typeUser, token) => {
+export const getPlatformCategorieStatistique = async (period, typePlatform, typeUser, websiteId, token) => {
   try {
   
       const response = await Axios.get(`${apiUrl}/getPlateformCategorieAnalytics`, {
           params: {
               period: period,
               typePlatform: typePlatform,
-              typeUser: typeUser
+              typeUser: typeUser,
+              websiteId: websiteId
           },
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -68,14 +90,15 @@ export const getPlatformCategorieStatistique = async (period, typePlatform, type
 }
 
 
-export const getPageStatistique = async (period, typePage, typeUser ,token) => {
+export const getPageStatistique = async (period, typePage, typeUser, websiteId, token) => {
   try {
   
       const response = await Axios.get(`${apiUrl}/getPageAnalytics`, {
           params: {
               period: period,
               typePage: typePage,
-              typeUser: typeUser
+              typeUser: typeUser,
+              websiteId: websiteId
           },
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -89,12 +112,13 @@ export const getPageStatistique = async (period, typePage, typeUser ,token) => {
     }
 }
 
-export const getSearchConsoleStatistique = async (period, metric, token) => {
+export const getSearchConsoleStatistique = async (period, metric, token, websiteId) => {
   try {
     const response = await Axios.get(`${apiUrl}/getSearchConsoleData`, {
       params: {
         period: period,
-        metric: metric
+        metric: metric,
+        websiteId: websiteId
       },
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -108,14 +132,17 @@ export const getSearchConsoleStatistique = async (period, metric, token) => {
   }
 }
 
-export const getSearchConsoleTable = async (type, period, token) => {
+export const getSearchConsoleTable = async (type, period, token, websiteId) => {
   try {
     const endpoint =
       type === 'page'
         ? `${apiUrl}/getSearchConsolePages`
         : `${apiUrl}/getSearchConsoleQueries`;
     const response = await Axios.get(endpoint, {
-      params: { period },
+      params: { 
+        period,
+        websiteId: websiteId
+      },
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',

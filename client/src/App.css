@@ -69,7 +69,7 @@ button{
 }
 
 .principal{
-    height: calc(100% - 3rem);
+    height: 100%;
     padding-top: 1rem;
     display: flex;
     align-items: center;
@@ -147,7 +147,7 @@ button{
     box-sizing: border-box;
     backdrop-filter: blur(10px);
     background-color: var(--color-primary-main);
-    border: 0.5px solid var(--color-primary-third);
+
 
 }
 
@@ -293,6 +293,9 @@ figure > div{
 
 
 .link_menu{
+    display: flex;
+    align-items: center;
+    justify-content: center;
     padding: 0.5rem 1rem ;
     font-size: 0.87rem;
     font-weight: 500;
@@ -310,7 +313,7 @@ figure > div{
     overflow: hidden;
     border-top: solid 0.5px var(--color-primary-third);
     border-left: solid 0.5px var(--color-primary-third);
-    margin-bottom: -0.5px;
+    margin-bottom: -1px;
 }
 
 .link_menu:hover{
@@ -327,4 +330,25 @@ figure > div{
     width: 1rem !important;
     height: 1rem !important;
 }
+
+
+
+
+
+
+.action_icon {
+    font-size: 1rem;
+}
+
+.line_horizontal {
+    height: 1px;
+    width: 100%;
+    margin: 0.5rem 0;
+}
+
+.line_horizontal.is_big_margin {
+    margin: 4rem 0 1rem 0;
+}
+
+
 
