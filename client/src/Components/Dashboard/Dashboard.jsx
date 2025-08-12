@@ -423,19 +423,18 @@ const Dashboard = () => {
                                             )}
                                             
                                             <div className="line_horizontal" style={{ backgroundColor: theme.palette.primary.third }}></div>
-                                            
-                                            {/* Actions */}
-                                            {selectedWorkspace && (
-                                                <div 
-                                                    className='user_action_item'
-                                                    onClick={handleWorkspaceSettings}
-                                                    style={{ color: theme.palette.text.primary }}
-                                                >
-                                                    <PiGearSixBold className='action_icon' />
-                                                    <span>Gérer les workspaces</span>
-                                                </div>
-                                            )}
                                         </div>
+                                        {/* Actions */}
+                                        {selectedWorkspace && (
+                                            <div 
+                                                className='user_action_item'
+                                                onClick={handleWorkspaceSettings}
+                                                style={{ color: theme.palette.text.primary }}
+                                            >
+                                                <PiGearSixBold className='action_icon' />
+                                                <span>Gérer les workspaces</span>
+                                            </div>
+                                        )}
                                     </div>
                                 </Grow>
                             )}
@@ -714,26 +713,25 @@ const Dashboard = () => {
                                                         </div>
                                                     ))
                                                 )}
+                                            </div>
+                                            <div className="line_horizontal" style={{ backgroundColor: theme.palette.primary.third }}></div>
                                                 
-                                                <div className="line_horizontal" style={{ backgroundColor: theme.palette.primary.third }}></div>
-                                                
-                                                {/* Actions */}
-                                                <div 
-                                                    className='user_action_item'
-                                                    onClick={handleCreateWebsite}
-                                                    style={{ color: theme.palette.text.primary }}
-                                                >
-                                                    <PiPlusBold className='action_icon' />
-                                                    <span>Créer un nouveau site</span>
-                                                </div>
-                                                <div 
-                                                    className='user_action_item'
-                                                    onClick={handleWebsiteSettings}
-                                                    style={{ color: theme.palette.text.primary }}
-                                                >
-                                                    <PiGearSixBold className='action_icon' />
-                                                    <span>Gérer les sites</span>
-                                                </div>
+                                            {/* Actions */}
+                                            <div 
+                                                className='user_action_item'
+                                                onClick={handleCreateWebsite}
+                                                style={{ color: theme.palette.text.primary }}
+                                            >
+                                                <PiPlusBold className='action_icon' />
+                                                <span>Créer un nouveau site</span>
+                                            </div>
+                                            <div 
+                                                className='user_action_item'
+                                                onClick={handleWebsiteSettings}
+                                                style={{ color: theme.palette.text.primary }}
+                                            >
+                                                <PiGearSixBold className='action_icon' />
+                                                <span>Gérer les sites</span>
                                             </div>
                                         </div>
                                     </Grow>

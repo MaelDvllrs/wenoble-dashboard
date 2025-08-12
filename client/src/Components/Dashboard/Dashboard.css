@@ -775,6 +775,10 @@
     flex-direction: column;
     gap: 0.25rem;
     width: 100%;
+    overflow-y: auto;
+    max-height: 20rem;
+    scrollbar-color: var(--color-primary-third) transparent;
+    scrollbar-width: thin;
 }
 
 .user_action_item {
