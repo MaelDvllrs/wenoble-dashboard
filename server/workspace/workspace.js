@@ -446,13 +446,21 @@ router.delete('/deleteWorkspace', authenticateToken, async (req, res) => {
 
     if (updateError) throw updateError;
 
-    // Supprimer le workspace (les contraintes de clé étrangère supprimeront automatiquement les relations)
+    const { error: userWorkspaceDeleteError } = await supabase
+      .from('user_workspaces')
+      .delete()
+      .eq('workspace_id', workspaceId);
+
+    if (userWorkspaceDeleteError) throw userWorkspaceDeleteError;
+
+    // Supprimer le workspace (les contraintes de clé étrangère supprimeront automatiquement les relations restantes)
     const { error } = await supabase
       .from('workspaces')
       .delete()
       .eq('id', workspaceId);
-      
+
     if (error) throw error;
+      
     
     res.send({ 
       message: 'Workspace supprimé avec succès. Les sites web ont été déplacés vers votre workspace par défaut.' 
