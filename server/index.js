@@ -138,6 +138,8 @@ const whitelist =
   'https://manuella-83b40f.webflow.io',
 
   'https://attique-b881c8.webflow.io',
+
+  'https://goout-0d445f.webflow.io'
 ];
 
 
