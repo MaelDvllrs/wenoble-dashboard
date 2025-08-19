@@ -110,10 +110,11 @@ const EditCollection = () => {
 
     // Charger les données de la collection
     const loadCollectionData = async () => {
+        if (!selectedWebsite?.id) return;
         setLoadingData(true);
         try {
             const response = await Axios.get(`${apiUrl}/getCollectionById`, {
-                params: { collectionId },
+                params: { collectionId, websiteId: selectedWebsite.id },
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -127,7 +128,7 @@ const EditCollection = () => {
                 
                 // Charger la configuration des champs
                 const configResponse = await Axios.get(`${apiUrl}/getConfigCollection`, {
-                    params: { collectionId },
+                    params: { collectionId, websiteId: selectedWebsite.id },
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
@@ -149,8 +150,10 @@ const EditCollection = () => {
 
     // Charger les collections disponibles pour les multi-références
     const loadAvailableCollections = async () => {
+        if (!selectedWebsite?.id) return;
         try {
             const response = await Axios.get(`${apiUrl}/getCollection`, {
+                params: { websiteId: selectedWebsite.id },
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -170,11 +173,11 @@ const EditCollection = () => {
 
     // Charger les données au montage du composant
     useEffect(() => {
-        if (collectionId) {
+        if (collectionId && selectedWebsite?.id) {
             loadCollectionData();
             loadAvailableCollections();
         }
-    }, [collectionId]);
+    }, [collectionId, selectedWebsite?.id]);
 
     // Ajouter un nouveau champ de configuration
     const addConfigField = () => {

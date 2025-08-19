@@ -218,8 +218,10 @@ const CreateCollection = () => {
 
     // Charger les collections disponibles pour les multi-références
     const loadAvailableCollections = async () => {
+        if (!selectedWebsite?.id) return;
         try {
             const response = await Axios.get(`${apiUrl}/getCollection`, {
+                params: { websiteId: selectedWebsite.id },
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -239,7 +241,7 @@ const CreateCollection = () => {
     // Charger les collections au montage du composant
     useEffect(() => {
         loadAvailableCollections();
-    }, []);
+    }, [selectedWebsite?.id]);
 
     // Valider les données avant création
     const validateData = () => {
