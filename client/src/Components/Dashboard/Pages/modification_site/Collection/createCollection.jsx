@@ -272,28 +272,13 @@ const CreateCollection = () => {
             showSnackbar('error', 'Veuillez sélectionner un site web');
             return;
         }
-        
         if (!validateData()) return;
-
         setLoading(true);
         try {
-            // 1. Créer la collection principale
-            const collectionResponse = await Axios.post(`${apiUrl}/createCollectionMain`, {
+            const res = await Axios.post(`${apiUrl}/createCollectionMain`, {
                 collection_name: collectionName,
                 collection_slug: collectionSlug,
-                website_id: selectedWebsite.id
-            }, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            const collectionId = collectionResponse.data.id;
-
-            // 2. Créer la configuration des champs
-            await Axios.post(`${apiUrl}/createCollectionConfig`, {
-                collection_id: collectionId,
+                website_id: selectedWebsite.id,
                 config_fields: configFields
             }, {
                 headers: {
@@ -301,19 +286,15 @@ const CreateCollection = () => {
                     'Content-Type': 'application/json'
                 }
             });
-
+            const collectionId = res.data.id;
             showSnackbar('success', 'Collection créée avec succès !');
-            
-            // Attendre un court délai pour que la base de données soit mise à jour
-            setTimeout(() => {
-                navigate(`/dashboard/modification/collection/${collectionId}`, { 
-                    replace: true,
-                    state: { refreshCollections: true }
-                });
-            }, 100);
+            navigate(`/dashboard/modification/collection/${collectionId}`, { 
+                replace: true,
+                state: { refreshCollections: true }
+            });
         } catch (error) {
             console.error('Erreur lors de la création de la collection:', error);
-            showSnackbar('error', 'Erreur lors de la création de la collection');
+            showSnackbar('error', error?.response?.data?.error || 'Erreur lors de la création de la collection');
         } finally {
             setLoading(false);
         }

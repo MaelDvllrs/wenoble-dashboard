@@ -1617,36 +1617,38 @@ router.delete('/deleteCollectionElement', authenticateToken, async (req, res) =>
 
 
 
-// Créer une nouvelle collection principale
+// Créer une nouvelle collection principale (supporte config_fields optionnel)
 router.post('/createCollectionMain', authenticateToken, async (req, res) => {
   try {
-    const { collection_name, collection_slug, website_id } = req.body;
+    const { collection_name, collection_slug, website_id: rawWebsiteId, websiteId: altWebsiteId, config_fields } = req.body;
+    const website_id = rawWebsiteId || altWebsiteId; // tolérer les deux clés
+    if (!website_id) {
+      return res.status(400).send({ error: "website_id (ou websiteId) est requis" });
+    }
     const token = req.headers['authorization']?.split(' ')[1];
     const supabase = supabaseServer(token);
     const userId = req.user.idUser;
 
-    // Vérifier que l'utilisateur a accès au site web
+    // Vérifier droits d'accès
     const { hasAccess } = await checkUserWebsiteAccess(supabase, userId, website_id);
     if (!hasAccess) {
-      return res.status(403).send({ error: 'Vous n\'avez pas les droits pour créer une collection sur ce site web' });
+      return res.status(403).send({ error: "Vous n'avez pas les droits pour créer une collection sur ce site web" });
     }
 
-    // Vérifier que le slug n'existe pas déjà pour ce site web
+    // Slug unique sur ce site
     const { data: existing, error: checkError } = await supabase
       .from('collection')
       .select('id')
       .eq('collection_slug', collection_slug)
       .eq('website_id', website_id)
       .maybeSingle();
-
     if (checkError) throw checkError;
-
     if (existing) {
       return res.status(400).send({ error: 'Une collection avec ce slug existe déjà sur ce site web' });
     }
 
     // Créer la collection
-    const { data, error } = await supabase
+    const { data: created, error: createError } = await supabase
       .from('collection')
       .insert({
         collection_name,
@@ -1657,10 +1659,34 @@ router.post('/createCollectionMain', authenticateToken, async (req, res) => {
       })
       .select()
       .single();
-      
-    if (error) throw error;
-    
-    res.send({ message: 'Collection créée avec succès', id: data.id });
+    if (createError) throw createError;
+
+    let insertedConfig = [];
+    if (Array.isArray(config_fields) && config_fields.length > 0) {
+      try {
+        const configToInsert = config_fields.map((field, index) => ({
+          collection_id: created.id,
+            tab_field: field.tab_field,
+            name_field: field.name_field,
+            description_field: field.description_field || '',
+            collection_id_ref: field.collection_id_ref || null,
+            multiline_text: field.multiline_text || false,
+            field_order: index
+        }));
+        const { data: cfg, error: cfgError } = await supabase
+          .from('collection_config')
+          .insert(configToInsert)
+          .select();
+        if (cfgError) throw cfgError;
+        insertedConfig = cfg;
+      } catch (cfgErr) {
+        // rollback collection si config échoue
+        await supabase.from('collection').delete().eq('id', created.id);
+        throw cfgErr;
+      }
+    }
+
+    res.send({ message: 'Collection créée avec succès', id: created.id, config_inserted: insertedConfig.length, config_fields: insertedConfig });
   } catch (error) {
     console.error('Erreur lors de la création de la collection:', error);
     res.status(500).send({ error: error.message });
