@@ -115,7 +115,8 @@ router.get('/getCollection', authenticateToken, async (req, res) => {
     const { data, error } = await supabase
       .from('collection')
       .select('id, collection_name')
-      .eq('website_id', websiteId);
+  .eq('website_id', websiteId)
+  .order('created_at', { ascending: true });
     
     if (error) throw error;
     
