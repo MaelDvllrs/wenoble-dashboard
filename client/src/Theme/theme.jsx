@@ -16,7 +16,7 @@ const DARK_THEME = createTheme({
         type: "dark",
         primary: {
             main: 'rgba(14, 15, 17, 1)',
-            secondary: 'rgb(17, 17, 22)',
+            secondary: '#0d0e11', // légèrement plus sombre
             third: 'rgba(51, 51, 51, 1)'
         },
         secondary: {
@@ -34,20 +34,35 @@ const DARK_THEME = createTheme({
         },
 
         shadow: {
-            main: '0 0 0 1px rgba(255, 255, 255, 0.145)',
-            secondary: '0 0 0 1px rgba(255, 255, 255, 0.30)'
+            // Effet "liquid glass" : fine bordure + glow interne léger + profondeur
+            main: [
+                '0 0 0 1px rgba(255,255,255,0.06)',          // stroke très discret
+                '0 2px 3px -1px rgba(0,0,0,0.55)',           // ombre proche
+                '0 6px 14px -6px rgba(0,0,0,0.50)',          // profondeur légère
+                'inset 0 0 0 1px rgba(255,255,255,0.04)'     // liseré interne subtil
+            ].join(', '),
+            secondary: [
+                '0 0 0 1px rgba(255,255,255,0.10)',          // un peu plus visible
+                '0 3px 10px -4px rgba(0,0,0,0.55)',
+                'inset 0 0 0 1px rgba(255,255,255,0.05)'
+            ].join(', ')
         },
         globe: {
             dark: '1.1',
         },
         background: {
             default: 'rgba(5, 5, 10, 1)',
-            secondary: 'rgba(0, 0, 0, 1)'
+            secondary: '#08090b'
         },
         text: {
             primary: 'rgba(255, 255, 255, 0.8)',
             secondary: 'rgba(255, 255, 255, 0.5)'
         },
+        gradients: {
+            // Plus sombre globalement: linear plus profond + highlight plus doux et un peu remonté
+            surface: 'radial-gradient(at 50% 118%, rgba(255,255,255,0.08) 0%, rgba(160,170,180,0.035) 22%, rgba(18,20,23,0) 48%) , linear-gradient(180deg, #060708 0%, #090b0d 55%, #0d1013 100%)',
+            surfaceHover: 'radial-gradient(at 50% 120%, rgba(255,255,255,0.12) 0%, rgba(180,190,200,0.05) 26%, rgba(18,20,23,0) 52%) , linear-gradient(180deg, #07080a 0%, #0b0d10 55%, #111519 100%)'
+        }
     }
 });
 
@@ -75,8 +90,19 @@ const LIGHT_THEME = createTheme({
         },
 
         shadow: {
-            main: '0 0 0 1px rgba(0, 0, 0, 0.08)',
-            secondary: '0 0 0 1px rgba(0, 0, 0, 0.30)'
+            // Effet "liquid glass" version clair : couche externe + halo doux + relief interne
+            main: [
+                '0 0 0 1px rgba(0,0,0,0.06)',                // stroke externe discret
+                '0 2px 3px -1px rgba(0,0,0,0.10)',           // petite ombre proche
+                '0 6px 18px -6px rgba(0,0,0,0.10)',          // profondeur
+                'inset 0 0 0 1px rgba(255,255,255,0.65)',    // liseré interne lumineux
+                'inset 0 1px 4px rgba(255,255,255,0.35)'     // diffusion interne verre
+            ].join(', '),
+            secondary: [
+                '0 0 0 1px rgba(0,0,0,0.10)',
+                '0 4px 10px -2px rgba(0,0,0,0.18)',
+                'inset 0 0 0 1px rgba(255,255,255,0.55)'
+            ].join(', ')
         },
         globe: {
             dark: '0',

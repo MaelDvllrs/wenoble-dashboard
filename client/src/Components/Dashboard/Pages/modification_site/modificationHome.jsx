@@ -309,6 +309,13 @@ useEffect(() => {
   getTotalSize();
 },[selectedWebsite, websiteLoading]);
 
+// Helper surface background: utilise gradient si défini sinon secondaire unie
+const surfaceGradient = theme.palette.gradients?.surface;
+const surfaceBase = theme.palette.background.secondary;
+const bgStyle = surfaceGradient
+  ? { background: surfaceGradient, backgroundColor: surfaceBase }
+  : { backgroundColor: surfaceBase };
+
 
 
 return(
@@ -317,7 +324,7 @@ return(
         <div className="modification_contain">
           {
             (authPortfolio === true || authPage === true || authBlog === true) && selectedWebsite && (
-              <div className="dashboard_case_empty limit_size_contain" style={{backgroundColor : theme.palette.primary.secondary, boxShadow: theme.palette.shadow.main}}>
+              <div className="dashboard_case_empty limit_size_contain" style={{ ...bgStyle, boxShadow: theme.palette.shadow.main }}>
                 <h3 className="title_contain">Espace utilisé - {selectedWebsite.website_name}</h3>
                 <div className="limit_size_info_contain">
                   {
@@ -342,7 +349,7 @@ return(
           
           <div className="modification_page_contain">
               <div ref={containerRef} className="modification_link_contain">
-                  <NavLink to={authPortfolio === true ? '/dashboard/modification/portfolio' : '#'}  className="modification_box" ref={portfolioContainerRef} style={{backgroundColor : theme.palette.primary.secondary, boxShadow: theme.palette.shadow.main}}>
+                  <NavLink to={authPortfolio === true ? '/dashboard/modification/portfolio' : '#'}  className="modification_box" ref={portfolioContainerRef} style={{ ...bgStyle, boxShadow: theme.palette.shadow.main }}>
                       <div className="modification_title_box" style={{color: theme.palette.text.primary}}>
                           <div className="modification_title"><MdImportContacts  className="icon_modifiaction_title"/>
                             <b>Portfolio</b>
@@ -426,7 +433,7 @@ return(
                           </div>
                       </div>
                   </NavLink>
-                  <NavLink to={authPage === true ? '/dashboard/modification/page' : '#'} className="modification_box" ref={pageContainerRef} style={{backgroundColor : theme.palette.primary.secondary, boxShadow: theme.palette.shadow.main}}>
+                  <NavLink to={authPage === true ? '/dashboard/modification/page' : '#'} className="modification_box" ref={pageContainerRef} style={{ ...bgStyle, boxShadow: theme.palette.shadow.main }}>
                       <div className="modification_title_box" style={{color: theme.palette.text.primary}}>
                         <div className="modification_title">
                           <FaElementor  className="icon_modifiaction_title"/>
@@ -451,7 +458,7 @@ return(
                         <img src={sphere_page} alt="shere page" className="shere_page" />                          
                       </div>
                   </NavLink>
-                  <NavLink to={authBlog === true ? '/dashboard/modification/collection' : '#'} className="modification_box box_blog" ref={iconContainerRef} style={{backgroundColor : theme.palette.primary.secondary, boxShadow: theme.palette.shadow.main}}>
+                  <NavLink to={authBlog === true ? '/dashboard/modification/collection' : '#'} className="modification_box box_blog" ref={iconContainerRef} style={{ ...bgStyle, boxShadow: theme.palette.shadow.main }}>
                       <div className="modification_title_box" style={{color: theme.palette.text.primary}}>
                         <div className="modification_title"><RiDatabase2Fill className="icon_modifiaction_title"/><b>CMS</b>
                         {
