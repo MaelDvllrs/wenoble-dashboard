@@ -115,6 +115,8 @@ const whitelist =
   'https://thibault-laupretre.com',  
 
   'https://salon-marco-d950f4.webflow.io',
+  'https://salonmarco.com',
+  'https://www.salonmarco.com',
 
   'https://kimberley-architecture.webflow.io',
   'https://kimberleygouno.fr',
@@ -135,10 +137,15 @@ const whitelist =
 
   'https://maison-astucieuse-emma-lamarqu-388c45.webflow.io',
   'https://maisonastucieuse.fr',
+  'https://www.maisonastucieuse.fr',
 
   'https://manuella-83b40f.webflow.io',
+  'https://archime-design.fr',
+  'https://www.archime-design.fr',
 
   'https://attique-b881c8.webflow.io',
+  'https://attiquearchitecte.com',
+  'https://www.attiquearchitecte.com',
 
   'https://goout-0d445f.webflow.io'
 ];
