@@ -141,7 +141,8 @@ function initContactForm(apiEndpoint, apiKey, formElement, submitButtonSelector 
                         fieldValue = field.value || '';
                         formData[fieldName] = fieldValue;
                     }
-                    if (fieldName.toLowerCase() === 'email' && field.checked !== false) {
+
+                    if (fieldName.toLowerCase() === 'email') {
                         senderEmail = field.value;
                     }
                 }
