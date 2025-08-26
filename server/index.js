@@ -56,16 +56,6 @@ const whitelist =
   'https://kristinaphotography.fr',
   'https://www.kristinaphotography.fr',
   
-  
-  'https://explora-production.webflow.io',
-  'https://exploraprod.com',
-  'https://www.exploraprod.com', 
-  
-  'https://perfoseos.webflow.io', 
-  'https://perfoseos.com', 
-  'https://www.perfoseos.com',
-  'https://perfoseos.fr',
-  'https://www.perfoseos.fr',
 
   'https://savoirfairetatouagepreview.webflow.io',
   'https://savoirfairetatouage.com',
@@ -108,6 +98,7 @@ const whitelist =
 
   'https://psc-environnement-preview.webflow.io',
   'https://psc-environnement.fr',
+  'https://www.psc-environnement.fr',
 
   'https://wechoose-site.webflow.io',
 
@@ -147,7 +138,12 @@ const whitelist =
   'https://attiquearchitecte.com',
   'https://www.attiquearchitecte.com',
 
-  'https://goout-0d445f.webflow.io'
+  'https://goout-0d445f.webflow.io',
+
+
+  'https://mildesign.webflow.io',
+
+
 ];
 
 
