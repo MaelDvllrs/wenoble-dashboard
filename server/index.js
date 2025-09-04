@@ -143,6 +143,8 @@ const whitelist =
 
   'https://mildesign.webflow.io',
 
+  'https://bule.webflow.io'
+
 
 ];
 
