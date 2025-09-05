@@ -38,6 +38,7 @@ const apiKeyMiddleware = async (req, res, next) => {
             req.mail = mail;
             next();
         } else {
+            console.log('Clé API invalide:', apiKey);
             return res.status(403).json({ message: 'Clé API invalide.' });
         }
     } catch (err) {
