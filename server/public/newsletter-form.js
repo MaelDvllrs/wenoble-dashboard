@@ -158,8 +158,30 @@ document.addEventListener('DOMContentLoaded', () => {
                     submitButton = targetForm.querySelector('[wn-submit-form]');
                 }
             } else {
-                // Look for submit button in the same form
-                const parentForm = faceButton.closest('form[wn-newsletter-form]');
+                // Try to locate a nearby form when button is placed next to (not inside) the form
+                let parentForm = faceButton.closest('form[wn-newsletter-form]');
+                // Check previous sibling (or its descendants)
+                if (!parentForm) {
+                    const prev = faceButton.previousElementSibling;
+                    if (prev) {
+                        parentForm = prev.matches && prev.matches('form[wn-newsletter-form]')
+                            ? prev
+                            : (prev.querySelector && prev.querySelector('form[wn-newsletter-form]'));
+                    }
+                }
+                // Check next sibling (or its descendants)
+                if (!parentForm) {
+                    const next = faceButton.nextElementSibling;
+                    if (next) {
+                        parentForm = next.matches && next.matches('form[wn-newsletter-form]')
+                            ? next
+                            : (next.querySelector && next.querySelector('form[wn-newsletter-form]'));
+                    }
+                }
+                // As a last resort, search within the same parent container
+                if (!parentForm && faceButton.parentElement) {
+                    parentForm = faceButton.parentElement.querySelector('form[wn-newsletter-form]');
+                }
                 if (parentForm) {
                     submitButton = parentForm.querySelector('[wn-submit-form]');
                 }
