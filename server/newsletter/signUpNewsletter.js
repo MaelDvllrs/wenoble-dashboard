@@ -21,10 +21,10 @@ const apiKeyMiddleware = async (req, res, next) => {
     }
     
     try {
-        // Vérification de la clé API
+        // Vérification de la clé API dans la table websites
         const { data, error } = await supabase
-            .from('users')
-            .select('id')
+            .from('websites')
+            .select('id, workspace_id')
             .eq('api_key', apiKey)
             .maybeSingle();
             
@@ -36,6 +36,8 @@ const apiKeyMiddleware = async (req, res, next) => {
         if (data) {
             req.apiKey = apiKey;
             req.mail = mail;
+            req.websiteId = data.id;
+            req.workspaceId = data.workspace_id;
             next();
         } else {
             console.log('Clé API invalide:', apiKey);
@@ -48,30 +50,17 @@ const apiKeyMiddleware = async (req, res, next) => {
 
 router.post('/signUpNewsletter',apiKeyMiddleware, async (req, res) => {
     const apiKey = req.apiKey;
+    const websiteId = req.websiteId;
     const mail = req.mail;
     const dateSend = new Date();
     
     try {
-        // Récupérer l'utilisateur par api_key
-        const { data: userData, error: userError } = await supabase
-            .from('users')
-            .select('id')
-            .eq('api_key', apiKey)
-            .maybeSingle();
-            
-        if (userError || !userData) {
-            console.error('Erreur lors de la récupération de l\'utilisateur:', userError);
-            return res.status(404).json({ error: 'Utilisateur non trouvé' });
-        }
-        
-        const user_id = userData.id;
-        
-        // Vérifier si le mail existe déjà
+        // Vérifier si le mail existe déjà pour ce site web
         const { data: existing, error: existError } = await supabase
             .from('newsletter_website')
             .select('id_newsletter')
             .eq('mail', mail)
-            .eq('user_id', user_id);
+            .eq('website_id', websiteId);
             
         if (existError) {
             return res.status(500).json({ error: existError.message });
@@ -81,10 +70,10 @@ router.post('/signUpNewsletter',apiKeyMiddleware, async (req, res) => {
             return res.status(409).json({ message: 'mail déjà enregistré.' });
         }
         
-        // Insérer le mail
+        // Insérer le mail pour ce site web
         const { error: insertError } = await supabase
             .from('newsletter_website')
-            .insert({ user_id, mail, date: dateSend });
+            .insert({ website_id: websiteId, mail, date: dateSend });
             
         if (insertError) {
             return res.status(500).json({ error: insertError.message });
