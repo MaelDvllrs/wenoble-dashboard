@@ -102,6 +102,19 @@
 
 }
 
+
+.grid-website-wrapper{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 0.8rem;
+    padding: 1rem;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-primary-third) transparent;
+    border-top: solid 1px var(--color-primary-third);
+
+}
+
 .website_card {
     padding: 1.5rem;
     border-radius: 0.5rem;

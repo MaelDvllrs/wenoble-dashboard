@@ -1,3 +1,62 @@
+/* Number input customization */
+/* Hide native spinners */
+.input_text_blog[type="number"]::-webkit-outer-spin-button,
+.input_text_blog[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.input_text_blog[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+/* Vertical custom spin buttons container */
+.number-input-vertical {
+    position: relative;
+}
+
+.number-input-vertical .input_text_blog.input-count {
+    width: 100%;
+    padding-right: 0.8rem; /* space for aesthetics */
+}
+
+.number-input-vertical .spin-buttons {
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 100%;
+    border-radius: 0.3rem;
+    overflow: hidden;
+}
+
+.number-input-vertical .spin-btn {
+    border: none;
+    background: var(--color-primary-third);
+    color: var(--color-text-primary);
+    cursor: pointer;
+    height: 100%;
+    font-size: 0.5rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color .15s, box-shadow .15s, transform .05s;
+}
+
+.number-input-vertical .spin-btn:hover:not(:disabled) {
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 20%, transparent);
+}
+
+.number-input-vertical .spin-btn:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+.number-input-vertical .spin-btn:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+}
 .loading_field{
     position: absolute;
     width: 100%;
@@ -432,8 +491,8 @@
 }
 
 .input_text_blog{
-    border-radius: 0.5rem;
-    padding: 0.5rem;
+    border-radius: 0.3rem;
+    padding: 0.35rem 0.5rem;
     width: 100%;
     font-family: "Montserrat", sans-serif !important;
     font-size: 0.9rem;
@@ -449,6 +508,8 @@
 .input_text_blog:focus{
     outline: none;
 }
+
+/* .input-count marker removed: styles provided via .number-input-vertical context */
 
 /* Amélioration UX pour le champ de copie cliquable */
 .copy-input-container:hover {
@@ -466,7 +527,7 @@
     padding-bottom: 0.2rem;
     padding-top: 0.2rem;
     display: flex;
-    align-items: center;
+    align-items: start;
     justify-content: space-between;
     overflow: visible;
 }

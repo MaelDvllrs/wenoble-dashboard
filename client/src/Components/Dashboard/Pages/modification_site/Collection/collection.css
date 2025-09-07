@@ -532,6 +532,11 @@
     color: var(--color-text-secondary);
 }
 
+.integration-fields-list{
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
 
 
 

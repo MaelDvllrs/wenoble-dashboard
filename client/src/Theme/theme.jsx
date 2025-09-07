@@ -21,7 +21,7 @@ const DARK_THEME = createTheme({
         },
         secondary: {
             main: 'rgba(255, 255, 255, 0.8)',
-            secondary: 'rgba(40, 42, 48, 1)',
+            secondary: 'rgba(28, 28, 29, 1)',
             third: 'rgba(53, 53, 53, 1)'
         },
 
@@ -62,7 +62,7 @@ const LIGHT_THEME = createTheme({
         },
         secondary: {
             main: 'rgba(20, 20, 20, 1)',
-            secondary: 'rgba(229, 229, 229, 1)',
+            secondary: 'rgba(243, 243, 243, 1)',
             third: 'rgba(240, 240, 240, 1)'
         },
 

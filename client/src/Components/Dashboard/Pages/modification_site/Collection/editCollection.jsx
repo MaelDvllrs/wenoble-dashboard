@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Select from 'react-select';
 import { useTheme } from '@mui/material/styles';
@@ -10,7 +10,6 @@ import {
     InputLabel, 
     Switch,
     FormControlLabel,
-    IconButton,
     Snackbar,
     CircularProgress,
     Dialog,
@@ -35,7 +34,8 @@ import {
     Videocam as VideocamIcon,
     AccountTree as AccountTreeIcon,
     Edit as EditIcon,
-    Visibility as VisibilityIcon,
+    VisibilityOutlined as VisibilityOutlinedIcon,
+    Cable as CableIcon
 } from '@mui/icons-material';
 import Cookies from 'js-cookie';
 import { jwtDecode } from 'jwt-decode';
@@ -45,7 +45,7 @@ import { useSnackbar } from '../../../../../Theme/snackbar';
 import { useWebsite } from '../../../../../Context/WebsiteContext';
 import './collection.css';
 import '../Fields/Field.css';
-import { SecondaryButton, DefaultButton, MultiReferenceSelect, DefaultSwitch, CopyButton, CopyField } from '../../../../../Theme/element';
+import { SecondaryButton, DefaultButton, IconButton, MultiReferenceSelect, DefaultSwitch, CopyButton, CopyField, PopupSide, SelectField } from '../../../../../Theme/element';
 
 const EditCollection = () => {
     const theme = useTheme();
@@ -71,6 +71,76 @@ const EditCollection = () => {
     const [loading, setLoading] = useState(false);
     const [loadingData, setLoadingData] = useState(true);
     const [openPreview, setOpenPreview] = useState(false);
+    const [openIntegration, setOpenIntegration] = useState(false);
+    const [websiteApiKey, setWebsiteApiKey] = useState('');
+    // Options for wrapper key generation
+    const [wrapLimit, setWrapLimit] = useState(10);
+    const [wrapLimitEnabled, setWrapLimitEnabled] = useState(true);
+    const [wrapOrder, setWrapOrder] = useState('asc'); // 'asc' | 'desc'
+    const [wrapColone, setWrapColone] = useState('created_at');
+    // Template SEO attribute selections
+    const [templateTitleTag, setTemplateTitleTag] = useState('');
+    const [templateMetaTag, setTemplateMetaTag] = useState('');
+    const [templateMetaImageTag, setTemplateMetaImageTag] = useState('');
+    // Base orderable columns always available
+    const baseOrderColumns = useMemo(() => ([
+        { value: 'collection_element_name', label: 'Titre' },
+        { value: 'created_at', label: 'Date de création' },
+        { value: 'collection_element_publish_date', label: 'Date de publication' },
+        { value: 'updated_at', label: 'Date de modification' }
+    ]), []);
+
+    // Compute orderable columns from config (text or multiReference)
+    const configOrderColumns = useMemo(() => {
+        const names = (configFields || [])
+            .filter(f => f?.tab_field === 'text' || f?.tab_field === 'multiReference')
+            .map(f => f?.name_field)
+            .filter(Boolean);
+        // unique and map to {label, value}
+        return Array.from(new Set(names)).map(name => ({ label: name, value: name }));
+    }, [configFields]);
+
+    const orderableColumns = useMemo(() => ([...baseOrderColumns, ...configOrderColumns]), [baseOrderColumns, configOrderColumns]);
+
+    // Options for template loader selects
+    const textFieldOptions = useMemo(() => (
+        (configFields || [])
+            .filter(f => f?.tab_field === 'text')
+            .map(f => ({ value: f.id, label: f.name_field }))
+    ), [configFields]);
+    const imageFieldOptions = useMemo(() => (
+        (configFields || [])
+            .filter(f => f?.tab_field === 'image')
+            .map(f => ({ value: f.id, label: f.name_field }))
+    ), [configFields]);
+
+    const templateScript = useMemo(() => {
+        const attrs = [
+            'src="https://api-wenoble.wenoble.fr/collection-template-loader.js"',
+            `data-user-id="${websiteApiKey || 'VOTRE_API_KEY'}"`,
+            `data-blog-id="${collectionId}"`
+        ];
+        if (templateTitleTag) attrs.push(`title-tag="${templateTitleTag}"`);
+        if (templateMetaTag) attrs.push(`meta-tag="${templateMetaTag}"`);
+        if (templateMetaImageTag) attrs.push(`meta-tag-image="${templateMetaImageTag}"`);
+        return `<script ${attrs.join(' ')}></script>`;
+    }, [websiteApiKey, collectionId, templateTitleTag, templateMetaTag, templateMetaImageTag]);
+    const encodedWrapperKey = useMemo(() => {
+        try {
+            const payload = {
+                blogId: collectionId,
+                order: wrapOrder,
+                colone: wrapColone
+            };
+            // Inclure la limite uniquement si activée
+            if (wrapLimitEnabled) {
+                payload.limit = Math.max(0, Number(wrapLimit) || 0);
+            }
+            return btoa(JSON.stringify(payload));
+        } catch {
+            return '';
+        }
+    }, [collectionId, wrapLimit, wrapLimitEnabled, wrapOrder, wrapColone]);
     const [availableCollections, setAvailableCollections] = useState([]);
     const [showFieldTypeGrid, setShowFieldTypeGrid] = useState(false);
     const [selectedFieldType, setSelectedFieldType] = useState('');
@@ -107,6 +177,9 @@ const EditCollection = () => {
         // Ne pas changer automatiquement le slug en mode édition
         // L'utilisateur peut le modifier manuellement si nécessaire
     };
+
+
+
 
     // Charger les données de la collection
     const loadCollectionData = async () => {
@@ -147,6 +220,8 @@ const EditCollection = () => {
             setLoadingData(false);
         }
     };
+
+
 
     // Charger les collections disponibles pour les multi-références
     const loadAvailableCollections = async () => {
@@ -234,6 +309,7 @@ const EditCollection = () => {
                 ...newFieldData
             };
             setConfigFields(newFields);
+            showSnackbar('success', 'Champ modifié avec succès !');
         } else {
             // Ajouter un nouveau champ
             const newField = {
@@ -242,6 +318,7 @@ const EditCollection = () => {
                 ...newFieldData
             };
             setConfigFields([...configFields, newField]);
+            showSnackbar('success', 'Champ ajouté avec succès !');
         }
 
         setShowFieldTypeGrid(false);
@@ -426,20 +503,34 @@ const EditCollection = () => {
             </div>
         );
     }
-
     return (
         <div className="Blog_creation_Page">
             <div className="header_modification header_page_modification">
                 <h3 className="titlePage">Option de la collection</h3>
                 <div className="actions-section">
-                    <SecondaryButton    
-                        variant="outlined"
-                        startIcon={<VisibilityIcon style={{fontSize:"1.1rem"}} />}
-                        onClick={() => setOpenPreview(true)}
-                        sx={{ color: theme.palette.primary.main, borderColor: theme.palette.primary.main }}
-                    >
-                        Aperçu
-                    </SecondaryButton>
+
+                    <IconButton ariaLabel="Aperçu" onClick={() => setOpenPreview(true)}>
+                        <VisibilityOutlinedIcon  fontSize='tiny'/>
+                    </IconButton>
+
+                    <IconButton ariaLabel="Intégration" onClick={async () => {
+                        try {
+                            if (selectedWebsite?.id) {
+                                const resp = await Axios.get(`${apiUrl}/getWebsiteById`, {
+                                    params: { websiteId: selectedWebsite.id },
+                                    headers: { 'Authorization': `Bearer ${token}` }
+                                });
+                                setWebsiteApiKey(resp?.data?.data?.api_key || '');
+                            }
+                        } catch (e) {
+                            console.error('Erreur récupération api_key website:', e);
+                        } finally {
+                            setOpenIntegration(true);
+                        }
+                    }}>
+                        <CableIcon fontSize='small'/>
+                    </IconButton>
+
 
                     <SecondaryButton
                         variant="outlined"
@@ -459,6 +550,205 @@ const EditCollection = () => {
                     </DefaultButton>
                 </div>
             </div>
+
+            {/* Integration Side Panel */}
+            <PopupSide 
+                open={openIntegration}
+                onClose={() => setOpenIntegration(false)}
+                title="Intégration de la collection"
+                width={'50%'}
+                maxWidth={300}
+            >
+                <div className='integration-wrapper'>
+                    <div className='header_modification header_page_modification'>
+                        <h4 className="section-title">Liste de collection</h4>
+                    </div>
+                    <div className='input-container'>
+                        <label className="blogField_name collection_edit_name">
+                            Limite
+                            <DefaultSwitch
+                                checked={wrapLimitEnabled}
+                                onChange={(e) => setWrapLimitEnabled(e.target.checked)}
+                            />
+                        </label>
+                        <div className="number-input-vertical">
+                            <input
+                                className="input_text_blog input-count"
+                                type="number"
+                                min={0}
+                                step={1}
+                                value={wrapLimit}
+                                onChange={(e) => setWrapLimit(e.target.value)}
+                                disabled={!wrapLimitEnabled}
+                                onWheel={(e) => e.currentTarget.blur()}
+                            />
+                            <div className="spin-buttons">
+                                <button
+                                    type="button"
+                                    className="spin-btn spin-up"
+                                    aria-label="Augmenter"
+                                    disabled={!wrapLimitEnabled}
+                                    onClick={() => setWrapLimit(v => Math.max(0, (Number(v) || 0) + 1))}
+                                >
+                                    ▲
+                                </button>
+                                <button
+                                    type="button"
+                                    className="spin-btn spin-down"
+                                    aria-label="Diminuer"
+                                    disabled={!wrapLimitEnabled}
+                                    onClick={() => setWrapLimit(v => Math.max(0, (Number(v) || 0) - 1))}
+                                >
+                                    ▼
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div className='input-container'>
+                        <p className="blogField_name collection_edit_name">Ordre</p>
+                        <SelectField
+                            className="input_text_blog"
+                            value={wrapOrder}
+                            onChange={(e) => setWrapOrder(e.target.value)}
+                        >
+                            <MenuItem value="asc">Ascendant</MenuItem>
+                            <MenuItem value="desc">Descendant</MenuItem>
+                        </SelectField>
+                    </div>
+                    <div className='input-container'>
+
+                        <p className="blogField_name collection_edit_name">Trier par</p>
+                        <SelectField
+                            className="input_text_blog"
+                            value={wrapColone}
+                            displayEmpty
+                            renderValue={(selected) => {
+                                if (!selected) return 'Sélectionner une colonne…';
+                                const selectedOpt = orderableColumns.find(o => o.value === selected);
+                                return selectedOpt ? selectedOpt.label : selected;
+                            }}
+                            onChange={(e) => setWrapColone(e.target.value)}                                >
+                            {orderableColumns.length === 0
+                                ? (<MenuItem value="" disabled>Aucune colonne disponible</MenuItem>)
+                                : ([
+                                    ...orderableColumns.map(opt => (
+                                        <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                                    ))
+                                ])}
+                        </SelectField>
+                    </div>
+                    <div className='input-container'>
+                        <p className="blogField_name collection_edit_name">Clé du wrapper</p>
+                        <CopyField 
+                            textToCopy={encodedWrapperKey || ''}
+                            iconSize="0.9rem"
+                        />
+                    </div>
+                    <div className='input-container'>
+                        <p className="blogField_name collection_edit_name">Script Loader</p>
+                        <CopyField 
+                            textToCopy={`<script src="https://api-wenoble.wenoble.fr/collection-loader.js" data-user-id="${websiteApiKey || 'VOTRE_API_KEY'}"></script>`}
+                            iconSize="0.9rem"
+                        />
+                    </div>
+                    <div className='line_horizontal' style={{backgroundColor: theme.palette.primary.third}}/>
+                    <div className='header_modification header_page_modification' style={{marginTop: '1rem'}}>
+                        <h4 className="section-title">Template de collection</h4>
+                    </div>
+                    <div className='input-container'>
+                        <p className="blogField_name collection_edit_name">Titre Tag</p>
+                        <SelectField
+                            className="input_text_blog"
+                            value={templateTitleTag}
+                            displayEmpty
+                            renderValue={(selected) => {
+                                if (!selected) return 'Sélectionner le champ titre…';
+                                const opt = textFieldOptions.find(o => o.value === selected);
+                                return opt ? opt.label : selected;
+                            }}
+                            onChange={(e) => setTemplateTitleTag(e.target.value)}
+                        >
+                            {textFieldOptions.length === 0
+                                ? (<MenuItem value="" disabled>Aucun champ texte</MenuItem>)
+                                : ([
+                                    ...textFieldOptions.map(opt => (
+                                        <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                                    ))
+                                ])}
+                        </SelectField>
+                    </div>
+                    <div className='input-container'>
+                        <p className="blogField_name collection_edit_name">Meta description</p>
+                        <SelectField
+                            className="input_text_blog"
+                            value={templateMetaTag}
+                            displayEmpty
+                            renderValue={(selected) => {
+                                if (!selected) return 'Sélectionner la meta description…';
+                                const opt = textFieldOptions.find(o => o.value === selected);
+                                return opt ? opt.label : selected;
+                            }}
+                            onChange={(e) => setTemplateMetaTag(e.target.value)}
+                        >
+                            {textFieldOptions.length === 0
+                                ? (<MenuItem value="" disabled>Aucun champ texte</MenuItem>)
+                                : ([
+                                    ...textFieldOptions.map(opt => (
+                                        <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                                    ))
+                                ])}
+                        </SelectField>
+                    </div>
+                    <div className='input-container'>
+                        <p className="blogField_name collection_edit_name">Meta image</p>
+                        <SelectField
+                            className="input_text_blog"
+                            value={templateMetaImageTag}
+                            displayEmpty
+                            renderValue={(selected) => {
+                                if (!selected) return 'Sélectionner la meta image…';
+                                const opt = imageFieldOptions.find(o => o.value === selected);
+                                return opt ? opt.label : selected;
+                            }}
+                            onChange={(e) => setTemplateMetaImageTag(e.target.value)}
+                        >
+                            {imageFieldOptions.length === 0
+                                ? (<MenuItem value="" disabled>Aucun champ image</MenuItem>)
+                                : ([
+                                    ...imageFieldOptions.map(opt => (
+                                        <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                                    ))
+                                ])}
+                        </SelectField>
+                    </div>
+                    <div className='input-container'>
+                        <p className="blogField_name collection_edit_name">Script Template</p>
+                        <CopyField 
+                            textToCopy={templateScript}
+                            iconSize="0.9rem"
+                        />
+                    </div>
+                    
+                </div>
+                <div className='line_horizontal' style={{backgroundColor: theme.palette.primary.third}}/>
+                <div className='header_modification header_page_modification' style={{marginTop: '1rem'}}>
+                    <h4 className="section-title">Champs de collection</h4>
+                </div>
+                <div className='integration-fields-list' style={{ marginTop: '0.5rem' }}>
+                    {configFields.length === 0 ? (
+                        <p style={{ color: theme.palette.text.secondary, fontSize: '0.85rem' }}>Aucun champ configuré</p>
+                    ) : (
+                        configFields.map((field) => (
+                            <CopyField 
+                                textToCopy={field.id}
+                                displayText={field.name_field}
+                                iconSize="0.9rem"
+                            />
+                        ))
+                    )}
+                </div>
+                
+            </PopupSide>
 
             <div className="Blog_creation_field_contain">
                 {/* Informations de base */}
@@ -682,8 +972,9 @@ const EditCollection = () => {
                                     </div>
                                 ) : (
                                     /* Affichage normal du champ */
+                                    <>
                                     <div className="configured-field-item">
-                                        <div className="field-item-info-wrapper">
+                                        <div className='field-item-info-wrapper'>
                                             <span className="field-item-type">
                                                 {fieldTypes.find(t => t.value === field.tab_field)?.value === 'text' && <TextFieldsIcon fontSize='large'/>}
                                                 {fieldTypes.find(t => t.value === field.tab_field)?.value === 'richText' && <NotesIcon fontSize='large'/>}
@@ -714,6 +1005,8 @@ const EditCollection = () => {
                                                 </span>
                                             )}
                                         </div>
+                                            
+                                        
 
                                         <div className="field-item-actions">
                                             <SecondaryButton
@@ -730,6 +1023,7 @@ const EditCollection = () => {
                                             </SecondaryButton>
                                         </div>
                                     </div>
+                                </>
                                 )}
                             </div>
                         ))}

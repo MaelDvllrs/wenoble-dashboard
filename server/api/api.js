@@ -103,30 +103,171 @@ router.get('/sendPhotoPortfolio', apiKeyMiddleware, async (req, res) => {
 // Récupérer toutes les pages de blogs (collections)
 router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
     const ids = req.ids;
-    const order = req.query.order || 'DESC';
+    const order = (req.query.order || 'desc').toString().toLowerCase();
     const limit = req.query.limit ? parseInt(req.query.limit, 10) : null;
     const colone = req.query.colone || 'collection_element_publish_date';
-    const joinTable = req.query.joinTable || 'collection_element';
-    const configs = req.query.configs || null;
 
     try {
-        let query = supabase
-            .from('collection_element')
-            .select('*')
-            .eq('collection_element_status', true)
-            .order(colone, { ascending: false });
+        // Determine targeted collection(s)
+        let targetCollectionIds = [];
         if (ids) {
-            const idArray = ids.split(',').map(id => id.trim());
-            query = query.in('collection_id', idArray);
+            targetCollectionIds = ids.split(',').map(id => id.trim()).filter(Boolean);
         } else if (req.id_data) {
-            query = query.eq('collection_id', req.id_data);
+            targetCollectionIds = [req.id_data];
         }
-        if (limit) query = query.limit(limit);
-        const { data, error } = await query;
-        if (error) throw error;
-        if (!data || data.length === 0) return res.status(200).json({ message: 'Aucun blog trouvé' });
 
-        return res.json({ blog: data });
+        const ascending = order === 'asc';
+
+        // Helper: fetch base elements for targeted collections
+        const fetchBaseElements = async () => {
+            let query = supabase
+                .from('collection_element')
+                .select('*')
+                .eq('collection_element_status', true);
+
+            if (targetCollectionIds.length > 0) {
+                if (targetCollectionIds.length === 1) {
+                    query = query.eq('collection_id', targetCollectionIds[0]);
+                } else {
+                    query = query.in('collection_id', targetCollectionIds);
+                }
+            }
+            const { data, error } = await query;
+            if (error) throw error;
+            return data || [];
+        };
+
+        // Base columns present on collection_element
+        const baseColumns = new Set([
+            'id',
+            'collection_id',
+            'collection_element_name',
+            'collection_element_slug',
+            'collection_element_status',
+            'collection_element_publish_date',
+            'created_at',
+            'updated_at'
+        ]);
+
+        // If sorting by a base column or no single collection targeted, use DB-side order for performance
+        const canUseDbOrder = baseColumns.has(colone) || targetCollectionIds.length !== 1;
+        if (canUseDbOrder) {
+            let query = supabase
+                .from('collection_element')
+                .select('*')
+                .eq('collection_element_status', true)
+                .order(colone, { ascending });
+            if (targetCollectionIds.length > 0) {
+                if (targetCollectionIds.length === 1) query = query.eq('collection_id', targetCollectionIds[0]);
+                else query = query.in('collection_id', targetCollectionIds);
+            }
+            if (limit) query = query.limit(limit);
+            const { data, error } = await query;
+            if (error) throw error;
+            if (!data || data.length === 0) return res.status(200).json({ message: 'Aucun blog trouvé' });
+            return res.json({ blog: data });
+        }
+
+        // Otherwise, attempt to sort by a configured field of the collection (text or multiReference)
+        const targetCollectionId = targetCollectionIds[0];
+        // Find config by name_field matching colone for this collection
+        const { data: configRow, error: configError } = await supabase
+            .from('collection_config')
+            .select('id, tab_field, name_field, multiline_text')
+            .eq('collection_id', targetCollectionId)
+            .eq('name_field', colone)
+            .maybeSingle();
+        if (configError) throw configError;
+
+        if (!configRow) {
+            // Fallback to DB order by colone if no matching config
+            let query = supabase
+                .from('collection_element')
+                .select('*')
+                .eq('collection_element_status', true)
+                .order(colone, { ascending });
+            query = query.eq('collection_id', targetCollectionId);
+            if (limit) query = query.limit(limit);
+            const { data, error } = await query;
+            if (error) throw error;
+            if (!data || data.length === 0) return res.status(200).json({ message: 'Aucun blog trouvé' });
+            return res.json({ blog: data });
+        }
+
+        // Fetch base elements (no order applied yet)
+        const baseElements = await fetchBaseElements();
+        if (!baseElements || baseElements.length === 0) return res.status(200).json({ message: 'Aucun blog trouvé' });
+
+        // Build a value map for ordering depending on field type
+        const valueMap = new Map();
+
+        if (configRow.tab_field === 'text') {
+            const { data: texts, error: textError } = await supabase
+                .from('collection_field_text')
+                .select('collection_element_id, text')
+                .eq('id_config', configRow.id);
+            if (textError) throw textError;
+            (texts || []).forEach(row => {
+                valueMap.set(row.collection_element_id, (row.text || '').toString());
+            });
+        } else if (configRow.tab_field === 'multiReference') {
+            // Get referenced IDs for each element; use first referenced item's name
+            const { data: refs, error: refError } = await supabase
+                .from('collection_field_multireference')
+                .select('collection_element_id, info_ref')
+                .eq('id_config', configRow.id);
+            if (refError) throw refError;
+
+            // Extract first referenced element id per element
+            const firstRefByElement = new Map();
+            (refs || []).forEach(row => {
+                let parsed;
+                if (typeof row.info_ref === 'string') {
+                    try { parsed = JSON.parse(row.info_ref); } catch { parsed = []; }
+                } else {
+                    parsed = row.info_ref || [];
+                }
+                const first = Array.isArray(parsed) && parsed.length > 0 ? parsed[0] : null;
+                const refId = first && typeof first === 'object' ? first.value : first;
+                if (refId) firstRefByElement.set(row.collection_element_id, refId);
+            });
+            const refIds = Array.from(new Set(Array.from(firstRefByElement.values())));
+            if (refIds.length > 0) {
+                const { data: refElements, error: refElError } = await supabase
+                    .from('collection_element')
+                    .select('id, collection_element_name')
+                    .in('id', refIds);
+                if (refElError) throw refElError;
+                const nameById = new Map((refElements || []).map(e => [e.id, e.collection_element_name || '']));
+                firstRefByElement.forEach((refId, elId) => {
+                    valueMap.set(elId, (nameById.get(refId) || '').toString());
+                });
+            }
+        } else {
+            // Unsupported configured field type for ordering; fallback to DB order
+            let query = supabase
+                .from('collection_element')
+                .select('*')
+                .eq('collection_element_status', true)
+                .order(colone, { ascending });
+            query = query.eq('collection_id', targetCollectionId);
+            if (limit) query = query.limit(limit);
+            const { data, error } = await query;
+            if (error) throw error;
+            if (!data || data.length === 0) return res.status(200).json({ message: 'Aucun blog trouvé' });
+            return res.json({ blog: data });
+        }
+
+        // Sort in Node based on valueMap
+        const sorted = [...baseElements].sort((a, b) => {
+            const va = (valueMap.get(a.id) || '').toString().toLowerCase();
+            const vb = (valueMap.get(b.id) || '').toString().toLowerCase();
+            if (va < vb) return ascending ? -1 : 1;
+            if (va > vb) return ascending ? 1 : -1;
+            return 0;
+        });
+        const finalData = typeof limit === 'number' ? sorted.slice(0, limit) : sorted;
+        return res.json({ blog: finalData });
     } catch (err) {
         console.error('Erreur lors de la récupération des blogs :', err);
         res.status(500).send({ error: err.message });

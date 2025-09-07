@@ -454,7 +454,7 @@ const EditWebsite = () => {
             <div className="creation-site-wrapper-info">
               {/* Informations générales */}
               <div className="input-container">
-                <p className='blogField_name collection_edit_name'>Informations générales</p>
+                <h4 className='titlePage'>Informations générales</h4>
                 <p className="blogField_description">Configuration de base de votre site web</p>
               </div>
 
@@ -518,7 +518,7 @@ const EditWebsite = () => {
 
               {/* Gestion des utilisateurs */}
               <div className="input-container">
-                <p className='blogField_name collection_edit_name'>Gestion des utilisateurs</p>
+                <h4 className='titlePage'>Gestion des utilisateurs</h4>
                 <p className="blogField_description">Ajoutez, modifiez ou supprimez les utilisateurs du site</p>
               </div>
 
@@ -619,7 +619,7 @@ const EditWebsite = () => {
 
               {/* Fonctionnalités du site */}
               <div className="input-container">
-                <p className='blogField_name collection_edit_name'>Fonctionnalités</p>
+                <h4 className='titlePage'>Fonctionnalités</h4>
                 <p className="blogField_description">Activez ou désactivez les fonctionnalités de votre site</p>
               </div>
 

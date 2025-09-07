@@ -3,7 +3,7 @@ import React, { useRef, useLayoutEffect, useState } from 'react';
 import ReactSelect from 'react-select';
 
 import TextField from '@mui/material/TextField';
-import { styled } from '@mui/material/styles';
+import { styled, useTheme } from '@mui/material/styles';
 import Switch from '@mui/material/Switch';
 import Button from '@mui/material/Button';
 import Select from '@mui/material/Select';
@@ -22,7 +22,7 @@ import { FiSearch } from "react-icons/fi";
 
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import IconButton from '@mui/material/IconButton';
+import MuiIconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 import SortIcon from '@mui/icons-material/Sort';
 import CheckIcon from '@mui/icons-material/Check';
@@ -31,6 +31,7 @@ import ArrowDropUpOutlinedIcon from '@mui/icons-material/ArrowDropUpOutlined';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { Snackbar, Alert } from '@mui/material';
 import MuiAlert from '@mui/material/Alert';
+import Drawer from '@mui/material/Drawer';
 
 // Internal utilities and hooks
 import { useAxisTooltip, useItemTooltip, useMouseTracker } from '@mui/x-charts/ChartsTooltip';
@@ -145,20 +146,24 @@ export const SearchFieldSmall = styled(TextField)(({ theme, variant }) => ({
 // Styled Select components
 export const SelectField = styled(Select)(({ theme }) => ({
     color: theme.palette.text.primary,
-    borderColor: theme.palette.primary.third,
-    borderRadius: '0.5rem',
+    backgroundColor: theme.palette.secondary.secondary,
+    borderRadius: '0.3rem',
+    padding: '0.1rem 0.3rem',
+    fontSize: '0.8rem',
+    border: 'none',
+    boxShadow: 'none',
     '& .MuiSelect-select': {
-        padding: '0.5rem 0.8rem',
+        padding: '0.2rem 0.1rem',
         borderRadius: '0.5rem',
     },
     '& .MuiOutlinedInput-notchedOutline': {
-        borderColor: theme.palette.primary.third,
+        borderColor: theme.palette.secondary.secondary,
     },
     '&:hover .MuiOutlinedInput-notchedOutline': {
-        borderColor: theme.palette.primary.third,
+        borderColor: theme.palette.secondary.secondary,
     },
     '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-        borderColor: theme.palette.primary.third,
+        borderColor: theme.palette.secondary.secondary,
         borderWidth: '1px',
     },
     '& .MuiSvgIcon-root': {
@@ -168,13 +173,27 @@ export const SelectField = styled(Select)(({ theme }) => ({
 
 SelectField.defaultProps = {
     MenuProps: {
+    anchorOrigin: { vertical: 'bottom', horizontal: 'left' },
+    transformOrigin: { vertical: 'top', horizontal: 'left' },
         PaperProps: {
             sx: (theme) => ({
-                bgcolor: theme.palette.background.default,
-                border: `1px solid ${theme.palette.primary.third}`,
-                transition: 'border-color 0.3s ease, background-color 0.3s ease',
+        bgcolor: theme.palette.primary.main,
+        color: theme.palette.text.primary,
+        border: `1px solid ${theme.palette.primary.third}`,
+        borderRadius: '0.5rem',
+        boxShadow: theme.shadows[8],
+        transition: 'border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease',
+        maxHeight: 360,
+        '& .MuiList-root': {
+          p: 0.5,
+          maxHeight: 340,
+          overflowY: 'auto',
+        },
                 '& .MuiMenuItem-root': {
                     color: theme.palette.text.primary,
+          fontSize: '0.9rem',
+          borderRadius: '0.35rem',
+          padding: '0.35rem 0.75rem',
                     '&:hover': {
                         bgcolor: theme.palette.primary.third,
                     },
@@ -182,7 +201,7 @@ SelectField.defaultProps = {
                         bgcolor: theme.palette.primary.third,
                     },
                     '&.Mui-selected:hover': {
-                        bgcolor: theme.palette.primary.dark,
+                        bgcolor: theme.palette.primary.third,
                     },
                 },
             }),
@@ -217,13 +236,27 @@ export const SelectFieldSecondary = styled(Select)(({ theme }) => ({
 
 SelectFieldSecondary.defaultProps = {
     MenuProps: {
+    anchorOrigin: { vertical: 'bottom', horizontal: 'left' },
+    transformOrigin: { vertical: 'top', horizontal: 'left' },
         PaperProps: {
             sx: (theme) => ({
-                bgcolor: theme.palette.background.default,
-                border: `1px solid ${theme.palette.primary.third}`,
-                transition: 'border-color 0.3s ease, background-color 0.3s ease',
+        bgcolor: theme.palette.primary.main,
+        color: theme.palette.text.primary,
+        border: `1px solid ${theme.palette.primary.third}`,
+        borderRadius: '0.5rem',
+        boxShadow: theme.shadows[8],
+        transition: 'border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease',
+        maxHeight: 360,
+        '& .MuiList-root': {
+          p: 0.5,
+          maxHeight: 340,
+          overflowY: 'auto',
+        },
                 '& .MuiMenuItem-root': {
                     color: theme.palette.text.primary,
+          fontSize: '0.9rem',
+          borderRadius: '0.35rem',
+          padding: '0.35rem 0.75rem',
                     '&:hover': {
                         bgcolor: theme.palette.primary.third,
                     },
@@ -300,6 +333,10 @@ export const RedButton = styled(Button)(({ theme }) => ({
         boxShadow: theme.palette.shadow.secondary,
     },
 }));
+
+
+
+
 
 export const DefaultSwitch = styled(Switch)(({ theme }) => ({
     '& .MuiSwitch-switchBase.Mui-checked': {
@@ -774,12 +811,12 @@ export function SortMenu({
                 }}
               />
               <span style={{fontSize: '0.87rem', minWidth: 70, textAlign: 'center', color: theme.palette.text.secondary}}>{sort.dir === 'asc' ? 'Ascendant' : 'Descendant'}</span>
-              <IconButton size="small" onClick={() => onRemoveSort(sort.key)}>
+              <MuiIconButton size="small" onClick={() => onRemoveSort(sort.key)}>
                 <CloseIcon 
                     fontSize="small"
                     sx={{ color: theme.palette.text.secondary, '&:hover': { color: theme.palette.text.primary } }} 
                 />
-              </IconButton>
+              </MuiIconButton>
             </div>
           );
         })}
@@ -873,9 +910,9 @@ export function CopyButton({ textToCopy, successMessage = 'Copié dans le presse
   };
 
   return (
-    <IconButton
+    <MuiIconButton
       onClick={handleCopy}
-      size="small"
+      size="tiny"
       title={copied ? "Copié !" : "Copier"}
       sx={{
         color: theme => theme.palette.text.secondary,
@@ -889,9 +926,48 @@ export function CopyButton({ textToCopy, successMessage = 'Copié dans le presse
       {...props}
     >
       {copied ? <CheckIcon sx={{ fontSize: iconSize }} /> : <ContentCopyIcon sx={{ fontSize: iconSize }} />}
-    </IconButton>
+    </MuiIconButton>
   );
 }
+
+// IconButton (custom): icon-only, no border/background, icon color uses theme.palette.primary.third
+export function IconButton({ icon, children, ariaLabel = 'icon button', size = 'small', sx = {}, ...props }) {
+  const content = icon
+    ? (React.isValidElement(icon) ? icon : (typeof icon === 'function' ? React.createElement(icon) : null))
+    : children;
+
+  const ensuredContent = React.isValidElement(content)
+    ? React.cloneElement(content, {
+        sx: { color: 'currentColor', ...(content.props?.sx || {}) },
+        style: { color: 'currentColor', ...(content.props?.style || {}) },
+      })
+    : content;
+
+  return (
+    <MuiIconButton
+      disableRipple
+      aria-label={ariaLabel}
+      size={size}
+      sx={{
+        color: (theme) => theme.palette.text.secondary,
+        backgroundColor: 'transparent',
+        border: 'none',
+        boxShadow: 'none',
+        '&:hover': {
+          backgroundColor: 'transparent',
+          opacity: 0.9,
+        },
+        ...sx,
+      }}
+      {...props}
+    >
+  {ensuredContent}
+  </MuiIconButton>
+  );
+}
+
+// Backward-compatible alias to avoid confusion with MUI's IconButton import
+export const IconsButton = IconButton;
 
 // Composant de champ de copie cliquable réutilisable
 export function CopyField({ 
@@ -930,21 +1006,29 @@ export function CopyField({
       className={`input_text_blog copy-input-container ${className}`}
       onClick={handleCopy}
       style={{
+        maxWidth:'100%',
         cursor: 'pointer',
         transition: 'all 0.2s ease-in-out',
         userSelect: 'none',
+
+        
         ...style
       }}
       title={copied ? "Copié !" : "Cliquer pour copier"}
       {...props}
     >
-      <span style={{ flex: 1 }}>
+      <span style={{ 
+        flex: 1,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+      }}>
         {displayText || textToCopy}
       </span>
       <div style={{ 
         display: 'flex', 
         alignItems: 'center',
         marginLeft: '0.5rem',
+        marginTop: '0.2rem',
         opacity: copied ? 1 : 0.7,
         transition: 'opacity 0.2s ease-in-out'
       }}>
@@ -966,6 +1050,50 @@ export function CopyField({
         )}
       </div>
     </div>
+  );
+}
+
+
+
+
+
+
+// Reusable right-side popup panel
+export function PopupSide({ open, onClose, title = '', width = 420, maxWidth = 420, children, footer = null, sx = {} }) {
+  const theme = useTheme();
+  return (
+    <Drawer
+      anchor="right"
+      open={open}
+      onClose={onClose}
+      PaperProps={{
+        sx: (theme) => ({
+          width,
+          maxWidth: maxWidth,
+          backgroundColor: theme.palette.primary.main,
+          color: theme.palette.text.primary,
+          boxShadow: theme.palette.shadow?.secondary || theme.shadows[6],
+          display: 'flex',
+          flexDirection: 'column',
+          ...sx,
+        })
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        <h4 style={{ margin: 0, fontSize: '1rem' }}>{title}</h4>
+        <MuiIconButton aria-label="Close" onClick={onClose} size="small" sx={{ color: (theme) => theme.palette.text.secondary }}>
+          <CloseIcon fontSize="small" />
+        </MuiIconButton>
+      </div>
+      <div style={{ padding: '1rem', overflowY: 'auto', flex: 1, scrollbarGutter: 'stable', scrollbarWidth: 'thin', scrollbarColor: `${theme.palette.primary.third} transparent` }}>
+        {children}
+      </div>
+      {footer && (
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', padding: '0.75rem 1rem' }}>
+          {footer}
+        </div>
+      )}
+    </Drawer>
   );
 }
 

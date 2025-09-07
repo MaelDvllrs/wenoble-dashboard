@@ -12,6 +12,43 @@ router.use(express.json());
 
 require('dotenv').config();
 
+// Helpers: slugify name and generate a unique API key that includes the site name
+const slugify = (str) => {
+  if (!str) return '';
+  return String(str)
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .replace(/-{2,}/g, '-');
+};
+
+const randomSegment = (length = 8) => {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let out = '';
+  for (let i = 0; i < length; i++) out += chars[Math.floor(Math.random() * chars.length)];
+  return out;
+};
+
+// Attempts to generate a unique api_key based on the website slug/name
+const generateUniqueApiKey = async (supabase, baseNameOrSlug) => {
+  const base = slugify(baseNameOrSlug) || 'site';
+  // Try a few candidates to avoid a round-trip race
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const candidate = `wn-${base}-${randomSegment(10)}`;
+    const { data, error } = await supabase
+      .from('websites')
+      .select('id')
+      .eq('api_key', candidate)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return candidate;
+  }
+  // Fallback – add timestamp to guarantee uniqueness
+  return `wn-${base}-${Date.now()}-${randomSegment(6)}`;
+};
+
 // Fonction helper pour vérifier l'accès d'un utilisateur à un site web (mise à jour avec workspaces)
 const checkUserWebsiteAccess = async (supabase, userId, websiteId) => {
   // D'abord vérifier l'accès direct au site web
@@ -378,12 +415,16 @@ router.post('/createWebsite', authenticateToken, async (req, res) => {
       return res.status(400).send({ error: 'Un site web avec ce slug existe déjà' });
     }
 
-    // Créer le site web
+  // Générer une API key unique qui contient le nom/slug du site
+  const apiKey = await generateUniqueApiKey(supabase, website_slug || website_name);
+
+  // Créer le site web
     const { data: websiteData, error: websiteError } = await supabase
       .from('websites')
       .insert({
         website_name,
         website_slug,
+        api_key: apiKey,
         workspace_id: finalWorkspaceId,
         visibility,
         created_at: new Date().toISOString(),
@@ -448,7 +489,7 @@ router.get('/getWebsiteById', authenticateToken, async (req, res) => {
     // Récupérer les informations du site web
     const { data, error } = await supabase
       .from('websites')
-      .select('id, website_name, website_slug, workspace_id, visibility, created_at, updated_at')
+      .select('id, api_key, website_name, website_slug, workspace_id, visibility, created_at, updated_at')
       .eq('id', websiteId)
       .single();
       
