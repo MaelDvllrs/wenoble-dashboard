@@ -206,8 +206,19 @@
 
 .menu_link:hover{
     color: var(--color-text-primary) !important;
-    background-color: var(--color-secondary-third);
-
+    /* Effet liquid glass: léger gradient + halo interne + transparence contrôlée */
+    background:
+        radial-gradient(at 50% 120%, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 60%) ,
+        linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 60%, rgba(255,255,255,0) 100%);
+    box-shadow:
+        0 0 0 1px rgba(255,255,255,0.06),
+    /* Ombre adoucie (réduction offset / blur / opacité) */
+    0 3px 6px -4px rgba(0,0,0,0.38),
+        inset 0 0 0 1px rgba(255,255,255,0.05);
+    backdrop-filter: blur(6px) saturate(140%);
+    -webkit-backdrop-filter: blur(6px) saturate(140%);
+    border-radius: 0.5rem;
+    transition: background 0.35s ease, box-shadow 0.35s ease, color 0.2s ease;
 }
 
 .menuDashboard{
@@ -217,8 +228,20 @@
 
 
 .menuActive > .menu_link{
-    background-color: var(--color-secondary-third);
     color: var(--color-text-primary) !important;
+    /* Effet liquid glass: léger gradient + halo interne + transparence contrôlée */
+    background:
+        radial-gradient(at 50% 120%, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 60%) ,
+        linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 60%, rgba(255,255,255,0) 100%);
+    box-shadow:
+        0 0 0 1px rgba(255,255,255,0.06),
+    /* Ombre adoucie (réduction offset / blur / opacité) */
+    0 3px 6px -4px rgba(0,0,0,0.38),
+        inset 0 0 0 1px rgba(255,255,255,0.05);
+    backdrop-filter: blur(6px) saturate(140%);
+    -webkit-backdrop-filter: blur(6px) saturate(140%);
+    border-radius: 0.5rem;
+    transition: background 0.35s ease, box-shadow 0.35s ease, color 0.2s ease;
 
 }
 

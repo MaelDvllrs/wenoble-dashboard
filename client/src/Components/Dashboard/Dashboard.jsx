@@ -609,7 +609,7 @@ const Dashboard = () => {
                 <motion.div 
                     className="menu_dashboard" 
                     animate={{width: isSidebarOpen ? "15rem" : "4rem"}} 
-                    style={{backgroundColor: theme.palette.primary.main, boxShadow : theme.palette.shadow.main}}
+                    style={{boxShadow : theme.palette.shadow.main}}
                     onMouseEnter={() => setHoveringSidebar(true)}
                     onMouseLeave={() => setHoveringSidebar(false)}
                 >
