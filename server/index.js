@@ -143,7 +143,9 @@ const whitelist =
 
   'https://mildesign.webflow.io',
 
-  'https://bule.webflow.io'
+  'https://bule.webflow.io',
+
+  'https://jo-interieurs.webflow.io'
 
 
 ];
