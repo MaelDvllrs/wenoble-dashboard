@@ -53,12 +53,11 @@ const logConnectionAttempt = async (req) => {
 // Login endpoint - bridge to Supabase Auth
 router.post('/login', async (req, res) => {
 
+  console.log(getFormattedDate() + " | Login attempt with username " + req.body.loginEmail);
+
   await logConnectionAttempt(req);
 
-  
-  
   const { loginEmail, loginPassword } = req.body;
-
 
   if (!loginEmail || !loginPassword) {
     return res.status(400).send({ message: 'Email and password are required' });
@@ -73,8 +72,29 @@ router.post('/login', async (req, res) => {
     return res.status(400).send({ message: error.message });
   }
 
-  
   // Success - Supabase returns session with access token
+  // Enregistrer un log de connexion
+  try {
+    const ip = getIpAddress(req);
+    const user_agent = req.headers['user-agent'] || '';
+    const location = await getGeoLocation(ip);
+
+    console.log(getFormattedDate() + " | Successful login for user ID " + data.user.id + " from IP " + ip);
+
+    await supabase
+      .from('user_login_logs')
+      .insert({
+        user_id: data.user.id,
+        ip,
+        user_agent,
+        success: true,
+        method: 'password',
+        location
+      });
+  } catch (e) {
+    console.error('Failed to insert user_login_logs:', e?.message || e);
+  }
+
   res.send({ token: data.session.access_token });
 });
 
@@ -171,5 +191,6 @@ router.post('/register', async (req, res) => {
     });
   }
 });
+
 
 module.exports = router;

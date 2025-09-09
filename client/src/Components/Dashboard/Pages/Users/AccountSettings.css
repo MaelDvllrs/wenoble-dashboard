@@ -1,0 +1,155 @@
+/* Minimal styles for the refactored Account Settings page. Adjust as needed to fit your design system. */
+.account-settings-root {
+  display: flex;
+  gap: 1rem;
+  min-height: 60vh;
+  width: 100%;
+}
+.account-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-right: 1px solid transparent;
+  min-width: 220px;
+}
+
+.account-sidebar-link{
+    font-size: 0.87rem;
+    color: var(--color-text-primary);
+    font-weight: 600;
+    padding: 0.4rem 0.8rem;
+    border-radius: 0.2rem;
+    transition: background-color 200ms ease;
+}
+
+.account-sidebar-link:hover{
+    background-color: var(--color-primary-third);
+}
+
+.account-sidebar-link-active{
+  background-color: var(--color-primary-third);
+}
+
+.account-setting-title{
+    margin-top: 0;
+    margin-bottom: 1rem;
+}
+
+.account-settings-subtitle{
+    color: var(--color-text-secondary);
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+
+.account-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.profile-form-row, .settings-row, .logs-list {
+  padding: 1rem;
+  border-radius: 8px;
+}
+.profile-avatar {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.profile-avatar-info{
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    gap: 0.5rem;
+}
+
+.profile-fields {
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+.setting-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: space-between;
+}
+.log-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px dashed rgba(255,255,255,0.1);
+}
+
+/* Security logs table */
+.logs-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--color-primary-third);
+  border-radius: 6px;
+  margin-top: 0.5rem;
+}
+
+.security-logs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+  min-width: 780px;
+}
+.security-logs-table thead th {
+  text-align: left;
+  font-weight: 600;
+  padding: 0.5rem 0.6rem;
+  color: var(--color-text-secondary);
+  border-bottom: 1px solid var(--color-primary-third);
+  white-space: nowrap;
+}
+.security-logs-table tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+.security-logs-table td {
+  padding: 0.45rem 0.6rem;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  color: var(--color-text-primary);
+  vertical-align: middle;
+}
+.security-logs-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Column specifics */
+.security-logs-table .col-date { width: 80px; }
+.security-logs-table .col-time { width: 70px; white-space: nowrap; }
+.security-logs-table .col-ip { width: 120px; }
+.security-logs-table .col-method { width: 90px; }
+.security-logs-table .col-status { width: 80px; }
+.security-logs-table .col-device { width: 110px; }
+.security-logs-table .col-location { min-width: 120px; }
+
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size: 0.7rem; }
+
+/* Badges */
+.badge-status, .badge-method {
+  display: inline-block;
+  padding: 0.15rem 0.45rem;
+  border-radius: 0.4rem;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: .3px;
+  text-transform: uppercase;
+  line-height: 1;
+  background: var(--color-primary-third);
+  color: var(--color-text-secondary);
+}
+.badge-status.ok { background: rgba(46, 201, 109, 0.15); color: #2ec96d; }
+.badge-status.fail { background: rgba(244, 67, 54, 0.15); color: #f44336; }
+
+/* Row state shading (optional subtle) */
+.log-row.log-success { /* succès : pas de style additionnel volontairement */ }
+.log-row.log-fail { background: rgba(244, 67, 54, 0.04); }

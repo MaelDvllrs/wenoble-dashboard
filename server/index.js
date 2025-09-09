@@ -11,6 +11,7 @@ const apiRouter = require('./api/api');
 const authRoutes = require('./users/auth');
 const authorisationRouter = require('./users/authorisation');
 const infoUserRouter = require('./users/infoUser');
+const securityRouter = require('./users/security');
 const portfolioRouter = require('./modification/portfolio');
 const pageRouter = require('./modification/page');
 const collectionRouter = require('./modification/collection');
@@ -203,6 +204,7 @@ app.use(videoRouter);
 
 //
 app.use(infoUserRouter);
+app.use(securityRouter);
 app.use(portfolioRouter);
 app.use(pageRouter);
 app.use(collectionRouter);

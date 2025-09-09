@@ -53,23 +53,28 @@ const Login = () => {
         setStatusHolder('message');
 
         try {
-            // Utilisation de signInWithEmail de supabaseAuth
             const authData = await signInWithEmail(
                 loginEmail, 
                 loginPassword,
                 stayConnected
             );
-            
-            // Vérification si l'authentification a réussi
+
             if (!authData || !authData.session) {
                 navigateTo('/');
                 setStatusHolder('showMessage');
                 setLoading(false);
                 return;
             }
-            
-            // Récupération du token depuis la session Supabase
+
             const token = authData.session.access_token;
+
+            // Enregistrer le log de connexion (succès) côté serveur
+            // Ne bloque pas la redirection
+            void Axios.post(
+                `${apiUrl}/user/login-logs`,
+                { success: true, method: 'password' },
+                { headers: { Authorization: `Bearer ${token}` } }
+            ).catch(() => { /* ignore */ });
             
             // Vérifier le rôle de l'utilisateur (admin ou non)
             // Note: Nous devons déterminer si l'utilisateur est admin

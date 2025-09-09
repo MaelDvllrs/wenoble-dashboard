@@ -16,7 +16,7 @@ const DARK_THEME = createTheme({
         type: "dark",
         primary: {
             main: 'rgba(14, 15, 17, 1)',
-            secondary: '#0d0e11', // légèrement plus sombre
+            secondary: 'rgb(17, 17, 22)',
             third: 'rgba(51, 51, 51, 1)'
         },
         secondary: {
@@ -34,18 +34,8 @@ const DARK_THEME = createTheme({
         },
 
         shadow: {
-            // Effet "liquid glass" : fine bordure + glow interne léger + profondeur
-            main: [
-                '0 0 0 1px rgba(255,255,255,0.06)',          // stroke très discret
-                '0 2px 3px -1px rgba(0,0,0,0.55)',           // ombre proche
-                '0 6px 14px -6px rgba(0,0,0,0.50)',          // profondeur légère
-                'inset 0 0 0 1px rgba(255,255,255,0.04)'     // liseré interne subtil
-            ].join(', '),
-            secondary: [
-                '0 0 0 1px rgba(255,255,255,0.10)',          // un peu plus visible
-                '0 3px 10px -4px rgba(0,0,0,0.55)',
-                'inset 0 0 0 1px rgba(255,255,255,0.05)'
-            ].join(', ')
+            main: '0 0 0 1px rgba(255, 255, 255, 0.145)',
+            secondary: '0 0 0 1px rgba(255, 255, 255, 0.30)'
         },
         globe: {
             dark: '1.1',
@@ -73,7 +63,7 @@ const LIGHT_THEME = createTheme({
         primary: {
             main: 'rgb(246, 247, 248)',
             secondary: 'rgba(255, 255, 255, 1)',
-            third: 'rgba(240, 240, 240, 1)'
+            third: 'rgba(209, 209, 209, 1)'
         },
         secondary: {
             main: 'rgba(20, 20, 20, 1)',

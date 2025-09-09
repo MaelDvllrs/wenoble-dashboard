@@ -32,6 +32,9 @@ import { WorkspaceProvider } from './Context/WorkspaceContext';
 import Dashboard from './Components/Dashboard/Dashboard';
 import Home from './Components/Dashboard/Pages/Home/Home';
 import Account from './Components/Dashboard/Pages/Users/Account';
+import AccountGeneral from './Components/Dashboard/Pages/Users/AccountGeneral';
+import AccountSecurity from './Components/Dashboard/Pages/Users/AccountSecurity';
+import AccountEmail from './Components/Dashboard/Pages/Users/AccountEmail';
 import ModificationHome from './Components/Dashboard/Pages/modification_site/modificationHome';
 import Portfolio from './Components/Dashboard/Pages/modification_site/Portfolio/portfolio';
 import EditPortfolio from './Components/Dashboard/Pages/modification_site/Portfolio/EditPortfolio';
@@ -131,7 +134,12 @@ function App() {
                             <Route path="/dashboard">
                                 <Route element={<ProtectedRoutesClient><Dashboard /></ProtectedRoutesClient>}>
                                     <Route path="/dashboard/home" element={<Home />} />
-                                    <Route path="/dashboard/account" element={<Account />} />
+                                    <Route path="/dashboard/account" element={<Account />} >
+                                        <Route index element={<Navigate to="/dashboard/account/general" />} />
+                                        <Route path="general" element={<AccountGeneral />} />
+                                        <Route path="security" element={<AccountSecurity />} />
+                                        <Route path="email" element={<AccountEmail />} />
+                                    </Route>
                                     <Route path="/dashboard/workspace" element={<WorkspaceManager />} />
                                     <Route path="/dashboard/modification" element={<ModificationHome />} />
                                     <Route path="/dashboard/modification/portfolio" element={<AuthorisedRoutePortfolio><Portfolio /></AuthorisedRoutePortfolio>}>

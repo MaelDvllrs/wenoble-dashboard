@@ -1,5 +1,5 @@
 // External libraries
-import React, { useState, useEffect, useContext, useRef } from 'react';
+import React, { useState, useEffect, useContext, useRef, useMemo } from 'react';
 import Axios from '../../service/AxiosConfig';
 import { jwtDecode } from 'jwt-decode';
 import Cookies from 'js-cookie';
@@ -36,7 +36,7 @@ import Logo from '../../assets/icon/logo.svg?react';
 import config from '../../config';
 import { SkeletonProfile, SkeletonMenuList, SkeletonFullSelector } from '../skeleton/skeleton';
 import ThemeContext from '../../Theme/themeContext';
-import { notificationTitle, notificationLink } from '../../Theme/element';
+import { notificationTitle, notificationLink, SimpleSearchField } from '../../Theme/element';
 import { checkAuthorization } from '../../Authorisation/Authorisation';
 import { fetchUserInfo } from './Pages/Users/apiAccount';
 import InstallPWA from '../InstallPWA';
@@ -70,6 +70,17 @@ const Dashboard = () => {
     // Website selector from context
     const { websites, selectedWebsite, loading: loadingWebsites, selectWebsite, refreshWebsites } = useWebsite();
     const [openWebsiteMenu, setOpenWebsiteMenu] = useState(false);
+    const [websiteSearch, setWebsiteSearch] = useState('');
+    const websiteSearchInputRef = useRef(null);
+    const filteredWebsites = useMemo(() => {
+        const q = websiteSearch.trim().toLowerCase();
+        if (!q) return websites || [];
+        return (websites || []).filter(w => {
+            const name = (w.website_name || '').toLowerCase();
+            const slug = (w.website_slug || '').toLowerCase();
+            return name.includes(q) || slug.includes(q);
+        });
+    }, [websites, websiteSearch]);
 
     // Workspace selector from context
     const { workspaces, selectedWorkspace, loading: loadingWorkspaces, initialLoading: initialWorkspaceLoading, selectWorkspace } = useWorkspace();
@@ -211,9 +222,17 @@ const Dashboard = () => {
         handleClickAway(event);
     };
 
-    const logoutUser = () => {
-        Cookies.remove('token');
-        navigateTo('/');
+    const logoutUser = async () => {
+        try {
+            // Déconnexion complète (révoque le refresh token sur tous les appareils)
+            await supabase.auth.signOut({ scope: 'global' });
+        } catch (e) {
+            console.error('Erreur de déconnexion Supabase:', e);
+        } finally {
+            // Nettoyage côté app
+            Cookies.remove('token');
+            navigateTo('/');
+        }
     };
 
     // Sidebar mode popper
@@ -243,7 +262,20 @@ const Dashboard = () => {
         setOpenWorkspaceMenu(false);
         setOpenUserMenu(false);
         setOpenNotif(false);
-        setOpenWebsiteMenu((prevOpen) => !prevOpen);
+        setOpenWebsiteMenu((prevOpen) => {
+            const next = !prevOpen;
+            if (next) {
+                setWebsiteSearch(''); // reset à l’ouverture
+                // Focus après le rendu du Popper
+                setTimeout(() => {
+                    if (websiteSearchInputRef.current) {
+                        // MUI TextField input element
+                        websiteSearchInputRef.current.focus();
+                    }
+                }, 60);
+            }
+            return next;
+        });
     };
 
     const handleCloseWebsiteMenu = () => {
@@ -609,7 +641,7 @@ const Dashboard = () => {
                 <motion.div 
                     className="menu_dashboard" 
                     animate={{width: isSidebarOpen ? "15rem" : "4rem"}} 
-                    style={{boxShadow : theme.palette.shadow.main}}
+                    style={{backgroundColor: theme.palette.primary.main, boxShadow : theme.palette.shadow.main}}
                     onMouseEnter={() => setHoveringSidebar(true)}
                     onMouseLeave={() => setHoveringSidebar(false)}
                 >
@@ -676,13 +708,20 @@ const Dashboard = () => {
                                                             <div className='user_name_large' style={{ color: theme.palette.text.primary }}>
                                                                 <b>Sites web</b>
                                                             </div>
-                                                            <div className='user_email' style={{ color: theme.palette.text.secondary }}>
-                                                                Sélectionner un site
-                                                            </div>
+                                                            
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
+
+                                            <SimpleSearchField
+                                                theme={theme}
+                                                placeholder="Rechercher un site..."
+                                                value={websiteSearch}
+                                                onChange={(e) => setWebsiteSearch(e.target.value)}
+                                                inputRef={websiteSearchInputRef}
+                                                style={{ width: '100%' }}
+                                            />
                                             
                                             <div className="line_horizontal" style={{ backgroundColor: theme.palette.primary.third }}></div>
 
@@ -690,19 +729,17 @@ const Dashboard = () => {
                                             <div className='user_menu_actions'>
                                                 {loadingWebsites ? (
                                                     <SkeletonMenuList lines={4} />
-                                                ) : websites.length === 0 ? (
+                                                ) : (filteredWebsites.length === 0) ? (
                                                     <div className='user_action_item' style={{ color: theme.palette.text.secondary }}>
-                                                        Aucun site web disponible
+                                                        Aucun site web trouvé
                                                     </div>
                                                 ) : (
-                                                    websites.map((website) => (
+                                                    filteredWebsites.map((website) => (
                                                         <div
                                                             key={website.id}
                                                             className={`user_action_item ${selectedWebsite?.id === website.id ? 'selected' : ''}`}
                                                             onClick={() => handleSelectWebsite(website)}
-                                                            style={{
-                                                                color: theme.palette.text.primary
-                                                            }}
+                                                            style={{ color: theme.palette.text.primary }}
                                                         >
                                                             <div className='button-selector'>
                                                                 <div><b>{website.website_name}</b></div>
