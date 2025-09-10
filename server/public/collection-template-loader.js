@@ -251,8 +251,24 @@
                 const key = el.getAttribute("wn-image");
                 const imageData = data.content.image.find(img => img.id_config == key);
                 if (imageData) {
-                    el.src = imageData.url;
-                    el.alt = imageData.alt_image;
+                    // Cas IMG HTML classique
+                    if (el.tagName.toLowerCase() === 'img') {
+                        el.src = imageData.url;
+                        el.alt = imageData.alt_image;
+                    }
+                    // Cas balise <image> SVG
+                    else if (el.tagName.toLowerCase() === 'image') {
+                        // Pour compatibilité, on set à la fois href et xlink:href
+                        el.setAttribute('href', imageData.url);
+                        el.setAttribute('xlink:href', imageData.url);
+                        // L'attribut alt n'existe pas sur <image>, mais on peut ajouter un <title> pour l'accessibilité
+                        let title = el.ownerSVGElement && el.ownerSVGElement.querySelector('title');
+                        if (!title && el.ownerSVGElement) {
+                            title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+                            el.ownerSVGElement.insertBefore(title, el.ownerSVGElement.firstChild);
+                        }
+                        if (title) title.textContent = imageData.alt_image || '';
+                    }
                 }
             }
 
@@ -307,7 +323,6 @@
                         galleryItems = galleryData.gallery;
                     }
 
-                    console.log("Gallery Items:", galleryItems);
                     // Création des images avec lazy loading
                     galleryItems.forEach(img => {
                         const imgElement = document.createElement('img');
