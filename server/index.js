@@ -145,7 +145,7 @@ const whitelist =
 
   'https://bule.webflow.io',
 
-  'https://jo-interieurs.webflow.io'
+  'https://jo-interieurs.webflow.io',
 
   'https://elena-ivanoff.webflow.io/'
 
