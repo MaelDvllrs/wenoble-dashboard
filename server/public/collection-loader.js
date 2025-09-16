@@ -68,20 +68,24 @@
             const encodedData = el.getAttribute("wn-collection-wrapper");
             const decodedData = decodeBase64(encodedData);
 
-            const { blogId, limit, order, colone, joinTable, config } = decodedData;
+            const { blogId, limit, order, colone, joinTable, config, pagination, itemsPerPage } = decodedData;
 
             if (!blogId) {
                 console.error("Blog ID manquant !");
                 return;
             }
 
-            const params = new URLSearchParams({
-                limit: limit,
+            // Build query params; if pagination is enabled, don't send limit to fetch all and paginate client-side
+            const paramsObj = {
                 order: order,
                 colone: colone,
                 joinTable: joinTable,
                 configs: JSON.stringify(config)
-            });
+            };
+            if (!pagination && typeof limit !== 'undefined' && limit !== null) {
+                paramsObj.limit = limit;
+            }
+            const params = new URLSearchParams(paramsObj);
 
             const blogPageResponse = await fetch(`${apiUrl}/api/sendBlog?${params.toString()}`, {
                 method: "GET",
@@ -114,8 +118,24 @@
                 return;
             }
 
+            // Pagination handling (client-side) if enabled
+            let allBlogs = Array.isArray(dataBlog.blog) ? dataBlog.blog : [];
+            let currentPage = 1;
+            let perPage = itemsPerPage || limit || 10;
+            let totalPages = 1;
+            if (pagination) {
+                const url = new URL(window.location.href);
+                const pageParam = parseInt(url.searchParams.get('page') || '1', 10);
+                currentPage = isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
+                perPage = parseInt(perPage, 10) || 10;
+                totalPages = Math.max(1, Math.ceil(allBlogs.length / perPage));
+                if (currentPage > totalPages) currentPage = totalPages;
+                const start = (currentPage - 1) * perPage;
+                allBlogs = allBlogs.slice(start, start + perPage);
+            }
+
             // Traitement séquentiel pour préserver l'ordre
-            for (const blog of dataBlog.blog) {
+            for (const blog of allBlogs) {
                 try {
                     const clone = template.cloneNode(true);
                     clone.removeAttribute("wn-collection-box");
@@ -431,12 +451,82 @@
                 originalTemplate.remove();
             }
 
+            // Build pagination UI if configured
+            if (pagination) {
+                let paginationWrapper = el.querySelector('[wn-collection-pagination]');
+                if (!paginationWrapper) {
+                    paginationWrapper = document.querySelector(`[wn-collection-pagination][data-collection-id="${blogId}"]`) || document.querySelector('[wn-collection-pagination]');
+                }
+                const blogsTotal = Array.isArray(dataBlog.blog) ? dataBlog.blog.length : 0;
+                const totalPagesCalc = Math.max(1, Math.ceil(blogsTotal / (parseInt(itemsPerPage || limit || 10, 10) || 10)));
+                // If no need for pagination UI, hide it
+                if (!paginationWrapper || totalPagesCalc <= 1) {
+                    if (paginationWrapper) paginationWrapper.style.display = 'none';
+                } else {
+                    const baseUrl = new URL(window.location.href);
+                    const buildHref = (pageNumber) => {
+                        const u = new URL(baseUrl.href);
+                        if (pageNumber === 1) {
+                            u.searchParams.delete('page');
+                        } else {
+                            u.searchParams.set('page', String(pageNumber));
+                        }
+                        const qs = u.searchParams.toString();
+                        return u.pathname + (qs ? `?${qs}` : '');
+                    };
+
+                    // Prev/Next links
+                    const prevEl = paginationWrapper.querySelector('[wn-pagination-prev]');
+                    const nextEl = paginationWrapper.querySelector('[wn-pagination-next]');
+                    if (prevEl) {
+                        const prevPage = Math.max(1, (typeof currentPage !== 'undefined' ? currentPage : 1) - 1);
+                        prevEl.setAttribute('href', prevPage < 1 || currentPage === 1 ? '#' : buildHref(prevPage));
+                        if (currentPage === 1) {
+                            prevEl.setAttribute('aria-disabled', 'true');
+                            prevEl.classList.add('disabled');
+                        } else {
+                            prevEl.removeAttribute('aria-disabled');
+                            prevEl.classList.remove('disabled');
+                        }
+                    }
+                    if (nextEl) {
+                        const nextPage = Math.min(totalPagesCalc, (typeof currentPage !== 'undefined' ? currentPage : 1) + 1);
+                        nextEl.setAttribute('href', currentPage >= totalPagesCalc ? '#' : buildHref(nextPage));
+                        if (currentPage >= totalPagesCalc) {
+                            nextEl.setAttribute('aria-disabled', 'true');
+                            nextEl.classList.add('disabled');
+                        } else {
+                            nextEl.removeAttribute('aria-disabled');
+                            nextEl.classList.remove('disabled');
+                        }
+                    }
+
+                    // Numbered links template
+                    const numberTpl = paginationWrapper.querySelector('[wn-pagination-number]');
+                    if (numberTpl && numberTpl.parentNode) {
+                        // Remove previously generated items
+                        paginationWrapper.querySelectorAll('[data-generated="true"]').forEach(n => n.remove());
+
+                        for (let i = 1; i <= totalPagesCalc; i++) {
+                            const clone = numberTpl.cloneNode(true);
+                            clone.setAttribute('data-generated', 'true');
+                            clone.setAttribute('href', buildHref(i));
+                            clone.textContent = String(i);
+                            if (i === currentPage) clone.classList.add('active');
+                            numberTpl.parentNode.appendChild(clone);
+                        }
+                        // Hide the template
+                        numberTpl.style.display = 'none';
+                    }
+                }
+            }
+
             // Créer le marker SEULEMENT après que tout est prêt
             const collectionMarker = document.createElement('div');
             collectionMarker.className = 'ssr-wn-collection-box';
             collectionMarker.style.display = 'none';
             collectionMarker.setAttribute('data-collection-processed', 'true');
-            collectionMarker.setAttribute('data-items-count', dataBlog.blog.length);
+            collectionMarker.setAttribute('data-items-count', Array.isArray(dataBlog.blog) ? dataBlog.blog.length : 0);
             collectionMarker.setAttribute('data-processed-time', new Date().toISOString());
             el.appendChild(collectionMarker);
 

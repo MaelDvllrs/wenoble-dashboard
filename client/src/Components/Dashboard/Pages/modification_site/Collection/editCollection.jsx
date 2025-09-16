@@ -75,7 +75,9 @@ const EditCollection = () => {
     const [websiteApiKey, setWebsiteApiKey] = useState('');
     // Options for wrapper key generation
     const [wrapLimit, setWrapLimit] = useState(10);
-    const [wrapLimitEnabled, setWrapLimitEnabled] = useState(true);
+    const [wrapLimitEnabled, setWrapLimitEnabled] = useState(false);
+    const [wrapPaginationEnabled, setWrapPaginationEnabled] = useState(false);
+    const [wrapItemsPerPage, setWrapItemsPerPage] = useState(10);
     const [wrapOrder, setWrapOrder] = useState('asc'); // 'asc' | 'desc'
     const [wrapColone, setWrapColone] = useState('created_at');
     // Template SEO attribute selections
@@ -136,11 +138,17 @@ const EditCollection = () => {
             if (wrapLimitEnabled) {
                 payload.limit = Math.max(0, Number(wrapLimit) || 0);
             }
+            // Inclure la pagination uniquement si activée
+            if (wrapPaginationEnabled) {
+                payload.pagination = true;
+                const perPage = Math.max(1, Number(wrapItemsPerPage) || 10);
+                payload.itemsPerPage = perPage;
+            }
             return btoa(JSON.stringify(payload));
         } catch {
             return '';
         }
-    }, [collectionId, wrapLimit, wrapLimitEnabled, wrapOrder, wrapColone]);
+    }, [collectionId, wrapLimit, wrapLimitEnabled, wrapOrder, wrapColone, wrapPaginationEnabled, wrapItemsPerPage]);
     const [availableCollections, setAvailableCollections] = useState([]);
     const [showFieldTypeGrid, setShowFieldTypeGrid] = useState(false);
     const [selectedFieldType, setSelectedFieldType] = useState('');
@@ -571,38 +579,40 @@ const EditCollection = () => {
                                 onChange={(e) => setWrapLimitEnabled(e.target.checked)}
                             />
                         </label>
-                        <div className="number-input-vertical">
-                            <input
-                                className="input_text_blog input-count"
-                                type="number"
-                                min={0}
-                                step={1}
-                                value={wrapLimit}
-                                onChange={(e) => setWrapLimit(e.target.value)}
-                                disabled={!wrapLimitEnabled}
-                                onWheel={(e) => e.currentTarget.blur()}
-                            />
-                            <div className="spin-buttons">
-                                <button
-                                    type="button"
-                                    className="spin-btn spin-up"
-                                    aria-label="Augmenter"
-                                    disabled={!wrapLimitEnabled}
-                                    onClick={() => setWrapLimit(v => Math.max(0, (Number(v) || 0) + 1))}
-                                >
-                                    ▲
-                                </button>
-                                <button
-                                    type="button"
-                                    className="spin-btn spin-down"
-                                    aria-label="Diminuer"
-                                    disabled={!wrapLimitEnabled}
-                                    onClick={() => setWrapLimit(v => Math.max(0, (Number(v) || 0) - 1))}
-                                >
-                                    ▼
-                                </button>
+
+
+
+                        {wrapLimitEnabled && (
+                            <div className="number-input-vertical">
+                                <input
+                                    className="input_text_blog input-count"
+                                    type="number"
+                                    min={0}
+                                    step={1}
+                                    value={wrapLimit}
+                                    onChange={(e) => setWrapLimit(e.target.value)}
+                                    onWheel={(e) => e.currentTarget.blur()}
+                                />
+                                <div className="spin-buttons">
+                                    <button
+                                        type="button"
+                                        className="spin-btn spin-up"
+                                        aria-label="Augmenter"
+                                        onClick={() => setWrapLimit(v => Math.max(0, (Number(v) || 0) + 1))}
+                                    >
+                                        ▲
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="spin-btn spin-down"
+                                        aria-label="Diminuer"
+                                        onClick={() => setWrapLimit(v => Math.max(0, (Number(v) || 0) - 1))}
+                                    >
+                                        ▼
+                                    </button>
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
                     <div className='input-container'>
                         <p className="blogField_name collection_edit_name">Ordre</p>
@@ -614,6 +624,46 @@ const EditCollection = () => {
                             <MenuItem value="asc">Ascendant</MenuItem>
                             <MenuItem value="desc">Descendant</MenuItem>
                         </SelectField>
+                    </div>
+                    <div className='input-container'>
+                        <label className="blogField_name collection_edit_name">
+                            Pagination
+                            <DefaultSwitch
+                                checked={wrapPaginationEnabled}
+                                onChange={(e) => setWrapPaginationEnabled(e.target.checked)}
+                            />
+                        </label>
+                        {wrapPaginationEnabled && (
+                            <div className="number-input-vertical">
+                                <input
+                                    className="input_text_blog input-count"
+                                    type="number"
+                                    min={1}
+                                    step={1}
+                                    value={wrapItemsPerPage}
+                                    onChange={(e) => setWrapItemsPerPage(e.target.value)}
+                                    onWheel={(e) => e.currentTarget.blur()}
+                                />
+                                <div className="spin-buttons">
+                                    <button
+                                        type="button"
+                                        className="spin-btn spin-up"
+                                        aria-label="Augmenter"
+                                        onClick={() => setWrapItemsPerPage(v => Math.max(1, (Number(v) || 1) + 1))}
+                                    >
+                                        ▲
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="spin-btn spin-down"
+                                        aria-label="Diminuer"
+                                        onClick={() => setWrapItemsPerPage(v => Math.max(1, (Number(v) || 1) - 1))}
+                                    >
+                                        ▼
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                     <div className='input-container'>
 
