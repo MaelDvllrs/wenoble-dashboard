@@ -4,6 +4,7 @@ import Cookies from 'js-cookie';
 import { Navigate } from 'react-router-dom';
 import { useWebsite } from '../Context/WebsiteContext';
 import config from '../config';
+import { supabase } from '../service/supabaseAuth';
 
 // Constants
 const apiUrl = config.apiUrl;
@@ -11,10 +12,18 @@ const apiUrl = config.apiUrl;
 // Helper function for authorization
 const fetchAuthorization = async (type, websiteId, setVerify, setAuthorized) => {
     try {
-        const token = Cookies.get('token');
+        // Try cookie first, then resync from Supabase if missing
+        let token = Cookies.get('token');
         if (!token) {
-            setVerify(true);
-            throw new Error('Token not found');
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.access_token) {
+                token = session.access_token;
+                Cookies.set('token', token, {
+                    expires: 30,
+                    secure: process.env.NODE_ENV === 'production',
+                    sameSite: 'Lax'
+                });
+            }
         }
 
         if (!websiteId) {
@@ -95,7 +104,19 @@ export const AuthorisedRouteNewsletter = ({ children }) => (
 
 // Utility function for checking authorization
 export const checkAuthorization = async (authType, websiteId) => {
-    const token = Cookies.get('token');
+    // Try cookie first, then resync from Supabase if missing
+    let token = Cookies.get('token');
+    if (!token) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+            token = session.access_token;
+            Cookies.set('token', token, {
+                expires: 30,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'Lax'
+            });
+        }
+    }
 
     if (!websiteId) {
         console.log('Aucun site web sélectionné pour vérifier les autorisations');
@@ -107,11 +128,6 @@ export const checkAuthorization = async (authType, websiteId) => {
             token,
             type: authType,
             websiteId: websiteId
-        }, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
         });
         return response.data.authorisation;
     } catch (error) {

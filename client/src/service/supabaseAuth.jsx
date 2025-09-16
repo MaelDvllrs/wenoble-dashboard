@@ -9,8 +9,8 @@ export const supabase = createClient(
   {
     auth: {
       autoRefreshToken: true,
-  persistSession: true,
-  detectSessionInUrl: true
+      persistSession: true,
+      detectSessionInUrl: true
     }
   }
 );
@@ -58,14 +58,15 @@ export const getCurrentUser = async () => {
 // --- Persistence & Sync Cookie -> Access Token Rotation ---
 // Sur chaque rafraîchissement ou changement d'état, on réécrit le cookie avec le nouvel access token.
 // Cela évite qu'un token expiré reste dans le cookie pendant que Supabase en a généré un nouveau.
-supabase.auth.onAuthStateChange((_event, session) => {
-  if (session?.access_token) {
+supabase.auth.onAuthStateChange((event, session) => {
+  if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') && session?.access_token) {
     Cookies.set('token', session.access_token, {
       expires: 30,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'Lax'
     });
-  } else {
+  }
+  if (event === 'SIGNED_OUT') {
     Cookies.remove('token');
   }
 });

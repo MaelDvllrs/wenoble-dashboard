@@ -147,8 +147,9 @@ const whitelist =
 
   'https://jo-interieurs.webflow.io',
 
-  'https://elena-ivanoff.webflow.io'
+  'https://elena-ivanoff.webflow.io',
 
+  'https://next-immo.webflow.io'
 
 ];
 
