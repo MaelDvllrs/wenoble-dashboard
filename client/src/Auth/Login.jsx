@@ -28,7 +28,6 @@ const Login = () => {
     const [loginEmail, setLoginEmail] = useState('');
     const [loginPassword, setLoginPassword] = useState('');
     const [statusHolder, setStatusHolder] = useState('message');
-    const [stayConnected, setStayConnected] = useState(false);
     const [loading, setLoading] = useState(false);
 
     // Navigation
@@ -56,9 +55,7 @@ const Login = () => {
             const authData = await signInWithEmail(
                 loginEmail, 
                 loginPassword,
-                stayConnected
             );
-
             if (!authData || !authData.session) {
                 navigateTo('/');
                 setStatusHolder('showMessage');
@@ -158,26 +155,40 @@ const Login = () => {
                                         setLoginPassword(event.target.value);
                                     }}
                                 />
-                                <div className="loginError">
-                                    <span className={statusHolder}>Identifiants incorrects</span>
-                                </div>
+                                
                             </div>
                         </div>
-                        <div className="stayConnectedContain">
-                            <p className="loginPresentation" style={{ color: theme.palette.text.secondary }}>Rester connecté ?</p>
-                            <DefaultSwitch
-                                theme={theme}
-                                checked={stayConnected}
-                                onChange={(event) => {
-                                    setStayConnected(event.target.checked);
-                                }}
-                            />
+                        <div className="forgotPasswordWrapper">
+                            <a className="forgotPassword" href="https://www.wenoble.fr/contact">Mot de passe oublié ?</a>
                         </div>
+                        
+                        
 
                         <LoadingDefaultButton loading={loading} className="loginButton" type="submit" theme={theme} onClick={loginUser}>
                             {!loading && 'Connexion'}
                         </LoadingDefaultButton>
-                        <a className="forgotPassword" href="https://www.wenoble.fr/contact">Mot de passe oublié ?</a>
+                        <div className="loginError">
+                            <span className={statusHolder}>Identifiants incorrects</span>
+                        </div>
+                        <div className="oauthButtonsWrapper" style={{ display: 'flex', flexDirection: 'column', gap: '12px', margin: '16px 0' }}>
+                            <button
+                                type="button"
+                                className="oauthButton oauthGoogle"
+                                onClick={() => window.location.href = `${config.supabaseUrl}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(window.location.origin + '/oauth-callback')}`}
+                            >
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/2/2d/Google-favicon-2015.png" alt="Google" className="oauthIcon" />
+                                Se connecter avec Google
+                            </button>
+                            <button
+                                type="button"
+                                className="oauthButton oauthLinkedin"
+                                onClick={() => window.location.href = `${config.supabaseUrl}/auth/v1/authorize?provider=linkedin&redirect_to=${encodeURIComponent(window.location.origin + '/oauth-callback')}`}
+                            >
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png" alt="LinkedIn" className="oauthIcon linkedinIcon" />
+                                Se connecter avec LinkedIn
+                            </button>
+                        </div>
+                        
                     </form>
                     <div className="LoginPowered" href="https://www.wenoble.fr/contact" style={{ color: theme.palette.text.secondary }}>Powered by <a href="https://www.wenoble.fr" className="blueText">Wenoble</a></div>
                 </div>

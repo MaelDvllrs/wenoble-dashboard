@@ -71,15 +71,20 @@ export const CssTextField = styled(TextField)(({ theme }) => ({
 
 export const LoginTextField = styled(TextField)(({ theme }) => ({
     '& .MuiOutlinedInput-root': {
+        ' input': {
+        },
         '& fieldset': {
-            borderColor: theme.palette.text.secondary,
-            borderRadius: '0.5rem',
+            borderColor: theme.palette.primary.third,
+            borderRadius: '0.8rem',
+            
         },
         '&:hover fieldset': {
-            borderColor: theme.palette.text.secondary,
+            borderColor: theme.palette.primary.third,
         },
         '&.Mui-focused fieldset': {
-            borderColor: theme.palette.text.secondary,
+            borderWidth: '1px',
+            borderColor: '#2ec96d'
+
         },
     },
     '& .MuiInputLabel-root': {
@@ -87,6 +92,7 @@ export const LoginTextField = styled(TextField)(({ theme }) => ({
     },
     '& .MuiInputLabel-root.Mui-focused': {
         color: theme.palette.text.secondary,
+
     },
 }));
 
@@ -358,6 +364,8 @@ export const LoadingButtonBase = styled(LoadingButton)(({ theme }) => ({
     '&.MuiButton-root': {
         backgroundColor: "var(--primary-color)",
         color: 'rgba(255, 255, 255, 0.8)',
+        borderRadius: '6px !important',
+        padding: '1.5rem'
     },
     '&:hover': {
         backgroundColor: "var(--primary-color)",
