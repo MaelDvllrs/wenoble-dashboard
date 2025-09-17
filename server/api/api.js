@@ -116,6 +116,8 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
         }
     }
 
+    console.log('Filters received:', filters);
+
     try {
         // Determine targeted collection(s)
         let targetCollectionIds = [];
