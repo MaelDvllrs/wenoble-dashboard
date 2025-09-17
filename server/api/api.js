@@ -311,14 +311,55 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
 // Helper: applique les filtres sur un tableau d'éléments (colonnes de base + champs texte + multiReference dynamiques)
 async function applyFiltersToElements({ elements, filters, baseColumns, targetCollectionIds }) {
     if (!elements || elements.length === 0) return [];
-    const filterEntries = Object.entries(filters);
+    // Copie de travail pour normalisation éventuelle
+    let workingFilters = { ...filters };
+    let filterEntries = Object.entries(workingFilters);
     if (filterEntries.length === 0) return elements;
 
-    // Si plusieurs collections, on ne tente pas les champs dynamiques (ambiguïté) -> uniquement base
+    // Une seule collection ? => on peut traduire id_config -> name_field
     const singleCollectionId = targetCollectionIds && targetCollectionIds.length === 1 ? targetCollectionIds[0] : null;
-
-    // Déterminer les clés dynamiques candidates (non base)
-    const dynamicKeys = [];
+    let dynamicKeys = [];
+    if (singleCollectionId) {
+        try {
+            const { data: allConfigs, error: cfgErr } = await supabase
+                .from('collection_config')
+                .select('id, name_field, tab_field')
+                .eq('collection_id', singleCollectionId);
+            if (!cfgErr && Array.isArray(allConfigs)) {
+                const idToName = new Map(allConfigs.map(c => [c.id?.toString(), c.name_field]));
+                // Accent-insensitive map for name_field
+                const fold = (s) => (s || '').toString().normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+                const foldedNameMap = new Map(allConfigs.map(c => [fold(c.name_field), c.name_field]));
+                const normalized = {};
+                for (const [k, v] of Object.entries(workingFilters)) {
+                    if (baseColumns.has(k)) { normalized[k] = v; continue; }
+                    const mapped = idToName.get(k.toString());
+                    let targetName = mapped;
+                    if (!targetName) {
+                        // Tentative de match accent-insensitive sur name_field
+                        const foldedKey = fold(k);
+                        if (foldedNameMap.has(foldedKey)) targetName = foldedNameMap.get(foldedKey);
+                    }
+                    if (targetName) {
+                        if (normalized[mapped]) {
+                            const existing = Array.isArray(normalized[mapped]) ? normalized[mapped] : [normalized[mapped]];
+                            const incoming = Array.isArray(v) ? v : [v];
+                            normalized[mapped] = Array.from(new Set([...existing, ...incoming]));
+                        } else {
+                            normalized[targetName] = v;
+                        }
+                    } else {
+                        normalized[k] = v;
+                    }
+                }
+                workingFilters = normalized;
+                filterEntries = Object.entries(workingFilters);
+            }
+        } catch (normErr) {
+            console.warn('Normalisation filtres (id_config->name_field) échouée:', normErr.message);
+        }
+    }
+    // Recalcule des clés dynamiques après normalisation
     for (const [key] of filterEntries) {
         if (!baseColumns.has(key)) dynamicKeys.push(key);
     }
@@ -382,14 +423,29 @@ async function applyFiltersToElements({ elements, filters, baseColumns, targetCo
                             parsed = row.info_ref || [];
                         }
                         const refIds = new Set();
+                        const fold = (s) => (s || '').toString().normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
                         if (Array.isArray(parsed)) {
                             parsed.forEach(ref => {
                                 if (!ref) return;
-                                if (typeof ref === 'object' && ref.value) refIds.add(ref.value.toString());
-                                else refIds.add(ref.toString());
+                                if (typeof ref === 'object') {
+                                    if (ref.value) {
+                                        const vLower = ref.value.toString().toLowerCase();
+                                        refIds.add(vLower);
+                                        refIds.add(fold(ref.value));
+                                    }
+                                    if (ref.label) {
+                                        const lLower = ref.label.toString().toLowerCase();
+                                        refIds.add(lLower);
+                                        refIds.add(fold(ref.label));
+                                    }
+                                } else {
+                                    const raw = ref.toString().toLowerCase();
+                                    refIds.add(raw);
+                                    refIds.add(fold(ref));
+                                }
                             });
                         }
-                        multiRefFieldValueMap.get(row.collection_element_id)[nameField] = refIds; // Set d'IDs référencés
+                        multiRefFieldValueMap.get(row.collection_element_id)[nameField] = refIds; // Set de valeurs (ids + labels) en lowercase
                     });
                 }
             }
@@ -431,7 +487,11 @@ async function applyFiltersToElements({ elements, filters, baseColumns, targetCo
                     const refSet = obj[key]; // Set
                     isMultiRef = true;
                     if (!(refSet instanceof Set)) return false;
-                    const match = values.some(v => refSet.has(v));
+                    const fold = (s) => (s || '').toString().normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+                    const match = values.some(v => {
+                        const lower = v.toString().toLowerCase();
+                        return refSet.has(lower) || refSet.has(fold(v));
+                    });
                     if (!match) return false;
                     continue;
                 }
