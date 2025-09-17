@@ -456,7 +456,7 @@ async function applyFiltersToElements({ elements, filters, baseColumns, targetCo
     for (const [key] of filterEntries) {
         if (!baseColumns.has(key)) dynamicKeys.push(key);
     }
-    const dynamicKeySet = new Set(dynamicKeys);
+    let dynamicKeySet = new Set(dynamicKeys);
 
     let textFieldValueMap = new Map();          // Map(element_id => { fieldName: value })
     let multiRefFieldValueMap = new Map();       // Map(element_id => { fieldName: Set(refIds) })
@@ -493,6 +493,7 @@ async function applyFiltersToElements({ elements, filters, baseColumns, targetCo
                 console.log('Working filters after remap:', workingFilters);
                 // Recalcul dynamicKeys (peut avoir changé après remap)
                 dynamicKeys = filterEntries.map(([k]) => k).filter(k => !baseColumns.has(k));
+                dynamicKeySet = new Set(dynamicKeys);
 
                 // --- TEXT --- //
                 if (textConfigs.length > 0) {
