@@ -537,7 +537,8 @@ async function applyFiltersToElements({ elements, filters, baseColumns, targetCo
                                     }
                                 });
                             }
-                            multiRefFieldValueMap.get(row.collection_element_id)[nameField] = refIds; // Set de valeurs (ids + labels) en lowercase
+                            multiRefFieldValueMap.get(row.collection_element_id)[nameField] = refIds; 
+                            console.log('MultiReference field values (ids + labels):', Array.from(refIds));
                         });
                     }
                 }
