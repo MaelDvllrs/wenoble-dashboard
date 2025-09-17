@@ -106,7 +106,7 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
     const order = (req.query.order || 'desc').toString().toLowerCase();
     const limit = req.query.limit ? parseInt(req.query.limit, 10) : null;
     const colone = req.query.colone || 'collection_element_publish_date';
-    const debugFilters = req.query.debugFilters === '1';
+    const debugFilters = '1';
     // Nouveau: filtres dynamiques envoyés par collection-filter-plus.js
     let filters = {};
     if (req.query.filters) {
@@ -366,6 +366,12 @@ async function applyFiltersToElements({ elements, filters, baseColumns, targetCo
     let filterEntries = Object.entries(workingFilters);
     if (filterEntries.length === 0) return elements;
 
+    // Supprimer les clés meta éventuelles insérées dans filters JSON
+    const metaFilterKeys = ['debugFilters'];
+    let removedMeta = false;
+    metaFilterKeys.forEach(k => { if (workingFilters[k] !== undefined) { delete workingFilters[k]; removedMeta = true; } });
+    if (removedMeta) filterEntries = Object.entries(workingFilters);
+
     // Une seule collection ? => on peut traduire id_config -> name_field
     const singleCollectionId = targetCollectionIds && targetCollectionIds.length === 1 ? targetCollectionIds[0] : null;
     let dynamicKeys = [];
@@ -450,6 +456,7 @@ async function applyFiltersToElements({ elements, filters, baseColumns, targetCo
     for (const [key] of filterEntries) {
         if (!baseColumns.has(key)) dynamicKeys.push(key);
     }
+    const dynamicKeySet = new Set(dynamicKeys);
 
     let textFieldValueMap = new Map();          // Map(element_id => { fieldName: value })
     let multiRefFieldValueMap = new Map();       // Map(element_id => { fieldName: Set(refIds) })
@@ -717,8 +724,14 @@ async function applyFiltersToElements({ elements, filters, baseColumns, targetCo
                         return refSet.has(lower) || refSet.has(fold(v));
                     });
                     if (!match) {
-                        if (debug) elementDebug.checks.push({ key, type: 'multiReference', expected: values, refSet: Array.from(refSet).slice(0,100), matched: false });
+                    // Si la clé est dynamique demandée mais absente de l'élément => exclusion
+                    if (dynamicKeySet.has(key)) {
+                        if (debug) elementDebug.checks.push({ key, type: 'dynamic-missing', expected: values, matched: false, reason: 'champ dynamique absent sur élément' });
                         return false;
+                    } else {
+                        if (debug) elementDebug.checks.push({ key, type: 'ignored', expected: values, matched: true, reason: 'clé inconnue ignorée' });
+                    }
+                    continue;
                     }
                     if (debug) elementDebug.checks.push({ key, type: 'multiReference', expected: values, refSet: Array.from(refSet).slice(0,100), matched: true });
                     continue;
