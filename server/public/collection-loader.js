@@ -481,6 +481,11 @@
                     if (prevEl) {
                         const prevPage = Math.max(1, (typeof currentPage !== 'undefined' ? currentPage : 1) - 1);
                         prevEl.setAttribute('href', prevPage < 1 || currentPage === 1 ? '#' : buildHref(prevPage));
+                        if (currentPage > 1) {
+                            prevEl.setAttribute('rel', 'prev');
+                        } else {
+                            prevEl.removeAttribute('rel');
+                        }
                         if (currentPage === 1) {
                             prevEl.setAttribute('aria-disabled', 'true');
                             prevEl.classList.add('disabled');
@@ -492,6 +497,11 @@
                     if (nextEl) {
                         const nextPage = Math.min(totalPagesCalc, (typeof currentPage !== 'undefined' ? currentPage : 1) + 1);
                         nextEl.setAttribute('href', currentPage >= totalPagesCalc ? '#' : buildHref(nextPage));
+                        if (currentPage < totalPagesCalc) {
+                            nextEl.setAttribute('rel', 'next');
+                        } else {
+                            nextEl.removeAttribute('rel');
+                        }
                         if (currentPage >= totalPagesCalc) {
                             nextEl.setAttribute('aria-disabled', 'true');
                             nextEl.classList.add('disabled');
@@ -518,6 +528,26 @@
                         // Hide the template
                         numberTpl.style.display = 'none';
                     }
+
+                    // Prefetch adjacent pages (previous and next) for smoother navigation
+                    try {
+                        const head = document.head || document.getElementsByTagName('head')[0];
+                        const addPrefetch = (href) => {
+                            if (!href || href === '#' ) return;
+                            // Avoid duplicates
+                            if (head.querySelector(`link[rel="prefetch"][data-wn-prefetch='${href}']`)) return;
+                            const l = document.createElement('link');
+                            l.rel = 'prefetch';
+                            l.href = href;
+                            l.as = 'document';
+                            l.setAttribute('data-wn-prefetch', href);
+                            head.appendChild(l);
+                        };
+                        const prevPageNum = currentPage > 1 ? currentPage - 1 : null;
+                        const nextPageNum = currentPage < totalPagesCalc ? currentPage + 1 : null;
+                        if (prevPageNum) addPrefetch(buildHref(prevPageNum));
+                        if (nextPageNum) addPrefetch(buildHref(nextPageNum));
+                    } catch(prefErr) { /* silent */ }
                 }
             }
 
