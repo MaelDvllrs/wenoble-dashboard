@@ -403,6 +403,9 @@ async function applyFiltersToElements({ elements, filters, baseColumns, targetCo
                 }
                 const textConfigs = configRows.filter(r => r.tab_field === 'text');
                 const multiRefConfigs = configRows.filter(r => r.tab_field === 'multiReference');
+
+                console.log('Config for filtering found:', configRows);
+                console.log('Working filters after remap:', workingFilters);
                 // Recalcul dynamicKeys (peut avoir changé après remap)
                 dynamicKeys = filterEntries.map(([k]) => k).filter(k => !baseColumns.has(k));
 
