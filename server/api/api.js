@@ -725,14 +725,9 @@ async function applyFiltersToElements({ elements, filters, baseColumns, targetCo
                         return refSet.has(lower) || refSet.has(fold(v));
                     });
                     if (!match) {
-                    // Si la clé est dynamique demandée mais absente de l'élément => exclusion
-                    if (dynamicKeySet.has(key)) {
-                        if (debug) elementDebug.checks.push({ key, type: 'dynamic-missing', expected: values, matched: false, reason: 'champ dynamique absent sur élément' });
-                        return false;
-                    } else {
-                        if (debug) elementDebug.checks.push({ key, type: 'ignored', expected: values, matched: true, reason: 'clé inconnue ignorée' });
-                    }
-                    continue;
+                    // Clé dynamique absente => exclusion stricte
+                    if (debug) elementDebug.checks.push({ key, type: 'dynamic-missing', expected: values, matched: false, reason: 'champ non présent pour cet élément' });
+                    return false;
                     }
                     if (debug) elementDebug.checks.push({ key, type: 'multiReference', expected: values, refSet: Array.from(refSet).slice(0,100), matched: true });
                     continue;
