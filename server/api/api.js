@@ -301,9 +301,10 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
                 targetCollectionIds
             });
         }
+
+        console.log('Final data after filtering:', finalData);
         if (finalData.length === 0) return res.status(200).json({ message: 'Aucun blog trouvé' });
         const limitedSorted = typeof limit === 'number' ? finalData.slice(0, limit) : finalData;
-        console.log('Blogs récupérés avec succès :', limitedSorted);
         return res.json({ blog: limitedSorted });
     } catch (err) {
         console.error('Erreur lors de la récupération des blogs :', err);
