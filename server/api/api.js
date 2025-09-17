@@ -479,6 +479,98 @@ async function applyFiltersToElements({ elements, filters, baseColumns, targetCo
             }
         }
     }
+    else if (!singleCollectionId && dynamicKeys.length > 0) {
+        // Construction des maps dynamiques pour plusieurs collections (ou collection non spécifiée)
+        try {
+            const collectionIds = Array.from(new Set(elements.map(e => e.collection_id).filter(Boolean)));
+            if (collectionIds.length > 0) {
+                // Récupérer les configs pertinentes par name_field
+                const { data: configRows, error: cfgErr } = await supabase
+                    .from('collection_config')
+                    .select('id, collection_id, name_field, tab_field')
+                    .in('collection_id', collectionIds)
+                    .in('name_field', dynamicKeys);
+                if (!cfgErr && Array.isArray(configRows) && configRows.length > 0) {
+                    const textConfigs = configRows.filter(r => r.tab_field === 'text');
+                    const multiRefConfigs = configRows.filter(r => r.tab_field === 'multiReference');
+
+                    // TEXT
+                    if (textConfigs.length > 0) {
+                        const textConfigIds = textConfigs.map(r => r.id);
+                        const idToNameText = new Map(textConfigs.map(r => [r.id, r.name_field]));
+                        const { data: textValues, error: textValErr } = await supabase
+                            .from('collection_field_text')
+                            .select('collection_element_id, id_config, text')
+                            .in('id_config', textConfigIds)
+                            .in('collection_element_id', elements.map(e => e.id));
+                        if (!textValErr && Array.isArray(textValues)) {
+                            textValues.forEach(row => {
+                                if (!textFieldValueMap.has(row.collection_element_id)) {
+                                    textFieldValueMap.set(row.collection_element_id, {});
+                                }
+                                const nameField = idToNameText.get(row.id_config);
+                                if (nameField) {
+                                    textFieldValueMap.get(row.collection_element_id)[nameField] = row.text || '';
+                                }
+                            });
+                        }
+                    }
+
+                    // MULTIREFERENCE
+                    if (multiRefConfigs.length > 0) {
+                        const multiRefConfigIds = multiRefConfigs.map(r => r.id);
+                        const idToNameMulti = new Map(multiRefConfigs.map(r => [r.id, r.name_field]));
+                        const { data: multiRefValues, error: multiRefErr } = await supabase
+                            .from('collection_field_multireference')
+                            .select('collection_element_id, id_config, info_ref')
+                            .in('id_config', multiRefConfigIds)
+                            .in('collection_element_id', elements.map(e => e.id));
+                        if (!multiRefErr && Array.isArray(multiRefValues)) {
+                            multiRefValues.forEach(row => {
+                                if (!multiRefFieldValueMap.has(row.collection_element_id)) {
+                                    multiRefFieldValueMap.set(row.collection_element_id, {});
+                                }
+                                const nameField = idToNameMulti.get(row.id_config);
+                                if (!nameField) return;
+                                let parsed;
+                                if (typeof row.info_ref === 'string') {
+                                    try { parsed = JSON.parse(row.info_ref); } catch { parsed = []; }
+                                } else {
+                                    parsed = row.info_ref || [];
+                                }
+                                const refIds = new Set();
+                                const fold = (s) => (s || '').toString().normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+                                if (Array.isArray(parsed)) {
+                                    parsed.forEach(ref => {
+                                        if (!ref) return;
+                                        if (typeof ref === 'object') {
+                                            if (ref.value) {
+                                                const vLower = ref.value.toString().toLowerCase();
+                                                refIds.add(vLower);
+                                                refIds.add(fold(ref.value));
+                                            }
+                                            if (ref.label) {
+                                                const lLower = ref.label.toString().toLowerCase();
+                                                refIds.add(lLower);
+                                                refIds.add(fold(ref.label));
+                                            }
+                                        } else {
+                                            const raw = ref.toString().toLowerCase();
+                                            refIds.add(raw);
+                                            refIds.add(fold(ref));
+                                        }
+                                    });
+                                }
+                                multiRefFieldValueMap.get(row.collection_element_id)[nameField] = refIds;
+                            });
+                        }
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('Construction maps dynamiques multi-collection échouée:', e.message);
+        }
+    }
 
     // Fonction de test: pour multiReference on exige qu'au moins UNE valeur attendue soit présente (logique OR)
     function elementMatches(el) {
