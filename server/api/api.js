@@ -106,6 +106,7 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
     const order = (req.query.order || 'desc').toString().toLowerCase();
     const limit = req.query.limit ? parseInt(req.query.limit, 10) : null;
     const colone = req.query.colone || 'collection_element_publish_date';
+    const debugFilters = req.query.debugFilters === '1';
     // Nouveau: filtres dynamiques envoyés par collection-filter-plus.js
     let filters = {};
     if (req.query.filters) {
@@ -181,20 +182,28 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
             console.log('Dataset before filtering:', dataset);
 
             // Application des filtres sur colonnes de base + (optionnel) champs texte dynamiques
+            let debugInfo = null;
             if (Object.keys(filters).length > 0 && dataset.length > 0) {
-                dataset = await applyFiltersToElements({
+                const filtered = await applyFiltersToElements({
                     elements: dataset,
                     filters,
                     baseColumns,
                     targetCollectionIds,
+                    debug: debugFilters
                 });
+                if (debugFilters && filtered && filtered.elements) {
+                    debugInfo = filtered.debug;
+                    dataset = filtered.elements;
+                } else {
+                    dataset = filtered;
+                }
             }
 
             if (dataset.length === 0) return res.status(200).json({ message: 'Aucun blog trouvé' });
 
             const limited = typeof limit === 'number' ? dataset.slice(0, limit) : dataset;
             console.log('Blogs récupérés avec succès limited :', limited);
-            return res.json({ blog: limited });
+            return res.json(debugFilters ? { blog: limited, debug: debugInfo } : { blog: limited });
         }
 
         // Otherwise, attempt to sort by a configured field of the collection (text or multiReference)
@@ -322,18 +331,26 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
         });
         let finalData = sorted;
         // Filtres (base + texte dynamiques) appliqués après tri
+        let debugInfo = null;
         if (Object.keys(filters).length > 0 && finalData.length > 0) {
-            finalData = await applyFiltersToElements({
+            const filtered = await applyFiltersToElements({
                 elements: finalData,
                 filters,
                 baseColumns,
-                targetCollectionIds
+                targetCollectionIds,
+                debug: debugFilters
             });
+            if (debugFilters && filtered && filtered.elements) {
+                debugInfo = filtered.debug;
+                finalData = filtered.elements;
+            } else {
+                finalData = filtered;
+            }
         }
 
         if (finalData.length === 0) return res.status(200).json({ message: 'Aucun blog trouvé' });
         const limitedSorted = typeof limit === 'number' ? finalData.slice(0, limit) : finalData;
-        return res.json({ blog: limitedSorted });
+        return res.json(debugFilters ? { blog: limitedSorted, debug: debugInfo } : { blog: limitedSorted });
     } catch (err) {
         console.error('Erreur lors de la récupération des blogs :', err);
         res.status(500).send({ error: err.message });
@@ -341,7 +358,7 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
 });
 
 // Helper: applique les filtres sur un tableau d'éléments (colonnes de base + champs texte + multiReference dynamiques)
-async function applyFiltersToElements({ elements, filters, baseColumns, targetCollectionIds }) {
+async function applyFiltersToElements({ elements, filters, baseColumns, targetCollectionIds, debug = false }) {
     if (!elements || elements.length === 0) return [];
     console.log('Applying filters:', filters);
     // Copie de travail pour normalisation éventuelle
@@ -639,17 +656,25 @@ async function applyFiltersToElements({ elements, filters, baseColumns, targetCo
     }
 
     // Fonction de test: pour multiReference on exige qu'au moins UNE valeur attendue soit présente (logique OR)
+    const debugPerElement = debug ? {} : null;
     function elementMatches(el) {
+        const elementDebug = debug ? { id: el.id, checks: [] } : null;
         for (const [key, expected] of filterEntries) {
             const values = Array.isArray(expected) ? expected.map(v => v.toString()) : [expected.toString()];
             let actual;
-            let isMultiRef = false;
             if (baseColumns.has(key)) {
                 actual = el[key];
-                if (actual === undefined || actual === null) return false;
+                if (actual === undefined || actual === null) {
+                    if (debug) elementDebug.checks.push({ key, type: 'base', expected: values, matched: false, reason: 'valeur absente' });
+                    return false;
+                }
                 const actualStr = actual.toString().toLowerCase();
                 const match = values.some(v => actualStr === v.toLowerCase());
-                if (!match) return false;
+                if (!match) {
+                    if (debug) elementDebug.checks.push({ key, type: 'base', expected: values, actual: actualStr, matched: false });
+                    return false;
+                }
+                if (debug) elementDebug.checks.push({ key, type: 'base', expected: values, actual: actualStr, matched: true });
                 continue;
             }
 
@@ -658,42 +683,75 @@ async function applyFiltersToElements({ elements, filters, baseColumns, targetCo
                 const obj = textFieldValueMap.get(el.id) || {};
                 if (Object.prototype.hasOwnProperty.call(obj, key)) {
                     actual = obj[key];
-                    if (actual === undefined || actual === null) return false;
+                    if (actual === undefined || actual === null) {
+                        if (debug) elementDebug.checks.push({ key, type: 'text', expected: values, matched: false, reason: 'valeur absente' });
+                        return false;
+                    }
                     const actualStr = actual.toString().toLowerCase();
                     const match = values.some(v => actualStr === v.toLowerCase());
-                    if (!match) return false;
+                    if (!match) {
+                        if (debug) elementDebug.checks.push({ key, type: 'text', expected: values, actual: actualStr, matched: false });
+                        return false;
+                    }
+                    if (debug) elementDebug.checks.push({ key, type: 'text', expected: values, actual: actualStr, matched: true });
                     continue;
                 }
             }
 
-            console.log("MultiReference field values (ids + labels):", Array.from(multiRefFieldValueMap));
+            if (debug && !debugPerElement._multiRefSnapshot) {
+                debugPerElement._multiRefSnapshot = Array.from(multiRefFieldValueMap.entries()).slice(0, 30);
+            }
 
             // MultiReference dynamique
             if (multiRefFieldValueMap.size > 0) {
                 const obj = multiRefFieldValueMap.get(el.id) || {};
                 if (Object.prototype.hasOwnProperty.call(obj, key)) {
                     const refSet = obj[key]; // Set
-                    isMultiRef = true;
-                    if (!(refSet instanceof Set)) return false;
+                    if (!(refSet instanceof Set)) {
+                        if (debug) elementDebug.checks.push({ key, type: 'multiReference', expected: values, matched: false, reason: 'refSet invalide' });
+                        return false;
+                    }
                     const fold = (s) => (s || '').toString().normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
                     const match = values.some(v => {
                         const lower = v.toString().toLowerCase();
                         return refSet.has(lower) || refSet.has(fold(v));
                     });
-                    if (!match) return false;
+                    if (!match) {
+                        if (debug) elementDebug.checks.push({ key, type: 'multiReference', expected: values, refSet: Array.from(refSet).slice(0,100), matched: false });
+                        return false;
+                    }
+                    if (debug) elementDebug.checks.push({ key, type: 'multiReference', expected: values, refSet: Array.from(refSet).slice(0,100), matched: true });
                     continue;
                 }
             }
 
             // Clé non gérée (ni base, ni text, ni multiReference) -> ignorer le filtre (ne pas exclure)
+            if (debug) elementDebug.checks.push({ key, type: 'ignored', expected: values, matched: true, reason: 'clé non trouvée - filtre ignoré' });
             continue;
         }
+        if (debug) { elementDebug.final = true; debugPerElement[el.id] = elementDebug; }
         return true;
     }
-
-    console.log('Filtering elements:', elements);
-
-    return elements.filter(elementMatches);
+    const kept = [];
+    for (const el of elements) {
+        const ok = elementMatches(el);
+        if (!ok && debug) {
+            if (!debugPerElement[el.id]) debugPerElement[el.id] = { id: el.id, final: false };
+        }
+        if (ok) kept.push(el);
+    }
+    if (debug) {
+        return {
+            elements: kept,
+            debug: {
+                filtersApplied: workingFilters,
+                totalBefore: elements.length,
+                totalAfter: kept.length,
+                perElement: debugPerElement
+            }
+        };
+    }
+    return kept;
 }
 
 // Récupérer les infos d'une page de blog (collection_element)
