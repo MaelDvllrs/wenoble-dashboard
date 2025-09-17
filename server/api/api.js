@@ -178,6 +178,8 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
             if (error) throw error;
             let dataset = data || [];
 
+            console.log('Dataset before filtering:', dataset);
+
             // Application des filtres sur colonnes de base + (optionnel) champs texte dynamiques
             if (Object.keys(filters).length > 0 && dataset.length > 0) {
                 dataset = await applyFiltersToElements({
