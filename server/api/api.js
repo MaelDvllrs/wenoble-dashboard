@@ -145,6 +145,7 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
             }
             const { data, error } = await query;
             if (error) throw error;
+            console.log('Base elements fetched:', data);
             return data || [];
         };
 
@@ -190,6 +191,7 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
             if (dataset.length === 0) return res.status(200).json({ message: 'Aucun blog trouvé' });
 
             const limited = typeof limit === 'number' ? dataset.slice(0, limit) : dataset;
+            console.log('Blogs récupérés avec succès :', limited);
             return res.json({ blog: limited });
         }
 
@@ -216,6 +218,7 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
             const { data, error } = await query;
             if (error) throw error;
             if (!data || data.length === 0) return res.status(200).json({ message: 'Aucun blog trouvé' });
+            console.log('Blogs récupérés avec succès :', data);
             return res.json({ blog: data });
         }
 
