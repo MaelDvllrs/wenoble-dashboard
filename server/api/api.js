@@ -226,6 +226,8 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
         // Build a value map for ordering depending on field type
         const valueMap = new Map();
 
+        console.log('Config for ordering found:', configRow);
+
         if (configRow.tab_field === 'text') {
             const { data: texts, error: textError } = await supabase
                 .from('collection_field_text')
@@ -302,7 +304,6 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
             });
         }
 
-        console.log('Final data after filtering:', finalData);
         if (finalData.length === 0) return res.status(200).json({ message: 'Aucun blog trouvé' });
         const limitedSorted = typeof limit === 'number' ? finalData.slice(0, limit) : finalData;
         return res.json({ blog: limitedSorted });
