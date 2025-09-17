@@ -191,7 +191,7 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
             if (dataset.length === 0) return res.status(200).json({ message: 'Aucun blog trouvé' });
 
             const limited = typeof limit === 'number' ? dataset.slice(0, limit) : dataset;
-            console.log('Blogs récupérés avec succès :', limited);
+            console.log('Blogs récupérés avec succès limited :', limited);
             return res.json({ blog: limited });
         }
 
