@@ -370,85 +370,105 @@ async function applyFiltersToElements({ elements, filters, baseColumns, targetCo
     let multiRefFieldValueMap = new Map();       // Map(element_id => { fieldName: Set(refIds) })
 
     if (singleCollectionId && dynamicKeys.length > 0) {
-        // Récupérer les configs correspondantes par name_field
-        const { data: configRows, error: configErr } = await supabase
+        // Récupérer toutes les configs de la collection puis filtrer par name_field OU id
+        const { data: allConfigRows, error: configErr } = await supabase
             .from('collection_config')
             .select('id, name_field, tab_field')
-            .eq('collection_id', singleCollectionId)
-            .in('name_field', dynamicKeys);
-        if (!configErr && configRows && configRows.length > 0) {
-            const textConfigs = configRows.filter(r => r.tab_field === 'text');
-            const multiRefConfigs = configRows.filter(r => r.tab_field === 'multiReference');
-
-            // --- TEXT --- //
-            if (textConfigs.length > 0) {
-                const textConfigIds = textConfigs.map(r => r.id);
-                const idToNameText = new Map(textConfigs.map(r => [r.id, r.name_field]));
-                const { data: textValues, error: textValErr } = await supabase
-                    .from('collection_field_text')
-                    .select('collection_element_id, id_config, text')
-                    .in('id_config', textConfigIds)
-                    .in('collection_element_id', elements.map(e => e.id));
-                if (!textValErr && textValues) {
-                    textValues.forEach(row => {
-                        if (!textFieldValueMap.has(row.collection_element_id)) {
-                            textFieldValueMap.set(row.collection_element_id, {});
-                        }
-                        const nameField = idToNameText.get(row.id_config);
-                        if (nameField) {
-                            textFieldValueMap.get(row.collection_element_id)[nameField] = row.text || '';
-                        }
-                    });
+            .eq('collection_id', singleCollectionId);
+        if (!configErr && allConfigRows && allConfigRows.length > 0) {
+            const dynKeySet = new Set(dynamicKeys.map(k => k.toString()));
+            const configRows = allConfigRows.filter(r => dynKeySet.has(r.name_field) || dynKeySet.has(r.id?.toString()));
+            if (configRows.length > 0) {
+                // Remap: si le filtre était par id_config, on ajoute aussi une entrée par name_field pour uniformiser les maps ci-dessous
+                const remappedFilters = { ...workingFilters };
+                let changed = false;
+                for (const row of configRows) {
+                    const idStr = row.id?.toString();
+                    if (idStr && remappedFilters[idStr] !== undefined && remappedFilters[row.name_field] === undefined) {
+                        remappedFilters[row.name_field] = remappedFilters[idStr];
+                        delete remappedFilters[idStr];
+                        changed = true;
+                    }
                 }
-            }
+                if (changed) {
+                    workingFilters = remappedFilters;
+                    filterEntries = Object.entries(workingFilters);
+                }
+                const textConfigs = configRows.filter(r => r.tab_field === 'text');
+                const multiRefConfigs = configRows.filter(r => r.tab_field === 'multiReference');
+                // Recalcul dynamicKeys (peut avoir changé après remap)
+                dynamicKeys = filterEntries.map(([k]) => k).filter(k => !baseColumns.has(k));
 
-            // --- MULTIREFERENCE --- //
-            if (multiRefConfigs.length > 0) {
-                const multiRefConfigIds = multiRefConfigs.map(r => r.id);
-                const idToNameMulti = new Map(multiRefConfigs.map(r => [r.id, r.name_field]));
-                const { data: multiRefValues, error: multiRefErr } = await supabase
-                    .from('collection_field_multireference')
-                    .select('collection_element_id, id_config, info_ref')
-                    .in('id_config', multiRefConfigIds)
-                    .in('collection_element_id', elements.map(e => e.id));
-                if (!multiRefErr && multiRefValues) {
-                    multiRefValues.forEach(row => {
-                        if (!multiRefFieldValueMap.has(row.collection_element_id)) {
-                            multiRefFieldValueMap.set(row.collection_element_id, {});
-                        }
-                        const nameField = idToNameMulti.get(row.id_config);
-                        if (!nameField) return;
-                        let parsed;
-                        if (typeof row.info_ref === 'string') {
-                            try { parsed = JSON.parse(row.info_ref); } catch { parsed = []; }
-                        } else {
-                            parsed = row.info_ref || [];
-                        }
-                        const refIds = new Set();
-                        const fold = (s) => (s || '').toString().normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
-                        if (Array.isArray(parsed)) {
-                            parsed.forEach(ref => {
-                                if (!ref) return;
-                                if (typeof ref === 'object') {
-                                    if (ref.value) {
-                                        const vLower = ref.value.toString().toLowerCase();
-                                        refIds.add(vLower);
-                                        refIds.add(fold(ref.value));
+                // --- TEXT --- //
+                if (textConfigs.length > 0) {
+                    const textConfigIds = textConfigs.map(r => r.id);
+                    const idToNameText = new Map(textConfigs.map(r => [r.id, r.name_field]));
+                    const { data: textValues, error: textValErr } = await supabase
+                        .from('collection_field_text')
+                        .select('collection_element_id, id_config, text')
+                        .in('id_config', textConfigIds)
+                        .in('collection_element_id', elements.map(e => e.id));
+                    if (!textValErr && textValues) {
+                        textValues.forEach(row => {
+                            if (!textFieldValueMap.has(row.collection_element_id)) {
+                                textFieldValueMap.set(row.collection_element_id, {});
+                            }
+                            const nameField = idToNameText.get(row.id_config);
+                            if (nameField) {
+                                textFieldValueMap.get(row.collection_element_id)[nameField] = row.text || '';
+                            }
+                        });
+                    }
+                }
+
+                // --- MULTIREFERENCE --- //
+                if (multiRefConfigs.length > 0) {
+                    const multiRefConfigIds = multiRefConfigs.map(r => r.id);
+                    const idToNameMulti = new Map(multiRefConfigs.map(r => [r.id, r.name_field]));
+                    const { data: multiRefValues, error: multiRefErr } = await supabase
+                        .from('collection_field_multireference')
+                        .select('collection_element_id, id_config, info_ref')
+                        .in('id_config', multiRefConfigIds)
+                        .in('collection_element_id', elements.map(e => e.id));
+                    if (!multiRefErr && multiRefValues) {
+                        multiRefValues.forEach(row => {
+                            if (!multiRefFieldValueMap.has(row.collection_element_id)) {
+                                multiRefFieldValueMap.set(row.collection_element_id, {});
+                            }
+                            const nameField = idToNameMulti.get(row.id_config);
+                            if (!nameField) return;
+                            let parsed;
+                            if (typeof row.info_ref === 'string') {
+                                try { parsed = JSON.parse(row.info_ref); } catch { parsed = []; }
+                            } else {
+                                parsed = row.info_ref || [];
+                            }
+                            const refIds = new Set();
+                            const fold = (s) => (s || '').toString().normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+                            if (Array.isArray(parsed)) {
+                                parsed.forEach(ref => {
+                                    if (!ref) return;
+                                    if (typeof ref === 'object') {
+                                        if (ref.value) {
+                                            const vLower = ref.value.toString().toLowerCase();
+                                            refIds.add(vLower);
+                                            refIds.add(fold(ref.value));
+                                        }
+                                        if (ref.label) {
+                                            const lLower = ref.label.toString().toLowerCase();
+                                            refIds.add(lLower);
+                                            refIds.add(fold(ref.label));
+                                        }
+                                    } else {
+                                        const raw = ref.toString().toLowerCase();
+                                        refIds.add(raw);
+                                        refIds.add(fold(ref));
                                     }
-                                    if (ref.label) {
-                                        const lLower = ref.label.toString().toLowerCase();
-                                        refIds.add(lLower);
-                                        refIds.add(fold(ref.label));
-                                    }
-                                } else {
-                                    const raw = ref.toString().toLowerCase();
-                                    refIds.add(raw);
-                                    refIds.add(fold(ref));
-                                }
-                            });
-                        }
-                        multiRefFieldValueMap.get(row.collection_element_id)[nameField] = refIds; // Set de valeurs (ids + labels) en lowercase
-                    });
+                                });
+                            }
+                            multiRefFieldValueMap.get(row.collection_element_id)[nameField] = refIds; // Set de valeurs (ids + labels) en lowercase
+                        });
+                    }
                 }
             }
         }
