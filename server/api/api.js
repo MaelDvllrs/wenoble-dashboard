@@ -319,6 +319,7 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
 // Helper: applique les filtres sur un tableau d'éléments (colonnes de base + champs texte + multiReference dynamiques)
 async function applyFiltersToElements({ elements, filters, baseColumns, targetCollectionIds }) {
     if (!elements || elements.length === 0) return [];
+    console.log('Applying filters:', filters);
     // Copie de travail pour normalisation éventuelle
     let workingFilters = { ...filters };
     let filterEntries = Object.entries(workingFilters);
