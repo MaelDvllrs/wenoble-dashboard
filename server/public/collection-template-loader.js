@@ -136,7 +136,7 @@
             }
         }
         
-        document.title = info.blog[0].collection_element_name;
+        
 
         // Ajout de toutes les balises SEO
         const ogTitle = document.querySelector("meta[property='og:title']") || document.createElement('meta');
@@ -144,6 +144,7 @@
         const titleText = data.content.text.find(text => text.id_config == titleTag);
         if (titleText) {
             ogTitle.setAttribute('content', titleText.text);
+            document.title = titleText.text;
         }
         document.head.appendChild(ogTitle);
 
