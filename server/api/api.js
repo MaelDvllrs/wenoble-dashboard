@@ -389,6 +389,43 @@ async function applyFiltersToElements({ elements, filters, baseColumns, targetCo
         } catch (normErr) {
             console.warn('Normalisation filtres (id_config->name_field) échouée:', normErr.message);
         }
+    } else {
+        // Cas multi-collection: tenter de convertir les clés purement numériques id_config -> name_field globalement
+        try {
+            const numericKeys = filterEntries.map(([k]) => k).filter(k => /^\d+$/.test(k));
+            if (numericKeys.length > 0) {
+                const { data: cfgRows, error: cfgErr } = await supabase
+                    .from('collection_config')
+                    .select('id, name_field')
+                    .in('id', numericKeys);
+                if (!cfgErr && Array.isArray(cfgRows) && cfgRows.length > 0) {
+                    const idToName = new Map(cfgRows.map(r => [r.id?.toString(), r.name_field]));
+                    const remapped = { ...workingFilters };
+                    let changed = false;
+                    for (const k of numericKeys) {
+                        const target = idToName.get(k);
+                        if (target) {
+                            if (remapped[target] === undefined) {
+                                remapped[target] = remapped[k];
+                            } else {
+                                const existing = Array.isArray(remapped[target]) ? remapped[target] : [remapped[target]];
+                                const incoming = Array.isArray(remapped[k]) ? remapped[k] : [remapped[k]];
+                                remapped[target] = Array.from(new Set([...existing, ...incoming]));
+                            }
+                            delete remapped[k];
+                            changed = true;
+                        }
+                    }
+                    if (changed) {
+                        workingFilters = remapped;
+                        filterEntries = Object.entries(workingFilters);
+                        console.log('Multi-collection numeric filter remap:', workingFilters);
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('Normalisation multi-collection id_config échouée:', e.message);
+        }
     }
     // Recalcule des clés dynamiques après normalisation
     for (const [key] of filterEntries) {
