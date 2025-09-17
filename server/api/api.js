@@ -106,6 +106,15 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
     const order = (req.query.order || 'desc').toString().toLowerCase();
     const limit = req.query.limit ? parseInt(req.query.limit, 10) : null;
     const colone = req.query.colone || 'collection_element_publish_date';
+    // Nouveau: filtres dynamiques envoyés par collection-filter-plus.js
+    let filters = {};
+    if (req.query.filters) {
+        try {
+            filters = JSON.parse(req.query.filters);
+        } catch (e) {
+            return res.status(400).json({ message: 'Paramètre filters invalide (JSON attendu)' });
+        }
+    }
 
     try {
         // Determine targeted collection(s)
@@ -152,6 +161,7 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
         // If sorting by a base column or no single collection targeted, use DB-side order for performance
         const canUseDbOrder = baseColumns.has(colone) || targetCollectionIds.length !== 1;
         if (canUseDbOrder) {
+            // On ne met pas le limit tout de suite pour ne pas tronquer avant filtres
             let query = supabase
                 .from('collection_element')
                 .select('*')
@@ -161,11 +171,24 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
                 if (targetCollectionIds.length === 1) query = query.eq('collection_id', targetCollectionIds[0]);
                 else query = query.in('collection_id', targetCollectionIds);
             }
-            if (limit) query = query.limit(limit);
             const { data, error } = await query;
             if (error) throw error;
-            if (!data || data.length === 0) return res.status(200).json({ message: 'Aucun blog trouvé' });
-            return res.json({ blog: data });
+            let dataset = data || [];
+
+            // Application des filtres sur colonnes de base + (optionnel) champs texte dynamiques
+            if (Object.keys(filters).length > 0 && dataset.length > 0) {
+                dataset = await applyFiltersToElements({
+                    elements: dataset,
+                    filters,
+                    baseColumns,
+                    targetCollectionIds,
+                });
+            }
+
+            if (dataset.length === 0) return res.status(200).json({ message: 'Aucun blog trouvé' });
+
+            const limited = typeof limit === 'number' ? dataset.slice(0, limit) : dataset;
+            return res.json({ blog: limited });
         }
 
         // Otherwise, attempt to sort by a configured field of the collection (text or multiReference)
@@ -266,13 +289,162 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
             if (va > vb) return ascending ? 1 : -1;
             return 0;
         });
-        const finalData = typeof limit === 'number' ? sorted.slice(0, limit) : sorted;
-        return res.json({ blog: finalData });
+        let finalData = sorted;
+        // Filtres (base + texte dynamiques) appliqués après tri
+        if (Object.keys(filters).length > 0 && finalData.length > 0) {
+            finalData = await applyFiltersToElements({
+                elements: finalData,
+                filters,
+                baseColumns,
+                targetCollectionIds
+            });
+        }
+        if (finalData.length === 0) return res.status(200).json({ message: 'Aucun blog trouvé' });
+        const limitedSorted = typeof limit === 'number' ? finalData.slice(0, limit) : finalData;
+        return res.json({ blog: limitedSorted });
     } catch (err) {
         console.error('Erreur lors de la récupération des blogs :', err);
         res.status(500).send({ error: err.message });
     }
 });
+
+// Helper: applique les filtres sur un tableau d'éléments (colonnes de base + champs texte + multiReference dynamiques)
+async function applyFiltersToElements({ elements, filters, baseColumns, targetCollectionIds }) {
+    if (!elements || elements.length === 0) return [];
+    const filterEntries = Object.entries(filters);
+    if (filterEntries.length === 0) return elements;
+
+    // Si plusieurs collections, on ne tente pas les champs dynamiques (ambiguïté) -> uniquement base
+    const singleCollectionId = targetCollectionIds && targetCollectionIds.length === 1 ? targetCollectionIds[0] : null;
+
+    // Déterminer les clés dynamiques candidates (non base)
+    const dynamicKeys = [];
+    for (const [key] of filterEntries) {
+        if (!baseColumns.has(key)) dynamicKeys.push(key);
+    }
+
+    let textFieldValueMap = new Map();          // Map(element_id => { fieldName: value })
+    let multiRefFieldValueMap = new Map();       // Map(element_id => { fieldName: Set(refIds) })
+
+    if (singleCollectionId && dynamicKeys.length > 0) {
+        // Récupérer les configs correspondantes par name_field
+        const { data: configRows, error: configErr } = await supabase
+            .from('collection_config')
+            .select('id, name_field, tab_field')
+            .eq('collection_id', singleCollectionId)
+            .in('name_field', dynamicKeys);
+        if (!configErr && configRows && configRows.length > 0) {
+            const textConfigs = configRows.filter(r => r.tab_field === 'text');
+            const multiRefConfigs = configRows.filter(r => r.tab_field === 'multiReference');
+
+            // --- TEXT --- //
+            if (textConfigs.length > 0) {
+                const textConfigIds = textConfigs.map(r => r.id);
+                const idToNameText = new Map(textConfigs.map(r => [r.id, r.name_field]));
+                const { data: textValues, error: textValErr } = await supabase
+                    .from('collection_field_text')
+                    .select('collection_element_id, id_config, text')
+                    .in('id_config', textConfigIds)
+                    .in('collection_element_id', elements.map(e => e.id));
+                if (!textValErr && textValues) {
+                    textValues.forEach(row => {
+                        if (!textFieldValueMap.has(row.collection_element_id)) {
+                            textFieldValueMap.set(row.collection_element_id, {});
+                        }
+                        const nameField = idToNameText.get(row.id_config);
+                        if (nameField) {
+                            textFieldValueMap.get(row.collection_element_id)[nameField] = row.text || '';
+                        }
+                    });
+                }
+            }
+
+            // --- MULTIREFERENCE --- //
+            if (multiRefConfigs.length > 0) {
+                const multiRefConfigIds = multiRefConfigs.map(r => r.id);
+                const idToNameMulti = new Map(multiRefConfigs.map(r => [r.id, r.name_field]));
+                const { data: multiRefValues, error: multiRefErr } = await supabase
+                    .from('collection_field_multireference')
+                    .select('collection_element_id, id_config, info_ref')
+                    .in('id_config', multiRefConfigIds)
+                    .in('collection_element_id', elements.map(e => e.id));
+                if (!multiRefErr && multiRefValues) {
+                    multiRefValues.forEach(row => {
+                        if (!multiRefFieldValueMap.has(row.collection_element_id)) {
+                            multiRefFieldValueMap.set(row.collection_element_id, {});
+                        }
+                        const nameField = idToNameMulti.get(row.id_config);
+                        if (!nameField) return;
+                        let parsed;
+                        if (typeof row.info_ref === 'string') {
+                            try { parsed = JSON.parse(row.info_ref); } catch { parsed = []; }
+                        } else {
+                            parsed = row.info_ref || [];
+                        }
+                        const refIds = new Set();
+                        if (Array.isArray(parsed)) {
+                            parsed.forEach(ref => {
+                                if (!ref) return;
+                                if (typeof ref === 'object' && ref.value) refIds.add(ref.value.toString());
+                                else refIds.add(ref.toString());
+                            });
+                        }
+                        multiRefFieldValueMap.get(row.collection_element_id)[nameField] = refIds; // Set d'IDs référencés
+                    });
+                }
+            }
+        }
+    }
+
+    // Fonction de test: pour multiReference on exige qu'au moins UNE valeur attendue soit présente (logique OR)
+    function elementMatches(el) {
+        for (const [key, expected] of filterEntries) {
+            const values = Array.isArray(expected) ? expected.map(v => v.toString()) : [expected.toString()];
+            let actual;
+            let isMultiRef = false;
+            if (baseColumns.has(key)) {
+                actual = el[key];
+                if (actual === undefined || actual === null) return false;
+                const actualStr = actual.toString().toLowerCase();
+                const match = values.some(v => actualStr === v.toLowerCase());
+                if (!match) return false;
+                continue;
+            }
+
+            // Texte dynamique
+            if (textFieldValueMap.size > 0) {
+                const obj = textFieldValueMap.get(el.id) || {};
+                if (Object.prototype.hasOwnProperty.call(obj, key)) {
+                    actual = obj[key];
+                    if (actual === undefined || actual === null) return false;
+                    const actualStr = actual.toString().toLowerCase();
+                    const match = values.some(v => actualStr === v.toLowerCase());
+                    if (!match) return false;
+                    continue;
+                }
+            }
+
+            // MultiReference dynamique
+            if (multiRefFieldValueMap.size > 0) {
+                const obj = multiRefFieldValueMap.get(el.id) || {};
+                if (Object.prototype.hasOwnProperty.call(obj, key)) {
+                    const refSet = obj[key]; // Set
+                    isMultiRef = true;
+                    if (!(refSet instanceof Set)) return false;
+                    const match = values.some(v => refSet.has(v));
+                    if (!match) return false;
+                    continue;
+                }
+            }
+
+            // Clé non gérée (ni base, ni text, ni multiReference) -> ignorer le filtre (ne pas exclure)
+            continue;
+        }
+        return true;
+    }
+
+    return elements.filter(elementMatches);
+}
 
 // Récupérer les infos d'une page de blog (collection_element)
 router.get('/sendBlogInfo', apiKeyMiddleware, async (req, res) => {
@@ -631,7 +803,7 @@ router.get('/sendBlogContent', apiKeyMiddleware, async (req, res) => {
                 }
                 case 'multiReference': {
                    // 1. Récupérer la ligne multireference
-                   const { data } = await supabase
+                   const { data: multiRefRow } = await supabase
                        .from('collection_field_multireference')
                        .select('id_config, info_ref')
                        .eq('collection_element_id', id_blog_page)
@@ -639,59 +811,88 @@ router.get('/sendBlogContent', apiKeyMiddleware, async (req, res) => {
                        .maybeSingle();
 
                    let references = [];
-                   if (data && data.info_ref) {
+                   if (multiRefRow && multiRefRow.info_ref) {
                         let parsedRefs;
-                        if (typeof data.info_ref === 'string') {
+                        if (typeof multiRefRow.info_ref === 'string') {
                             try {
-                                parsedRefs = JSON.parse(data.info_ref); // tableau d'objets
+                                parsedRefs = JSON.parse(multiRefRow.info_ref); // tableau d'objets { label, value }
                             } catch (e) {
-                                console.error('Erreur lors du parsing JSON multiReference:', e, data.info_ref);
+                                console.error('Erreur lors du parsing JSON multiReference:', e, multiRefRow.info_ref);
                                 parsedRefs = [];
                             }
                         } else {
-                            parsedRefs = data.info_ref;
+                            parsedRefs = multiRefRow.info_ref;
                         }
-                        // Pour récupérer tous les value :
-                        const values = parsedRefs.map(ref => ref.value);
 
-                       
-                       
-                       let collection_ids = [];
-                       if (Array.isArray(values) && values.length > 0) {
-                           const { data: configData, error: configError } = await supabase
-                               .from('collection_element')
-                               .select('collection_id, id')
-                               .in('id', values);
-                           if (configError) {
-                               console.error('Erreur lors de la récupération des collection_id :', configError.message);
-                               return;
-                           }
-                           // Associer chaque value à son collection_id
-                           // Exemple : [{value: ..., collection_id: ...}, ...]
-                           collection_ids = values.map(val => {
-                               const found = configData.find(row => row.id === val);
-                               return found ? found.collection_id : null;
-                           });
-                       } else if (values) {
-                           const { data: configData, error: configError } = await supabase
-                               .from('collection_element')
-                               .select('collection_id')
-                               .eq('id', values)
-                               .maybeSingle();
-                           if (configError) {
-                               console.error('Erreur lors de la récupération de la collection_id :', configError.message);
-                               return;
-                           }
-                           if (configData) {
-                               collection_ids = [configData.collection_id];
-                           }
-                       }
-                   
-                       references = parsedRefs.map((ref, i) => ({
-                           ...ref,
-                           id_config: data.id_config,
-                           collection_id: collection_ids[i] // Ajout du collection_id récupéré
-                       }));
+                        const values = Array.isArray(parsedRefs) ? parsedRefs.map(ref => ref.value).filter(Boolean) : [];
+
+                        let elementRows = [];
+                        if (values.length > 0) {
+                            const { data: elementData, error: elementErr } = await supabase
+                                .from('collection_element')
+                                .select('id, collection_id')
+                                .in('id', values);
+                            if (elementErr) {
+                                console.error('Erreur récupération collection_id multiReference:', elementErr.message);
+                            } else {
+                                elementRows = elementData || [];
+                            }
+                        }
+
+                        const idToCollectionId = new Map(elementRows.map(r => [r.id, r.collection_id]));
+                        const uniqueCollectionIds = Array.from(new Set(elementRows.map(r => r.collection_id).filter(Boolean)));
+
+                        // 2. Récupérer toutes les configs 'text' pour les collections concernées
+                        let textConfigs = [];
+                        if (uniqueCollectionIds.length > 0) {
+                            const { data: cfgData, error: cfgErr } = await supabase
+                                .from('collection_config')
+                                .select('id, collection_id, name_field, tab_field')
+                                .in('collection_id', uniqueCollectionIds)
+                                .eq('tab_field', 'text');
+                            if (cfgErr) {
+                                console.error('Erreur récupération configs text multiReference:', cfgErr.message);
+                            } else {
+                                textConfigs = cfgData || [];
+                            }
+                        }
+
+                        const textConfigIds = textConfigs.map(c => c.id);
+                        const configIdToName = new Map(textConfigs.map(c => [c.id, c.name_field]));
+
+                        // 3. Récupérer les valeurs texte pour tous les éléments référencés
+                        let elementTextsMap = new Map(); // element_id -> { fieldName: text }
+                        if (values.length > 0 && textConfigIds.length > 0) {
+                            const { data: textVals, error: textValsErr } = await supabase
+                                .from('collection_field_text')
+                                .select('collection_element_id, id_config, text')
+                                .in('collection_element_id', values)
+                                .in('id_config', textConfigIds);
+                            if (textValsErr) {
+                                console.error('Erreur récupération textes multiReference:', textValsErr.message);
+                            } else if (textVals) {
+                                textVals.forEach(row => {
+                                    if (!elementTextsMap.has(row.collection_element_id)) {
+                                        elementTextsMap.set(row.collection_element_id, {});
+                                    }
+                                    const nameField = configIdToName.get(row.id_config);
+                                    if (nameField) {
+                                        elementTextsMap.get(row.collection_element_id)[nameField] = row.text || '';
+                                    }
+                                });
+                            }
+                        }
+
+                        // 4. Construire la réponse enrichie
+                        references = parsedRefs.map(ref => {
+                            const elId = ref.value;
+                            return {
+                                ...ref,
+                                id_config: multiRefRow.id_config,
+                                collection_id: idToCollectionId.get(elId) || null,
+                                texts: elementTextsMap.get(elId) || {}
+                            };
+                        });
                    }
                    return { type: 'multiReference', data: references };
                 }
