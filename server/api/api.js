@@ -106,7 +106,7 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
     const order = (req.query.order || 'desc').toString().toLowerCase();
     const limit = req.query.limit ? parseInt(req.query.limit, 10) : null;
     const colone = req.query.colone || 'collection_element_publish_date';
-    const debugFilters = '1';
+    const debugFilters = 'false';
     // Nouveau: filtres dynamiques envoyés par collection-filter-plus.js
     let filters = {};
     if (req.query.filters) {
