@@ -40,6 +40,99 @@
 		return options;
 	}
 
+	// ---- Form filtering helpers ----
+	function collectFilterInputs(form) {
+		// Returns array of { key, value }
+		const entries = [];
+		const elements = Array.from(form.querySelectorAll('input[name], select[name], textarea[name], [data-id-config], [wn-filter-field]'));
+		elements.forEach(el => {
+			let values = [];
+			const type = (el.getAttribute('type') || '').toLowerCase();
+			if (el.tagName === 'SELECT' && el.multiple) {
+				values = Array.from(el.selectedOptions).map(o => o.value).filter(v => v !== '');
+			} else if (type === 'checkbox') {
+				if (el.checked) values = [el.value];
+			} else if (type === 'radio') {
+				if (el.checked) values = [el.value]; else return;
+			} else {
+				const v = ('value' in el) ? el.value : '';
+				if (v !== '') values = [v]; else return; // skip empty
+			}
+
+			if (values.length === 0) return;
+			// Determine key: priority data-id-config / wn-filter-field / name
+			let key = el.getAttribute('wn-filter-field');
+			if (!key) key = el.getAttribute('data-id-config');
+			if (!key) key = el.getAttribute('name');
+			if (!key) return;
+			values.forEach(v => entries.push({ key, value: v }));
+		});
+		return entries;
+	}
+
+	function buildFilteredUrl(baseUrl, filterEntries, idToNameMap) {
+		// Start from current URL but remove page param and prior filter params we'll overwrite
+		const url = new URL(baseUrl.href);
+		url.searchParams.delete('page');
+		// Build a set of keys we will manage
+		const managedKeys = new Set();
+		filterEntries.forEach(({ key }) => {
+			// If key is an id_config convert to name_field via map
+			const mapped = idToNameMap.get(key) || key; // fallback: treat as direct field name
+			managedKeys.add(mapped);
+		});
+		// Remove existing values for managed keys
+		managedKeys.forEach(k => url.searchParams.delete(k));
+		// Append new entries
+		filterEntries.forEach(({ key, value }) => {
+			const mapped = idToNameMap.get(key) || key;
+			url.searchParams.append(mapped, value);
+		});
+		return url.pathname + (url.searchParams.toString() ? `?${url.searchParams.toString()}` : '');
+	}
+
+	function hydrateFormFromUrl(form, params, nameToIdMap) {
+		// For convenience, set form fields if matching either name_field or id_config
+		const allFields = Array.from(form.querySelectorAll('[data-id-config], [wn-filter-field], input[name], select[name], textarea[name]'));
+		allFields.forEach(el => {
+			let key = el.getAttribute('wn-filter-field') || el.getAttribute('data-id-config') || el.getAttribute('name');
+			if (!key) return;
+			// If element uses id_config, we need to map name_field -> id_config for lookup
+			let paramValues;
+			if (!params.has(key) && nameToIdMap.has(key)) {
+				// key is name_field but element maybe uses id_config? We handle below
+			}
+			// If key looks like an id_config (UUID) attempt inverse mapping to name_field
+			if (!params.has(key) && nameToIdMap) {
+				// Try: if element has data-id-config (id) then find its name_field to pull values
+				if (el.hasAttribute('data-id-config')) {
+					const idc = el.getAttribute('data-id-config');
+					const nameField = (idToNameGlobal.get && idToNameGlobal.get(idc)) || null;
+					if (nameField && params.has(nameField)) {
+						paramValues = params.getAll(nameField);
+					}
+				}
+			}
+			if (!paramValues && params.has(key)) {
+				paramValues = params.getAll(key);
+			}
+			if (!paramValues || paramValues.length === 0) return;
+			const type = (el.getAttribute('type') || '').toLowerCase();
+			if (type === 'checkbox' || type === 'radio') {
+				el.checked = paramValues.includes(el.value);
+			} else if (el.tagName === 'SELECT' && el.multiple) {
+				Array.from(el.options).forEach(opt => { opt.selected = paramValues.includes(opt.value); });
+			} else {
+				// Use first value
+				el.value = paramValues[0];
+			}
+		});
+	}
+
+	// Global maps per blogId to avoid recomputation
+	const configMapsCache = new Map(); // blogId -> { idToName: Map, nameToId: Map }
+	const idToNameGlobal = new Map(); // merged for hydrate helper
+
 	// Build filters from URL params (exclude reserved keys)
 	function extractFilters() {
 		const params = new URLSearchParams(window.location.search);
@@ -97,6 +190,41 @@
 		const cfg = decodeBase64(encoded);
 		const { blogId, pagination, itemsPerPage } = cfg;
 		if (!blogId) { console.error('[collection-filter-plus] blogId manquant'); return; }
+
+		// Build config maps from token cfg.config if provided
+		let idToNameMap = new Map();
+		let nameToIdMap = new Map();
+		if (configMapsCache.has(blogId)) {
+			({ idToName: idToNameMap, nameToId: nameToIdMap } = configMapsCache.get(blogId));
+		} else {
+			if (Array.isArray(cfg.config)) {
+				cfg.config.forEach(c => {
+					if (c.id && c.name_field) {
+						idToNameMap.set(c.id, c.name_field);
+						nameToIdMap.set(c.name_field, c.id);
+						idToNameGlobal.set(c.id, c.name_field);
+					}
+				});
+			}
+			configMapsCache.set(blogId, { idToName: idToNameMap, nameToId: nameToIdMap });
+		}
+
+		// Form handling: locate a form within wrapper or linked via data-collection-id
+		const form = wrapper.querySelector('form[wn-collection-filter-form]') || document.querySelector(`form[wn-collection-filter-form][data-collection-id="${blogId}"]`);
+		if (form && !form.__wnFilterBound) {
+			form.__wnFilterBound = true;
+			// Hydrate existing values from URL
+			try { hydrateFormFromUrl(form, new URLSearchParams(window.location.search), nameToIdMap); } catch {}
+			form.addEventListener('submit', (ev) => {
+				// Allow normal submit if form has native action override attribute
+				if (!form.hasAttribute('data-wn-native-submit')) ev.preventDefault();
+				const baseUrl = new URL(window.location.href);
+				const inputs = collectFilterInputs(form);
+				const finalUrl = buildFilteredUrl(baseUrl, inputs, idToNameMap);
+				// Navigate (soft reload)
+				window.location.href = finalUrl;
+			});
+		}
 
 		const template = wrapper.querySelector('[wn-collection-box]');
 		if (!template) { console.error('[collection-filter-plus] Template wn-collection-box manquant'); return; }
@@ -284,6 +412,70 @@
 		}
 
 		template.remove();
+
+		// Build pagination UI if configured (mirrors collection-loader.js)
+		if (pagination) {
+			let paginationWrapper = wrapper.querySelector('[wn-collection-pagination]');
+			if (!paginationWrapper) {
+				paginationWrapper = document.querySelector(`[wn-collection-pagination][data-collection-id="${blogId}"]`) || document.querySelector('[wn-collection-pagination]');
+			}
+			const blogsTotal = Array.isArray(allItems) ? allItems.length : 0; // allItems = full dataset (pre-slice)
+			const totalPagesCalc = Math.max(1, Math.ceil(blogsTotal / (parseInt(itemsPerPage || 10, 10) || 10)));
+			if (!paginationWrapper || totalPagesCalc <= 1) {
+				if (paginationWrapper) paginationWrapper.style.display = 'none';
+			} else {
+				const baseUrl = new URL(window.location.href);
+				const buildHref = (pageNumber) => {
+					const u = new URL(baseUrl.href);
+					if (pageNumber === 1) {
+						u.searchParams.delete('page');
+					} else {
+						u.searchParams.set('page', String(pageNumber));
+					}
+					const qs = u.searchParams.toString();
+					return u.pathname + (qs ? `?${qs}` : '');
+				};
+
+				const prevEl = paginationWrapper.querySelector('[wn-pagination-prev]');
+				const nextEl = paginationWrapper.querySelector('[wn-pagination-next]');
+				if (prevEl) {
+					const prevPage = Math.max(1, currentPage - 1);
+					prevEl.setAttribute('href', currentPage === 1 ? '#' : buildHref(prevPage));
+					if (currentPage === 1) {
+						prevEl.setAttribute('aria-disabled', 'true');
+						prevEl.classList.add('disabled');
+					} else {
+						prevEl.removeAttribute('aria-disabled');
+						prevEl.classList.remove('disabled');
+					}
+				}
+				if (nextEl) {
+					const nextPage = Math.min(totalPagesCalc, currentPage + 1);
+					nextEl.setAttribute('href', currentPage >= totalPagesCalc ? '#' : buildHref(nextPage));
+					if (currentPage >= totalPagesCalc) {
+						nextEl.setAttribute('aria-disabled', 'true');
+						nextEl.classList.add('disabled');
+					} else {
+						nextEl.removeAttribute('aria-disabled');
+						nextEl.classList.remove('disabled');
+					}
+				}
+
+				const numberTpl = paginationWrapper.querySelector('[wn-pagination-number]');
+				if (numberTpl && numberTpl.parentNode) {
+					paginationWrapper.querySelectorAll('[data-generated="true"]').forEach(n => n.remove());
+					for (let i = 1; i <= totalPagesCalc; i++) {
+						const nClone = numberTpl.cloneNode(true);
+						nClone.setAttribute('data-generated', 'true');
+						nClone.setAttribute('href', buildHref(i));
+						nClone.textContent = String(i);
+						if (i === currentPage) nClone.classList.add('active');
+						numberTpl.parentNode.appendChild(nClone);
+					}
+					numberTpl.style.display = 'none';
+				}
+			}
+		}
 
 		const marker = document.createElement('div');
 		marker.className = 'ssr-wn-collection-box';
