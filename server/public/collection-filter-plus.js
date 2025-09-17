@@ -42,9 +42,10 @@
 
 	// ---- Form filtering helpers ----
 	function collectFilterInputs(form) {
-		// Returns array of { key, value }
+		// Nouvelle version simplifiée: on ne prend que les éléments avec wn-filter-type (id_config)
+		// Retourne array { key: id_config, value }
 		const entries = [];
-		const elements = Array.from(form.querySelectorAll('input[name], select[name], textarea[name], [data-id-config], [wn-filter-field]'));
+		const elements = Array.from(form.querySelectorAll('[wn-filter-type]'));
 		elements.forEach(el => {
 			let values = [];
 			const type = (el.getAttribute('type') || '').toLowerCase();
@@ -56,14 +57,10 @@
 				if (el.checked) values = [el.value]; else return;
 			} else {
 				const v = ('value' in el) ? el.value : '';
-				if (v !== '') values = [v]; else return; // skip empty
+				if (v !== '') values = [v]; else return;
 			}
-
 			if (values.length === 0) return;
-			// Determine key: priority data-id-config / wn-filter-field / name
-			let key = el.getAttribute('wn-filter-field');
-			if (!key) key = el.getAttribute('data-id-config');
-			if (!key) key = el.getAttribute('name');
+			const key = el.getAttribute('wn-filter-type'); // id_config direct
 			if (!key) return;
 			values.forEach(v => entries.push({ key, value: v }));
 		});
@@ -71,59 +68,38 @@
 	}
 
 	function buildFilteredUrl(baseUrl, filterEntries, idToNameMap) {
-		// Start from current URL but remove page param and prior filter params we'll overwrite
 		const url = new URL(baseUrl.href);
 		url.searchParams.delete('page');
-		// Build a set of keys we will manage
-		const managedKeys = new Set();
+		// On supprime les anciens params pour les name_field correspondants
+		const managed = new Set();
 		filterEntries.forEach(({ key }) => {
-			// If key is an id_config convert to name_field via map
-			const mapped = idToNameMap.get(key) || key; // fallback: treat as direct field name
-			managedKeys.add(mapped);
+			const nameField = idToNameMap.get(key) || key; // clé finale (name_field attendu par backend)
+			managed.add(nameField);
 		});
-		// Remove existing values for managed keys
-		managedKeys.forEach(k => url.searchParams.delete(k));
-		// Append new entries
+		managed.forEach(k => url.searchParams.delete(k));
 		filterEntries.forEach(({ key, value }) => {
-			const mapped = idToNameMap.get(key) || key;
-			url.searchParams.append(mapped, value);
+			const nameField = idToNameMap.get(key) || key;
+			url.searchParams.append(nameField, value);
 		});
 		return url.pathname + (url.searchParams.toString() ? `?${url.searchParams.toString()}` : '');
 	}
 
-	function hydrateFormFromUrl(form, params, nameToIdMap) {
-		// For convenience, set form fields if matching either name_field or id_config
-		const allFields = Array.from(form.querySelectorAll('[data-id-config], [wn-filter-field], input[name], select[name], textarea[name]'));
-		allFields.forEach(el => {
-			let key = el.getAttribute('wn-filter-field') || el.getAttribute('data-id-config') || el.getAttribute('name');
-			if (!key) return;
-			// If element uses id_config, we need to map name_field -> id_config for lookup
-			let paramValues;
-			if (!params.has(key) && nameToIdMap.has(key)) {
-				// key is name_field but element maybe uses id_config? We handle below
-			}
-			// If key looks like an id_config (UUID) attempt inverse mapping to name_field
-			if (!params.has(key) && nameToIdMap) {
-				// Try: if element has data-id-config (id) then find its name_field to pull values
-				if (el.hasAttribute('data-id-config')) {
-					const idc = el.getAttribute('data-id-config');
-					const nameField = (idToNameGlobal.get && idToNameGlobal.get(idc)) || null;
-					if (nameField && params.has(nameField)) {
-						paramValues = params.getAll(nameField);
-					}
-				}
-			}
-			if (!paramValues && params.has(key)) {
-				paramValues = params.getAll(key);
-			}
-			if (!paramValues || paramValues.length === 0) return;
+	function hydrateFormFromUrl(form, params, nameToIdMap, idToNameMap) {
+		// Version simplifiée: inputs avec wn-filter-type=id_config => on cherche les valeurs dans l'URL via name_field
+		const fields = Array.from(form.querySelectorAll('[wn-filter-type]'));
+		fields.forEach(el => {
+			const idConfig = el.getAttribute('wn-filter-type');
+			if (!idConfig) return;
+			const nameField = idToNameMap.get(idConfig) || idConfig; // fallback si pas trouvé
+			if (!params.has(nameField)) return;
+			const paramValues = params.getAll(nameField);
+			if (!paramValues.length) return;
 			const type = (el.getAttribute('type') || '').toLowerCase();
 			if (type === 'checkbox' || type === 'radio') {
 				el.checked = paramValues.includes(el.value);
 			} else if (el.tagName === 'SELECT' && el.multiple) {
 				Array.from(el.options).forEach(opt => { opt.selected = paramValues.includes(opt.value); });
 			} else {
-				// Use first value
 				el.value = paramValues[0];
 			}
 		});
@@ -209,12 +185,22 @@
 			configMapsCache.set(blogId, { idToName: idToNameMap, nameToId: nameToIdMap });
 		}
 
-		// Form handling: locate a form within wrapper or linked via data-collection-id
-		const form = wrapper.querySelector('form[wn-collection-filter-form]') || document.querySelector(`form[wn-collection-filter-form][data-collection-id="${blogId}"]`);
+		// Nouvelle logique de liaison wrapper <-> form : attribut partagé
+		let form = null;
+		const filterGroup = wrapper.getAttribute('wn-collection-filter-wrapper');
+		if (filterGroup) {
+			form = document.querySelector(`form[wn-collection-filter-form="${filterGroup}"]`);
+			if (!form) {
+				// fallback ancienne méthode si non trouvé
+				form = wrapper.querySelector('form[wn-collection-filter-form]') || document.querySelector(`form[wn-collection-filter-form][data-collection-id="${blogId}"]`);
+			}
+		} else {
+			form = wrapper.querySelector('form[wn-collection-filter-form]') || document.querySelector(`form[wn-collection-filter-form][data-collection-id="${blogId}"]`);
+		}
 		if (form && !form.__wnFilterBound) {
 			form.__wnFilterBound = true;
-			// Hydrate existing values from URL
-			try { hydrateFormFromUrl(form, new URLSearchParams(window.location.search), nameToIdMap); } catch {}
+			// Hydrate existing values from URL (nouvelle signature)
+			try { hydrateFormFromUrl(form, new URLSearchParams(window.location.search), nameToIdMap, idToNameMap); } catch {}
 			form.addEventListener('submit', (ev) => {
 				// Allow normal submit if form has native action override attribute
 				if (!form.hasAttribute('data-wn-native-submit')) ev.preventDefault();
