@@ -241,15 +241,16 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
                 valueMap.set(row.collection_element_id, (row.text || '').toString());
             });
         } else if (configRow.tab_field === 'multiReference') {
-            // Get referenced IDs for each element; use first referenced item's name
+            // Tri sur multiReference: utiliser TOUS les labels référencés, triés alphabétiquement, concaténés
             const { data: refs, error: refError } = await supabase
                 .from('collection_field_multireference')
                 .select('collection_element_id, info_ref')
                 .eq('id_config', configRow.id);
             if (refError) throw refError;
 
-            // Extract first referenced element id per element
-            const firstRefByElement = new Map();
+            // Map element -> array de IDs référencés (order natif du JSON)
+            const allRefIds = new Set();
+            const refsByElement = new Map();
             (refs || []).forEach(row => {
                 let parsed;
                 if (typeof row.info_ref === 'string') {
@@ -257,20 +258,41 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
                 } else {
                     parsed = row.info_ref || [];
                 }
-                const first = Array.isArray(parsed) && parsed.length > 0 ? parsed[0] : null;
-                const refId = first && typeof first === 'object' ? first.value : first;
-                if (refId) firstRefByElement.set(row.collection_element_id, refId);
+                const ids = [];
+                if (Array.isArray(parsed)) {
+                    parsed.forEach(entry => {
+                        if (!entry) return;
+                        if (typeof entry === 'object') {
+                            if (entry.value) {
+                                ids.push(entry.value);
+                                allRefIds.add(entry.value);
+                            }
+                        } else {
+                            ids.push(entry);
+                            allRefIds.add(entry);
+                        }
+                    });
+                }
+                refsByElement.set(row.collection_element_id, ids);
             });
-            const refIds = Array.from(new Set(Array.from(firstRefByElement.values())));
-            if (refIds.length > 0) {
+
+            if (allRefIds.size > 0) {
                 const { data: refElements, error: refElError } = await supabase
                     .from('collection_element')
                     .select('id, collection_element_name')
-                    .in('id', refIds);
+                    .in('id', Array.from(allRefIds));
                 if (refElError) throw refElError;
-                const nameById = new Map((refElements || []).map(e => [e.id, e.collection_element_name || '']));
-                firstRefByElement.forEach((refId, elId) => {
-                    valueMap.set(elId, (nameById.get(refId) || '').toString());
+                const nameById = new Map((refElements || []).map(e => [e.id, (e.collection_element_name || '').toString()]));
+
+                refsByElement.forEach((ids, elId) => {
+                    if (!ids || ids.length === 0) {
+                        valueMap.set(elId, '');
+                        return;
+                    }
+                    // Récupère les noms, filtre vides, trie alphabétiquement
+                    const names = ids.map(id => nameById.get(id) || '').filter(Boolean).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+                    const orderingKey = names.join(' | ');
+                    valueMap.set(elId, orderingKey);
                 });
             }
         } else {
