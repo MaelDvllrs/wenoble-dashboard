@@ -691,6 +691,8 @@ async function applyFiltersToElements({ elements, filters, baseColumns, targetCo
         return true;
     }
 
+    console.log('Filtering elements:', elements);
+
     return elements.filter(elementMatches);
 }
 
