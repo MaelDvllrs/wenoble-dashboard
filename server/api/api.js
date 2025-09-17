@@ -666,6 +666,8 @@ async function applyFiltersToElements({ elements, filters, baseColumns, targetCo
                 }
             }
 
+            console.log("MultiReference field values (ids + labels):", Array.from(multiRefFieldValueMap));
+
             // MultiReference dynamique
             if (multiRefFieldValueMap.size > 0) {
                 const obj = multiRefFieldValueMap.get(el.id) || {};
