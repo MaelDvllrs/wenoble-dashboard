@@ -376,7 +376,8 @@ async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, b
     }
 
     console.log('Configs récupérées pour classification des filtres :', allConfigs);
-    
+    console.log('Filtres reçus :', filters);
+    console.log('Entries des filtres :', filterEntries);
     const configMap = new Map(allConfigs.map(c => [c.name_field, c.tab_field]));
     
     // Classifier les filtres
