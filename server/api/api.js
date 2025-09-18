@@ -253,7 +253,46 @@ async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, 
 
         console.log('multiRefResults pour configId', configId, multiRefResults);
         
-        // Filtrer côté serveur en parsant le JSON
+        // Collecter tous les IDs référencés pour les récupérer en une seule requête
+        const allRefIds = new Set();
+        multiRefResults.forEach(row => {
+            let parsed;
+            if (typeof row.info_ref === 'string') {
+                try { parsed = JSON.parse(row.info_ref); } catch { return; }
+            } else {
+                parsed = row.info_ref || [];
+            }
+            
+            if (Array.isArray(parsed)) {
+                parsed.forEach(ref => {
+                    if (!ref) return;
+                    if (typeof ref === 'object' && ref.value) {
+                        allRefIds.add(ref.value);
+                    } else if (typeof ref !== 'object') {
+                        allRefIds.add(ref);
+                    }
+                });
+            }
+        });
+
+        // Récupérer les éléments référencés avec leurs propriétés
+        let refElementsMap = new Map();
+        if (allRefIds.size > 0) {
+            const { data: refElements, error: refErr } = await supabase
+                .from('collection_element')
+                .select('id, collection_element_name, collection_element_slug')
+                .in('id', Array.from(allRefIds));
+            
+            if (!refErr && refElements) {
+                refElements.forEach(element => {
+                    refElementsMap.set(element.id, element);
+                });
+            }
+        }
+
+        console.log('Éléments référencés récupérés:', refElementsMap);
+        
+        // Filtrer côté serveur en parsant le JSON et en comparant avec les éléments référencés
         const matchingIds = [];
         for (const row of multiRefResults) {
             let parsed;
@@ -269,12 +308,26 @@ async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, 
             const hasMatch = values.some(expectedValue => {
                 return parsed.some(ref => {
                     if (!ref) return false;
-                    if (typeof ref === 'object') {
-                        return ref.value?.toString().toLowerCase() === expectedValue.toString().toLowerCase() ||
-                               ref.label?.toString().toLowerCase() === expectedValue.toString().toLowerCase();
+                    
+                    let refId;
+                    if (typeof ref === 'object' && ref.value) {
+                        refId = ref.value;
+                    } else if (typeof ref !== 'object') {
+                        refId = ref;
                     } else {
-                        return ref.toString().toLowerCase() === expectedValue.toString().toLowerCase();
+                        return false;
                     }
+
+                    // Récupérer l'élément référencé
+                    const refElement = refElementsMap.get(refId);
+                    if (!refElement) return false;
+
+                    // Comparer avec les propriétés de l'élément référencé
+                    const expectedLower = expectedValue.toString().toLowerCase();
+                    return refElement.id?.toString() === expectedValue.toString() ||
+                           refElement.collection_element_name?.toLowerCase() === expectedLower ||
+                           refElement.collection_element_slug?.toLowerCase() === expectedLower ||
+                           (typeof ref === 'object' && ref.label?.toLowerCase() === expectedLower);
                 });
             });
             
