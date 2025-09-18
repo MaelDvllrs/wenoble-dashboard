@@ -250,6 +250,8 @@ async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, 
             .eq('id_config', configId);
             
         if (multiRefErr || !multiRefResults) continue;
+
+        console.log('multiRefResults pour configId', configId, multiRefResults);
         
         // Filtrer côté serveur en parsant le JSON
         const matchingIds = [];
