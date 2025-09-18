@@ -210,6 +210,44 @@
 				// Navigate (soft reload)
 				window.location.href = finalUrl;
 			});
+
+			// Clear filters support: buttons/inputs with [wn-filter-clear] (optionally scoped by group)
+			const clearSelectors = [];
+			if (filterGroup) clearSelectors.push(`[wn-filter-clear="${filterGroup}"]`);
+			clearSelectors.push('[wn-filter-clear]');
+			const clearEls = Array.from((wrapper || document).querySelectorAll(clearSelectors.join(',')));
+			clearEls.forEach(btn => {
+				if (btn.__wnClearBound) return;
+				btn.__wnClearBound = true;
+				btn.addEventListener('click', (ev) => {
+					ev.preventDefault();
+					// Reset UI controls inside the form
+					try {
+						const ctrls = Array.from(form.querySelectorAll('[wn-filter-type]'));
+						ctrls.forEach(c => {
+							const type = (c.getAttribute('type') || '').toLowerCase();
+							if (type === 'checkbox' || type === 'radio') {
+								c.checked = false;
+							} else if (c.tagName === 'SELECT') {
+								if (c.multiple) Array.from(c.options).forEach(o => o.selected = false);
+								else c.selectedIndex = -1;
+							} else if ('value' in c) {
+								c.value = '';
+							}
+						});
+					} catch {}
+
+					// Build cleaned URL by removing managed params
+					const url = new URL(window.location.href);
+					url.searchParams.delete('page');
+					idToNameMap.forEach((nameField) => {
+						if (typeof nameField === 'string' && nameField) url.searchParams.delete(nameField);
+					});
+					const qs = url.searchParams.toString();
+					const nextHref = url.pathname + (qs ? `?${qs}` : '');
+					window.location.href = nextHref;
+				});
+			});
 		}
 
 		const template = wrapper.querySelector('[wn-collection-box]');
