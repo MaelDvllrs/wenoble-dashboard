@@ -1,3 +1,4 @@
+// Optimisé : Route /sendBlog et fonction applyFiltersToElements simplifiées et commentées
 const express = require('express');
 const router = express.Router();
 
