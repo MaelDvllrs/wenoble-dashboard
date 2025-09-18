@@ -212,16 +212,19 @@
 			});
 
 			// Clear filters support: buttons/inputs with [wn-filter-clear] (optionally scoped by group)
-			const clearSelectors = [];
-			if (filterGroup) clearSelectors.push(`[wn-filter-clear="${filterGroup}"]`);
-			clearSelectors.push('[wn-filter-clear]');
-			const clearEls = Array.from((wrapper || document).querySelectorAll(clearSelectors.join(',')));
+			let clearEls = [];
+			if (filterGroup) {
+				clearEls = Array.from(document.querySelectorAll(`[wn-filter-clear="${filterGroup}"]`));
+			} else {
+				clearEls = Array.from(wrapper.querySelectorAll('[wn-filter-clear]'));
+			}
 			clearEls.forEach(btn => {
 				if (btn.__wnClearBound) return;
 				btn.__wnClearBound = true;
-				btn.addEventListener('click', (ev) => {
-					ev.preventDefault();
-					// Reset UI controls inside the form
+				const btnType = (btn.getAttribute && (btn.getAttribute('type') || '').toLowerCase()) || '';
+				const evType = (btn.tagName === 'INPUT' && (btnType === 'radio' || btnType === 'checkbox')) ? 'change' : 'click';
+				btn.addEventListener(evType, (ev) => {
+					if (evType === 'click') ev.preventDefault();
 					try {
 						const ctrls = Array.from(form.querySelectorAll('[wn-filter-type]'));
 						ctrls.forEach(c => {
@@ -237,12 +240,19 @@
 						});
 					} catch {}
 
-					// Build cleaned URL by removing managed params
 					const url = new URL(window.location.href);
 					url.searchParams.delete('page');
-					idToNameMap.forEach((nameField) => {
-						if (typeof nameField === 'string' && nameField) url.searchParams.delete(nameField);
-					});
+					try {
+						const ctrls = Array.from(form.querySelectorAll('[wn-filter-type]'));
+						const managedKeys = new Set();
+						ctrls.forEach(c => {
+							const idCfg = c.getAttribute('wn-filter-type');
+							if (!idCfg) return;
+							const nameField = idToNameMap.get(idCfg) || idCfg;
+							if (typeof nameField === 'string' && nameField) managedKeys.add(nameField);
+						});
+						managedKeys.forEach(k => url.searchParams.delete(k));
+					} catch {}
 					const qs = url.searchParams.toString();
 					const nextHref = url.pathname + (qs ? `?${qs}` : '');
 					window.location.href = nextHref;
