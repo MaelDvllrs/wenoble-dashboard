@@ -257,13 +257,23 @@
 
                     if (el.hasAttribute("wn-input")) {
                         const key = el.getAttribute("wn-input");
-                        const textData = data.content.text.find(text => text.id_config == key);
-                        if (textData) {
+                        let inputValue = null;
+
+                        if (key === 'slug') {
+                            inputValue = blog.collection_element_slug || '';
+                        } else if (key === 'title') {
+                            inputValue = blog.collection_element_name || '';
+                        } else {
+                            const textData = data.content.text.find(text => text.id_config == key);
+                            if (textData) inputValue = textData.text;
+                        }
+
+                        if (inputValue !== null) {
                             if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || (typeof el.value !== 'undefined')) {
-                                el.value = textData.text;
+                                el.value = inputValue;
                             } else {
                                 // Fallback si l'élément n'a pas de propriété value
-                                el.textContent = textData.text;
+                                el.textContent = inputValue;
                             }
                         }
                     }
