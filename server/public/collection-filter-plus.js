@@ -90,9 +90,15 @@
 		fields.forEach(el => {
 			const idConfig = el.getAttribute('wn-filter-type');
 			if (!idConfig) return;
-			const nameField = idToNameMap.get(idConfig) || idConfig; // fallback si pas trouvé
-			if (!params.has(nameField)) return;
-			const paramValues = params.getAll(nameField);
+			const mappedName = idToNameMap.get(idConfig);
+			let paramValues = [];
+			if (mappedName && params.has(mappedName)) {
+				paramValues = params.getAll(mappedName);
+			} else if (params.has(idConfig)) {
+				paramValues = params.getAll(idConfig);
+			} else {
+				return; // rien à hydrater
+			}
 			if (!paramValues.length) return;
 			const type = (el.getAttribute('type') || '').toLowerCase();
 			if (type === 'checkbox' || type === 'radio') {
