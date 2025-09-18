@@ -213,21 +213,19 @@
 
 			// Auto-submit for radio/checkbox filters when no explicit [wn-filter-submit]
 			const hasExplicitSubmit = !!form.querySelector('[wn-filter-submit]');
-			if (!hasExplicitSubmit) {
-				const autoInputs = Array.from(form.querySelectorAll('input[wn-filter-type]')).filter(inp => {
-					const t = (inp.getAttribute('type') || '').toLowerCase();
-					return t === 'radio' || t === 'checkbox';
-				});
-				autoInputs.forEach(inp => {
-					if (inp.__wnAutoSubmitBound) return;
-					inp.__wnAutoSubmitBound = true;
-					inp.addEventListener('change', () => {
-						if (form.hasAttribute('data-wn-native-submit')) { form.submit(); return; }
-						const baseUrl = new URL(window.location.href);
-						const entries = collectFilterInputs(form);
-						const next = buildFilteredUrl(baseUrl, entries, idToNameMap);
-						window.location.href = next;
-					});
+			if (!hasExplicitSubmit && !form.__wnAutoDelegateBound) {
+				form.__wnAutoDelegateBound = true;
+				form.addEventListener('change', (e) => {
+					const t = e.target;
+					if (!t || !t.matches || !t.matches('[wn-filter-type]')) return;
+					if (t.hasAttribute('wn-filter-clear')) return; // avoid double handling; clear has its own logic
+					const type = (t.getAttribute('type') || '').toLowerCase();
+					if (type !== 'radio' && type !== 'checkbox') return;
+					if (form.hasAttribute('data-wn-native-submit')) { form.submit(); return; }
+					const baseUrl = new URL(window.location.href);
+					const entries = collectFilterInputs(form);
+					const next = buildFilteredUrl(baseUrl, entries, idToNameMap);
+					window.location.href = next;
 				});
 			}
 
