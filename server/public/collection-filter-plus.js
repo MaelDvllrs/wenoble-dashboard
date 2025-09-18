@@ -67,18 +67,28 @@
 		return entries;
 	}
 
-	function buildFilteredUrl(baseUrl, filterEntries, idToNameMap) {
+	function buildFilteredUrl(baseUrl, filterEntries, idToNameMap, form) {
 		const url = new URL(baseUrl.href);
 		url.searchParams.delete('page');
 		// On supprime les anciens params pour les name_field correspondants
 		const managed = new Set();
 		filterEntries.forEach(({ key }) => {
-			const nameField = idToNameMap.get(key) || key; // clé finale (name_field attendu par backend)
+			let nameField = idToNameMap.get(key) || '';
+			if (!nameField && form) {
+				const ctrl = Array.from(form.querySelectorAll('[wn-filter-type]')).find(c => c.getAttribute('wn-filter-type') == key);
+				if (ctrl) nameField = ctrl.getAttribute('wn-param-name') || ctrl.getAttribute('name') || '';
+			}
+			if (!nameField) nameField = key; // fallback ultime
 			managed.add(nameField);
 		});
 		managed.forEach(k => url.searchParams.delete(k));
 		filterEntries.forEach(({ key, value }) => {
-			const nameField = idToNameMap.get(key) || key;
+			let nameField = idToNameMap.get(key) || '';
+			if (!nameField && form) {
+				const ctrl = Array.from(form.querySelectorAll('[wn-filter-type]')).find(c => c.getAttribute('wn-filter-type') == key);
+				if (ctrl) nameField = ctrl.getAttribute('wn-param-name') || ctrl.getAttribute('name') || '';
+			}
+			if (!nameField) nameField = key;
 			url.searchParams.append(nameField, value);
 		});
 		return url.pathname + (url.searchParams.toString() ? `?${url.searchParams.toString()}` : '');
@@ -91,14 +101,14 @@
 			const idConfig = el.getAttribute('wn-filter-type');
 			if (!idConfig) return;
 			const mappedName = idToNameMap.get(idConfig);
+			const customKey = el.getAttribute('wn-param-name');
+			const nameAttr = el.getAttribute('name');
+			const candidateKeys = [customKey, mappedName, nameAttr, idConfig].filter(Boolean);
 			let paramValues = [];
-			if (mappedName && params.has(mappedName)) {
-				paramValues = params.getAll(mappedName);
-			} else if (params.has(idConfig)) {
-				paramValues = params.getAll(idConfig);
-			} else {
-				return; // rien à hydrater
+			for (const k of candidateKeys) {
+				if (params.has(k)) { paramValues = params.getAll(k); break; }
 			}
+			if (!paramValues.length) return; // rien à hydrater
 			if (!paramValues.length) return;
 			const type = (el.getAttribute('type') || '').toLowerCase();
 			if (type === 'checkbox' || type === 'radio') {
@@ -212,7 +222,7 @@
 				if (!form.hasAttribute('data-wn-native-submit')) ev.preventDefault();
 				const baseUrl = new URL(window.location.href);
 				const inputs = collectFilterInputs(form);
-				const finalUrl = buildFilteredUrl(baseUrl, inputs, idToNameMap);
+				const finalUrl = buildFilteredUrl(baseUrl, inputs, idToNameMap, form);
 				// Navigate (soft reload)
 				window.location.href = finalUrl;
 			});
@@ -230,7 +240,7 @@
 					if (form.hasAttribute('data-wn-native-submit')) { form.submit(); return; }
 					const baseUrl = new URL(window.location.href);
 					const entries = collectFilterInputs(form);
-					const next = buildFilteredUrl(baseUrl, entries, idToNameMap);
+					const next = buildFilteredUrl(baseUrl, entries, idToNameMap, form);
 					window.location.href = next;
 				});
 			}
@@ -272,8 +282,11 @@
 						ctrls.forEach(c => {
 							const idCfg = c.getAttribute('wn-filter-type');
 							if (!idCfg) return;
-							const nameField = idToNameMap.get(idCfg) || idCfg;
-							if (typeof nameField === 'string' && nameField) managedKeys.add(nameField);
+							const mapped = idToNameMap.get(idCfg);
+							const customKey = c.getAttribute('wn-param-name');
+							const nameAttr = c.getAttribute('name');
+							// delete by all candidate keys to fully clean
+							[customKey, mapped, nameAttr, idCfg].filter(Boolean).forEach(k => managedKeys.add(k));
 						});
 						managedKeys.forEach(k => url.searchParams.delete(k));
 					} catch {}
