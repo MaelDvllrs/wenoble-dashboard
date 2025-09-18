@@ -129,6 +129,16 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
             return res.status(400).json({ message: 'Paramètre filters invalide (JSON attendu)' });
         }
     }
+    
+    // Nouveau: paramètres de tri dynamiques
+    let sorts = {};
+    if (req.query.sorts) {
+        try {
+            sorts = JSON.parse(req.query.sorts);
+        } catch (e) {
+            return res.status(400).json({ message: 'Paramètre sorts invalide (JSON attendu)' });
+        }
+    }
 
     try {
         // Determine targeted collection(s)
@@ -142,17 +152,18 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
         const ascending = order === 'asc';
         const baseColumns = BASE_COLLECTION_COLUMNS;
         const hasFilters = Object.keys(filters).length > 0;
+        const hasSorts = Object.keys(sorts).length > 0;
 
-        // Si pas de filtres, utiliser la logique de base simple
-        if (!hasFilters) {
+        // Si pas de filtres ni de tri personnalisé, utiliser la logique de base simple
+        if (!hasFilters && !hasSorts) {
             return await handleNoFiltersCase({
                 supabase, targetCollectionIds, baseColumns, colone, ascending, limit, res
             });
         }
 
-        // Avec filtres: utiliser la nouvelle logique DB-first pour tous les cas
+        // Avec filtres ou tri personnalisé: utiliser la nouvelle logique DB-first
         const dataset = await applyFiltersAtDbLevel({
-            supabase, targetCollectionIds, filters, baseColumns, colone, ascending, limit
+            supabase, targetCollectionIds, filters, baseColumns, colone, ascending, limit, sorts
         });
 
         if (dataset.length === 0) return res.status(200).json({ message: 'Aucun blog trouvé' });
@@ -352,8 +363,167 @@ async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, 
     return elementIds.size > 0 ? Array.from(elementIds) : [];
 }
 
+// Helper: applique le tri dynamique sur les éléments
+async function applySortsToElements({ supabase, targetCollectionIds, elements, sorts }) {
+    if (!sorts || Object.keys(sorts).length === 0 || !elements || elements.length === 0) {
+        return elements;
+    }
+
+    console.log('Application du tri dynamique:', sorts);
+
+    // Récupérer les configs pour identifier les types de champs
+    let allConfigs = [];
+    if (targetCollectionIds.length > 0) {
+        const { data: configs, error: configErr } = await supabase
+            .from('collection_config')
+            .select('id, tab_field, name_field')
+            .in('collection_id', targetCollectionIds);
+        if (!configErr && configs) {
+            allConfigs = configs;
+        }
+    }
+
+    const configMap = new Map(allConfigs.map(c => [c.id?.toString(), { tab_field: c.tab_field, name_field: c.name_field }]));
+
+    // Collecter les valeurs de tri pour chaque élément
+    const sortValuesMap = new Map(); // elementId => { sortKey: value }
+
+    for (const [sortKey, sortConfig] of Object.entries(sorts)) {
+        const { order: sortOrder = 'asc' } = sortConfig;
+        const configInfo = configMap.get(sortKey);
+
+        if (!configInfo) {
+            // Tri sur une colonne de base ou alias
+            if (sortKey === 'title') {
+                elements.forEach(el => {
+                    if (!sortValuesMap.has(el.id)) sortValuesMap.set(el.id, {});
+                    sortValuesMap.get(el.id)[sortKey] = el.collection_element_name || '';
+                });
+            } else if (sortKey === 'slug') {
+                elements.forEach(el => {
+                    if (!sortValuesMap.has(el.id)) sortValuesMap.set(el.id, {});
+                    sortValuesMap.get(el.id)[sortKey] = el.collection_element_slug || '';
+                });
+            } else {
+                // Colonne de base
+                elements.forEach(el => {
+                    if (!sortValuesMap.has(el.id)) sortValuesMap.set(el.id, {});
+                    sortValuesMap.get(el.id)[sortKey] = el[sortKey] || '';
+                });
+            }
+            continue;
+        }
+
+        // Tri sur un champ dynamique
+        if (configInfo.tab_field === 'text') {
+            const { data: textValues, error: textErr } = await supabase
+                .from('collection_field_text')
+                .select('collection_element_id, text')
+                .eq('id_config', sortKey)
+                .in('collection_element_id', elements.map(e => e.id));
+
+            if (!textErr && textValues) {
+                const textMap = new Map(textValues.map(t => [t.collection_element_id, t.text || '']));
+                elements.forEach(el => {
+                    if (!sortValuesMap.has(el.id)) sortValuesMap.set(el.id, {});
+                    sortValuesMap.get(el.id)[sortKey] = textMap.get(el.id) || '';
+                });
+            }
+        } else if (configInfo.tab_field === 'multiReference') {
+            const { data: multiRefValues, error: multiRefErr } = await supabase
+                .from('collection_field_multireference')
+                .select('collection_element_id, info_ref')
+                .eq('id_config', sortKey)
+                .in('collection_element_id', elements.map(e => e.id));
+
+            if (!multiRefErr && multiRefValues) {
+                // Collecter les IDs référencés
+                const allRefIds = new Set();
+                multiRefValues.forEach(row => {
+                    let parsed;
+                    if (typeof row.info_ref === 'string') {
+                        try { parsed = JSON.parse(row.info_ref); } catch { return; }
+                    } else {
+                        parsed = row.info_ref || [];
+                    }
+
+                    if (Array.isArray(parsed)) {
+                        parsed.forEach(ref => {
+                            if (ref && typeof ref === 'object' && ref.value) {
+                                allRefIds.add(ref.value);
+                            }
+                        });
+                    }
+                });
+
+                // Récupérer les noms des éléments référencés
+                let refElementsMap = new Map();
+                if (allRefIds.size > 0) {
+                    const { data: refElements, error: refErr } = await supabase
+                        .from('collection_element')
+                        .select('id, collection_element_name')
+                        .in('id', Array.from(allRefIds));
+
+                    if (!refErr && refElements) {
+                        refElements.forEach(element => {
+                            refElementsMap.set(element.id, element.collection_element_name || '');
+                        });
+                    }
+                }
+
+                // Construire les valeurs de tri (concaténation des noms triés alphabétiquement)
+                multiRefValues.forEach(row => {
+                    let parsed;
+                    if (typeof row.info_ref === 'string') {
+                        try { parsed = JSON.parse(row.info_ref); } catch { return; }
+                    } else {
+                        parsed = row.info_ref || [];
+                    }
+
+                    const refNames = [];
+                    if (Array.isArray(parsed)) {
+                        parsed.forEach(ref => {
+                            if (ref && typeof ref === 'object' && ref.value) {
+                                const refName = refElementsMap.get(ref.value);
+                                if (refName) refNames.push(refName);
+                            }
+                        });
+                    }
+
+                    const sortValue = refNames.sort().join(' | ');
+                    if (!sortValuesMap.has(row.collection_element_id)) {
+                        sortValuesMap.set(row.collection_element_id, {});
+                    }
+                    sortValuesMap.get(row.collection_element_id)[sortKey] = sortValue;
+                });
+            }
+        }
+    }
+
+    // Appliquer le tri
+    const sortedElements = [...elements].sort((a, b) => {
+        for (const [sortKey, sortConfig] of Object.entries(sorts)) {
+            const { order: sortOrder = 'asc' } = sortConfig;
+            const ascending = sortOrder === 'asc';
+
+            const aValues = sortValuesMap.get(a.id) || {};
+            const bValues = sortValuesMap.get(b.id) || {};
+
+            const aValue = (aValues[sortKey] || '').toString().toLowerCase();
+            const bValue = (bValues[sortKey] || '').toString().toLowerCase();
+
+            if (aValue < bValue) return ascending ? -1 : 1;
+            if (aValue > bValue) return ascending ? 1 : -1;
+            // Si égalité, continuer avec le prochain critère de tri
+        }
+        return 0;
+    });
+
+    return sortedElements;
+}
+
 // Helper: applique les filtres au niveau base de données quand possible
-async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, baseColumns, colone, ascending, limit }) {
+async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, baseColumns, colone, ascending, limit, sorts = {} }) {
     const filterEntries = Object.entries(filters);
     if (filterEntries.length === 0) {
         // Pas de filtres, récupérer tous les éléments
@@ -479,7 +649,9 @@ async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, b
     }
     
     // Appliquer le tri et la limite si possible
-    if (colone && baseColumns.has(colone)) {
+    const hasDynamicSorts = sorts && Object.keys(sorts).length > 0;
+    
+    if (!hasDynamicSorts && colone && baseColumns.has(colone)) {
         query = query.order(colone, { ascending });
         if (limit) query = query.limit(limit);
     }
@@ -487,7 +659,24 @@ async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, b
     const { data: results, error } = await query;
     if (error) throw error;
     
-    return results || [];
+    let finalResults = results || [];
+    
+    // Appliquer le tri dynamique si nécessaire
+    if (hasDynamicSorts) {
+        finalResults = await applySortsToElements({
+            supabase,
+            targetCollectionIds,
+            elements: finalResults,
+            sorts
+        });
+        
+        // Appliquer la limite après le tri dynamique
+        if (limit && finalResults.length > limit) {
+            finalResults = finalResults.slice(0, limit);
+        }
+    }
+    
+    return finalResults;
 }
 
 // Récupérer les infos d'une page de blog (collection_element)

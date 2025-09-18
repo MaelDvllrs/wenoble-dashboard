@@ -68,7 +68,7 @@
             const encodedData = el.getAttribute("wn-collection-wrapper");
             const decodedData = decodeBase64(encodedData);
 
-            const { blogId, limit, order, colone, joinTable, config, pagination, itemsPerPage } = decodedData;
+            const { blogId, limit, order, colone, joinTable, config, pagination, itemsPerPage, sorts } = decodedData;
 
             if (!blogId) {
                 console.error("Blog ID manquant !");
@@ -82,6 +82,12 @@
                 joinTable: joinTable,
                 configs: JSON.stringify(config)
             };
+            
+            // Ajouter les paramètres de tri si définis
+            if (sorts && Object.keys(sorts).length > 0) {
+                paramsObj.sorts = JSON.stringify(sorts);
+            }
+            
             if (!pagination && typeof limit !== 'undefined' && limit !== null) {
                 paramsObj.limit = limit;
             }
