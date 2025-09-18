@@ -211,6 +211,26 @@
 				window.location.href = finalUrl;
 			});
 
+			// Auto-submit for radio/checkbox filters when no explicit [wn-filter-submit]
+			const hasExplicitSubmit = !!form.querySelector('[wn-filter-submit]');
+			if (!hasExplicitSubmit) {
+				const autoInputs = Array.from(form.querySelectorAll('input[wn-filter-type]')).filter(inp => {
+					const t = (inp.getAttribute('type') || '').toLowerCase();
+					return t === 'radio' || t === 'checkbox';
+				});
+				autoInputs.forEach(inp => {
+					if (inp.__wnAutoSubmitBound) return;
+					inp.__wnAutoSubmitBound = true;
+					inp.addEventListener('change', () => {
+						if (form.hasAttribute('data-wn-native-submit')) { form.submit(); return; }
+						const baseUrl = new URL(window.location.href);
+						const entries = collectFilterInputs(form);
+						const next = buildFilteredUrl(baseUrl, entries, idToNameMap);
+						window.location.href = next;
+					});
+				});
+			}
+
 			// Clear filters support: buttons/inputs with [wn-filter-clear] (optionally scoped by group)
 			let clearEls = [];
 			if (filterGroup) {
