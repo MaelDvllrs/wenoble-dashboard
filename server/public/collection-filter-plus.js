@@ -70,27 +70,10 @@
 	function buildFilteredUrl(baseUrl, filterEntries, idToNameMap, form) {
 		const url = new URL(baseUrl.href);
 		url.searchParams.delete('page');
-		// On supprime les anciens params pour les name_field correspondants
-		const managed = new Set();
-		filterEntries.forEach(({ key }) => {
-			let nameField = idToNameMap.get(key) || '';
-			if (!nameField && form) {
-				const ctrl = Array.from(form.querySelectorAll('[wn-filter-type]')).find(c => c.getAttribute('wn-filter-type') == key);
-				if (ctrl) nameField = ctrl.getAttribute('wn-param-name') || ctrl.getAttribute('name') || '';
-			}
-			if (!nameField) nameField = key; // fallback ultime
-			managed.add(nameField);
-		});
+		// Utilise exclusivement la clé id_config (wn-filter-type)
+		const managed = new Set(filterEntries.map(e => e.key));
 		managed.forEach(k => url.searchParams.delete(k));
-		filterEntries.forEach(({ key, value }) => {
-			let nameField = idToNameMap.get(key) || '';
-			if (!nameField && form) {
-				const ctrl = Array.from(form.querySelectorAll('[wn-filter-type]')).find(c => c.getAttribute('wn-filter-type') == key);
-				if (ctrl) nameField = ctrl.getAttribute('wn-param-name') || ctrl.getAttribute('name') || '';
-			}
-			if (!nameField) nameField = key;
-			url.searchParams.append(nameField, value);
-		});
+		filterEntries.forEach(({ key, value }) => { url.searchParams.append(key, value); });
 		return url.pathname + (url.searchParams.toString() ? `?${url.searchParams.toString()}` : '');
 	}
 
@@ -100,15 +83,8 @@
 		fields.forEach(el => {
 			const idConfig = el.getAttribute('wn-filter-type');
 			if (!idConfig) return;
-			const mappedName = idToNameMap.get(idConfig);
-			const customKey = el.getAttribute('wn-param-name');
-			const nameAttr = el.getAttribute('name');
-			const candidateKeys = [customKey, mappedName, nameAttr, idConfig].filter(Boolean);
-			let paramValues = [];
-			for (const k of candidateKeys) {
-				if (params.has(k)) { paramValues = params.getAll(k); break; }
-			}
-			if (!paramValues.length) return; // rien à hydrater
+			if (!params.has(idConfig)) return;
+			const paramValues = params.getAll(idConfig);
 			if (!paramValues.length) return;
 			const type = (el.getAttribute('type') || '').toLowerCase();
 			if (type === 'checkbox' || type === 'radio') {
@@ -279,15 +255,7 @@
 					try {
 						const ctrls = Array.from(form.querySelectorAll('[wn-filter-type]'));
 						const managedKeys = new Set();
-						ctrls.forEach(c => {
-							const idCfg = c.getAttribute('wn-filter-type');
-							if (!idCfg) return;
-							const mapped = idToNameMap.get(idCfg);
-							const customKey = c.getAttribute('wn-param-name');
-							const nameAttr = c.getAttribute('name');
-							// delete by all candidate keys to fully clean
-							[customKey, mapped, nameAttr, idCfg].filter(Boolean).forEach(k => managedKeys.add(k));
-						});
+						ctrls.forEach(c => { const idCfg = c.getAttribute('wn-filter-type'); if (idCfg) managedKeys.add(idCfg); });
 						managedKeys.forEach(k => url.searchParams.delete(k));
 					} catch {}
 					const qs = url.searchParams.toString();
