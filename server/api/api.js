@@ -197,30 +197,14 @@ async function getFilteredElementIdsByText({ supabase, targetCollectionIds, text
     
     let elementIds = new Set();
     
-    for (const [fieldName, filterValues] of Object.entries(textFilters)) {
+    for (const [configId, filterValues] of Object.entries(textFilters)) {
         const values = Array.isArray(filterValues) ? filterValues : [filterValues];
-        
-        // Récupérer la config pour ce name_field
-        let configQuery = supabase
-            .from('collection_config')
-            .select('id')
-            .eq('name_field', fieldName)
-            .eq('tab_field', 'text');
-            
-        if (targetCollectionIds.length > 0) {
-            configQuery = configQuery.in('collection_id', targetCollectionIds);
-        }
-        
-        const { data: configs, error: configErr } = await configQuery;
-        if (configErr || !configs || configs.length === 0) continue;
-        
-        const configIds = configs.map(c => c.id);
         
         // Récupérer les collection_element_id qui matchent ces valeurs
         let textQuery = supabase
             .from('collection_field_text')
             .select('collection_element_id')
-            .in('id_config', configIds);
+            .eq('id_config', configId);
             
         // Appliquer les filtres de valeur
         if (values.length === 1) {
@@ -256,30 +240,14 @@ async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, 
     
     let elementIds = new Set();
     
-    for (const [fieldName, filterValues] of Object.entries(multiRefFilters)) {
+    for (const [configId, filterValues] of Object.entries(multiRefFilters)) {
         const values = Array.isArray(filterValues) ? filterValues : [filterValues];
         
-        // Récupérer la config pour ce name_field
-        let configQuery = supabase
-            .from('collection_config')
-            .select('id')
-            .eq('name_field', fieldName)
-            .eq('tab_field', 'multiReference');
-            
-        if (targetCollectionIds.length > 0) {
-            configQuery = configQuery.in('collection_id', targetCollectionIds);
-        }
-        
-        const { data: configs, error: configErr } = await configQuery;
-        if (configErr || !configs || configs.length === 0) continue;
-        
-        const configIds = configs.map(c => c.id);
-        
-        // Récupérer tous les enregistrements multiReference pour ces configs
+        // Récupérer tous les enregistrements multiReference pour ce config
         const { data: multiRefResults, error: multiRefErr } = await supabase
             .from('collection_field_multireference')
             .select('collection_element_id, info_ref')
-            .in('id_config', configIds);
+            .eq('id_config', configId);
             
         if (multiRefErr || !multiRefResults) continue;
         
@@ -368,7 +336,7 @@ async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, b
     if (targetCollectionIds.length > 0) {
         const { data: configs, error: configErr } = await supabase
             .from('collection_config')
-            .select('name_field, tab_field')
+            .select('id, tab_field')
             .in('collection_id', targetCollectionIds);
         if (!configErr && configs) {
             allConfigs = configs;
@@ -377,10 +345,10 @@ async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, b
 
     console.log('Configs récupérées pour classification des filtres :', allConfigs);
     console.log('Filtres reçus :', filters);
-    console.log('Entries des filtres :', filterEntries);
-    const configMap = new Map(allConfigs.map(c => [c.name_field, c.tab_field]));
     
-    // Classifier les filtres
+    const configMap = new Map(allConfigs.map(c => [c.id?.toString(), c.tab_field]));
+    
+    // Classifier les filtres par type directement avec les IDs
     for (const [key, value] of filterEntries) {
         if (baseColumns.has(key)) {
             baseFilters[key] = value;
