@@ -70,10 +70,23 @@
 	function buildFilteredUrl(baseUrl, filterEntries, idToNameMap, form) {
 		const url = new URL(baseUrl.href);
 		url.searchParams.delete('page');
-		// Utilise exclusivement la clé id_config (wn-filter-type)
-		const managed = new Set(filterEntries.map(e => e.key));
+		// Utilise exclusivement la clé id_config (wn-filter-type) avec alias pour title/slug
+		const managed = new Set();
+		filterEntries.forEach(({ key }) => {
+			// Support des alias simplifiés
+			let finalKey = key;
+			if (key === 'collection_element_name') finalKey = 'title';
+			if (key === 'collection_element_slug') finalKey = 'slug';
+			managed.add(finalKey);
+		});
 		managed.forEach(k => url.searchParams.delete(k));
-		filterEntries.forEach(({ key, value }) => { url.searchParams.append(key, value); });
+		filterEntries.forEach(({ key, value }) => {
+			// Support des alias simplifiés
+			let finalKey = key;
+			if (key === 'collection_element_name') finalKey = 'title';
+			if (key === 'collection_element_slug') finalKey = 'slug';
+			url.searchParams.append(finalKey, value);
+		});
 		return url.pathname + (url.searchParams.toString() ? `?${url.searchParams.toString()}` : '');
 	}
 
@@ -83,8 +96,22 @@
 		fields.forEach(el => {
 			const idConfig = el.getAttribute('wn-filter-type');
 			if (!idConfig) return;
-			if (!params.has(idConfig)) return;
-			const paramValues = params.getAll(idConfig);
+			
+			// Support des alias simplifiés
+			let searchKey = idConfig;
+			if (idConfig === 'collection_element_name') searchKey = 'title';
+			if (idConfig === 'collection_element_slug') searchKey = 'slug';
+			
+			// Chercher d'abord l'alias, puis la clé complète
+			let paramValues = [];
+			if (params.has(searchKey)) {
+				paramValues = params.getAll(searchKey);
+			} else if (params.has(idConfig)) {
+				paramValues = params.getAll(idConfig);
+			} else {
+				return;
+			}
+			
 			if (!paramValues.length) return;
 			const type = (el.getAttribute('type') || '').toLowerCase();
 			if (type === 'checkbox' || type === 'radio') {
@@ -108,15 +135,20 @@
 		const filters = {};
 		params.forEach((value, key) => {
 			if (!reserved.has(key)) {
+				// Alias simplifiés pour les champs de base
+				let finalKey = key;
+				if (key === 'title') finalKey = 'collection_element_name';
+				if (key === 'slug') finalKey = 'collection_element_slug';
+				
 				// Support multiple values (repeat params)
-				if (filters[key]) {
-					if (Array.isArray(filters[key])) {
-						filters[key].push(value);
+				if (filters[finalKey]) {
+					if (Array.isArray(filters[finalKey])) {
+						filters[finalKey].push(value);
 					} else {
-						filters[key] = [filters[key], value];
+						filters[finalKey] = [filters[finalKey], value];
 					}
 				} else {
-					filters[key] = value;
+					filters[finalKey] = value;
 				}
 			}
 		});
@@ -255,7 +287,17 @@
 					try {
 						const ctrls = Array.from(form.querySelectorAll('[wn-filter-type]'));
 						const managedKeys = new Set();
-						ctrls.forEach(c => { const idCfg = c.getAttribute('wn-filter-type'); if (idCfg) managedKeys.add(idCfg); });
+						ctrls.forEach(c => { 
+							const idCfg = c.getAttribute('wn-filter-type'); 
+							if (idCfg) {
+								// Support des alias simplifiés pour le clear
+								let finalKey = idCfg;
+								if (idCfg === 'collection_element_name') finalKey = 'title';
+								if (idCfg === 'collection_element_slug') finalKey = 'slug';
+								managedKeys.add(finalKey);
+								managedKeys.add(idCfg); // aussi supprimer la clé complète si elle existe
+							}
+						});
 						managedKeys.forEach(k => url.searchParams.delete(k));
 					} catch {}
 					const qs = url.searchParams.toString();

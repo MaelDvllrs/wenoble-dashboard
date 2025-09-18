@@ -130,8 +130,6 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
         }
     }
 
-    // filters reçus
-
     try {
         // Determine targeted collection(s)
         let targetCollectionIds = [];
@@ -142,638 +140,328 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
         }
 
         const ascending = order === 'asc';
-
-        // Helper: fetch base elements for targeted collections
-        const fetchBaseElements = async () => {
-            let query = supabase
-                .from('collection_element')
-                .select('*')
-                .eq('collection_element_status', true);
-
-            if (targetCollectionIds.length > 0) {
-                if (targetCollectionIds.length === 1) {
-                    query = query.eq('collection_id', targetCollectionIds[0]);
-                } else {
-                    query = query.in('collection_id', targetCollectionIds);
-                }
-            }
-            const { data, error } = await query;
-            if (error) throw error;
-            console.log('Base elements fetched:', data);
-            return data || [];
-        };
-
-        // Base columns present on collection_element
         const baseColumns = BASE_COLLECTION_COLUMNS;
+        const hasFilters = Object.keys(filters).length > 0;
 
-        // If sorting by a base column or no single collection targeted, use DB-side order for performance
-        const canUseDbOrder = baseColumns.has(colone) || targetCollectionIds.length !== 1;
-        if (canUseDbOrder) {
-            // On ne met pas le limit tout de suite pour ne pas tronquer avant filtres
-            let query = supabase
-                .from('collection_element')
-                .select('*')
-                .eq('collection_element_status', true)
-                .order(colone, { ascending });
-            if (targetCollectionIds.length > 0) {
-                if (targetCollectionIds.length === 1) query = query.eq('collection_id', targetCollectionIds[0]);
-                else query = query.in('collection_id', targetCollectionIds);
-            }
-            const { data, error } = await query;
-            if (error) throw error;
-            let dataset = data || [];
-
-            // Application des filtres sur colonnes de base + champs dynamiques
-            if (Object.keys(filters).length > 0 && dataset.length > 0) {
-                dataset = await applyFiltersToElements({
-                    elements: dataset,
-                    filters,
-                    baseColumns,
-                    targetCollectionIds
-                });
-            }
-
-            if (dataset.length === 0) return res.status(200).json({ message: 'Aucun blog trouvé' });
-
-            const limited = typeof limit === 'number' ? dataset.slice(0, limit) : dataset;
-            return res.json({ blog: limited });
-        }
-
-        // Otherwise, attempt to sort by a configured field of the collection (text or multiReference)
-        const targetCollectionId = targetCollectionIds[0];
-        // Find config by name_field matching colone for this collection
-        const { data: configRow, error: configError } = await supabase
-            .from('collection_config')
-            .select('id, tab_field, name_field, multiline_text')
-            .eq('collection_id', targetCollectionId)
-            .eq('name_field', colone)
-            .maybeSingle();
-        if (configError) throw configError;
-
-        if (!configRow) {
-            // Fallback to DB order by colone if no matching config
-            let query = supabase
-                .from('collection_element')
-                .select('*')
-                .eq('collection_element_status', true)
-                .order(colone, { ascending });
-            query = query.eq('collection_id', targetCollectionId);
-            if (limit) query = query.limit(limit);
-            const { data, error } = await query;
-            if (error) throw error;
-            if (!data || data.length === 0) return res.status(200).json({ message: 'Aucun blog trouvé' });
-            console.log('Blogs récupérés avec succès :', data);
-            return res.json({ blog: data });
-        }
-
-        // Fetch base elements (no order applied yet)
-        const baseElements = await fetchBaseElements();
-        if (!baseElements || baseElements.length === 0) return res.status(200).json({ message: 'Aucun blog trouvé' });
-
-        // Build a value map for ordering depending on field type
-        const valueMap = new Map();
-
-    // configRow récupéré pour tri dynamique
-
-        if (configRow.tab_field === 'text') {
-            const { data: texts, error: textError } = await supabase
-                .from('collection_field_text')
-                .select('collection_element_id, text')
-                .eq('id_config', configRow.id);
-            if (textError) throw textError;
-            (texts || []).forEach(row => {
-                valueMap.set(row.collection_element_id, (row.text || '').toString());
+        // Si pas de filtres, utiliser la logique de base simple
+        if (!hasFilters) {
+            return await handleNoFiltersCase({
+                supabase, targetCollectionIds, baseColumns, colone, ascending, limit, res
             });
-        } else if (configRow.tab_field === 'multiReference') {
-            // Tri sur multiReference: utiliser TOUS les labels référencés, triés alphabétiquement, concaténés
-            const { data: refs, error: refError } = await supabase
-                .from('collection_field_multireference')
-                .select('collection_element_id, info_ref')
-                .eq('id_config', configRow.id);
-            if (refError) throw refError;
-
-            // Map element -> array de IDs référencés (order natif du JSON)
-            const allRefIds = new Set();
-            const refsByElement = new Map();
-            (refs || []).forEach(row => {
-                let parsed;
-                if (typeof row.info_ref === 'string') {
-                    try { parsed = JSON.parse(row.info_ref); } catch { parsed = []; }
-                } else {
-                    parsed = row.info_ref || [];
-                }
-                const ids = [];
-                if (Array.isArray(parsed)) {
-                    parsed.forEach(entry => {
-                        if (!entry) return;
-                        if (typeof entry === 'object') {
-                            if (entry.value) {
-                                ids.push(entry.value);
-                                allRefIds.add(entry.value);
-                            }
-                        } else {
-                            ids.push(entry);
-                            allRefIds.add(entry);
-                        }
-                    });
-                }
-                refsByElement.set(row.collection_element_id, ids);
-            });
-
-            if (allRefIds.size > 0) {
-                const { data: refElements, error: refElError } = await supabase
-                    .from('collection_element')
-                    .select('id, collection_element_name')
-                    .in('id', Array.from(allRefIds));
-                if (refElError) throw refElError;
-                const nameById = new Map((refElements || []).map(e => [e.id, (e.collection_element_name || '').toString()]));
-
-                refsByElement.forEach((ids, elId) => {
-                    if (!ids || ids.length === 0) {
-                        valueMap.set(elId, '');
-                        return;
-                    }
-                    // Récupère les noms, filtre vides, trie alphabétiquement
-                    const names = ids.map(id => nameById.get(id) || '').filter(Boolean).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
-                    const orderingKey = names.join(' | ');
-                    valueMap.set(elId, orderingKey);
-                });
-            }
-        } else {
-            // Unsupported configured field type for ordering; fallback to DB order
-            let query = supabase
-                .from('collection_element')
-                .select('*')
-                .eq('collection_element_status', true)
-                .order(colone, { ascending });
-            query = query.eq('collection_id', targetCollectionId);
-            if (limit) query = query.limit(limit);
-            const { data, error } = await query;
-            if (error) throw error;
-            if (!data || data.length === 0) return res.status(200).json({ message: 'Aucun blog trouvé' });
-            return res.json({ blog: data });
         }
 
-        // Sort in Node based on valueMap
-        const sorted = [...baseElements].sort((a, b) => {
-            const va = (valueMap.get(a.id) || '').toString().toLowerCase();
-            const vb = (valueMap.get(b.id) || '').toString().toLowerCase();
-            if (va < vb) return ascending ? -1 : 1;
-            if (va > vb) return ascending ? 1 : -1;
-            return 0;
+        // Avec filtres: utiliser la nouvelle logique DB-first pour tous les cas
+        const dataset = await applyFiltersAtDbLevel({
+            supabase, targetCollectionIds, filters, baseColumns, colone, ascending, limit
         });
-        let finalData = sorted;
-        // Filtres (base + texte dynamiques) appliqués après tri
-        if (Object.keys(filters).length > 0 && finalData.length > 0) {
-            finalData = await applyFiltersToElements({
-                elements: finalData,
-                filters,
-                baseColumns,
-                targetCollectionIds
-            });
-        }
 
-        if (finalData.length === 0) return res.status(200).json({ message: 'Aucun blog trouvé' });
-        const limitedSorted = typeof limit === 'number' ? finalData.slice(0, limit) : finalData;
-        return res.json({ blog: limitedSorted });
+        if (dataset.length === 0) return res.status(200).json({ message: 'Aucun blog trouvé' });
+        return res.json({ blog: dataset });
     } catch (err) {
         console.error('Erreur lors de la récupération des blogs :', err);
         res.status(500).send({ error: err.message });
     }
 });
 
-// Helper: applique les filtres sur un tableau d'éléments (colonnes de base + champs texte + multiReference dynamiques)
-async function applyFiltersToElements({ elements, filters, baseColumns, targetCollectionIds }) {
-    if (!elements || elements.length === 0) return [];
-    // Copie de travail pour normalisation éventuelle
-    let workingFilters = { ...filters };
-    let filterEntries = Object.entries(workingFilters);
-    if (filterEntries.length === 0) return elements;
-
-    // Supprimer les clés meta éventuelles insérées dans filters JSON
-    // Nettoyage: si des clés meta étaient passées on pourrait les lister ici (actuellement aucune)
-
-    // Une seule collection ? => on peut traduire id_config -> name_field
-    const singleCollectionId = targetCollectionIds && targetCollectionIds.length === 1 ? targetCollectionIds[0] : null;
-    let dynamicKeys = [];
-    if (singleCollectionId) {
-        try {
-            const { data: allConfigs, error: cfgErr } = await supabase
-                .from('collection_config')
-                .select('id, name_field, tab_field')
-                .eq('collection_id', singleCollectionId);
-            if (!cfgErr && Array.isArray(allConfigs)) {
-                const idToName = new Map(allConfigs.map(c => [c.id?.toString(), c.name_field]));
-                // Accent-insensitive map for name_field
-                const fold = (s) => (s || '').toString().normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
-                const foldedNameMap = new Map(allConfigs.map(c => [fold(c.name_field), c.name_field]));
-                const normalized = {};
-                for (const [k, v] of Object.entries(workingFilters)) {
-                    if (baseColumns.has(k)) { normalized[k] = v; continue; }
-                    const mapped = idToName.get(k.toString());
-                    let targetName = mapped;
-                    if (!targetName) {
-                        // Tentative de match accent-insensitive sur name_field
-                        const foldedKey = fold(k);
-                        if (foldedNameMap.has(foldedKey)) targetName = foldedNameMap.get(foldedKey);
-                    }
-                    if (targetName) {
-                        if (normalized[mapped]) {
-                            const existing = Array.isArray(normalized[mapped]) ? normalized[mapped] : [normalized[mapped]];
-                            const incoming = Array.isArray(v) ? v : [v];
-                            normalized[mapped] = Array.from(new Set([...existing, ...incoming]));
-                        } else {
-                            normalized[targetName] = v;
-                        }
-                    } else {
-                        normalized[k] = v;
-                    }
-                }
-                workingFilters = normalized;
-                filterEntries = Object.entries(workingFilters);
-            }
-        } catch (normErr) {
-            console.warn('Normalisation filtres (id_config->name_field) échouée:', normErr.message);
-        }
-    } else {
-        // Cas multi-collection: tenter de convertir les clés purement numériques id_config -> name_field globalement
-        try {
-            const numericKeys = filterEntries.map(([k]) => k).filter(k => /^\d+$/.test(k));
-            if (numericKeys.length > 0) {
-                const { data: cfgRows, error: cfgErr } = await supabase
-                    .from('collection_config')
-                    .select('id, name_field')
-                    .in('id', numericKeys);
-                if (!cfgErr && Array.isArray(cfgRows) && cfgRows.length > 0) {
-                    const idToName = new Map(cfgRows.map(r => [r.id?.toString(), r.name_field]));
-                    const remapped = { ...workingFilters };
-                    let changed = false;
-                    for (const k of numericKeys) {
-                        const target = idToName.get(k);
-                        if (target) {
-                            if (remapped[target] === undefined) {
-                                remapped[target] = remapped[k];
-                            } else {
-                                const existing = Array.isArray(remapped[target]) ? remapped[target] : [remapped[target]];
-                                const incoming = Array.isArray(remapped[k]) ? remapped[k] : [remapped[k]];
-                                remapped[target] = Array.from(new Set([...existing, ...incoming]));
-                            }
-                            delete remapped[k];
-                            changed = true;
-                        }
-                    }
-                    if (changed) {
-                        workingFilters = remapped;
-                        filterEntries = Object.entries(workingFilters);
-                        console.log('Multi-collection numeric filter remap:', workingFilters);
-                    }
-                }
-            }
-        } catch (e) {
-            console.warn('Normalisation multi-collection id_config échouée:', e.message);
+// Helper: gère le cas sans filtres (ancienne logique optimisée)
+async function handleNoFiltersCase({ supabase, targetCollectionIds, baseColumns, colone, ascending, limit, res }) {
+    let query = supabase
+        .from('collection_element')
+        .select('*')
+        .eq('collection_element_status', true)
+        .order(colone, { ascending });
+    
+    if (targetCollectionIds.length > 0) {
+        if (targetCollectionIds.length === 1) {
+            query = query.eq('collection_id', targetCollectionIds[0]);
+        } else {
+            query = query.in('collection_id', targetCollectionIds);
         }
     }
-    // Recalcule des clés dynamiques après normalisation
-    for (const [key] of filterEntries) {
-        if (!baseColumns.has(key)) dynamicKeys.push(key);
+    
+    if (limit) query = query.limit(limit);
+    
+    const { data, error } = await query;
+    if (error) throw error;
+    
+    if (!data || data.length === 0) {
+        return res.status(200).json({ message: 'Aucun blog trouvé' });
     }
-    let dynamicKeySet = new Set(dynamicKeys);
+    
+    return res.json({ blog: data });
+}
 
-    let textFieldValueMap = new Map();          // Map(element_id => { fieldName: value })
-    let multiRefFieldValueMap = new Map();       // Map(element_id => { fieldName: Set(refIds) })
-
-    if (singleCollectionId && dynamicKeys.length > 0) {
-        // Récupérer toutes les configs de la collection puis filtrer par name_field OU id
-        const { data: allConfigRows, error: configErr } = await supabase
+// Helper: récupère les collection_element_id filtrés via les champs text
+async function getFilteredElementIdsByText({ supabase, targetCollectionIds, textFilters }) {
+    if (Object.keys(textFilters).length === 0) return null;
+    
+    let elementIds = new Set();
+    
+    for (const [fieldName, filterValues] of Object.entries(textFilters)) {
+        const values = Array.isArray(filterValues) ? filterValues : [filterValues];
+        
+        // Récupérer la config pour ce name_field
+        let configQuery = supabase
             .from('collection_config')
-            .select('id, name_field, tab_field')
-            .eq('collection_id', singleCollectionId);
-        if (!configErr && allConfigRows && allConfigRows.length > 0) {
-            const dynKeySet = new Set(dynamicKeys.map(k => k.toString()));
-            const configRows = allConfigRows.filter(r => dynKeySet.has(r.name_field) || dynKeySet.has(r.id?.toString()));
-            if (configRows.length > 0) {
-                // Remap: si le filtre était par id_config, on ajoute aussi une entrée par name_field pour uniformiser les maps ci-dessous
-                const remappedFilters = { ...workingFilters };
-                let changed = false;
-                for (const row of configRows) {
-                    const idStr = row.id?.toString();
-                    if (idStr && remappedFilters[idStr] !== undefined && remappedFilters[row.name_field] === undefined) {
-                        remappedFilters[row.name_field] = remappedFilters[idStr];
-                        delete remappedFilters[idStr];
-                        changed = true;
-                    }
-                }
-                if (changed) {
-                    workingFilters = remappedFilters;
-                    filterEntries = Object.entries(workingFilters);
-                }
-                const textConfigs = configRows.filter(r => r.tab_field === 'text');
-                const multiRefConfigs = configRows.filter(r => r.tab_field === 'multiReference');
-
-                console.log('Config for filtering found:', configRows);
-                console.log('Working filters after remap:', workingFilters);
-                // Recalcul dynamicKeys (peut avoir changé après remap)
-                dynamicKeys = filterEntries.map(([k]) => k).filter(k => !baseColumns.has(k));
-                dynamicKeySet = new Set(dynamicKeys);
-
-                // --- TEXT --- //
-                if (textConfigs.length > 0) {
-                    const textConfigIds = textConfigs.map(r => r.id);
-                    const idToNameText = new Map(textConfigs.map(r => [r.id, r.name_field]));
-                    const { data: textValues, error: textValErr } = await supabase
-                        .from('collection_field_text')
-                        .select('collection_element_id, id_config, text')
-                        .in('id_config', textConfigIds)
-                        .in('collection_element_id', elements.map(e => e.id));
-                    if (!textValErr && textValues) {
-                        textValues.forEach(row => {
-                            if (!textFieldValueMap.has(row.collection_element_id)) {
-                                textFieldValueMap.set(row.collection_element_id, {});
-                            }
-                            const nameField = idToNameText.get(row.id_config);
-                            if (nameField) {
-                                textFieldValueMap.get(row.collection_element_id)[nameField] = row.text || '';
-                            }
-                        });
-                    }
-                }
-
-                // --- MULTIREFERENCE --- //
-                if (multiRefConfigs.length > 0) {
-                    const multiRefConfigIds = multiRefConfigs.map(r => r.id);
-                    const idToNameMulti = new Map(multiRefConfigs.map(r => [r.id, r.name_field]));
-                    const { data: multiRefValues, error: multiRefErr } = await supabase
-                        .from('collection_field_multireference')
-                        .select('collection_element_id, id_config, info_ref')
-                        .in('id_config', multiRefConfigIds)
-                        .in('collection_element_id', elements.map(e => e.id));
-                    if (!multiRefErr && multiRefValues) {
-                        // Collecter tous les IDs référencés pour récupérer leurs slugs en une seule requête
-                        const allRefIds = new Set();
-                        multiRefValues.forEach(row => {
-                            let parsed;
-                            if (typeof row.info_ref === 'string') {
-                                try { parsed = JSON.parse(row.info_ref); } catch { parsed = []; }
-                            } else {
-                                parsed = row.info_ref || [];
-                            }
-                            if (Array.isArray(parsed)) {
-                                parsed.forEach(ref => {
-                                    if (!ref) return;
-                                    if (typeof ref === 'object') {
-                                        if (ref.value) allRefIds.add(ref.value);
-                                    } else {
-                                        allRefIds.add(ref);
-                                    }
-                                });
-                            }
-                        });
-
-                        let slugById = new Map();
-                        if (allRefIds.size > 0) {
-                            const { data: refEls } = await supabase
-                                .from('collection_element')
-                                .select('id, collection_element_slug')
-                                .in('id', Array.from(allRefIds));
-                            if (Array.isArray(refEls)) {
-                                slugById = new Map(refEls.map(e => [e.id, (e.collection_element_slug || '').toString()]));
-                            }
-                        }
-
-                        multiRefValues.forEach(row => {
-                            if (!multiRefFieldValueMap.has(row.collection_element_id)) {
-                                multiRefFieldValueMap.set(row.collection_element_id, {});
-                            }
-                            const nameField = idToNameMulti.get(row.id_config);
-                            if (!nameField) return;
-                            let parsed;
-                            if (typeof row.info_ref === 'string') {
-                                try { parsed = JSON.parse(row.info_ref); } catch { parsed = []; }
-                            } else {
-                                parsed = row.info_ref || [];
-                            }
-                            const refIds = new Set();
-                            if (Array.isArray(parsed)) {
-                                parsed.forEach(ref => {
-                                    if (!ref) return;
-                                    if (typeof ref === 'object') {
-                                        if (ref.value) {
-                                            const vLower = ref.value.toString().toLowerCase();
-                                            refIds.add(vLower);
-                                            refIds.add(fold(ref.value));
-                                            const slug = slugById.get(ref.value);
-                                            if (slug) {
-                                                refIds.add(slug.toLowerCase());
-                                                refIds.add(fold(slug));
-                                            }
-                                        }
-                                        if (ref.label) {
-                                            const lLower = ref.label.toString().toLowerCase();
-                                            refIds.add(lLower);
-                                            refIds.add(fold(ref.label));
-                                        }
-                                    } else {
-                                        const raw = ref.toString().toLowerCase();
-                                        refIds.add(raw);
-                                        refIds.add(fold(ref));
-                                        const slug = slugById.get(ref);
-                                        if (slug) {
-                                            refIds.add(slug.toLowerCase());
-                                            refIds.add(fold(slug));
-                                        }
-                                    }
-                                });
-                            }
-                            multiRefFieldValueMap.get(row.collection_element_id)[nameField] = refIds; 
-                            // valeurs multiReference collectées
-                        });
-                    }
-                }
-            }
+            .select('id')
+            .eq('name_field', fieldName)
+            .eq('tab_field', 'text');
+            
+        if (targetCollectionIds.length > 0) {
+            configQuery = configQuery.in('collection_id', targetCollectionIds);
+        }
+        
+        const { data: configs, error: configErr } = await configQuery;
+        if (configErr || !configs || configs.length === 0) continue;
+        
+        const configIds = configs.map(c => c.id);
+        
+        // Récupérer les collection_element_id qui matchent ces valeurs
+        let textQuery = supabase
+            .from('collection_field_text')
+            .select('collection_element_id')
+            .in('id_config', configIds);
+            
+        // Appliquer les filtres de valeur
+        if (values.length === 1) {
+            textQuery = textQuery.eq('text', values[0]);
+        } else {
+            textQuery = textQuery.in('text', values);
+        }
+        
+        const { data: textResults, error: textErr } = await textQuery;
+        if (textErr || !textResults) continue;
+        
+        const matchingIds = textResults.map(r => r.collection_element_id);
+        
+        if (elementIds.size === 0) {
+            // Premier filtre : ajouter tous les IDs
+            matchingIds.forEach(id => elementIds.add(id));
+        } else {
+            // Filtres suivants : intersection (ET logique)
+            const intersection = new Set();
+            matchingIds.forEach(id => {
+                if (elementIds.has(id)) intersection.add(id);
+            });
+            elementIds = intersection;
         }
     }
-    else if (!singleCollectionId && dynamicKeys.length > 0) {
-        // Construction des maps dynamiques pour plusieurs collections (ou collection non spécifiée)
-        try {
-            const collectionIds = Array.from(new Set(elements.map(e => e.collection_id).filter(Boolean)));
-            if (collectionIds.length > 0) {
-                // Récupérer les configs pertinentes par name_field
-                const { data: configRows, error: cfgErr } = await supabase
-                    .from('collection_config')
-                    .select('id, collection_id, name_field, tab_field')
-                    .in('collection_id', collectionIds)
-                    .in('name_field', dynamicKeys);
-                if (!cfgErr && Array.isArray(configRows) && configRows.length > 0) {
-                    const textConfigs = configRows.filter(r => r.tab_field === 'text');
-                    const multiRefConfigs = configRows.filter(r => r.tab_field === 'multiReference');
+    
+    return elementIds.size > 0 ? Array.from(elementIds) : [];
+}
 
-                    // TEXT
-                    if (textConfigs.length > 0) {
-                        const textConfigIds = textConfigs.map(r => r.id);
-                        const idToNameText = new Map(textConfigs.map(r => [r.id, r.name_field]));
-                        const { data: textValues, error: textValErr } = await supabase
-                            .from('collection_field_text')
-                            .select('collection_element_id, id_config, text')
-                            .in('id_config', textConfigIds)
-                            .in('collection_element_id', elements.map(e => e.id));
-                        if (!textValErr && Array.isArray(textValues)) {
-                            textValues.forEach(row => {
-                                if (!textFieldValueMap.has(row.collection_element_id)) {
-                                    textFieldValueMap.set(row.collection_element_id, {});
-                                }
-                                const nameField = idToNameText.get(row.id_config);
-                                if (nameField) {
-                                    textFieldValueMap.get(row.collection_element_id)[nameField] = row.text || '';
-                                }
-                            });
-                        }
-                    }
-
-                    // MULTIREFERENCE
-                    if (multiRefConfigs.length > 0) {
-                        const multiRefConfigIds = multiRefConfigs.map(r => r.id);
-                        const idToNameMulti = new Map(multiRefConfigs.map(r => [r.id, r.name_field]));
-                        const { data: multiRefValues, error: multiRefErr } = await supabase
-                            .from('collection_field_multireference')
-                            .select('collection_element_id, id_config, info_ref')
-                            .in('id_config', multiRefConfigIds)
-                            .in('collection_element_id', elements.map(e => e.id));
-                        if (!multiRefErr && Array.isArray(multiRefValues)) {
-                            // Collecter tous les IDs référencés pour récupérer leurs slugs en une seule requête
-                            const allRefIds = new Set();
-                            multiRefValues.forEach(row => {
-                                let parsed;
-                                if (typeof row.info_ref === 'string') {
-                                    try { parsed = JSON.parse(row.info_ref); } catch { parsed = []; }
-                                } else {
-                                    parsed = row.info_ref || [];
-                                }
-                                if (Array.isArray(parsed)) {
-                                    parsed.forEach(ref => {
-                                        if (!ref) return;
-                                        if (typeof ref === 'object') {
-                                            if (ref.value) allRefIds.add(ref.value);
-                                        } else {
-                                            allRefIds.add(ref);
-                                        }
-                                    });
-                                }
-                            });
-
-                            let slugById = new Map();
-                            if (allRefIds.size > 0) {
-                                const { data: refEls } = await supabase
-                                    .from('collection_element')
-                                    .select('id, collection_element_slug')
-                                    .in('id', Array.from(allRefIds));
-                                if (Array.isArray(refEls)) {
-                                    slugById = new Map(refEls.map(e => [e.id, (e.collection_element_slug || '').toString()]));
-                                }
-                            }
-
-                            multiRefValues.forEach(row => {
-                                if (!multiRefFieldValueMap.has(row.collection_element_id)) {
-                                    multiRefFieldValueMap.set(row.collection_element_id, {});
-                                }
-                                const nameField = idToNameMulti.get(row.id_config);
-                                if (!nameField) return;
-                                let parsed;
-                                if (typeof row.info_ref === 'string') {
-                                    try { parsed = JSON.parse(row.info_ref); } catch { parsed = []; }
-                                } else {
-                                    parsed = row.info_ref || [];
-                                }
-                                const refIds = new Set();
-                                if (Array.isArray(parsed)) {
-                                    parsed.forEach(ref => {
-                                        if (!ref) return;
-                                        if (typeof ref === 'object') {
-                                            if (ref.value) {
-                                                const vLower = ref.value.toString().toLowerCase();
-                                                refIds.add(vLower);
-                                                refIds.add(fold(ref.value));
-                                                const slug = slugById.get(ref.value);
-                                                if (slug) {
-                                                    refIds.add(slug.toLowerCase());
-                                                    refIds.add(fold(slug));
-                                                }
-                                            }
-                                            if (ref.label) {
-                                                const lLower = ref.label.toString().toLowerCase();
-                                                refIds.add(lLower);
-                                                refIds.add(fold(ref.label));
-                                            }
-                                        } else {
-                                            const raw = ref.toString().toLowerCase();
-                                            refIds.add(raw);
-                                            refIds.add(fold(ref));
-                                            const slug = slugById.get(ref);
-                                            if (slug) {
-                                                refIds.add(slug.toLowerCase());
-                                                refIds.add(fold(slug));
-                                            }
-                                        }
-                                    });
-                                }
-                                multiRefFieldValueMap.get(row.collection_element_id)[nameField] = refIds;
-                            });
-                        }
-                    }
-                }
+// Helper: récupère les collection_element_id filtrés via les champs multiReference
+async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, multiRefFilters }) {
+    if (Object.keys(multiRefFilters).length === 0) return null;
+    
+    let elementIds = new Set();
+    
+    for (const [fieldName, filterValues] of Object.entries(multiRefFilters)) {
+        const values = Array.isArray(filterValues) ? filterValues : [filterValues];
+        
+        // Récupérer la config pour ce name_field
+        let configQuery = supabase
+            .from('collection_config')
+            .select('id')
+            .eq('name_field', fieldName)
+            .eq('tab_field', 'multiReference');
+            
+        if (targetCollectionIds.length > 0) {
+            configQuery = configQuery.in('collection_id', targetCollectionIds);
+        }
+        
+        const { data: configs, error: configErr } = await configQuery;
+        if (configErr || !configs || configs.length === 0) continue;
+        
+        const configIds = configs.map(c => c.id);
+        
+        // Récupérer tous les enregistrements multiReference pour ces configs
+        const { data: multiRefResults, error: multiRefErr } = await supabase
+            .from('collection_field_multireference')
+            .select('collection_element_id, info_ref')
+            .in('id_config', configIds);
+            
+        if (multiRefErr || !multiRefResults) continue;
+        
+        // Filtrer côté serveur en parsant le JSON
+        const matchingIds = [];
+        for (const row of multiRefResults) {
+            let parsed;
+            if (typeof row.info_ref === 'string') {
+                try { parsed = JSON.parse(row.info_ref); } catch { continue; }
+            } else {
+                parsed = row.info_ref || [];
             }
-        } catch (e) {
-            console.warn('Construction maps dynamiques multi-collection échouée:', e.message);
+            
+            if (!Array.isArray(parsed)) continue;
+            
+            // Vérifier si au moins une valeur attendue est présente
+            const hasMatch = values.some(expectedValue => {
+                return parsed.some(ref => {
+                    if (!ref) return false;
+                    if (typeof ref === 'object') {
+                        return ref.value?.toString().toLowerCase() === expectedValue.toString().toLowerCase() ||
+                               ref.label?.toString().toLowerCase() === expectedValue.toString().toLowerCase();
+                    } else {
+                        return ref.toString().toLowerCase() === expectedValue.toString().toLowerCase();
+                    }
+                });
+            });
+            
+            if (hasMatch) {
+                matchingIds.push(row.collection_element_id);
+            }
+        }
+        
+        if (elementIds.size === 0) {
+            // Premier filtre : ajouter tous les IDs
+            matchingIds.forEach(id => elementIds.add(id));
+        } else {
+            // Filtres suivants : intersection (ET logique)
+            const intersection = new Set();
+            matchingIds.forEach(id => {
+                if (elementIds.has(id)) intersection.add(id);
+            });
+            elementIds = intersection;
         }
     }
+    
+    return elementIds.size > 0 ? Array.from(elementIds) : [];
+}
 
-    // Fonction de test: pour multiReference on exige qu'au moins UNE valeur attendue soit présente (logique OR)
-    function elementMatches(el) {
-        for (const [key, expected] of filterEntries) {
-            const values = Array.isArray(expected) ? expected.map(v => v.toString()) : [expected.toString()];
-            let actual;
-            if (baseColumns.has(key)) {
-                actual = el[key];
-                if (actual === undefined || actual === null) return false;
-                const actualStr = actual.toString().toLowerCase();
-                const match = values.some(v => actualStr === v.toLowerCase());
-                if (!match) return false;
-                continue;
-            }
-
-            // Texte dynamique
-            if (textFieldValueMap.size > 0) {
-                const obj = textFieldValueMap.get(el.id) || {};
-                if (Object.prototype.hasOwnProperty.call(obj, key)) {
-                    actual = obj[key];
-                    if (actual === undefined || actual === null) return false;
-                    const actualStr = actual.toString().toLowerCase();
-                    const match = values.some(v => actualStr === v.toLowerCase());
-                    if (!match) return false;
-                    continue;
-                }
-            }
-
-            // MultiReference dynamique
-            if (multiRefFieldValueMap.size > 0) {
-                const obj = multiRefFieldValueMap.get(el.id) || {};
-                if (Object.prototype.hasOwnProperty.call(obj, key)) {
-                    const refSet = obj[key]; // Set
-                    if (!(refSet instanceof Set)) return false;
-                    const fold = (s) => (s || '').toString().normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
-                    const match = values.some(v => {
-                        const lower = v.toString().toLowerCase();
-                        return refSet.has(lower) || refSet.has(fold(v));
-                    });
-                    if (!match) return false;
-                    continue;
-                }
-            }
-            // Clé dynamique absente => exclusion stricte
-            return false;
+// Helper: applique les filtres au niveau base de données quand possible
+async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, baseColumns, colone, ascending, limit }) {
+    const filterEntries = Object.entries(filters);
+    if (filterEntries.length === 0) {
+        // Pas de filtres, récupérer tous les éléments
+        let query = supabase
+            .from('collection_element')
+            .select('*')
+            .eq('collection_element_status', true);
+        
+        if (colone && baseColumns.has(colone)) {
+            query = query.order(colone, { ascending });
         }
-        return true;
+        
+        if (targetCollectionIds.length > 0) {
+            if (targetCollectionIds.length === 1) {
+                query = query.eq('collection_id', targetCollectionIds[0]);
+            } else {
+                query = query.in('collection_id', targetCollectionIds);
+            }
+        }
+        
+        if (limit && colone && baseColumns.has(colone)) query = query.limit(limit);
+        
+        const { data, error } = await query;
+        if (error) throw error;
+        return data || [];
     }
-    return elements.filter(elementMatches);
+    
+    // Séparer les filtres par type : base columns, text, multiReference
+    const baseFilters = {};
+    const textFilters = {};
+    const multiRefFilters = {};
+    
+    // Récupérer les configs pour identifier les types de champs dynamiques
+    let allConfigs = [];
+    if (targetCollectionIds.length > 0) {
+        const { data: configs, error: configErr } = await supabase
+            .from('collection_config')
+            .select('name_field, tab_field')
+            .in('collection_id', targetCollectionIds);
+        if (!configErr && configs) {
+            allConfigs = configs;
+        }
+    }
+    
+    const configMap = new Map(allConfigs.map(c => [c.name_field, c.tab_field]));
+    
+    // Classifier les filtres
+    for (const [key, value] of filterEntries) {
+        if (baseColumns.has(key)) {
+            baseFilters[key] = value;
+        } else {
+            const fieldType = configMap.get(key);
+            if (fieldType === 'text') {
+                textFilters[key] = value;
+            } else if (fieldType === 'multiReference') {
+                multiRefFilters[key] = value;
+            }
+            // Les autres types sont ignorés pour le moment
+        }
+    }
+    
+    console.log('Filtres classifiés:', { baseFilters, textFilters, multiRefFilters });
+    
+    // Récupérer les IDs filtrés par les champs text
+    const textFilteredIds = await getFilteredElementIdsByText({ 
+        supabase, 
+        targetCollectionIds, 
+        textFilters 
+    });
+    
+    // Récupérer les IDs filtrés par les champs multiReference  
+    const multiRefFilteredIds = await getFilteredElementIdsByMultiRef({ 
+        supabase, 
+        targetCollectionIds, 
+        multiRefFilters 
+    });
+    
+    // Calculer l'intersection des IDs si plusieurs types de filtres dynamiques
+    let dynamicFilteredIds = null;
+    if (textFilteredIds !== null && multiRefFilteredIds !== null) {
+        // Intersection des deux ensembles
+        const textSet = new Set(textFilteredIds);
+        dynamicFilteredIds = multiRefFilteredIds.filter(id => textSet.has(id));
+    } else if (textFilteredIds !== null) {
+        dynamicFilteredIds = textFilteredIds;
+    } else if (multiRefFilteredIds !== null) {
+        dynamicFilteredIds = multiRefFilteredIds;
+    }
+    
+    // Construire la requête finale sur collection_element
+    let query = supabase
+        .from('collection_element')
+        .select('*')
+        .eq('collection_element_status', true);
+    
+    if (targetCollectionIds.length > 0) {
+        if (targetCollectionIds.length === 1) {
+            query = query.eq('collection_id', targetCollectionIds[0]);
+        } else {
+            query = query.in('collection_id', targetCollectionIds);
+        }
+    }
+    
+    // Appliquer les filtres sur colonnes de base
+    for (const [key, value] of Object.entries(baseFilters)) {
+        if (Array.isArray(value)) {
+            query = query.in(key, value);
+        } else {
+            query = query.eq(key, value);
+        }
+    }
+    
+    // Appliquer le filtre sur les IDs issus des champs dynamiques
+    if (dynamicFilteredIds !== null) {
+        if (dynamicFilteredIds.length === 0) {
+            // Aucun élément ne correspond aux filtres dynamiques
+            return [];
+        }
+        query = query.in('id', dynamicFilteredIds);
+    }
+    
+    // Appliquer le tri et la limite si possible
+    if (colone && baseColumns.has(colone)) {
+        query = query.order(colone, { ascending });
+        if (limit) query = query.limit(limit);
+    }
+    
+    const { data: results, error } = await query;
+    if (error) throw error;
+    
+    return results || [];
 }
 
 // Récupérer les infos d'une page de blog (collection_element)
