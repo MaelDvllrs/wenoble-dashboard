@@ -159,7 +159,7 @@
                     }
 
                     // Parcours tous les éléments qui ont un attribut `wn-*` dans le clone de manière séquentielle
-                    const elementsToProcess = [...clone.querySelectorAll("[wn-title], [wn-link], [wn-id], [wn-for], [wn-date-published], [wn-image], [wn-richtext], [wn-text], [wn-gallery], [wn-gallery-index],[wn-gallery-modal], [wn-video], [wn-multiReference-wrapper]")];
+                    const elementsToProcess = [...clone.querySelectorAll("[wn-title], [wn-link], [wn-id], [wn-for], [wn-date-published], [wn-image], [wn-richtext], [wn-text], [wn-input], [wn-gallery], [wn-gallery-index],[wn-gallery-modal], [wn-video], [wn-multiReference-wrapper]")];
                     
                     for (const el of elementsToProcess) {
                     
@@ -254,6 +254,21 @@
                             el.textContent = textData.text;
                         }
                     }
+
+                    if (el.hasAttribute("wn-input")) {
+                        const key = el.getAttribute("wn-input");
+                        const textData = data.content.text.find(text => text.id_config == key);
+                        if (textData) {
+                            if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || (typeof el.value !== 'undefined')) {
+                                el.value = textData.text;
+                            } else {
+                                // Fallback si l'élément n'a pas de propriété value
+                                el.textContent = textData.text;
+                            }
+                        }
+                    }
+
+
                     if (el.hasAttribute("wn-richText")) {
                         const key = el.getAttribute("wn-richText");
                         const richTextData = data.content.richText.find(text => text.id_config == key);
