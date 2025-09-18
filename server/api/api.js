@@ -507,6 +507,38 @@ async function applyFiltersToElements({ elements, filters, baseColumns, targetCo
                         .in('id_config', multiRefConfigIds)
                         .in('collection_element_id', elements.map(e => e.id));
                     if (!multiRefErr && multiRefValues) {
+                        // Collecter tous les IDs référencés pour récupérer leurs slugs en une seule requête
+                        const allRefIds = new Set();
+                        multiRefValues.forEach(row => {
+                            let parsed;
+                            if (typeof row.info_ref === 'string') {
+                                try { parsed = JSON.parse(row.info_ref); } catch { parsed = []; }
+                            } else {
+                                parsed = row.info_ref || [];
+                            }
+                            if (Array.isArray(parsed)) {
+                                parsed.forEach(ref => {
+                                    if (!ref) return;
+                                    if (typeof ref === 'object') {
+                                        if (ref.value) allRefIds.add(ref.value);
+                                    } else {
+                                        allRefIds.add(ref);
+                                    }
+                                });
+                            }
+                        });
+
+                        let slugById = new Map();
+                        if (allRefIds.size > 0) {
+                            const { data: refEls } = await supabase
+                                .from('collection_element')
+                                .select('id, collection_element_slug')
+                                .in('id', Array.from(allRefIds));
+                            if (Array.isArray(refEls)) {
+                                slugById = new Map(refEls.map(e => [e.id, (e.collection_element_slug || '').toString()]));
+                            }
+                        }
+
                         multiRefValues.forEach(row => {
                             if (!multiRefFieldValueMap.has(row.collection_element_id)) {
                                 multiRefFieldValueMap.set(row.collection_element_id, {});
@@ -520,7 +552,6 @@ async function applyFiltersToElements({ elements, filters, baseColumns, targetCo
                                 parsed = row.info_ref || [];
                             }
                             const refIds = new Set();
-                            const fold = (s) => (s || '').toString().normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
                             if (Array.isArray(parsed)) {
                                 parsed.forEach(ref => {
                                     if (!ref) return;
@@ -529,6 +560,11 @@ async function applyFiltersToElements({ elements, filters, baseColumns, targetCo
                                             const vLower = ref.value.toString().toLowerCase();
                                             refIds.add(vLower);
                                             refIds.add(fold(ref.value));
+                                            const slug = slugById.get(ref.value);
+                                            if (slug) {
+                                                refIds.add(slug.toLowerCase());
+                                                refIds.add(fold(slug));
+                                            }
                                         }
                                         if (ref.label) {
                                             const lLower = ref.label.toString().toLowerCase();
@@ -539,6 +575,11 @@ async function applyFiltersToElements({ elements, filters, baseColumns, targetCo
                                         const raw = ref.toString().toLowerCase();
                                         refIds.add(raw);
                                         refIds.add(fold(ref));
+                                        const slug = slugById.get(ref);
+                                        if (slug) {
+                                            refIds.add(slug.toLowerCase());
+                                            refIds.add(fold(slug));
+                                        }
                                     }
                                 });
                             }
@@ -597,6 +638,38 @@ async function applyFiltersToElements({ elements, filters, baseColumns, targetCo
                             .in('id_config', multiRefConfigIds)
                             .in('collection_element_id', elements.map(e => e.id));
                         if (!multiRefErr && Array.isArray(multiRefValues)) {
+                            // Collecter tous les IDs référencés pour récupérer leurs slugs en une seule requête
+                            const allRefIds = new Set();
+                            multiRefValues.forEach(row => {
+                                let parsed;
+                                if (typeof row.info_ref === 'string') {
+                                    try { parsed = JSON.parse(row.info_ref); } catch { parsed = []; }
+                                } else {
+                                    parsed = row.info_ref || [];
+                                }
+                                if (Array.isArray(parsed)) {
+                                    parsed.forEach(ref => {
+                                        if (!ref) return;
+                                        if (typeof ref === 'object') {
+                                            if (ref.value) allRefIds.add(ref.value);
+                                        } else {
+                                            allRefIds.add(ref);
+                                        }
+                                    });
+                                }
+                            });
+
+                            let slugById = new Map();
+                            if (allRefIds.size > 0) {
+                                const { data: refEls } = await supabase
+                                    .from('collection_element')
+                                    .select('id, collection_element_slug')
+                                    .in('id', Array.from(allRefIds));
+                                if (Array.isArray(refEls)) {
+                                    slugById = new Map(refEls.map(e => [e.id, (e.collection_element_slug || '').toString()]));
+                                }
+                            }
+
                             multiRefValues.forEach(row => {
                                 if (!multiRefFieldValueMap.has(row.collection_element_id)) {
                                     multiRefFieldValueMap.set(row.collection_element_id, {});
@@ -610,7 +683,6 @@ async function applyFiltersToElements({ elements, filters, baseColumns, targetCo
                                     parsed = row.info_ref || [];
                                 }
                                 const refIds = new Set();
-                                const fold = (s) => (s || '').toString().normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
                                 if (Array.isArray(parsed)) {
                                     parsed.forEach(ref => {
                                         if (!ref) return;
@@ -619,6 +691,11 @@ async function applyFiltersToElements({ elements, filters, baseColumns, targetCo
                                                 const vLower = ref.value.toString().toLowerCase();
                                                 refIds.add(vLower);
                                                 refIds.add(fold(ref.value));
+                                                const slug = slugById.get(ref.value);
+                                                if (slug) {
+                                                    refIds.add(slug.toLowerCase());
+                                                    refIds.add(fold(slug));
+                                                }
                                             }
                                             if (ref.label) {
                                                 const lLower = ref.label.toString().toLowerCase();
@@ -629,6 +706,11 @@ async function applyFiltersToElements({ elements, filters, baseColumns, targetCo
                                             const raw = ref.toString().toLowerCase();
                                             refIds.add(raw);
                                             refIds.add(fold(ref));
+                                            const slug = slugById.get(ref);
+                                            if (slug) {
+                                                refIds.add(slug.toLowerCase());
+                                                refIds.add(fold(slug));
+                                            }
                                         }
                                     });
                                 }
