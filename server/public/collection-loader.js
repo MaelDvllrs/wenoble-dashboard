@@ -100,17 +100,57 @@
 
 
             if (!dataBlog.blog || dataBlog.blog.length === 0) {
-                
-                const comingSoonMessage = document.createElement('div');
-                comingSoonMessage.textContent = "Coming Soon";
-                comingSoonMessage.style.textAlign = "center";
-                comingSoonMessage.style.fontSize = "1.5rem";
-                comingSoonMessage.style.color = "#555";
-                el.appendChild(comingSoonMessage);
-                el.querySelector("[wn-collection-box]").remove();
+                // Si c'est un select, ajouter une option "Aucun élément"
+                if (el.tagName === 'SELECT') {
+                    const emptyOption = document.createElement('option');
+                    emptyOption.value = '';
+                    emptyOption.textContent = 'Aucun élément disponible';
+                    emptyOption.disabled = true;
+                    el.appendChild(emptyOption);
+                } else {
+                    const comingSoonMessage = document.createElement('div');
+                    comingSoonMessage.textContent = "Coming Soon";
+                    comingSoonMessage.style.textAlign = "center";
+                    comingSoonMessage.style.fontSize = "1.5rem";
+                    comingSoonMessage.style.color = "#555";
+                    el.appendChild(comingSoonMessage);
+                    const template = el.querySelector("[wn-collection-box]");
+                    if (template) template.remove();
+                }
                 return;
             }
 
+            // Vérifier si l'élément est un SELECT
+            if (el.tagName === 'SELECT') {
+                // Mode SELECT : remplir les options avec slug en value et title en text
+                const allBlogs = Array.isArray(dataBlog.blog) ? dataBlog.blog : [];
+                
+                // Vider le select d'abord (garder seulement les options existantes non-générées)
+                const existingOptions = Array.from(el.querySelectorAll('option:not([data-wn-generated])'));
+                el.innerHTML = '';
+                existingOptions.forEach(opt => el.appendChild(opt));
+
+                // Ajouter les nouvelles options depuis la collection
+                allBlogs.forEach(blog => {
+                    const option = document.createElement('option');
+                    option.value = blog.collection_element_slug || blog.id;
+                    option.textContent = blog.collection_element_name || `Élément ${blog.id}`;
+                    option.setAttribute('data-wn-generated', 'true');
+                    option.setAttribute('data-collection-id', blog.id);
+                    el.appendChild(option);
+                });
+
+                // Créer le marker pour indiquer que le select a été traité
+                const collectionMarker = document.createElement('div');
+                collectionMarker.className = 'ssr-wn-collection-box';
+                collectionMarker.style.display = 'none';
+                collectionMarker.setAttribute('data-collection-processed', 'true');
+                collectionMarker.setAttribute('data-items-count', allBlogs.length);
+                collectionMarker.setAttribute('data-processed-time', new Date().toISOString());
+                el.appendChild(collectionMarker);
+                
+                return; // Sortir ici car le traitement du select est terminé
+            }
 
             const template = el.querySelector("[wn-collection-box]");
             if (!template) {
