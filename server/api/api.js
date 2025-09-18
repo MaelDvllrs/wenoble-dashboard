@@ -374,6 +374,8 @@ async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, b
             allConfigs = configs;
         }
     }
+
+    console.log('Configs récupérées pour classification des filtres :', allConfigs);
     
     const configMap = new Map(allConfigs.map(c => [c.name_field, c.tab_field]));
     
