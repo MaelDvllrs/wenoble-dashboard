@@ -807,10 +807,10 @@ async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, b
     let allConfigs = [];
     let configCollectionIds = targetCollectionIds;
     
-    // En mode template, utiliser la collection template pour les configs de filtres
+    // En mode template, récupérer les configs des deux collections : template ET cible
     if (templateCollectionId) {
-        configCollectionIds = [templateCollectionId];
-        console.log('Mode template: récupération des configs depuis la collection template:', templateCollectionId);
+        configCollectionIds = [...targetCollectionIds, templateCollectionId];
+        console.log('Mode template: récupération des configs depuis les collections cible ET template:', configCollectionIds);
     }
     
     if (configCollectionIds.length > 0) {
