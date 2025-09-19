@@ -317,23 +317,43 @@ async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, 
         let filterValue = null;
         
         if (isTemplateMode && templateCollectionId && templateElementId) {
-            // Mode template: récupérer la valeur depuis la base de données
-            console.log('Mode template: récupération de la valeur depuis l\'élément template', templateElementId);
+            // Mode template: récupérer la valeur du champ multiReference de l'élément template
+            console.log('Mode template: récupération de la valeur du champ', configId, 'depuis l\'élément template', templateElementId);
             
-            const { data: templateElement, error: templateErr } = await supabase
-                .from('collection_element')
-                .select('collection_element_name')
-                .eq('id', templateElementId)
-                .eq('collection_element_status', true)
+            const { data: templateMultiRef, error: templateMultiRefErr } = await supabase
+                .from('collection_field_multireference')
+                .select('info_ref')
+                .eq('id_config', configId)
+                .eq('collection_element_id', templateElementId)
                 .maybeSingle();
                 
-            if (templateErr || !templateElement) {
-                console.log('Erreur ou élément template non trouvé:', templateErr);
+            if (templateMultiRefErr || !templateMultiRef) {
+                console.log('Erreur ou champ multiRef template non trouvé:', templateMultiRefErr);
                 continue;
             }
             
-            filterValue = templateElement.collection_element_name;
-            console.log('Valeur extraite du template:', filterValue);
+            // Parser le champ info_ref du template pour récupérer les IDs/labels référencés
+            let templateRefs = [];
+            try {
+                templateRefs = typeof templateMultiRef.info_ref === 'string' 
+                    ? JSON.parse(templateMultiRef.info_ref) 
+                    : (templateMultiRef.info_ref || []);
+            } catch (e) {
+                console.log('Erreur parsing info_ref template:', e);
+                continue;
+            }
+            
+            if (!Array.isArray(templateRefs) || templateRefs.length === 0) {
+                console.log('Aucune référence trouvée dans le template');
+                continue;
+            }
+            
+            console.log('Références du template:', templateRefs);
+            
+            // On va utiliser ces références comme critères de filtrage
+            // Plutôt qu'une seule valeur, on a maintenant une liste de références à rechercher
+            filterValue = templateRefs;
+            console.log('Valeurs extraites du template:', filterValue);
         } else {
             // Mode normal: vérifier si la valeur du token est un ID de config (nombre) ou une vraie valeur
             // Si c'est juste un nombre qui correspond au configId, on skip ce filtre
@@ -425,64 +445,114 @@ async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, 
             console.log(`Analyse de l'élément ${row.collection_element_id}, refs:`, parsed);
             
             // Vérifier si la valeur correspond
-            const hasMatch = parsed.some(ref => {
-                if (!ref) return false;
-                
-                let refId;
-                if (typeof ref === 'object' && ref.value) {
-                    refId = ref.value;
-                } else if (typeof ref !== 'object') {
-                    refId = ref;
-                } else {
-                    return false;
-                }
-                
-                // Récupérer l'élément référencé
-                const refElement = refElementsMap.get(refId);
-                if (!refElement) {
-                    console.log(`  RefId ${refId} non trouvé dans refElementsMap`);
-                    return false;
-                }
-                
-                // Comparer avec la valeur à filtrer
-                const filterValueLower = filterValue.toString().toLowerCase();
-                const elementName = (refElement.collection_element_name || '').toLowerCase();
-                const elementSlug = (refElement.collection_element_slug || '').toLowerCase();
-                const refLabel = (typeof ref === 'object' && ref.label ? ref.label.toLowerCase() : '');
-                
-                console.log(`  Comparaison: filterValue="${filterValueLower}" vs elementName="${elementName}" vs elementSlug="${elementSlug}" vs refLabel="${refLabel}"`);
-                
-                let matches = false;
-                switch (operator) {
-                    case 'equals':
-                        matches = elementName === filterValueLower ||
-                               elementSlug === filterValueLower ||
-                               refLabel === filterValueLower;
-                        break;
-                    case 'contains':
-                        matches = elementName.includes(filterValueLower) ||
-                               elementSlug.includes(filterValueLower) ||
-                               refLabel.includes(filterValueLower);
-                        break;
-                    case 'starts':
-                        matches = elementName.startsWith(filterValueLower) ||
-                               elementSlug.startsWith(filterValueLower) ||
-                               refLabel.startsWith(filterValueLower);
-                        break;
-                    case 'ends':
-                        matches = elementName.endsWith(filterValueLower) ||
-                               elementSlug.endsWith(filterValueLower) ||
-                               refLabel.endsWith(filterValueLower);
-                        break;
-                    default:
-                        matches = elementName === filterValueLower ||
-                               elementSlug === filterValueLower ||
-                               refLabel === filterValueLower;
-                }
-                
-                console.log(`  Match: ${matches}`);
-                return matches;
-            });
+            let hasMatch = false;
+            
+            if (isTemplateMode && Array.isArray(filterValue)) {
+                // Mode template: comparer les références du template avec celles de l'élément
+                hasMatch = filterValue.some(templateRef => {
+                    if (!templateRef) return false;
+                    
+                    let templateRefId = null;
+                    let templateRefLabel = null;
+                    
+                    if (typeof templateRef === 'object' && templateRef.value) {
+                        templateRefId = templateRef.value;
+                        templateRefLabel = templateRef.label;
+                    } else if (typeof templateRef !== 'object') {
+                        templateRefId = templateRef;
+                    }
+                    
+                    console.log(`  Recherche de correspondance pour templateRef: ID=${templateRefId}, Label=${templateRefLabel}`);
+                    
+                    return parsed.some(ref => {
+                        if (!ref) return false;
+                        
+                        let refId;
+                        let refLabel = '';
+                        if (typeof ref === 'object' && ref.value) {
+                            refId = ref.value;
+                            refLabel = ref.label || '';
+                        } else if (typeof ref !== 'object') {
+                            refId = ref;
+                        } else {
+                            return false;
+                        }
+                        
+                        // Comparer les IDs directement
+                        const idMatch = templateRefId && refId && templateRefId.toString() === refId.toString();
+                        
+                        // Comparer les labels si disponibles
+                        const labelMatch = templateRefLabel && refLabel && 
+                            templateRefLabel.toLowerCase() === refLabel.toLowerCase();
+                        
+                        console.log(`    Comparaison: templateRefId=${templateRefId} vs refId=${refId}, templateRefLabel="${templateRefLabel}" vs refLabel="${refLabel}", idMatch=${idMatch}, labelMatch=${labelMatch}`);
+                        
+                        return idMatch || labelMatch;
+                    });
+                });
+            } else {
+                // Mode normal: logique originale
+                hasMatch = parsed.some(ref => {
+                    if (!ref) return false;
+                    
+                    let refId;
+                    if (typeof ref === 'object' && ref.value) {
+                        refId = ref.value;
+                    } else if (typeof ref !== 'object') {
+                        refId = ref;
+                    } else {
+                        return false;
+                    }
+                    
+                    // Récupérer l'élément référencé
+                    const refElement = refElementsMap.get(refId);
+                    if (!refElement) {
+                        console.log(`  RefId ${refId} non trouvé dans refElementsMap`);
+                        return false;
+                    }
+                    
+                    // Comparer avec la valeur à filtrer
+                    const filterValueLower = filterValue.toString().toLowerCase();
+                    const elementName = (refElement.collection_element_name || '').toLowerCase();
+                    const elementSlug = (refElement.collection_element_slug || '').toLowerCase();
+                    const refLabel = (typeof ref === 'object' && ref.label ? ref.label.toLowerCase() : '');
+                    
+                    console.log(`  Comparaison: filterValue="${filterValueLower}" vs elementName="${elementName}" vs elementSlug="${elementSlug}" vs refLabel="${refLabel}"`);
+                    
+                    let matches = false;
+                    switch (operator) {
+                        case 'equals':
+                            matches = elementName === filterValueLower ||
+                                   elementSlug === filterValueLower ||
+                                   refLabel === filterValueLower;
+                            break;
+                        case 'contains':
+                            matches = elementName.includes(filterValueLower) ||
+                                   elementSlug.includes(filterValueLower) ||
+                                   refLabel.includes(filterValueLower);
+                            break;
+                        case 'starts':
+                            matches = elementName.startsWith(filterValueLower) ||
+                                   elementSlug.startsWith(filterValueLower) ||
+                                   refLabel.startsWith(filterValueLower);
+                            break;
+                        case 'ends':
+                            matches = elementName.endsWith(filterValueLower) ||
+                                   elementSlug.endsWith(filterValueLower) ||
+                                   refLabel.endsWith(filterValueLower);
+                            break;
+                        default:
+                            matches = elementName === filterValueLower ||
+                                   elementSlug === filterValueLower ||
+                                   refLabel === filterValueLower;
+                    }
+                    
+                    console.log(`  Match: ${matches}`);
+                    return matches;
+                });
+            }
+            
+            console.log(`  Résultat final pour l'élément ${row.collection_element_id}: ${hasMatch}`);
             
             if (hasMatch) {
                 matchingIds.push(row.collection_element_id);
