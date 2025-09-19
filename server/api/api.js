@@ -211,20 +211,46 @@ async function getFilteredElementIdsByText({ supabase, targetCollectionIds, text
     
     let elementIds = new Set();
     
-    for (const [configId, filterValues] of Object.entries(textFilters)) {
-        const values = Array.isArray(filterValues) ? filterValues : [filterValues];
+    for (const [configId, filterConfig] of Object.entries(textFilters)) {
+        // Les filtres peuvent être soit un objet {field, operator, value} ou une valeur simple
+        let operator = 'equals';
+        let values = [];
         
-        // Récupérer les collection_element_id qui matchent ces valeurs
+        if (typeof filterConfig === 'object' && filterConfig.operator) {
+            // Format: {field: "...", operator: "contains", value: "..."}
+            operator = filterConfig.operator;
+            values = Array.isArray(filterConfig.value) ? filterConfig.value : [filterConfig.value];
+        } else {
+            // Format simple: valeur directe
+            values = Array.isArray(filterConfig) ? filterConfig : [filterConfig];
+        }
+        
+        // Récupérer les collection_element_id qui matchent ces valeurs selon l'opérateur
         let textQuery = supabase
             .from('collection_field_text')
             .select('collection_element_id')
             .eq('id_config', configId);
             
-        // Appliquer les filtres de valeur
-        if (values.length === 1) {
-            textQuery = textQuery.eq('text', values[0]);
-        } else {
-            textQuery = textQuery.in('text', values);
+        // Appliquer les filtres selon l'opérateur
+        for (const value of values) {
+            if (!value) continue;
+            
+            switch (operator) {
+                case 'equals':
+                    textQuery = textQuery.eq('text', value);
+                    break;
+                case 'contains':
+                    textQuery = textQuery.ilike('text', `%${value}%`);
+                    break;
+                case 'starts':
+                    textQuery = textQuery.ilike('text', `${value}%`);
+                    break;
+                case 'ends':
+                    textQuery = textQuery.ilike('text', `%${value}`);
+                    break;
+                default:
+                    textQuery = textQuery.eq('text', value);
+            }
         }
         
         const { data: textResults, error: textErr } = await textQuery;
@@ -527,8 +553,20 @@ async function applySortsToElements({ supabase, targetCollectionIds, elements, s
 
 // Helper: applique les filtres au niveau base de données quand possible
 async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, baseColumns, colone, ascending, limit, sorts = {}, templateCollectionId = null }) {
-    const filterEntries = Object.entries(filters);
-    if (filterEntries.length === 0) {
+    // Vérifier si filters est un array (nouveau format) ou un objet (ancien format)
+    let filterArray = [];
+    if (Array.isArray(filters)) {
+        filterArray = filters;
+    } else if (filters && typeof filters === 'object') {
+        // Convertir l'ancien format objet en array pour compatibilité
+        filterArray = Object.entries(filters).map(([key, value]) => ({
+            field: key,
+            operator: 'equals',
+            value: value
+        }));
+    }
+    
+    if (filterArray.length === 0) {
         // Pas de filtres, récupérer tous les éléments
         let query = supabase
             .from('collection_element')
@@ -573,6 +611,7 @@ async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, b
 
     console.log('Configs récupérées pour classification des filtres :', allConfigs);
     console.log('Filtres reçus :', filters);
+    console.log('Filtres normalisés :', filterArray);
     console.log('Template Collection ID :', templateCollectionId);
     
     // Si mode template, log pour debugging
@@ -583,15 +622,17 @@ async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, b
     const configMap = new Map(allConfigs.map(c => [c.id?.toString(), c.tab_field]));
     
     // Classifier les filtres par type directement avec les IDs
-    for (const [key, value] of filterEntries) {
-        if (baseColumns.has(key)) {
-            baseFilters[key] = value;
+    for (const filter of filterArray) {
+        const { field, operator = 'equals', value } = filter;
+        
+        if (baseColumns.has(field)) {
+            baseFilters[field] = value;
         } else {
-            const fieldType = configMap.get(key);
+            const fieldType = configMap.get(field);
             if (fieldType === 'text') {
-                textFilters[key] = value;
+                textFilters[field] = { operator, value };
             } else if (fieldType === 'multiReference') {
-                multiRefFilters[key] = value;
+                multiRefFilters[field] = { operator, value };
             }
             // Les autres types sont ignorés pour le moment
         }
