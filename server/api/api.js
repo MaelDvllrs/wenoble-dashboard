@@ -142,6 +142,12 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
     
     // Nouveau: collection template pour le mode template
     const templateCollectionId = req.query.templateCollectionId || null;
+    let templateElementId = req.query.templateElementId || null;
+    
+    // Log pour debugging
+    if (templateCollectionId) {
+        console.log('Mode template - Collection ID:', templateCollectionId, 'Element ID:', templateElementId);
+    }
 
     try {
         // Determine targeted collection(s)
@@ -166,7 +172,7 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
 
         // Avec filtres ou tri personnalisé: utiliser la nouvelle logique DB-first
         const dataset = await applyFiltersAtDbLevel({
-            supabase, targetCollectionIds, filters, baseColumns, colone, ascending, limit, sorts, templateCollectionId
+            supabase, targetCollectionIds, filters, baseColumns, colone, ascending, limit, sorts, templateCollectionId, templateElementId
         });
 
         if (dataset.length === 0) return res.status(200).json({ message: 'Aucun blog trouvé' });
@@ -286,7 +292,7 @@ async function getFilteredElementIdsByText({ supabase, targetCollectionIds, text
 }
 
 // Helper: récupère les collection_element_id filtrés via les champs multiReference
-async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, multiRefFilters, isTemplateMode = false, templateCollectionId = null }) {
+async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, multiRefFilters, isTemplateMode = false, templateCollectionId = null, templateElementId = null }) {
     if (Object.keys(multiRefFilters).length === 0) return null;
     
     let elementIds = new Set();
@@ -310,19 +316,38 @@ async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, 
         console.log('Recherche de multiRef avec operator:', operator, 'values:', values);
         
         if (isTemplateMode && templateCollectionId) {
-            // Mode template: récupérer le collection_element_name de l'élément template
-            console.log('Mode template: récupération du nom de l\'élément template de la collection', templateCollectionId);
+            // Mode template: récupérer le collection_element_name de l'élément template spécifique
+            console.log('Mode template: récupération du nom de l\'élément template', templateElementId, 'de la collection', templateCollectionId);
             
-            // 1. Récupérer tous les éléments de la collection template pour avoir leur collection_element_name
-            const { data: templateElements, error: templateElementsErr } = await supabase
-                .from('collection_element')
-                .select('id, collection_element_name')
-                .eq('collection_id', templateCollectionId)
-                .eq('collection_element_status', true);
-                
-            if (templateElementsErr || !templateElements || templateElements.length === 0) {
-                console.log('Erreur ou pas d\'éléments dans la collection template:', templateElementsErr);
-                continue;
+            let templateElements = [];
+            
+            if (templateElementId) {
+                // 1a. Récupérer l'élément template spécifique
+                const { data: specificTemplateElement, error: specificTemplateErr } = await supabase
+                    .from('collection_element')
+                    .select('id, collection_element_name')
+                    .eq('id', templateElementId)
+                    .eq('collection_element_status', true)
+                    .maybeSingle();
+                    
+                if (specificTemplateErr || !specificTemplateElement) {
+                    console.log('Erreur ou élément template spécifique non trouvé:', specificTemplateErr);
+                    continue;
+                }
+                templateElements = [specificTemplateElement];
+            } else {
+                // 1b. Récupérer tous les éléments de la collection template (fallback)
+                const { data: allTemplateElements, error: allTemplateElementsErr } = await supabase
+                    .from('collection_element')
+                    .select('id, collection_element_name')
+                    .eq('collection_id', templateCollectionId)
+                    .eq('collection_element_status', true);
+                    
+                if (allTemplateElementsErr || !allTemplateElements || allTemplateElements.length === 0) {
+                    console.log('Erreur ou pas d\'éléments dans la collection template:', allTemplateElementsErr);
+                    continue;
+                }
+                templateElements = allTemplateElements;
             }
             
             // 2. Extraire les noms des éléments template comme valeurs à rechercher
@@ -758,7 +783,7 @@ async function applySortsToElements({ supabase, targetCollectionIds, elements, s
 }
 
 // Helper: applique les filtres au niveau base de données quand possible
-async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, baseColumns, colone, ascending, limit, sorts = {}, templateCollectionId = null }) {
+async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, baseColumns, colone, ascending, limit, sorts = {}, templateCollectionId = null, templateElementId = null }) {
     // Vérifier si filters est un array (nouveau format) ou un objet (ancien format)
     let filterArray = [];
     if (Array.isArray(filters)) {
@@ -875,7 +900,8 @@ async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, b
         targetCollectionIds: templateCollectionId ? [templateCollectionId] : targetCollectionIds, 
         multiRefFilters,
         isTemplateMode: !!templateCollectionId,
-        templateCollectionId
+        templateCollectionId,
+        templateElementId
     });
     
     // Calculer l'intersection des IDs si plusieurs types de filtres dynamiques

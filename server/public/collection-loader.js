@@ -69,6 +69,41 @@
             const decodedData = decodeBase64(encodedData);
 
             const { blogId, limit, order, colone, joinTable, config, pagination, itemsPerPage, sorts, filters, templateCollectionId } = decodedData;
+            
+            // Si en mode template, récupérer l'ID de l'élément template actuel
+            let templateElementId = null;
+            if (templateCollectionId) {
+                // Récupérer le slug de l'URL actuelle (comme dans collection-template-loader.js)
+                let slug = null;
+                if (isWebflowPreview()) {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    slug = urlParams.get('slug');
+                } else {
+                    slug = window.ARTICLE_SLUG;
+                }
+                
+                if (slug) {
+                    try {
+                        // Récupérer l'élément template par slug
+                        const templateInfoResponse = await fetch(`${apiUrl}/api/sendBlogInfoSlug`, {
+                            method: "GET",
+                            headers: {
+                                'api_key': userKey,
+                                'id_blog': templateCollectionId,
+                                'slug': slug,
+                            }
+                        });
+                        
+                        const templateInfo = await templateInfoResponse.json();
+                        if (templateInfo.blog && templateInfo.blog.length > 0) {
+                            templateElementId = templateInfo.blog[0].id;
+                            console.log('Template Element ID récupéré:', templateElementId);
+                        }
+                    } catch (error) {
+                        console.error('Erreur lors de la récupération du template element ID:', error);
+                    }
+                }
+            }
 
             if (!blogId) {
                 console.error("Blog ID manquant !");
@@ -96,6 +131,11 @@
             // Ajouter l'ID de la collection template si en mode template
             if (templateCollectionId) {
                 paramsObj.templateCollectionId = templateCollectionId;
+                
+                // Ajouter l'ID de l'élément template si disponible
+                if (templateElementId) {
+                    paramsObj.templateElementId = templateElementId;
+                }
             }
             
             if (!pagination && typeof limit !== 'undefined' && limit !== null) {
