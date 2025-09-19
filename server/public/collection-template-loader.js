@@ -166,7 +166,7 @@
 
         const ogImage = document.querySelector("meta[property='og:image']") || document.createElement('meta');
         ogImage.setAttribute('property', 'og:image');
-        const image = data.content.image.find(img => img.id_config == metaTagsImage);
+        const image = data.content.image && data.content.image.find(img => img.id_config == metaTagsImage);
         if (image) {
             ogImage.setAttribute('content', image.url);
         }
