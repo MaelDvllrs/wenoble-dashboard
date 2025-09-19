@@ -280,8 +280,23 @@ async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, 
     
     let elementIds = new Set();
     
-    for (const [configId, filterValues] of Object.entries(multiRefFilters)) {
-        const values = Array.isArray(filterValues) ? filterValues : [filterValues];
+    for (const [configId, filterConfig] of Object.entries(multiRefFilters)) {
+        console.log('Traitement du filtre multiRef pour configId:', configId, 'filterConfig:', filterConfig);
+        
+        // Les filtres peuvent être soit un objet {operator, value} ou une valeur simple
+        let operator = 'equals';
+        let values = [];
+        
+        if (typeof filterConfig === 'object' && filterConfig.operator) {
+            // Format: {operator: "equals", value: "test categorie"}
+            operator = filterConfig.operator;
+            values = Array.isArray(filterConfig.value) ? filterConfig.value : [filterConfig.value];
+        } else {
+            // Format simple: valeur directe
+            values = Array.isArray(filterConfig) ? filterConfig : [filterConfig];
+        }
+        
+        console.log('Recherche de multiRef avec operator:', operator, 'values:', values);
         
         // Récupérer tous les enregistrements multiReference pour ce config
         const { data: multiRefResults, error: multiRefErr } = await supabase
@@ -289,9 +304,12 @@ async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, 
             .select('collection_element_id, info_ref')
             .eq('id_config', configId);
             
-        if (multiRefErr || !multiRefResults) continue;
+        if (multiRefErr || !multiRefResults) {
+            console.log('Erreur ou pas de résultats multiRef:', multiRefErr);
+            continue;
+        }
 
-        console.log('multiRefResults pour configId', configId, multiRefResults);
+        console.log('Résultats multiRef trouvés:', multiRefResults.length);
         
         // Collecter tous les IDs référencés pour les récupérer en une seule requête
         const allRefIds = new Set();
@@ -330,7 +348,7 @@ async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, 
             }
         }
 
-        console.log('Éléments référencés récupérés:', refElementsMap);
+        console.log('Éléments référencés récupérés:', refElementsMap.size);
         
         // Filtrer côté serveur en parsant le JSON et en comparant avec les éléments référencés
         const matchingIds = [];
@@ -344,7 +362,7 @@ async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, 
             
             if (!Array.isArray(parsed)) continue;
             
-            // Vérifier si au moins une valeur attendue est présente
+            // Vérifier si au moins une valeur attendue est présente selon l'opérateur
             const hasMatch = values.some(expectedValue => {
                 return parsed.some(ref => {
                     if (!ref) return false;
@@ -362,12 +380,36 @@ async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, 
                     const refElement = refElementsMap.get(refId);
                     if (!refElement) return false;
 
-                    // Comparer avec les propriétés de l'élément référencé
+                    // Appliquer l'opérateur de comparaison
                     const expectedLower = expectedValue.toString().toLowerCase();
-                    return refElement.id?.toString() === expectedValue.toString() ||
-                           refElement.collection_element_name?.toLowerCase() === expectedLower ||
-                           refElement.collection_element_slug?.toLowerCase() === expectedLower ||
-                           (typeof ref === 'object' && ref.label?.toLowerCase() === expectedLower);
+                    const elementName = (refElement.collection_element_name || '').toLowerCase();
+                    const elementSlug = (refElement.collection_element_slug || '').toLowerCase();
+                    const refLabel = (typeof ref === 'object' && ref.label ? ref.label.toLowerCase() : '');
+                    
+                    switch (operator) {
+                        case 'equals':
+                            return refElement.id?.toString() === expectedValue.toString() ||
+                                   elementName === expectedLower ||
+                                   elementSlug === expectedLower ||
+                                   refLabel === expectedLower;
+                        case 'contains':
+                            return elementName.includes(expectedLower) ||
+                                   elementSlug.includes(expectedLower) ||
+                                   refLabel.includes(expectedLower);
+                        case 'starts':
+                            return elementName.startsWith(expectedLower) ||
+                                   elementSlug.startsWith(expectedLower) ||
+                                   refLabel.startsWith(expectedLower);
+                        case 'ends':
+                            return elementName.endsWith(expectedLower) ||
+                                   elementSlug.endsWith(expectedLower) ||
+                                   refLabel.endsWith(expectedLower);
+                        default:
+                            return refElement.id?.toString() === expectedValue.toString() ||
+                                   elementName === expectedLower ||
+                                   elementSlug === expectedLower ||
+                                   refLabel === expectedLower;
+                    }
                 });
             });
             
@@ -375,6 +417,8 @@ async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, 
                 matchingIds.push(row.collection_element_id);
             }
         }
+        
+        console.log('IDs correspondants trouvés:', matchingIds);
         
         if (elementIds.size === 0) {
             // Premier filtre : ajouter tous les IDs
@@ -398,7 +442,6 @@ async function applySortsToElements({ supabase, targetCollectionIds, elements, s
         return elements;
     }
 
-    console.log('Application du tri dynamique:', sorts);
 
     // Récupérer les configs pour identifier les types de champs
     let allConfigs = [];
@@ -609,8 +652,6 @@ async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, b
         }
     }
 
-    console.log('Configs récupérées pour classification des filtres :', allConfigs);
-    console.log('Filtres reçus :', filters);
     console.log('Filtres normalisés :', filterArray);
     console.log('Template Collection ID :', templateCollectionId);
     
