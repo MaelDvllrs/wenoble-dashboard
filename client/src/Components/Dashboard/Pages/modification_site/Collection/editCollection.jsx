@@ -78,32 +78,27 @@ const EditCollection = () => {
     const [wrapLimitEnabled, setWrapLimitEnabled] = useState(false);
     const [wrapPaginationEnabled, setWrapPaginationEnabled] = useState(false);
     const [wrapItemsPerPage, setWrapItemsPerPage] = useState(10);
-    const [wrapOrder, setWrapOrder] = useState('asc'); // 'asc' | 'desc'
-    const [wrapColone, setWrapColone] = useState('created_at');
+    
+    // États pour les filtres dynamiques
+    const [wrapFilters, setWrapFilters] = useState([]);
+    const [wrapSorts, setWrapSorts] = useState([]);
+    const [isTemplateMode, setIsTemplateMode] = useState(false);
+    const [selectedTemplateCollection, setSelectedTemplateCollection] = useState('');
+
+    // Réinitialiser les champs de valeur des filtres quand la collection template change
+    useEffect(() => {
+        if (isTemplateMode && wrapFilters.length > 0) {
+            setWrapFilters(prev => prev.map(filter => ({
+                ...filter,
+                value: '' // Réinitialiser la valeur quand la collection template change
+            })));
+        }
+    }, [selectedTemplateCollection, isTemplateMode]);
     // Template SEO attribute selections
     const [templateTitleTag, setTemplateTitleTag] = useState('');
     const [templateMetaTag, setTemplateMetaTag] = useState('');
     const [templateMetaImageTag, setTemplateMetaImageTag] = useState('');
-    // Base orderable columns always available
-    const baseOrderColumns = useMemo(() => ([
-        { value: 'collection_element_name', label: 'Titre' },
-        { value: 'created_at', label: 'Date de création' },
-        { value: 'collection_element_publish_date', label: 'Date de publication' },
-        { value: 'updated_at', label: 'Date de modification' }
-    ]), []);
-
-    // Compute orderable columns from config (text or multiReference)
-    const configOrderColumns = useMemo(() => {
-        const names = (configFields || [])
-            .filter(f => f?.tab_field === 'text' || f?.tab_field === 'multiReference')
-            .map(f => f?.name_field)
-            .filter(Boolean);
-        // unique and map to {label, value}
-        return Array.from(new Set(names)).map(name => ({ label: name, value: name }));
-    }, [configFields]);
-
-    const orderableColumns = useMemo(() => ([...baseOrderColumns, ...configOrderColumns]), [baseOrderColumns, configOrderColumns]);
-
+    
     // Options for template loader selects
     const textFieldOptions = useMemo(() => (
         (configFields || [])
@@ -130,9 +125,7 @@ const EditCollection = () => {
     const encodedWrapperKey = useMemo(() => {
         try {
             const payload = {
-                blogId: collectionId,
-                order: wrapOrder,
-                colone: wrapColone
+                blogId: collectionId
             };
             // Inclure la limite uniquement si activée
             if (wrapLimitEnabled) {
@@ -144,11 +137,23 @@ const EditCollection = () => {
                 const perPage = Math.max(1, Number(wrapItemsPerPage) || 10);
                 payload.itemsPerPage = perPage;
             }
+            // Inclure les filtres s'il y en a
+            if (wrapFilters.length > 0) {
+                payload.filters = wrapFilters;
+            }
+            // Inclure les tris s'il y en a
+            if (wrapSorts.length > 0) {
+                payload.sorts = wrapSorts;
+            }
+            // Inclure la collection template si en mode template
+            if (isTemplateMode && selectedTemplateCollection) {
+                payload.templateCollectionId = selectedTemplateCollection;
+            }
             return btoa(JSON.stringify(payload));
         } catch {
             return '';
         }
-    }, [collectionId, wrapLimit, wrapLimitEnabled, wrapOrder, wrapColone, wrapPaginationEnabled, wrapItemsPerPage]);
+    }, [collectionId, wrapLimit, wrapLimitEnabled, wrapPaginationEnabled, wrapItemsPerPage, wrapFilters, wrapSorts, isTemplateMode, selectedTemplateCollection]);
     const [availableCollections, setAvailableCollections] = useState([]);
     const [showFieldTypeGrid, setShowFieldTypeGrid] = useState(false);
     const [selectedFieldType, setSelectedFieldType] = useState('');
@@ -247,7 +252,41 @@ const EditCollection = () => {
                 const decoded = jwtDecode(response.data);
                 // Exclure la collection actuelle de la liste
                 const collections = (decoded.blog || []).filter(col => col.id !== parseInt(collectionId));
-                setAvailableCollections(collections);
+                
+                // Charger les champs de configuration pour chaque collection
+                const collectionsWithFields = await Promise.all(collections.map(async (collection) => {
+                    try {
+                        console.log(`Chargement des champs pour la collection ${collection.id} (${collection.collection_name})`);
+                        const configResponse = await Axios.get(`${apiUrl}/getConfigCollection`, {
+                            params: { collectionId: collection.id },
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        console.log(`Réponse pour collection ${collection.id}:`, configResponse.data);
+                        
+                        if (configResponse.data && configResponse.data.data) {
+                            return {
+                                ...collection,
+                                config_fields: configResponse.data.data || []
+                            };
+                        }
+                    } catch (error) {
+                        console.error(`Erreur lors du chargement des champs pour la collection ${collection.id}:`, error);
+                        if (error.response) {
+                            console.error('Détails de l\'erreur:', error.response.data);
+                        }
+                        return {
+                            ...collection,
+                            config_fields: []
+                        };
+                    }
+                    return collection;
+                }));
+                
+                setAvailableCollections(collectionsWithFields);
             }
         } catch (error) {
             console.error('Erreur lors du chargement des collections:', error);
@@ -389,6 +428,124 @@ const EditCollection = () => {
             showSnackbar('error', 'Erreur lors de la vérification du champ. Impossible de le supprimer.');
         }
     };
+
+    // Fonctions pour gérer les filtres dynamiques
+    const addFilter = () => {
+        const newFilter = {
+            id: Date.now(),
+            // Pour mode normal: field = champ de collection actuelle, value = texte libre
+            // Pour mode template: field = champ de collection actuelle, value = champ de la collection template sélectionnée
+            field: '', // Champ de la collection actuelle
+            operator: 'equals',
+            value: '', // Texte libre (normal) ou champ de la collection template (template)
+            pageType: isTemplateMode ? 'template' : 'normal',
+        };
+        setWrapFilters([...wrapFilters, newFilter]);
+    };
+
+    const updateFilter = (filterId, updates) => {
+        setWrapFilters(prev => prev.map(filter => {
+            if (filter.id === filterId) {
+                return { ...filter, ...updates };
+            }
+            return filter;
+        }));
+    };
+
+    const removeFilter = (filterId) => {
+        setWrapFilters(prev => prev.filter(filter => filter.id !== filterId));
+    };
+
+    const addSort = () => {
+        const newSort = {
+            id: Date.now(),
+            field: '', // Champ de la collection actuelle
+            direction: 'asc',
+            pageType: isTemplateMode ? 'template' : 'normal',
+        };
+        setWrapSorts([...wrapSorts, newSort]);
+    };
+
+    const updateSort = (sortId, updates) => {
+        setWrapSorts(prev => prev.map(sort => {
+            if (sort.id === sortId) {
+                return { ...sort, ...updates };
+            }
+            return sort;
+        }));
+    };
+
+    const removeSort = (sortId) => {
+        setWrapSorts(prev => prev.filter(sort => sort.id !== sortId));
+    };
+
+    // Options disponibles selon le type de page
+    const getFilterFieldOptions = () => {
+        // Pour mode normal : champs de la collection actuelle (seulement text et multiReference)
+        return [
+            { value: 'collection_element_name', label: 'Titre' },
+            { value: 'collection_element_slug', label: 'Slug' },
+            { value: 'created_at', label: 'Date de création' },
+            { value: 'collection_element_publish_date', label: 'Date de publication' },
+            ...configFields.filter(field => 
+                ['text', 'multiReference'].includes(field.tab_field)
+            ).map(field => ({
+                value: field.id,
+                label: `${field.name_field} (${field.tab_field})`
+            }))
+        ];
+    };
+
+    const getSelectedCollectionFields = (selectedCollectionId) => {
+        if (!selectedCollectionId) return [];
+        
+        // Trouver la collection sélectionnée en comparant avec les deux types
+        const selectedCollection = availableCollections.find(col => 
+            col.id == selectedCollectionId || 
+            col.id === parseInt(selectedCollectionId) ||
+            String(col.id) === String(selectedCollectionId)
+        );
+        
+        if (!selectedCollection) {
+            return [];
+        }
+        
+        if (!selectedCollection.config_fields) {
+            // Retourner au minimum les champs de base
+            return [
+                { value: 'collection_element_name', label: 'Titre' },
+                { value: 'collection_element_slug', label: 'Slug' },
+                { value: 'created_at', label: 'Date de création' },
+                { value: 'collection_element_publish_date', label: 'Date de publication' }
+            ];
+        }
+
+        // Retourner les champs de cette collection (seulement text et multiReference)
+        const fields = [
+            { value: 'collection_element_name', label: 'Titre' },
+            { value: 'collection_element_slug', label: 'Slug' },
+            { value: 'created_at', label: 'Date de création' },
+            { value: 'collection_element_publish_date', label: 'Date de publication' },
+            ...selectedCollection.config_fields.filter(field => 
+                ['text', 'multiReference'].includes(field.tab_field)
+            ).map(field => ({
+                value: field.id,
+                label: `${field.name_field} (${field.tab_field})`
+            }))
+        ];
+        
+        return fields;
+    };
+
+    // Fonction pour obtenir les champs de la collection template sélectionnée globalement
+    const getTemplateCollectionFields = () => {
+        return getSelectedCollectionFields(selectedTemplateCollection);
+    };
+
+    // Memo des champs de la collection template pour forcer la mise à jour
+    const templateCollectionFields = useMemo(() => {
+        return getTemplateCollectionFields();
+    }, [selectedTemplateCollection, availableCollections]);
 
     // Valider les données avant sauvegarde
     const validateData = () => {
@@ -615,17 +772,6 @@ const EditCollection = () => {
                         )}
                     </div>
                     <div className='input-container'>
-                        <p className="blogField_name collection_edit_name">Ordre</p>
-                        <SelectField
-                            className="input_text_blog"
-                            value={wrapOrder}
-                            onChange={(e) => setWrapOrder(e.target.value)}
-                        >
-                            <MenuItem value="asc">Ascendant</MenuItem>
-                            <MenuItem value="desc">Descendant</MenuItem>
-                        </SelectField>
-                    </div>
-                    <div className='input-container'>
                         <label className="blogField_name collection_edit_name">
                             Pagination
                             <DefaultSwitch
@@ -665,28 +811,261 @@ const EditCollection = () => {
                             </div>
                         )}
                     </div>
-                    <div className='input-container'>
-
-                        <p className="blogField_name collection_edit_name">Trier par</p>
-                        <SelectField
-                            className="input_text_blog"
-                            value={wrapColone}
-                            displayEmpty
-                            renderValue={(selected) => {
-                                if (!selected) return 'Sélectionner une colonne…';
-                                const selectedOpt = orderableColumns.find(o => o.value === selected);
-                                return selectedOpt ? selectedOpt.label : selected;
-                            }}
-                            onChange={(e) => setWrapColone(e.target.value)}                                >
-                            {orderableColumns.length === 0
-                                ? (<MenuItem value="" disabled>Aucune colonne disponible</MenuItem>)
-                                : ([
-                                    ...orderableColumns.map(opt => (
-                                        <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
-                                    ))
-                                ])}
-                        </SelectField>
+                    <div className='line_horizontal' style={{backgroundColor: theme.palette.primary.third}}/>
+                    
+                    {/* Section Filtres et Tris Dynamiques */}
+                    <div className='header_modification header_page_modification' style={{marginTop: '1rem'}}>
+                        <h4 className="section-title">Filtres et Tris Dynamiques</h4>
                     </div>
+                    
+                    <div className='input-container'>
+                        <label className="blogField_name collection_edit_name">
+                            Mode Template (Pages dynamiques)
+                            <DefaultSwitch
+                                checked={isTemplateMode}
+                                onChange={(e) => setIsTemplateMode(e.target.checked)}
+                            />
+                        </label>
+                        <p style={{fontSize: '0.8rem', color: theme.palette.text.secondary, marginTop: '0.5rem'}}>
+                            {isTemplateMode 
+                                ? "Mode Template : Filtres entre collections pour les pages dynamiques" 
+                                : "Mode Normal : Filtres dans la collection actuelle avec valeur libre"
+                            }
+                        </p>
+                    </div>
+
+                    {/* Sélecteur de collection template global */}
+                    {isTemplateMode && (
+                        <div className='input-container'>
+                            <p className="blogField_name collection_edit_name">Collection Template</p>
+                            <SelectField
+                                className="input_text_blog"
+                                value={selectedTemplateCollection}
+                                onChange={(e) => setSelectedTemplateCollection(e.target.value)}
+                                displayEmpty
+                            >
+                                <MenuItem value="">Sélectionner une collection template...</MenuItem>
+                                {availableCollections.length === 0 ? (
+                                    <MenuItem value="" disabled>Aucune collection disponible</MenuItem>
+                                ) : (
+                                    availableCollections.map(collection => (
+                                        <MenuItem key={collection.id} value={collection.id}>
+                                            {collection.collection_name || collection.name_collection || collection.name || `Collection ${collection.id}`}
+                                        </MenuItem>
+                                    ))
+                                )}
+                            </SelectField>
+                            <p style={{fontSize: '0.8rem', color: theme.palette.text.secondary, marginTop: '0.5rem'}}>
+                                Collection utilisée pour les champs de destination des filtres et tris
+                                {availableCollections.length > 0 && (
+                                    <span> ({availableCollections.length} collection(s) disponible(s))</span>
+                                )}
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Section Filtres */}
+                    <div className='input-container'>
+                        <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem'}}>
+                            <p className="blogField_name collection_edit_name" style={{margin: "0"}}>Filtres</p>
+                            <button 
+                                type="button" 
+                                className="add-field-btn"
+                                onClick={addFilter}
+                                style={{
+                                    backgroundColor: theme.palette.primary.main,
+                                    border: 'none',
+                                    color: theme.palette.text.primary,
+                                    borderRadius: '4px',
+                                    padding: '0.5rem 1rem',
+                                    cursor: 'pointer',
+                                    fontSize: '0.8rem'
+                                }}
+                            >
+                                + Ajouter un filtre
+                            </button>
+                        </div>
+                        
+                        {wrapFilters.map((filter) => (
+                            <div key={filter.id} style={{
+                                border: `1px solid ${theme.palette.divider}`,
+                                borderRadius: '4px',
+                                padding: '1rem',
+                                marginBottom: '0.5rem',
+                                backgroundColor: theme.palette.primary.secondary,
+                                boxShadow: theme.palette.shadow.main,
+                                position: "relative"
+                            }}>
+                                <div>
+                                    {/* Premier champ : toujours les champs de la collection actuelle */}
+                                        <p className="blogField_name collection_edit_name">Champ de la collection actuelle</p>
+                                        <SelectField
+                                            className="input_text_blog"
+                                            value={filter.field}
+                                            onChange={(e) => updateFilter(filter.id, { field: e.target.value })}
+                                            displayEmpty
+                                            style={{marginBottom: "1rem"}}
+                                        >
+                                            <MenuItem value="">Sélectionner un champ...</MenuItem>
+                                            {getFilterFieldOptions().map(option => (
+                                                <MenuItem key={option.value} value={option.value}>
+                                                    {option.label}
+                                                </MenuItem>
+                                            ))}
+                                        </SelectField>
+                                    
+                                        <p className="blogField_name collection_edit_name">Opérateur</p>
+                                        <SelectField
+                                            className="input_text_blog"
+                                            value={filter.operator}
+                                            onChange={(e) => updateFilter(filter.id, { operator: e.target.value })}
+                                            style={{marginBottom: "1rem"}}
+                                        >
+                                            <MenuItem value="equals">Égal à</MenuItem>
+                                            <MenuItem value="contains">Contient</MenuItem>
+                                            <MenuItem value="starts">Commence par</MenuItem>
+                                            <MenuItem value="ends">Finit par</MenuItem>
+                                        </SelectField>
+                                    
+                                    {/* Deuxième champ selon le mode */}
+                                        <p className="blogField_name collection_edit_name">
+                                            {isTemplateMode ? 'Champ de la collection template' : 'Valeur'}
+                                        </p>
+                                        {isTemplateMode ? (
+                                            // Mode Template: Champs de la collection template sélectionnée globalement
+                                            <SelectField
+                                                key={`template-field-${selectedTemplateCollection}`} // Force la re-création du component
+                                                className="input_text_blog"
+                                                value={filter.value}
+                                                onChange={(e) => updateFilter(filter.id, { value: e.target.value })}
+                                                displayEmpty
+                                                disabled={!selectedTemplateCollection}
+                                            >
+                                                <MenuItem value="">
+                                                    {selectedTemplateCollection ? 'Sélectionner un champ...' : 'Choisir d\'abord une collection template'}
+                                                </MenuItem>
+                                                {selectedTemplateCollection && templateCollectionFields.map(option => (
+                                                    <MenuItem key={option.value} value={option.value}>
+                                                        {option.label}
+                                                    </MenuItem>
+                                                ))}
+                                            </SelectField>
+                                        ) : (
+                                            // Mode Normal: Texte libre
+                                            <input
+                                                className="input_text_blog"
+                                                type="text"
+                                                placeholder="Valeur à filtrer"
+                                                value={filter.value}
+                                                onChange={(e) => updateFilter(filter.id, { value: e.target.value })}
+                                            />
+                                        )}
+                                    
+                                    
+                                </div>
+                                <button
+                                        type="button"
+                                        onClick={() => removeFilter(filter.id)}
+                                        style={{
+                                            backgroundColor: "transparent",
+                                            color: 'white',
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            position: "absolute",
+                                            top: "0.2rem",
+                                            right: "0.2rem"
+                                        }}
+                                    >
+                                        ✕
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Section Tris */}
+                    <div className='input-container'>
+                        <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem'}}>
+                            <p className="blogField_name collection_edit_name" style={{margin: "0"}}>Tris</p>
+                            <button 
+                                type="button" 
+                                className="add-field-btn"
+                                onClick={addSort}
+                                style={{
+                                    backgroundColor: theme.palette.primary.main,
+                                    color: theme.palette.text.primary,
+                                    border: 'none',
+                                    borderRadius: '4px',
+                                    padding: '0.5rem 1rem',
+                                    cursor: 'pointer',
+                                    fontSize: '0.8rem',
+                                }}
+                            >
+                                + Ajouter un tri
+                            </button>
+                        </div>
+                        
+                        {wrapSorts.map((sort) => (
+                            <div key={sort.id} style={{
+                                border: `1px solid ${theme.palette.divider}`,
+                                borderRadius: '4px',
+                                padding: '1rem',
+                                marginBottom: '0.5rem',
+                                backgroundColor: theme.palette.primary.secondary,
+                                boxShadow: theme.palette.shadow.main,
+                                position: 'relative'
+                            }}>
+                                <div>
+                                    {/* Premier champ : toujours les champs de la collection actuelle */}
+                                    <div>
+                                        <p className="blogField_name collection_edit_name">Champ de la collection actuelle</p>
+                                        <SelectField
+                                            className="input_text_blog"
+                                            value={sort.field}
+                                            onChange={(e) => updateSort(sort.id, { field: e.target.value })}
+                                            displayEmpty
+                                            style={{marginBottom: "1rem"}}
+                                        >
+                                            <MenuItem value="">Sélectionner un champ...</MenuItem>
+                                            {getFilterFieldOptions().map(option => (
+                                                <MenuItem key={option.value} value={option.value}>
+                                                    {option.label}
+                                                </MenuItem>
+                                            ))}
+                                        </SelectField>
+                                    </div>
+                                    
+                                    <div style={{flex: 1}}>
+                                        <p className="blogField_name collection_edit_name">Direction</p>
+                                        <SelectField
+                                            className="input_text_blog"
+                                            value={sort.direction}
+                                            onChange={(e) => updateSort(sort.id, { direction: e.target.value })}
+                                        >
+                                            <MenuItem value="asc">Croissant</MenuItem>
+                                            <MenuItem value="desc">Décroissant</MenuItem>
+                                        </SelectField>
+                                    </div>
+                                </div>
+                                
+                                <button
+                                    type="button"
+                                    onClick={() => removeSort(sort.id)}
+                                    style={{
+                                        backgroundColor: "transparent",
+                                        color: 'white',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        position: "absolute",
+                                        top: "0rem",
+                                        right: "0rem"
+                                    }}
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                    
                     <div className='input-container'>
                         <p className="blogField_name collection_edit_name">Clé du wrapper</p>
                         <CopyField 
@@ -701,6 +1080,9 @@ const EditCollection = () => {
                             iconSize="0.9rem"
                         />
                     </div>
+                    
+                    
+                    
                     <div className='line_horizontal' style={{backgroundColor: theme.palette.primary.third}}/>
                     <div className='header_modification header_page_modification' style={{marginTop: '1rem'}}>
                         <h4 className="section-title">Template de collection</h4>
@@ -790,6 +1172,7 @@ const EditCollection = () => {
                     ) : (
                         configFields.map((field) => (
                             <CopyField 
+                                key={field.id}
                                 textToCopy={field.id}
                                 displayText={field.name_field}
                                 iconSize="0.9rem"
@@ -797,7 +1180,6 @@ const EditCollection = () => {
                         ))
                     )}
                 </div>
-                
             </PopupSide>
 
             <div className="Blog_creation_field_contain">

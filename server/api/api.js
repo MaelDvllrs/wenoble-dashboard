@@ -139,6 +139,9 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
             return res.status(400).json({ message: 'Paramètre sorts invalide (JSON attendu)' });
         }
     }
+    
+    // Nouveau: collection template pour le mode template
+    const templateCollectionId = req.query.templateCollectionId || null;
 
     try {
         // Determine targeted collection(s)
@@ -157,13 +160,13 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
         // Si pas de filtres ni de tri personnalisé, utiliser la logique de base simple
         if (!hasFilters && !hasSorts) {
             return await handleNoFiltersCase({
-                supabase, targetCollectionIds, baseColumns, colone, ascending, limit, res
+                supabase, targetCollectionIds, baseColumns, colone, ascending, limit, res, templateCollectionId
             });
         }
 
         // Avec filtres ou tri personnalisé: utiliser la nouvelle logique DB-first
         const dataset = await applyFiltersAtDbLevel({
-            supabase, targetCollectionIds, filters, baseColumns, colone, ascending, limit, sorts
+            supabase, targetCollectionIds, filters, baseColumns, colone, ascending, limit, sorts, templateCollectionId
         });
 
         if (dataset.length === 0) return res.status(200).json({ message: 'Aucun blog trouvé' });
@@ -175,7 +178,7 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
 });
 
 // Helper: gère le cas sans filtres (ancienne logique optimisée)
-async function handleNoFiltersCase({ supabase, targetCollectionIds, baseColumns, colone, ascending, limit, res }) {
+async function handleNoFiltersCase({ supabase, targetCollectionIds, baseColumns, colone, ascending, limit, res, templateCollectionId }) {
     let query = supabase
         .from('collection_element')
         .select('*')
@@ -523,7 +526,7 @@ async function applySortsToElements({ supabase, targetCollectionIds, elements, s
 }
 
 // Helper: applique les filtres au niveau base de données quand possible
-async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, baseColumns, colone, ascending, limit, sorts = {} }) {
+async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, baseColumns, colone, ascending, limit, sorts = {}, templateCollectionId = null }) {
     const filterEntries = Object.entries(filters);
     if (filterEntries.length === 0) {
         // Pas de filtres, récupérer tous les éléments
@@ -570,6 +573,12 @@ async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, b
 
     console.log('Configs récupérées pour classification des filtres :', allConfigs);
     console.log('Filtres reçus :', filters);
+    console.log('Template Collection ID :', templateCollectionId);
+    
+    // Si mode template, log pour debugging
+    if (templateCollectionId) {
+        console.log('Mode template activé avec collection:', templateCollectionId);
+    }
     
     const configMap = new Map(allConfigs.map(c => [c.id?.toString(), c.tab_field]));
     

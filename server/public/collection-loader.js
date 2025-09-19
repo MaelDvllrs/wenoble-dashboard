@@ -68,7 +68,7 @@
             const encodedData = el.getAttribute("wn-collection-wrapper");
             const decodedData = decodeBase64(encodedData);
 
-            const { blogId, limit, order, colone, joinTable, config, pagination, itemsPerPage, sorts } = decodedData;
+            const { blogId, limit, order, colone, joinTable, config, pagination, itemsPerPage, sorts, filters, templateCollectionId } = decodedData;
 
             if (!blogId) {
                 console.error("Blog ID manquant !");
@@ -86,6 +86,16 @@
             // Ajouter les paramètres de tri si définis
             if (sorts && Object.keys(sorts).length > 0) {
                 paramsObj.sorts = JSON.stringify(sorts);
+            }
+            
+            // Ajouter les filtres dynamiques si définis
+            if (filters && filters.length > 0) {
+                paramsObj.filters = JSON.stringify(filters);
+            }
+            
+            // Ajouter l'ID de la collection template si en mode template
+            if (templateCollectionId) {
+                paramsObj.templateCollectionId = templateCollectionId;
             }
             
             if (!pagination && typeof limit !== 'undefined' && limit !== null) {

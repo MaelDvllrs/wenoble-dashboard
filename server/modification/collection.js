@@ -32,6 +32,7 @@ const checkIdInArray = (id) => {
 
 // Fonction helper pour récupérer le website_id d'une collection
 const getCollectionWebsiteId = async (supabase, collectionId) => {
+  console.log('getCollectionWebsiteId - searching for collectionId:', collectionId);
   const { data, error } = await supabase
     .from('collection')
     .select('website_id')
@@ -39,12 +40,15 @@ const getCollectionWebsiteId = async (supabase, collectionId) => {
     .single();
     
   if (error) {
+    console.log('getCollectionWebsiteId - error:', error);
     if (error.code === 'PGRST116') {
+      console.log('getCollectionWebsiteId - collection not found (PGRST116)');
       return null;
     }
     throw error;
   }
   
+  console.log('getCollectionWebsiteId - found data:', data);
   return data.website_id;
 };
 
@@ -175,17 +179,21 @@ router.get('/getConfigCollection', authenticateToken, async (req, res) => {
     const token = req.headers['authorization']?.split(' ')[1];
     const supabase = supabaseServer(token);
 
+    console.log('getConfigCollection - collectionId:', collectionId, 'userId:', userId);
+
     if (!collectionId) {
       return res.status(400).send({ error: 'collectionId est requis' });
     }
 
     // Récupérer le website_id de la collection et vérifier les droits d'accès
     const websiteId = await getCollectionWebsiteId(supabase, collectionId);
+    console.log('getConfigCollection - websiteId found:', websiteId);
     if (!websiteId) {
       return res.status(404).send({ error: 'Collection non trouvée' });
     }
 
     const { hasAccess } = await checkUserWebsiteAccess(supabase, userId, websiteId);
+    console.log('getConfigCollection - hasAccess:', hasAccess);
     if (!hasAccess) {
       return res.status(403).send({ error: 'Vous n\'avez pas les droits pour accéder à cette collection' });
     }
