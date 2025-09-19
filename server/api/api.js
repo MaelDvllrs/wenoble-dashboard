@@ -666,14 +666,21 @@ async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, b
     for (const filter of filterArray) {
         const { field, operator = 'equals', value } = filter;
         
+        // Dans le nouveau format, 'field' contient directement l'ID de la config
+        const fieldId = field.toString(); // S'assurer que c'est une string pour la Map
+        
         if (baseColumns.has(field)) {
             baseFilters[field] = value;
         } else {
-            const fieldType = configMap.get(field);
+            const fieldType = configMap.get(fieldId);
+            console.log(`Champ ${fieldId}: type trouvé = ${fieldType}`);
+            
             if (fieldType === 'text') {
-                textFilters[field] = { operator, value };
+                textFilters[fieldId] = { operator, value };
             } else if (fieldType === 'multiReference') {
-                multiRefFilters[field] = { operator, value };
+                multiRefFilters[fieldId] = { operator, value };
+            } else {
+                console.log(`Type de champ non géré pour ${fieldId}: ${fieldType}`);
             }
             // Les autres types sont ignorés pour le moment
         }
