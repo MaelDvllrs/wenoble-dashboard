@@ -286,7 +286,7 @@ async function getFilteredElementIdsByText({ supabase, targetCollectionIds, text
 }
 
 // Helper: récupère les collection_element_id filtrés via les champs multiReference
-async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, multiRefFilters, isTemplateMode = false }) {
+async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, multiRefFilters, isTemplateMode = false, templateCollectionId = null }) {
     if (Object.keys(multiRefFilters).length === 0) return null;
     
     let elementIds = new Set();
@@ -309,139 +309,261 @@ async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, 
         
         console.log('Recherche de multiRef avec operator:', operator, 'values:', values);
         
-        // Récupérer tous les enregistrements multiReference pour ce config
-        // En mode template, on cherche dans les éléments de la collection template
-        const { data: multiRefResults, error: multiRefErr } = await supabase
-            .from('collection_field_multireference')
-            .select('collection_element_id, info_ref')
-            .eq('id_config', configId);
+        if (isTemplateMode && templateCollectionId) {
+            // Mode template: récupérer la valeur du champ depuis la collection template
+            console.log('Mode template: récupération de la valeur depuis configId', configId, 'de la collection template', templateCollectionId);
             
-        if (multiRefErr || !multiRefResults) {
-            console.log('Erreur ou pas de résultats multiRef:', multiRefErr);
-            continue;
-        }
-
-        console.log('Résultats multiRef trouvés:', multiRefResults.length);
-        
-        // Collecter tous les IDs référencés pour les récupérer en une seule requête
-        const allRefIds = new Set();
-        multiRefResults.forEach(row => {
-            let parsed;
-            if (typeof row.info_ref === 'string') {
-                try { parsed = JSON.parse(row.info_ref); } catch { return; }
-            } else {
-                parsed = row.info_ref || [];
+            // 1. Récupérer la valeur du champ multiReference depuis l'élément template
+            const { data: templateMultiRefResults, error: templateMultiRefErr } = await supabase
+                .from('collection_field_multireference')
+                .select('collection_element_id, info_ref')
+                .eq('id_config', configId);
+                
+            if (templateMultiRefErr || !templateMultiRefResults || templateMultiRefResults.length === 0) {
+                console.log('Erreur ou pas de résultats multiRef template:', templateMultiRefErr);
+                continue;
             }
             
-            if (Array.isArray(parsed)) {
-                parsed.forEach(ref => {
-                    if (!ref) return;
-                    if (typeof ref === 'object' && ref.value) {
-                        allRefIds.add(ref.value);
-                    } else if (typeof ref !== 'object') {
-                        allRefIds.add(ref);
-                    }
-                });
-            }
-        });
-
-        // Récupérer les éléments référencés avec leurs propriétés
-        let refElementsMap = new Map();
-        if (allRefIds.size > 0) {
-            const { data: refElements, error: refErr } = await supabase
-                .from('collection_element')
-                .select('id, collection_element_name, collection_element_slug')
-                .in('id', Array.from(allRefIds));
-            
-            if (!refErr && refElements) {
-                refElements.forEach(element => {
-                    refElementsMap.set(element.id, element);
-                });
-            }
-        }
-
-        console.log('Éléments référencés récupérés:', refElementsMap.size);
-        
-        // Filtrer côté serveur en parsant le JSON et en comparant avec les éléments référencés
-        const matchingIds = [];
-        for (const row of multiRefResults) {
-            let parsed;
-            if (typeof row.info_ref === 'string') {
-                try { parsed = JSON.parse(row.info_ref); } catch { continue; }
-            } else {
-                parsed = row.info_ref || [];
+            // 2. Extraire les valeurs référencées depuis le template
+            const templateValues = new Set();
+            for (const templateRow of templateMultiRefResults) {
+                let parsed;
+                if (typeof templateRow.info_ref === 'string') {
+                    try { parsed = JSON.parse(templateRow.info_ref); } catch { continue; }
+                } else {
+                    parsed = templateRow.info_ref || [];
+                }
+                
+                if (Array.isArray(parsed)) {
+                    parsed.forEach(ref => {
+                        if (!ref) return;
+                        if (typeof ref === 'object' && ref.value) {
+                            templateValues.add(ref.value);
+                        } else if (typeof ref !== 'object') {
+                            templateValues.add(ref);
+                        }
+                    });
+                }
             }
             
-            if (!Array.isArray(parsed)) continue;
+            console.log('Valeurs extraites du template:', Array.from(templateValues));
             
-            // Vérifier si au moins une valeur attendue est présente selon l'opérateur
-            const hasMatch = values.some(expectedValue => {
-                return parsed.some(ref => {
+            // 3. Trouver le champ correspondant dans la collection cible (même name_field)
+            const { data: templateConfig, error: templateConfigErr } = await supabase
+                .from('collection_config')
+                .select('name_field')
+                .eq('id', configId)
+                .maybeSingle();
+                
+            if (templateConfigErr || !templateConfig) {
+                console.log('Erreur récupération config template:', templateConfigErr);
+                continue;
+            }
+            
+            const { data: targetConfigs, error: targetConfigErr } = await supabase
+                .from('collection_config')
+                .select('id')
+                .eq('name_field', templateConfig.name_field)
+                .eq('tab_field', 'multiReference')
+                .in('collection_id', targetCollectionIds);
+                
+            if (targetConfigErr || !targetConfigs || targetConfigs.length === 0) {
+                console.log('Erreur ou pas de config correspondante dans collection cible:', targetConfigErr);
+                continue;
+            }
+            
+            const targetConfigIds = targetConfigs.map(c => c.id);
+            console.log('Configs correspondantes dans collection cible:', targetConfigIds);
+            
+            // 4. Chercher les éléments de la collection cible qui ont les mêmes valeurs
+            const { data: targetMultiRefResults, error: targetMultiRefErr } = await supabase
+                .from('collection_field_multireference')
+                .select('collection_element_id, info_ref')
+                .in('id_config', targetConfigIds);
+                
+            if (targetMultiRefErr || !targetMultiRefResults) {
+                console.log('Erreur récupération multiRef collection cible:', targetMultiRefErr);
+                continue;
+            }
+            
+            // 5. Filtrer les éléments qui ont au moins une valeur en commun avec le template
+            const matchingIds = [];
+            for (const targetRow of targetMultiRefResults) {
+                let parsed;
+                if (typeof targetRow.info_ref === 'string') {
+                    try { parsed = JSON.parse(targetRow.info_ref); } catch { continue; }
+                } else {
+                    parsed = targetRow.info_ref || [];
+                }
+                
+                if (!Array.isArray(parsed)) continue;
+                
+                const hasMatchingValue = parsed.some(ref => {
                     if (!ref) return false;
                     
-                    let refId;
+                    let refValue;
                     if (typeof ref === 'object' && ref.value) {
-                        refId = ref.value;
+                        refValue = ref.value;
                     } else if (typeof ref !== 'object') {
-                        refId = ref;
+                        refValue = ref;
                     } else {
                         return false;
                     }
-
-                    // Récupérer l'élément référencé
-                    const refElement = refElementsMap.get(refId);
-                    if (!refElement) return false;
-
-                    // Appliquer l'opérateur de comparaison
-                    const expectedLower = expectedValue.toString().toLowerCase();
-                    const elementName = (refElement.collection_element_name || '').toLowerCase();
-                    const elementSlug = (refElement.collection_element_slug || '').toLowerCase();
-                    const refLabel = (typeof ref === 'object' && ref.label ? ref.label.toLowerCase() : '');
                     
-                    switch (operator) {
-                        case 'equals':
-                            return refElement.id?.toString() === expectedValue.toString() ||
-                                   elementName === expectedLower ||
-                                   elementSlug === expectedLower ||
-                                   refLabel === expectedLower;
-                        case 'contains':
-                            return elementName.includes(expectedLower) ||
-                                   elementSlug.includes(expectedLower) ||
-                                   refLabel.includes(expectedLower);
-                        case 'starts':
-                            return elementName.startsWith(expectedLower) ||
-                                   elementSlug.startsWith(expectedLower) ||
-                                   refLabel.startsWith(expectedLower);
-                        case 'ends':
-                            return elementName.endsWith(expectedLower) ||
-                                   elementSlug.endsWith(expectedLower) ||
-                                   refLabel.endsWith(expectedLower);
-                        default:
-                            return refElement.id?.toString() === expectedValue.toString() ||
-                                   elementName === expectedLower ||
-                                   elementSlug === expectedLower ||
-                                   refLabel === expectedLower;
-                    }
+                    return templateValues.has(refValue);
                 });
-            });
-            
-            if (hasMatch) {
-                matchingIds.push(row.collection_element_id);
+                
+                if (hasMatchingValue) {
+                    matchingIds.push(targetRow.collection_element_id);
+                }
             }
-        }
-        
-        console.log('IDs correspondants trouvés:', matchingIds);
-        
-        if (elementIds.size === 0) {
-            // Premier filtre : ajouter tous les IDs
-            matchingIds.forEach(id => elementIds.add(id));
+            
+            console.log('IDs correspondants dans collection cible:', matchingIds);
+            
+            if (elementIds.size === 0) {
+                matchingIds.forEach(id => elementIds.add(id));
+            } else {
+                const intersection = new Set();
+                matchingIds.forEach(id => {
+                    if (elementIds.has(id)) intersection.add(id);
+                });
+                elementIds = intersection;
+            }
+            
         } else {
-            // Filtres suivants : intersection (ET logique)
-            const intersection = new Set();
-            matchingIds.forEach(id => {
-                if (elementIds.has(id)) intersection.add(id);
+            // Mode normal: recherche directe dans la collection cible
+            const { data: multiRefResults, error: multiRefErr } = await supabase
+                .from('collection_field_multireference')
+                .select('collection_element_id, info_ref')
+                .eq('id_config', configId);
+                
+            if (multiRefErr || !multiRefResults) {
+                console.log('Erreur ou pas de résultats multiRef:', multiRefErr);
+                continue;
+            }
+
+            console.log('Résultats multiRef trouvés:', multiRefResults.length);
+            
+            // Collecter tous les IDs référencés pour les récupérer en une seule requête
+            const allRefIds = new Set();
+            multiRefResults.forEach(row => {
+                let parsed;
+                if (typeof row.info_ref === 'string') {
+                    try { parsed = JSON.parse(row.info_ref); } catch { return; }
+                } else {
+                    parsed = row.info_ref || [];
+                }
+                
+                if (Array.isArray(parsed)) {
+                    parsed.forEach(ref => {
+                        if (!ref) return;
+                        if (typeof ref === 'object' && ref.value) {
+                            allRefIds.add(ref.value);
+                        } else if (typeof ref !== 'object') {
+                            allRefIds.add(ref);
+                        }
+                    });
+                }
             });
-            elementIds = intersection;
+
+            // Récupérer les éléments référencés avec leurs propriétés
+            let refElementsMap = new Map();
+            if (allRefIds.size > 0) {
+                const { data: refElements, error: refErr } = await supabase
+                    .from('collection_element')
+                    .select('id, collection_element_name, collection_element_slug')
+                    .in('id', Array.from(allRefIds));
+                
+                if (!refErr && refElements) {
+                    refElements.forEach(element => {
+                        refElementsMap.set(element.id, element);
+                    });
+                }
+            }
+
+            console.log('Éléments référencés récupérés:', refElementsMap.size);
+            
+            // Filtrer côté serveur en parsant le JSON et en comparant avec les éléments référencés
+            const matchingIds = [];
+            for (const row of multiRefResults) {
+                let parsed;
+                if (typeof row.info_ref === 'string') {
+                    try { parsed = JSON.parse(row.info_ref); } catch { continue; }
+                } else {
+                    parsed = row.info_ref || [];
+                }
+                
+                if (!Array.isArray(parsed)) continue;
+                
+                // Vérifier si au moins une valeur attendue est présente selon l'opérateur
+                const hasMatch = values.some(expectedValue => {
+                    return parsed.some(ref => {
+                        if (!ref) return false;
+                        
+                        let refId;
+                        if (typeof ref === 'object' && ref.value) {
+                            refId = ref.value;
+                        } else if (typeof ref !== 'object') {
+                            refId = ref;
+                        } else {
+                            return false;
+                        }
+
+                        // Récupérer l'élément référencé
+                        const refElement = refElementsMap.get(refId);
+                        if (!refElement) return false;
+
+                        // Appliquer l'opérateur de comparaison
+                        const expectedLower = expectedValue.toString().toLowerCase();
+                        const elementName = (refElement.collection_element_name || '').toLowerCase();
+                        const elementSlug = (refElement.collection_element_slug || '').toLowerCase();
+                        const refLabel = (typeof ref === 'object' && ref.label ? ref.label.toLowerCase() : '');
+                        
+                        switch (operator) {
+                            case 'equals':
+                                return refElement.id?.toString() === expectedValue.toString() ||
+                                       elementName === expectedLower ||
+                                       elementSlug === expectedLower ||
+                                       refLabel === expectedLower;
+                            case 'contains':
+                                return elementName.includes(expectedLower) ||
+                                       elementSlug.includes(expectedLower) ||
+                                       refLabel.includes(expectedLower);
+                            case 'starts':
+                                return elementName.startsWith(expectedLower) ||
+                                       elementSlug.startsWith(expectedLower) ||
+                                       refLabel.startsWith(expectedLower);
+                            case 'ends':
+                                return elementName.endsWith(expectedLower) ||
+                                       elementSlug.endsWith(expectedLower) ||
+                                       refLabel.endsWith(expectedLower);
+                            default:
+                                return refElement.id?.toString() === expectedValue.toString() ||
+                                       elementName === expectedLower ||
+                                       elementSlug === expectedLower ||
+                                       refLabel === expectedLower;
+                        }
+                    });
+                });
+                
+                if (hasMatch) {
+                    matchingIds.push(row.collection_element_id);
+                }
+            }
+            
+            console.log('IDs correspondants trouvés:', matchingIds);
+            
+            if (elementIds.size === 0) {
+                // Premier filtre : ajouter tous les IDs
+                matchingIds.forEach(id => elementIds.add(id));
+            } else {
+                // Filtres suivants : intersection (ET logique)
+                const intersection = new Set();
+                matchingIds.forEach(id => {
+                    if (elementIds.has(id)) intersection.add(id);
+                });
+                elementIds = intersection;
+            }
         }
     }
     
@@ -723,7 +845,8 @@ async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, b
         supabase, 
         targetCollectionIds: templateCollectionId ? [templateCollectionId] : targetCollectionIds, 
         multiRefFilters,
-        isTemplateMode: !!templateCollectionId
+        isTemplateMode: !!templateCollectionId,
+        templateCollectionId
     });
     
     // Calculer l'intersection des IDs si plusieurs types de filtres dynamiques
