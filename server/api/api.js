@@ -237,28 +237,86 @@ async function getFilteredElementIdsByText({ supabase, targetCollectionIds, text
         let filterValue = null;
         
         if (isTemplateMode && templateCollectionId && templateElementId) {
-            // Mode template: récupérer la valeur du champ text de l'élément template
-            console.log('Mode template: récupération de la valeur du champ text', configId, 'depuis l\'élément template', templateElementId);
-            
-            const { data: templateText, error: templateTextErr } = await supabase
-                .from('collection_field_text')
-                .select('text')
-                .eq('id_config', configId)
-                .eq('collection_element_id', templateElementId)
-                .maybeSingle();
+            // Mode template: déterminer le type de filtrage selon la valeur du token
+            if (tokenValue === 'collection_element_name') {
+                // Filtrage par nom d'élément template
+                console.log('Mode template: récupération du nom de l\'élément template', templateElementId);
                 
-            if (templateTextErr) {
-                console.log('Erreur lors de la récupération du champ text template:', templateTextErr);
-                continue;
+                const { data: templateElement, error: templateErr } = await supabase
+                    .from('collection_element')
+                    .select('collection_element_name')
+                    .eq('id', templateElementId)
+                    .eq('collection_element_status', true)
+                    .maybeSingle();
+                    
+                if (templateErr || !templateElement) {
+                    console.log('Erreur ou élément template non trouvé:', templateErr);
+                    continue;
+                }
+                
+                filterValue = templateElement.collection_element_name;
+                console.log('Nom de l\'élément template récupéré:', filterValue);
+            } else if (tokenValue === 'collection_element_slug') {
+                // Filtrage par slug d'élément template
+                console.log('Mode template: récupération du slug de l\'élément template', templateElementId);
+                
+                const { data: templateElement, error: templateErr } = await supabase
+                    .from('collection_element')
+                    .select('collection_element_slug')
+                    .eq('id', templateElementId)
+                    .eq('collection_element_status', true)
+                    .maybeSingle();
+                    
+                if (templateErr || !templateElement) {
+                    console.log('Erreur ou élément template non trouvé:', templateErr);
+                    continue;
+                }
+                
+                filterValue = templateElement.collection_element_slug;
+                console.log('Slug de l\'élément template récupéré:', filterValue);
+            } else if (tokenValue === 'collection_element_publish_date' || tokenValue.includes('collection_element_')) {
+                // Filtrage par champ de base de l'élément template
+                const fieldName = tokenValue;
+                console.log('Mode template: récupération du champ de base', fieldName, 'de l\'élément template', templateElementId);
+                
+                const { data: templateElement, error: templateErr } = await supabase
+                    .from('collection_element')
+                    .select(fieldName)
+                    .eq('id', templateElementId)
+                    .eq('collection_element_status', true)
+                    .maybeSingle();
+                    
+                if (templateErr || !templateElement) {
+                    console.log('Erreur ou élément template non trouvé:', templateErr);
+                    continue;
+                }
+                
+                filterValue = templateElement[fieldName];
+                console.log('Champ de base de l\'élément template récupéré:', fieldName, '=', filterValue);
+            } else {
+                // Filtrage par champ text de l'élément template
+                console.log('Mode template: récupération de la valeur du champ text', configId, 'depuis l\'élément template', templateElementId);
+                
+                const { data: templateText, error: templateTextErr } = await supabase
+                    .from('collection_field_text')
+                    .select('text')
+                    .eq('id_config', configId)
+                    .eq('collection_element_id', templateElementId)
+                    .maybeSingle();
+                    
+                if (templateTextErr) {
+                    console.log('Erreur lors de la récupération du champ text template:', templateTextErr);
+                    continue;
+                }
+                
+                if (!templateText || !templateText.text) {
+                    console.log('Élément template n\'a pas de valeur pour le champ text', configId, '- pas de filtrage pour ce champ');
+                    continue;
+                }
+                
+                filterValue = templateText.text;
+                console.log('Valeur text extraite du template:', filterValue);
             }
-            
-            if (!templateText || !templateText.text) {
-                console.log('Élément template n\'a pas de valeur pour le champ text', configId, '- pas de filtrage pour ce champ');
-                continue;
-            }
-            
-            filterValue = templateText.text;
-            console.log('Valeur text extraite du template:', filterValue);
         } else {
             // Mode normal: vérifier si la valeur du token est un ID de config (nombre) ou une vraie valeur
             if (tokenValue && tokenValue.toString() === configId) {
@@ -352,49 +410,70 @@ async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, 
         let filterValue = null;
         
         if (isTemplateMode && templateCollectionId && templateElementId) {
-            // Mode template: récupérer la valeur du champ multiReference de l'élément template
-            console.log('Mode template: récupération de la valeur du champ', configId, 'depuis l\'élément template', templateElementId);
-            
-            const { data: templateMultiRef, error: templateMultiRefErr } = await supabase
-                .from('collection_field_multireference')
-                .select('info_ref')
-                .eq('id_config', configId)
-                .eq('collection_element_id', templateElementId)
-                .maybeSingle();
+            // Mode template: déterminer le type de filtrage selon la valeur du token
+            if (tokenValue === 'collection_element_name') {
+                // Filtrage par nom d'élément template
+                console.log('Mode template: récupération du nom de l\'élément template', templateElementId);
                 
-            if (templateMultiRefErr) {
-                console.log('Erreur lors de la récupération du champ multiRef template:', templateMultiRefErr);
-                continue;
+                const { data: templateElement, error: templateErr } = await supabase
+                    .from('collection_element')
+                    .select('collection_element_name')
+                    .eq('id', templateElementId)
+                    .eq('collection_element_status', true)
+                    .maybeSingle();
+                    
+                if (templateErr || !templateElement) {
+                    console.log('Erreur ou élément template non trouvé:', templateErr);
+                    continue;
+                }
+                
+                filterValue = templateElement.collection_element_name;
+                console.log('Nom de l\'élément template récupéré:', filterValue);
+            } else {
+                // Filtrage par champ multiReference de l'élément template
+                console.log('Mode template: récupération de la valeur du champ', configId, 'depuis l\'élément template', templateElementId);
+                
+                const { data: templateMultiRef, error: templateMultiRefErr } = await supabase
+                    .from('collection_field_multireference')
+                    .select('info_ref')
+                    .eq('id_config', configId)
+                    .eq('collection_element_id', templateElementId)
+                    .maybeSingle();
+                    
+                if (templateMultiRefErr) {
+                    console.log('Erreur lors de la récupération du champ multiRef template:', templateMultiRefErr);
+                    continue;
+                }
+                
+                if (!templateMultiRef || !templateMultiRef.info_ref) {
+                    console.log('Élément template n\'a pas de valeur pour le champ', configId, '- pas de filtrage pour ce champ');
+                    // Pas d'erreur, juste pas de filtrage pour ce champ
+                    continue;
+                }
+                
+                // Parser le champ info_ref du template pour récupérer les IDs/labels référencés
+                let templateRefs = [];
+                try {
+                    templateRefs = typeof templateMultiRef.info_ref === 'string' 
+                        ? JSON.parse(templateMultiRef.info_ref) 
+                        : (templateMultiRef.info_ref || []);
+                } catch (e) {
+                    console.log('Erreur parsing info_ref template:', e);
+                    continue;
+                }
+                
+                if (!Array.isArray(templateRefs) || templateRefs.length === 0) {
+                    console.log('Élément template n\'a pas de références valides pour le champ', configId, '- pas de filtrage pour ce champ');
+                    continue;
+                }
+                
+                console.log('Références du template:', templateRefs);
+                
+                // On va utiliser ces références comme critères de filtrage
+                // Plutôt qu'une seule valeur, on a maintenant une liste de références à rechercher
+                filterValue = templateRefs;
+                console.log('Valeurs extraites du template:', filterValue);
             }
-            
-            if (!templateMultiRef || !templateMultiRef.info_ref) {
-                console.log('Élément template n\'a pas de valeur pour le champ', configId, '- pas de filtrage pour ce champ');
-                // Pas d'erreur, juste pas de filtrage pour ce champ
-                continue;
-            }
-            
-            // Parser le champ info_ref du template pour récupérer les IDs/labels référencés
-            let templateRefs = [];
-            try {
-                templateRefs = typeof templateMultiRef.info_ref === 'string' 
-                    ? JSON.parse(templateMultiRef.info_ref) 
-                    : (templateMultiRef.info_ref || []);
-            } catch (e) {
-                console.log('Erreur parsing info_ref template:', e);
-                continue;
-            }
-            
-            if (!Array.isArray(templateRefs) || templateRefs.length === 0) {
-                console.log('Élément template n\'a pas de références valides pour le champ', configId, '- pas de filtrage pour ce champ');
-                continue;
-            }
-            
-            console.log('Références du template:', templateRefs);
-            
-            // On va utiliser ces références comme critères de filtrage
-            // Plutôt qu'une seule valeur, on a maintenant une liste de références à rechercher
-            filterValue = templateRefs;
-            console.log('Valeurs extraites du template:', filterValue);
         } else {
             // Mode normal: vérifier si la valeur du token est un ID de config (nombre) ou une vraie valeur
             // Si c'est juste un nombre qui correspond au configId, on skip ce filtre
@@ -489,7 +568,7 @@ async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, 
             let hasMatch = false;
             
             if (isTemplateMode && Array.isArray(filterValue)) {
-                // Mode template: comparer les références du template avec celles de l'élément
+                // Mode template avec références multiRef: comparer les références du template avec celles de l'élément
                 hasMatch = filterValue.some(templateRef => {
                     if (!templateRef) return false;
                     
@@ -530,6 +609,66 @@ async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, 
                         
                         return idMatch || labelMatch;
                     });
+                });
+            } else if (isTemplateMode && typeof filterValue === 'string') {
+                // Mode template avec nom d'élément: chercher des éléments qui référencent un élément avec ce nom
+                hasMatch = parsed.some(ref => {
+                    if (!ref) return false;
+                    
+                    let refId;
+                    if (typeof ref === 'object' && ref.value) {
+                        refId = ref.value;
+                    } else if (typeof ref !== 'object') {
+                        refId = ref;
+                    } else {
+                        return false;
+                    }
+                    
+                    // Récupérer l'élément référencé
+                    const refElement = refElementsMap.get(refId);
+                    if (!refElement) {
+                        console.log(`  RefId ${refId} non trouvé dans refElementsMap`);
+                        return false;
+                    }
+                    
+                    // Comparer avec le nom de l'élément template
+                    const filterValueLower = filterValue.toString().toLowerCase();
+                    const elementName = (refElement.collection_element_name || '').toLowerCase();
+                    const elementSlug = (refElement.collection_element_slug || '').toLowerCase();
+                    const refLabel = (typeof ref === 'object' && ref.label ? ref.label.toLowerCase() : '');
+                    
+                    console.log(`  Comparaison nom template: filterValue="${filterValueLower}" vs elementName="${elementName}" vs elementSlug="${elementSlug}" vs refLabel="${refLabel}"`);
+                    
+                    let matches = false;
+                    switch (operator) {
+                        case 'equals':
+                            matches = elementName === filterValueLower ||
+                                   elementSlug === filterValueLower ||
+                                   refLabel === filterValueLower;
+                            break;
+                        case 'contains':
+                            matches = elementName.includes(filterValueLower) ||
+                                   elementSlug.includes(filterValueLower) ||
+                                   refLabel.includes(filterValueLower);
+                            break;
+                        case 'starts':
+                            matches = elementName.startsWith(filterValueLower) ||
+                                   elementSlug.startsWith(filterValueLower) ||
+                                   refLabel.startsWith(filterValueLower);
+                            break;
+                        case 'ends':
+                            matches = elementName.endsWith(filterValueLower) ||
+                                   elementSlug.endsWith(filterValueLower) ||
+                                   refLabel.endsWith(filterValueLower);
+                            break;
+                        default:
+                            matches = elementName === filterValueLower ||
+                                   elementSlug === filterValueLower ||
+                                   refLabel === filterValueLower;
+                    }
+                    
+                    console.log(`  Match nom template: ${matches}`);
+                    return matches;
                 });
             } else {
                 // Mode normal: logique originale
@@ -871,7 +1010,27 @@ async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, b
             } else if (fieldType === 'multiReference') {
                 multiRefFilters[fieldId] = { operator, value };
             } else {
-                console.log(`Type de champ non géré pour ${fieldId}: ${fieldType} (configs disponibles: ${Array.from(configMap.keys()).join(', ')})`);
+                // En mode template, même si le type n'est pas trouvé, 
+                // on peut avoir des valeurs spéciales comme 'collection_element_name'
+                if (templateCollectionId && (
+                    value === 'collection_element_name' || 
+                    value === 'collection_element_slug' || 
+                    value === 'collection_element_publish_date' ||
+                    (typeof value === 'string' && value.includes('collection_element_'))
+                )) {
+                    // C'est un filtrage par champ de base via template
+                    console.log(`Mode template: filtrage par champ de base via template pour ${fieldId}, valeur = ${value}`);
+                    
+                    // Déterminer si c'est un champ text ou multiReference selon le fieldType trouvé ou par défaut
+                    if (fieldType === 'multiReference') {
+                        multiRefFilters[fieldId] = { operator, value };
+                    } else {
+                        // Par défaut, traiter comme text pour les champs de base
+                        textFilters[fieldId] = { operator, value };
+                    }
+                } else {
+                    console.log(`Type de champ non géré pour ${fieldId}: ${fieldType} (configs disponibles: ${Array.from(configMap.keys()).join(', ')})`);
+                }
             }
             // Les autres types sont ignorés pour le moment
         }
