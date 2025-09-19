@@ -335,7 +335,14 @@ async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, 
             filterValue = templateElement.collection_element_name;
             console.log('Valeur extraite du template:', filterValue);
         } else {
-            // Mode normal: utiliser la valeur directement depuis le token
+            // Mode normal: vérifier si la valeur du token est un ID de config (nombre) ou une vraie valeur
+            // Si c'est juste un nombre qui correspond au configId, on skip ce filtre
+            if (tokenValue && tokenValue.toString() === configId) {
+                console.log('Mode normal: la valeur du token correspond à l\'ID de config, pas de filtrage à effectuer');
+                continue;
+            }
+            
+            // Sinon utiliser la valeur directement depuis le token
             filterValue = tokenValue;
             console.log('Valeur directe du token:', filterValue);
         }
