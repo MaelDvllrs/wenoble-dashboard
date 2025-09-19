@@ -310,11 +310,26 @@ async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, 
         console.log('Recherche de multiRef avec operator:', operator, 'values:', values);
         
         if (isTemplateMode && templateCollectionId) {
-            // Mode template: le configId (541) appartient à la collection cible
-            // Les values contiennent le title/nom de l'élément template
-            console.log('Mode template: filtrage du champ', configId, 'avec les valeurs template:', values);
+            // Mode template: récupérer le collection_element_name de l'élément template
+            console.log('Mode template: récupération du nom de l\'élément template de la collection', templateCollectionId);
             
-            // Récupérer directement les éléments de la collection cible qui ont le champ configId
+            // 1. Récupérer tous les éléments de la collection template pour avoir leur collection_element_name
+            const { data: templateElements, error: templateElementsErr } = await supabase
+                .from('collection_element')
+                .select('id, collection_element_name')
+                .eq('collection_id', templateCollectionId)
+                .eq('collection_element_status', true);
+                
+            if (templateElementsErr || !templateElements || templateElements.length === 0) {
+                console.log('Erreur ou pas d\'éléments dans la collection template:', templateElementsErr);
+                continue;
+            }
+            
+            // 2. Extraire les noms des éléments template comme valeurs à rechercher
+            const templateNames = templateElements.map(elem => elem.collection_element_name).filter(Boolean);
+            console.log('Noms des éléments template à rechercher:', templateNames);
+            
+            // 3. Récupérer les éléments de la collection cible qui ont le champ configId
             const { data: targetMultiRefResults, error: targetMultiRefErr } = await supabase
                 .from('collection_field_multireference')
                 .select('collection_element_id, info_ref')
@@ -366,7 +381,7 @@ async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, 
 
             console.log('Éléments référencés récupérés:', refElementsMap.size);
             
-            // Filtrer côté serveur: chercher les éléments qui référencent un élément avec le nom/title du template
+            // Filtrer côté serveur: chercher les éléments qui référencent un élément avec le nom des éléments template
             const matchingIds = [];
             for (const row of targetMultiRefResults) {
                 let parsed;
@@ -378,8 +393,8 @@ async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, 
                 
                 if (!Array.isArray(parsed)) continue;
                 
-                // Vérifier si au moins une valeur attendue est présente selon l'opérateur
-                const hasMatch = values.some(expectedValue => {
+                // Vérifier si au moins un nom d'élément template correspond
+                const hasMatch = templateNames.some(templateName => {
                     return parsed.some(ref => {
                         if (!ref) return false;
                         
@@ -396,33 +411,33 @@ async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, 
                         const refElement = refElementsMap.get(refId);
                         if (!refElement) return false;
 
-                        // Comparer avec le nom/title du template
-                        const expectedLower = expectedValue.toString().toLowerCase();
+                        // Comparer avec le nom de l'élément template
+                        const templateNameLower = templateName.toString().toLowerCase();
                         const elementName = (refElement.collection_element_name || '').toLowerCase();
                         const elementSlug = (refElement.collection_element_slug || '').toLowerCase();
                         const refLabel = (typeof ref === 'object' && ref.label ? ref.label.toLowerCase() : '');
                         
                         switch (operator) {
                             case 'equals':
-                                return elementName === expectedLower ||
-                                       elementSlug === expectedLower ||
-                                       refLabel === expectedLower;
+                                return elementName === templateNameLower ||
+                                       elementSlug === templateNameLower ||
+                                       refLabel === templateNameLower;
                             case 'contains':
-                                return elementName.includes(expectedLower) ||
-                                       elementSlug.includes(expectedLower) ||
-                                       refLabel.includes(expectedLower);
+                                return elementName.includes(templateNameLower) ||
+                                       elementSlug.includes(templateNameLower) ||
+                                       refLabel.includes(templateNameLower);
                             case 'starts':
-                                return elementName.startsWith(expectedLower) ||
-                                       elementSlug.startsWith(expectedLower) ||
-                                       refLabel.startsWith(expectedLower);
+                                return elementName.startsWith(templateNameLower) ||
+                                       elementSlug.startsWith(templateNameLower) ||
+                                       refLabel.startsWith(templateNameLower);
                             case 'ends':
-                                return elementName.endsWith(expectedLower) ||
-                                       elementSlug.endsWith(expectedLower) ||
-                                       refLabel.endsWith(expectedLower);
+                                return elementName.endsWith(templateNameLower) ||
+                                       elementSlug.endsWith(templateNameLower) ||
+                                       refLabel.endsWith(templateNameLower);
                             default:
-                                return elementName === expectedLower ||
-                                       elementSlug === expectedLower ||
-                                       refLabel === expectedLower;
+                                return elementName === templateNameLower ||
+                                       elementSlug === templateNameLower ||
+                                       refLabel === templateNameLower;
                         }
                     });
                 });
