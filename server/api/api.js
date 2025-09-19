@@ -404,6 +404,12 @@ async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, 
         
         console.log('Éléments référencés récupérés:', refElementsMap.size);
         
+        // Debug: Afficher tous les éléments référencés
+        console.log('Détail des éléments référencés:');
+        refElementsMap.forEach((element, id) => {
+            console.log(`  ID: ${id}, Name: ${element.collection_element_name}, Slug: ${element.collection_element_slug}`);
+        });
+        
         // 6. Filtrer les éléments qui correspondent à la valeur
         const matchingIds = [];
         for (const row of targetMultiRefResults) {
@@ -415,6 +421,8 @@ async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, 
             }
             
             if (!Array.isArray(parsed)) continue;
+            
+            console.log(`Analyse de l'élément ${row.collection_element_id}, refs:`, parsed);
             
             // Vérifier si la valeur correspond
             const hasMatch = parsed.some(ref => {
@@ -431,7 +439,10 @@ async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, 
                 
                 // Récupérer l'élément référencé
                 const refElement = refElementsMap.get(refId);
-                if (!refElement) return false;
+                if (!refElement) {
+                    console.log(`  RefId ${refId} non trouvé dans refElementsMap`);
+                    return false;
+                }
                 
                 // Comparer avec la valeur à filtrer
                 const filterValueLower = filterValue.toString().toLowerCase();
@@ -439,28 +450,38 @@ async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, 
                 const elementSlug = (refElement.collection_element_slug || '').toLowerCase();
                 const refLabel = (typeof ref === 'object' && ref.label ? ref.label.toLowerCase() : '');
                 
+                console.log(`  Comparaison: filterValue="${filterValueLower}" vs elementName="${elementName}" vs elementSlug="${elementSlug}" vs refLabel="${refLabel}"`);
+                
+                let matches = false;
                 switch (operator) {
                     case 'equals':
-                        return elementName === filterValueLower ||
+                        matches = elementName === filterValueLower ||
                                elementSlug === filterValueLower ||
                                refLabel === filterValueLower;
+                        break;
                     case 'contains':
-                        return elementName.includes(filterValueLower) ||
+                        matches = elementName.includes(filterValueLower) ||
                                elementSlug.includes(filterValueLower) ||
                                refLabel.includes(filterValueLower);
+                        break;
                     case 'starts':
-                        return elementName.startsWith(filterValueLower) ||
+                        matches = elementName.startsWith(filterValueLower) ||
                                elementSlug.startsWith(filterValueLower) ||
                                refLabel.startsWith(filterValueLower);
+                        break;
                     case 'ends':
-                        return elementName.endsWith(filterValueLower) ||
+                        matches = elementName.endsWith(filterValueLower) ||
                                elementSlug.endsWith(filterValueLower) ||
                                refLabel.endsWith(filterValueLower);
+                        break;
                     default:
-                        return elementName === filterValueLower ||
+                        matches = elementName === filterValueLower ||
                                elementSlug === filterValueLower ||
                                refLabel === filterValueLower;
                 }
+                
+                console.log(`  Match: ${matches}`);
+                return matches;
             });
             
             if (hasMatch) {
