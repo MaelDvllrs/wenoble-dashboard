@@ -206,7 +206,7 @@ async function handleNoFiltersCase({ supabase, targetCollectionIds, baseColumns,
 }
 
 // Helper: récupère les collection_element_id filtrés via les champs text
-async function getFilteredElementIdsByText({ supabase, targetCollectionIds, textFilters }) {
+async function getFilteredElementIdsByText({ supabase, targetCollectionIds, textFilters, isTemplateMode = false }) {
     if (Object.keys(textFilters).length === 0) return null;
     
     let elementIds = new Set();
@@ -224,6 +224,8 @@ async function getFilteredElementIdsByText({ supabase, targetCollectionIds, text
             // Format simple: valeur directe
             values = Array.isArray(filterConfig) ? filterConfig : [filterConfig];
         }
+        
+        console.log('Filtrage text - Mode template:', isTemplateMode, 'ConfigId:', configId, 'Values:', values);
         
         // Récupérer les collection_element_id qui matchent ces valeurs selon l'opérateur
         let textQuery = supabase
@@ -254,9 +256,18 @@ async function getFilteredElementIdsByText({ supabase, targetCollectionIds, text
         }
         
         const { data: textResults, error: textErr } = await textQuery;
-        if (textErr || !textResults) continue;
+        if (textErr || !textResults) {
+            console.log('Erreur ou pas de résultats text:', textErr);
+            continue;
+        }
         
-        const matchingIds = textResults.map(r => r.collection_element_id);
+        console.log('Résultats text trouvés:', textResults.length);
+        
+        let matchingIds = textResults.map(r => r.collection_element_id);
+        
+        // En mode template, les IDs récupérés sont ceux de la collection template
+        // Il faut les retourner tels quels car ils correspondent aux éléments à filtrer
+        console.log('IDs text correspondants:', matchingIds);
         
         if (elementIds.size === 0) {
             // Premier filtre : ajouter tous les IDs
@@ -275,13 +286,13 @@ async function getFilteredElementIdsByText({ supabase, targetCollectionIds, text
 }
 
 // Helper: récupère les collection_element_id filtrés via les champs multiReference
-async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, multiRefFilters }) {
+async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, multiRefFilters, isTemplateMode = false }) {
     if (Object.keys(multiRefFilters).length === 0) return null;
     
     let elementIds = new Set();
     
     for (const [configId, filterConfig] of Object.entries(multiRefFilters)) {
-        console.log('Traitement du filtre multiRef pour configId:', configId, 'filterConfig:', filterConfig);
+        console.log('Traitement du filtre multiRef pour configId:', configId, 'filterConfig:', filterConfig, 'Mode template:', isTemplateMode);
         
         // Les filtres peuvent être soit un objet {operator, value} ou une valeur simple
         let operator = 'equals';
@@ -299,6 +310,7 @@ async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, 
         console.log('Recherche de multiRef avec operator:', operator, 'values:', values);
         
         // Récupérer tous les enregistrements multiReference pour ce config
+        // En mode template, on cherche dans les éléments de la collection template
         const { data: multiRefResults, error: multiRefErr } = await supabase
             .from('collection_field_multireference')
             .select('collection_element_id, info_ref')
@@ -642,11 +654,19 @@ async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, b
     
     // Récupérer les configs pour identifier les types de champs dynamiques
     let allConfigs = [];
-    if (targetCollectionIds.length > 0) {
+    let configCollectionIds = targetCollectionIds;
+    
+    // En mode template, utiliser la collection template pour les configs de filtres
+    if (templateCollectionId) {
+        configCollectionIds = [templateCollectionId];
+        console.log('Mode template: récupération des configs depuis la collection template:', templateCollectionId);
+    }
+    
+    if (configCollectionIds.length > 0) {
         const { data: configs, error: configErr } = await supabase
             .from('collection_config')
             .select('id, tab_field')
-            .in('collection_id', targetCollectionIds);
+            .in('collection_id', configCollectionIds);
         if (!configErr && configs) {
             allConfigs = configs;
         }
@@ -691,15 +711,17 @@ async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, b
     // Récupérer les IDs filtrés par les champs text
     const textFilteredIds = await getFilteredElementIdsByText({ 
         supabase, 
-        targetCollectionIds, 
-        textFilters 
+        targetCollectionIds: templateCollectionId ? [templateCollectionId] : targetCollectionIds, 
+        textFilters,
+        isTemplateMode: !!templateCollectionId
     });
     
     // Récupérer les IDs filtrés par les champs multiReference  
     const multiRefFilteredIds = await getFilteredElementIdsByMultiRef({ 
         supabase, 
-        targetCollectionIds, 
-        multiRefFilters 
+        targetCollectionIds: templateCollectionId ? [templateCollectionId] : targetCollectionIds, 
+        multiRefFilters,
+        isTemplateMode: !!templateCollectionId
     });
     
     // Calculer l'intersection des IDs si plusieurs types de filtres dynamiques
