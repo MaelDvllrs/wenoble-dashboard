@@ -212,53 +212,91 @@ async function handleNoFiltersCase({ supabase, targetCollectionIds, baseColumns,
 }
 
 // Helper: récupère les collection_element_id filtrés via les champs text
-async function getFilteredElementIdsByText({ supabase, targetCollectionIds, textFilters, isTemplateMode = false }) {
+async function getFilteredElementIdsByText({ supabase, targetCollectionIds, textFilters, isTemplateMode = false, templateCollectionId = null, templateElementId = null }) {
     if (Object.keys(textFilters).length === 0) return null;
     
     let elementIds = new Set();
     
     for (const [configId, filterConfig] of Object.entries(textFilters)) {
-        // Les filtres peuvent être soit un objet {field, operator, value} ou une valeur simple
+        console.log('Traitement du filtre text pour configId:', configId, 'filterConfig:', filterConfig, 'Mode template:', isTemplateMode);
+        
+        // 1. Extraire l'opérateur et la valeur depuis le token
         let operator = 'equals';
-        let values = [];
+        let tokenValue = null;
         
         if (typeof filterConfig === 'object' && filterConfig.operator) {
-            // Format: {field: "...", operator: "contains", value: "..."}
             operator = filterConfig.operator;
-            values = Array.isArray(filterConfig.value) ? filterConfig.value : [filterConfig.value];
+            tokenValue = filterConfig.value;
         } else {
-            // Format simple: valeur directe
-            values = Array.isArray(filterConfig) ? filterConfig : [filterConfig];
+            tokenValue = filterConfig;
         }
         
-        console.log('Filtrage text - Mode template:', isTemplateMode, 'ConfigId:', configId, 'Values:', values);
+        console.log('Valeur du token text:', tokenValue, 'Opérateur:', operator);
         
-        // Récupérer les collection_element_id qui matchent ces valeurs selon l'opérateur
+        // 2. Récupérer la valeur finale à filtrer
+        let filterValue = null;
+        
+        if (isTemplateMode && templateCollectionId && templateElementId) {
+            // Mode template: récupérer la valeur du champ text de l'élément template
+            console.log('Mode template: récupération de la valeur du champ text', configId, 'depuis l\'élément template', templateElementId);
+            
+            const { data: templateText, error: templateTextErr } = await supabase
+                .from('collection_field_text')
+                .select('text')
+                .eq('id_config', configId)
+                .eq('collection_element_id', templateElementId)
+                .maybeSingle();
+                
+            if (templateTextErr) {
+                console.log('Erreur lors de la récupération du champ text template:', templateTextErr);
+                continue;
+            }
+            
+            if (!templateText || !templateText.text) {
+                console.log('Élément template n\'a pas de valeur pour le champ text', configId, '- pas de filtrage pour ce champ');
+                continue;
+            }
+            
+            filterValue = templateText.text;
+            console.log('Valeur text extraite du template:', filterValue);
+        } else {
+            // Mode normal: vérifier si la valeur du token est un ID de config (nombre) ou une vraie valeur
+            if (tokenValue && tokenValue.toString() === configId) {
+                console.log('Mode normal: la valeur du token correspond à l\'ID de config, pas de filtrage à effectuer');
+                continue;
+            }
+            
+            filterValue = tokenValue;
+            console.log('Valeur text directe du token:', filterValue);
+        }
+        
+        if (!filterValue) {
+            console.log('Aucune valeur text à filtrer trouvée');
+            continue;
+        }
+        
+        // 3. Récupérer les collection_element_id qui matchent cette valeur selon l'opérateur
         let textQuery = supabase
             .from('collection_field_text')
             .select('collection_element_id')
             .eq('id_config', configId);
             
         // Appliquer les filtres selon l'opérateur
-        for (const value of values) {
-            if (!value) continue;
-            
-            switch (operator) {
-                case 'equals':
-                    textQuery = textQuery.eq('text', value);
-                    break;
-                case 'contains':
-                    textQuery = textQuery.ilike('text', `%${value}%`);
-                    break;
-                case 'starts':
-                    textQuery = textQuery.ilike('text', `${value}%`);
-                    break;
-                case 'ends':
-                    textQuery = textQuery.ilike('text', `%${value}`);
-                    break;
-                default:
-                    textQuery = textQuery.eq('text', value);
-            }
+        switch (operator) {
+            case 'equals':
+                textQuery = textQuery.eq('text', filterValue);
+                break;
+            case 'contains':
+                textQuery = textQuery.ilike('text', `%${filterValue}%`);
+                break;
+            case 'starts':
+                textQuery = textQuery.ilike('text', `${filterValue}%`);
+                break;
+            case 'ends':
+                textQuery = textQuery.ilike('text', `%${filterValue}`);
+                break;
+            default:
+                textQuery = textQuery.eq('text', filterValue);
         }
         
         const { data: textResults, error: textErr } = await textQuery;
@@ -270,9 +308,6 @@ async function getFilteredElementIdsByText({ supabase, targetCollectionIds, text
         console.log('Résultats text trouvés:', textResults.length);
         
         let matchingIds = textResults.map(r => r.collection_element_id);
-        
-        // En mode template, les IDs récupérés sont ceux de la collection template
-        // Il faut les retourner tels quels car ils correspondent aux éléments à filtrer
         console.log('IDs text correspondants:', matchingIds);
         
         if (elementIds.size === 0) {
@@ -327,8 +362,14 @@ async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, 
                 .eq('collection_element_id', templateElementId)
                 .maybeSingle();
                 
-            if (templateMultiRefErr || !templateMultiRef) {
-                console.log('Erreur ou champ multiRef template non trouvé:', templateMultiRefErr);
+            if (templateMultiRefErr) {
+                console.log('Erreur lors de la récupération du champ multiRef template:', templateMultiRefErr);
+                continue;
+            }
+            
+            if (!templateMultiRef || !templateMultiRef.info_ref) {
+                console.log('Élément template n\'a pas de valeur pour le champ', configId, '- pas de filtrage pour ce champ');
+                // Pas d'erreur, juste pas de filtrage pour ce champ
                 continue;
             }
             
@@ -344,7 +385,7 @@ async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, 
             }
             
             if (!Array.isArray(templateRefs) || templateRefs.length === 0) {
-                console.log('Aucune référence trouvée dans le template');
+                console.log('Élément template n\'a pas de références valides pour le champ', configId, '- pas de filtrage pour ce champ');
                 continue;
             }
             
@@ -843,7 +884,9 @@ async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, b
         supabase, 
         targetCollectionIds: templateCollectionId ? [templateCollectionId] : targetCollectionIds, 
         textFilters,
-        isTemplateMode: !!templateCollectionId
+        isTemplateMode: !!templateCollectionId,
+        templateCollectionId,
+        templateElementId
     });
     
     // Récupérer les IDs filtrés par les champs multiReference  
