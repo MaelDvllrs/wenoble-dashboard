@@ -681,6 +681,7 @@ async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, b
     }
     
     const configMap = new Map(allConfigs.map(c => [c.id?.toString(), c.tab_field]));
+    console.log('ConfigMap créée avec', configMap.size, 'entrées:', Array.from(configMap.entries()));
     
     // Classifier les filtres par type directement avec les IDs
     for (const filter of filterArray) {
@@ -691,16 +692,17 @@ async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, b
         
         if (baseColumns.has(field)) {
             baseFilters[field] = value;
+            console.log(`Champ de base ${field}: valeur = ${value}`);
         } else {
             const fieldType = configMap.get(fieldId);
-            console.log(`Champ ${fieldId}: type trouvé = ${fieldType}`);
+            console.log(`Champ ${fieldId}: type trouvé dans collection_config = ${fieldType}`);
             
             if (fieldType === 'text') {
                 textFilters[fieldId] = { operator, value };
             } else if (fieldType === 'multiReference') {
                 multiRefFilters[fieldId] = { operator, value };
             } else {
-                console.log(`Type de champ non géré pour ${fieldId}: ${fieldType}`);
+                console.log(`Type de champ non géré pour ${fieldId}: ${fieldType} (configs disponibles: ${Array.from(configMap.keys()).join(', ')})`);
             }
             // Les autres types sont ignorés pour le moment
         }
