@@ -141,9 +141,17 @@ const EditCollection = () => {
             if (wrapFilters.length > 0) {
                 payload.filters = wrapFilters;
             }
-            // Inclure les tris s'il y en a
+            // Inclure les tris s'il y en a - convertir du format array vers format objet attendu par l'API
             if (wrapSorts.length > 0) {
-                payload.sorts = wrapSorts;
+                const sortsObject = {};
+                wrapSorts.forEach(sort => {
+                    if (sort.field && sort.direction) {
+                        sortsObject[sort.field] = { order: sort.direction };
+                    }
+                });
+                if (Object.keys(sortsObject).length > 0) {
+                    payload.sorts = sortsObject;
+                }
             }
             // Inclure la collection template si en mode template
             if (isTemplateMode && selectedTemplateCollection) {
