@@ -229,7 +229,11 @@
         // Parcourir uniquement les éléments filtrés
         elementsToProcess.forEach(async el => {
             if (el.hasAttribute("wn-title")) {
-                el.textContent = info.blog[0].collection_element_name;
+                if (el.tagName.toLowerCase() === 'input') {
+                    el.value = info.blog[0].collection_element_name;
+                } else {
+                    el.textContent = info.blog[0].collection_element_name;
+                }
             }
 
 
