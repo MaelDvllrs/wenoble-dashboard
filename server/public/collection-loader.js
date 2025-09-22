@@ -348,6 +348,8 @@
                         const textData = data.content.text.find(text => text.id_config == key);
                         if (textData) {
                             el.textContent = textData.text;
+                        } else {
+                            el.style.display = "none";
                         }
                     }
 

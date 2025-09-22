@@ -155,8 +155,8 @@
 		return filters;
 	}
 
-	async function fetchBlogPages(cfg) {
-		const { blogId, order, colone, joinTable, config, limit, pagination } = cfg;
+	async function fetchBlogPages(cfg, templateElementId = null) {
+		const { blogId, order, colone, joinTable, config, limit, pagination, templateCollectionId } = cfg;
 		const filters = extractFilters();
 		const query = new URLSearchParams();
 		if (order) query.set('order', order);
@@ -165,6 +165,14 @@
 		if (config) query.set('configs', JSON.stringify(config));
 		if (!pagination && (limit !== undefined && limit !== null)) query.set('limit', limit);
 		if (Object.keys(filters).length) query.set('filters', JSON.stringify(filters));
+		
+		// Ajouter les paramètres template si en mode template
+		if (templateCollectionId) {
+			query.set('templateCollectionId', templateCollectionId);
+			if (templateElementId) {
+				query.set('templateElementId', templateElementId);
+			}
+		}
 
 		const resp = await fetch(`${apiUrl}/api/sendBlog?${query.toString()}`, {
 			method: 'GET',
@@ -188,8 +196,43 @@
 
 		const encoded = wrapper.getAttribute('wn-collection-filter-plus');
 		const cfg = decodeBase64(encoded);
-		const { blogId, pagination, itemsPerPage } = cfg;
+		const { blogId, pagination, itemsPerPage, templateCollectionId } = cfg;
 		if (!blogId) { console.error('[collection-filter-plus] blogId manquant'); return; }
+
+		// Si en mode template, récupérer l'ID de l'élément template actuel
+		let templateElementId = null;
+		if (templateCollectionId) {
+			// Récupérer le slug de l'URL actuelle (comme dans collection-template-loader.js)
+			let slug = null;
+			if (isWebflowPreview()) {
+				const urlParams = new URLSearchParams(window.location.search);
+				slug = urlParams.get('slug');
+			} else {
+				slug = window.ARTICLE_SLUG;
+			}
+			
+			if (slug) {
+				try {
+					// Récupérer l'élément template par slug
+					const templateInfoResponse = await fetch(`${apiUrl}/api/sendBlogInfoSlug`, {
+						method: "GET",
+						headers: {
+							'api_key': userKey,
+							'id_blog': templateCollectionId,
+							'slug': slug,
+						}
+					});
+					
+					const templateInfo = await templateInfoResponse.json();
+					if (templateInfo.blog && templateInfo.blog.length > 0) {
+						templateElementId = templateInfo.blog[0].id;
+						console.log('[collection-filter-plus] Template Element ID récupéré:', templateElementId);
+					}
+				} catch (error) {
+					console.error('[collection-filter-plus] Erreur lors de la récupération du template element ID:', error);
+				}
+			}
+		}
 
 		// Build config maps from token cfg.config if provided
 		let idToNameMap = new Map();
@@ -312,7 +355,7 @@
 
 		let dataBlog;
 		try {
-			dataBlog = await fetchBlogPages(cfg);
+			dataBlog = await fetchBlogPages(cfg, templateElementId);
 		} catch (e) {
 			console.error('[collection-filter-plus] Erreur récupération pages:', e); return;
 		}
