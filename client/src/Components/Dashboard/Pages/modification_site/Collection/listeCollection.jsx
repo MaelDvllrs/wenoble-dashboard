@@ -36,7 +36,8 @@ import {  PiGearSixBold } from "react-icons/pi";
 const ListeCollection = () => {
 
     const theme = useTheme();
-  const token = Cookies.get('token')
+    const token = Cookies.get('token')
+    const idUser = jwtDecode(token).idUser;
 
     const [InfoListeblog, setInfoblog] = useState([]);
     const apiUrl = config.apiUrl;
@@ -76,7 +77,7 @@ const ListeCollection = () => {
         Axios.get(`${apiUrl}/getListeCollection`, {
             params: {
                 IdBlog: idCollection,
-                websiteId: selectedWebsite.id, // Utiliser websiteId au lieu de idUser
+                websiteId: selectedWebsite.id,
             },
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -186,7 +187,7 @@ const ListeCollection = () => {
                           await deleteBlogPage({
                             apiUrl,
                             token,
-                            idUser,
+                            idWebsite: selectedWebsite.id,
                             idBlog: idCollection,
                             slug: page.page_blog_slug || page.collection_element_slug,
                             idBlogPage: page.id,

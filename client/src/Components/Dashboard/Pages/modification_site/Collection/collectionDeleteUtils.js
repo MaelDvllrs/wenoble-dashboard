@@ -18,7 +18,7 @@ import Axios from 'axios';
 export async function deleteBlogPage({
   apiUrl,
   token,
-  idUser,
+  idWebsite,
   idBlog,
   slug,
   idBlogPage,
@@ -33,7 +33,7 @@ export async function deleteBlogPage({
     // Supprimer les routes du sitemap
     await Axios.post(`${apiUrl}/deleteRouteBlogSitemap`, {
       params: {
-        idUser,
+        idWebsite,
         idBlog,
         slug,
         idBlogPage
@@ -64,7 +64,7 @@ export async function deleteBlogPage({
       if (!skipRegenerate) {
         onStatus('regenerating');
         if (generateStaticSite) {
-          await generateStaticSite(token, params?.websiteId);
+          await generateStaticSite(token, idWebsite);
         }
         await new Promise(resolve => setTimeout(resolve, 1000));
       } else {
@@ -72,6 +72,7 @@ export async function deleteBlogPage({
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
+    console.log('Page de blog supprimée avec succès');
     onStatus('completed');
     if (navigate) {
       setTimeout(() => navigate(`/dashboard/modification/collection/${idBlog}`), 1500);

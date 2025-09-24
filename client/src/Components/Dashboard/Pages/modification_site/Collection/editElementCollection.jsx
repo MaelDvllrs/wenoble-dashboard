@@ -185,7 +185,7 @@ const EditElementCollection = () => {
         try {        
 
 
-            const response = await updateBlogPage(idCollectionElement, mainText, localISOTime, status, setpublishDate, DecodeBlog.blogPage[0].status, idUser, idCollection, token);
+            const response = await updateBlogPage(idCollectionElement, mainText, localISOTime, status, setpublishDate, DecodeBlog.blogPage[0].status, selectedWebsite?.id, idCollection, token);
         
             // ENREGISTRER LES TEXTES
 
@@ -351,6 +351,24 @@ const EditElementCollection = () => {
                 }
             }
 
+            // Mettre à jour l'état local pour refléter immédiatement les changements (status, titre, slug, dates)
+            setDecodeBlog((prev) => {
+                if (!prev || !prev.blogPage || !prev.blogPage[0]) return prev;
+                const updated = { ...prev };
+                const bp = { ...updated.blogPage[0] };
+                const titleItem = mainText.find(t => t.id_config === 'title');
+                const slugItem = mainText.find(t => t.id_config === 'slug');
+                if (titleItem) bp.page_blog_name = titleItem.value;
+                if (slugItem) bp.page_blog_slug = slugItem.value;
+                bp.status = status === 1;
+                bp.page_blog_update_date = localISOTime;
+                if (setpublishDate === 1) {
+                    bp.page_blog_publish_date = (status === 1) ? localISOTime : null;
+                }
+                updated.blogPage = [bp];
+                return updated;
+            });
+
             // Mettre à jour le site si le statut est 1 ou si le statut a changé
             if (status === 1 || status !== DecodeBlog.blogPage[0].status) {
                 setDataRetrievalStatus(true);
@@ -489,7 +507,7 @@ const EditElementCollection = () => {
           await deleteBlogPage({
             apiUrl,
             token,
-            idUser,
+            idWebsite: selectedWebsite?.id,
             idBlog: idCollection,
             slug,
             idBlogPage: idCollectionElement,
@@ -498,7 +516,7 @@ const EditElementCollection = () => {
               if (status === 'regenerating') setRegenerateSiteStatus(true);
               if (status === 'deleted') setDeletionCompleted(true);
             },
-            generateStaticSite: () => generateStaticSite(token),
+                        generateStaticSite,
             navigate
           });
           setTimeout(() => {
@@ -731,23 +749,29 @@ const EditElementCollection = () => {
 
     
     useEffect(() => {
-
         if (isDeleting) return; // Ne pas appeler si suppression en cours
+        let cancelled = false;
         Axios.get(`${apiUrl}/getCollectionElement`, {
-            params: {
-                IdBlogPage: idCollectionElement,
-            },
+            params: { IdBlogPage: idCollectionElement },
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
             }
         }).then((response) => {
-            setInfoBlog(response.data);
+            if (!cancelled) setInfoBlog(response.data);
         }).catch((error) => {
+            const status = error?.response?.status;
+            const code = error?.response?.data?.error?.code;
+            if (status === 404 || code === 'PGRST116') {
+              // Considérer comme supprimé: éviter boucle + snackbar spam
+              if (!cancelled) setInfoBlog(null);
+              return;
+            }
             showSnackbar('error', '[EDIT-COLL-017] Erreur lors de la récupération de la collection');
             console.error('Erreur lors de la récupération de la page du Blog :', error);
         });
-    }, [idCollectionElement, handleSave, isDeleting]);
+        return () => { cancelled = true; };
+    }, [idCollectionElement, isDeleting, apiUrl, token]);
 
 
     useEffect(() => {

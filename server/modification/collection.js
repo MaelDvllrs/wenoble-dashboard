@@ -32,7 +32,6 @@ const checkIdInArray = (id) => {
 
 // Fonction helper pour récupérer le website_id d'une collection
 const getCollectionWebsiteId = async (supabase, collectionId) => {
-  console.log('getCollectionWebsiteId - searching for collectionId:', collectionId);
   const { data, error } = await supabase
     .from('collection')
     .select('website_id')
@@ -48,7 +47,6 @@ const getCollectionWebsiteId = async (supabase, collectionId) => {
     throw error;
   }
   
-  console.log('getCollectionWebsiteId - found data:', data);
   return data.website_id;
 };
 
@@ -179,7 +177,6 @@ router.get('/getConfigCollection', authenticateToken, async (req, res) => {
     const token = req.headers['authorization']?.split(' ')[1];
     const supabase = supabaseServer(token);
 
-    console.log('getConfigCollection - collectionId:', collectionId, 'userId:', userId);
 
     if (!collectionId) {
       return res.status(400).send({ error: 'collectionId est requis' });
@@ -187,13 +184,11 @@ router.get('/getConfigCollection', authenticateToken, async (req, res) => {
 
     // Récupérer le website_id de la collection et vérifier les droits d'accès
     const websiteId = await getCollectionWebsiteId(supabase, collectionId);
-    console.log('getConfigCollection - websiteId found:', websiteId);
     if (!websiteId) {
       return res.status(404).send({ error: 'Collection non trouvée' });
     }
 
     const { hasAccess } = await checkUserWebsiteAccess(supabase, userId, websiteId);
-    console.log('getConfigCollection - hasAccess:', hasAccess);
     if (!hasAccess) {
       return res.status(403).send({ error: 'Vous n\'avez pas les droits pour accéder à cette collection' });
     }
@@ -555,7 +550,6 @@ router.post('/createVideoCollection', uploadVideo.single('video'), async (req, r
     return res.status(400).send('Aucune vidéo n\'a été téléchargée.');
   }
 
-  console.log('Fichier vidéo reçu:', req.file); 
 
   const token = req.headers['authorization']?.split(' ')[1];
   const supabase = supabaseServer(token);
@@ -585,7 +579,6 @@ router.post('/createVideoCollection', uploadVideo.single('video'), async (req, r
     // Supprimer le fichier temporaire
     fs.unlinkSync(filePath);
 
-    console.log('Fichier vidéo uploadé avec succès:', data);
 
 
     if (uploadError) {
@@ -619,7 +612,6 @@ router.post('/createVideoCollection', uploadVideo.single('video'), async (req, r
       });
     }
 
-    console.log('Vidéo insérée avec succès dans la base de données');
 
     res.status(200).send({
       success: true,
@@ -641,7 +633,6 @@ router.post('/createVideoCollection', uploadVideo.single('video'), async (req, r
 
 
 router.post('/createTextCollection', authenticateToken, async (req, res) => {
-  console.log("createTextCollection")
   try {
     const id = req.body.params.id;
     const texts = req.body.params.otherText;
@@ -769,7 +760,6 @@ router.post('/createRichTextCollection', async (req, res) => {
 
 
 router.post('/createMultiReferenceCollection', authenticateToken, async (req, res) => {
-  console.log("createMultireference")
   try {
 
     const token = req.headers['authorization']?.split(' ')[1];
@@ -781,8 +771,6 @@ router.post('/createMultiReferenceCollection', authenticateToken, async (req, re
     const multiReference = req.body.params.multiReference;
     // multiReference est un objet { id_config, value }
 
-    console.log("id", id)
-    console.log("multiReference", multiReference)
 
     await supabase
       .from('collection_field_multireference')
@@ -791,7 +779,6 @@ router.post('/createMultiReferenceCollection', authenticateToken, async (req, re
         id_config: multiReference.id_config,
         info_ref: multiReference.value
       });
-    console.log("MultiReference insérée avec succès");
     res.status(200).send('MultiReference créée avec succès');
   } catch (error) {
     console.error('Erreur lors de la création du MultiReference:', error);
@@ -828,9 +815,9 @@ router.get('/getCollectionElement', authenticateToken, async (req, res) => {
         publisher:published_by(username)
       `)
       .eq('id', sentIdBlogPage)
-      .single();
-      
-    if (error) throw error;
+      .maybeSingle();
+    
+    if (error && error.code !== 'PGRST116') throw error;
     
     // Si aucun résultat n'est trouvé
     if (!data) {
@@ -1065,7 +1052,6 @@ router.post('/updateCollectionElement', authenticateToken, async (req, res) => {
     const status = req.body.params.status;
     const setPublishDate = req.body.params.setpublishDate;
 
-    console.log("updateCollectionElement", id, title, slug, date, status, setPublishDate);
 
     const token = req.headers['authorization']?.split(' ')[1];
     const supabase = supabaseServer(token);
@@ -1307,7 +1293,6 @@ router.post('/updateGalleryCollection', authenticateToken, uploadGallery.array('
   let fileIndex = 0;
   let totalSize = 0;
 
-  console.log("finalGallery", finalGallery);
 
   try {
     for (let i = 0; i < galleryLength; i++) {
@@ -1426,14 +1411,13 @@ router.post('/updateMultiReferenceCollection', authenticateToken, async (req, re
 
 
 router.delete('/deleteCollectionData', authenticateToken, async (req, res) => {
+  console.log('Requête de suppression reçue:', req.body);
   const id_blog_page = req.body.id_blog_page;
   const dataArray = req.body.data;
 
   const token = req.headers['authorization']?.split(' ')[1];
   const supabase = supabaseServer(token);
 
-   console.log("idBlogPage" + id_blog_page);
-   console.log("data" + dataArray);
   try {
     for (const data of dataArray) {
       const id_config = data.id_config;
@@ -1490,6 +1474,7 @@ router.delete('/deleteCollectionData', authenticateToken, async (req, res) => {
 
 
 router.delete('/deleteCollectionElement', authenticateToken, async (req, res) => {
+  console.log('Requête de suppression de l\'élément de collection reçue:', req.query);
   try {
 
     const token = req.headers['authorization']?.split(' ')[1];
@@ -1611,11 +1596,14 @@ router.delete('/deleteCollectionElement', authenticateToken, async (req, res) =>
         if (delError && delError.code !== 'PGRST116') throw delError;
       }
     }
-    // Supprimer la page elle-même
-    await supabase
+    // Supprimer la page elle-même (après avoir supprimé tous les enfants)
+    const { error: deleteError } = await supabase
       .from('collection_element')
       .delete()
       .eq('id', idBlogPage);
+    if (deleteError && deleteError.code !== 'PGRST116') throw deleteError;
+
+    console.log('Suppression réussie de la page de collection avec ID:', idBlogPage);
     res.status(200).send({ message: 'Page supprimée avec succès' });
   } catch (error) {
     console.error('Erreur lors de la suppression de la page:', error);

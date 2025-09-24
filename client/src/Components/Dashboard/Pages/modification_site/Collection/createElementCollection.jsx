@@ -156,7 +156,7 @@ const CreateElementCollection = () => {
         });
         try {        
             // Appeler la fonction createBlogPage
-            const response = await createBlogPage(idCollection, mainText, date, status, idUser, token);
+            const response = await createBlogPage(idCollection, mainText, date, status, selectedWebsite?.id, token);
             const blogPageId = response.id;
             // ENREGISTRER LES TEXTES
             try { 

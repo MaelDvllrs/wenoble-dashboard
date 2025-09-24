@@ -77,8 +77,10 @@ const findSitemapPath = async (folder) => {
 };
   
 // Route pour ajouter un nouvel article de blog
+// ...existing code...
 router.post('/addRouteBlogSitemap',authenticateToken, async (req, res) => {
-  const idUser = req.user.idUser;
+  console.log('Requête d\'ajout de route de blog reçue:', req.body);
+  const idWebsite = req.body.params.idWebsite;
   const idCollection = req.body.params.idBlog; // idBlog = idCollection
   const slug = req.body.params.slug;
   const date = dayjs().utc().format('YYYY-MM-DDTHH:mm:ss+00:00');
@@ -87,18 +89,18 @@ router.post('/addRouteBlogSitemap',authenticateToken, async (req, res) => {
     const authHeader = req.headers.authorization;
     const token = authHeader && authHeader.split(' ')[1];
     const supabase = supabaseServer(token);
-    // Récupérer le dossier de l'utilisateur
-    const { data: userData, error: userError } = await supabase
-      .from('users')
+    // Récupérer le dossier du site via l'id du website
+    const { data: websiteData, error: websiteError } = await supabase
+      .from('websites')
       .select('folder_project')
-      .eq('id', idUser)
+      .eq('id', idWebsite)
       .maybeSingle();
-    if (userError) throw userError;
-    if (!userData || !userData.folder_project) {
-      return res.status(200).json({ message: 'Aucun dossier trouvé pour cet utilisateur' });
+    if (websiteError) throw websiteError;
+    if (!websiteData || !websiteData.folder_project) {
+      return res.status(200).json({ message: 'Aucun dossier trouvé pour ce site' });
     }
-    const folder = userData.folder_project;
-    // Récupérer le slug de la collection (ancien blog)
+    const folder = websiteData.folder_project;
+    // Récupérer le slug de la collection
     const { data: collectionData, error: collectionError } = await supabase
       .from('collection')
       .select('collection_slug')
@@ -130,7 +132,8 @@ router.post('/addRouteBlogSitemap',authenticateToken, async (req, res) => {
 
 // Route pour supprimer un article de blog
 router.post('/deleteRouteBlogSitemap',authenticateToken, async (req, res) => {
-  const idUser = req.user.idUser;
+  // Utiliser l'id du site (website) au lieu de l'idUser
+  const idWebsite = req.body.params.idWebsite;
   const idCollection = req.body.params.idBlog;
   const idCollectionElement = req.body.params.idBlogPage;
   try {
@@ -138,17 +141,17 @@ router.post('/deleteRouteBlogSitemap',authenticateToken, async (req, res) => {
     const authHeader = req.headers.authorization;
     const token = authHeader && authHeader.split(' ')[1];
     const supabase = supabaseServer(token);
-    // Récupérer le dossier de l'utilisateur
-    const { data: userData, error: userError } = await supabase
-      .from('users')
+    // Récupérer le dossier du site via l'id du website
+    const { data: websiteData, error: websiteError } = await supabase
+      .from('websites')
       .select('folder_project')
-      .eq('id', idUser)
+      .eq('id', idWebsite)
       .maybeSingle();
-    if (userError) throw userError;
-    if (!userData || !userData.folder_project) {
-      return res.status(200).json({ message: 'Aucun dossier trouvé pour cet utilisateur' });
+    if (websiteError) throw websiteError;
+    if (!websiteData || !websiteData.folder_project) {
+      return res.status(200).json({ message: 'Aucun dossier trouvé pour ce site' });
     }
-    const folder = userData.folder_project;
+    const folder = websiteData.folder_project;
     // Récupérer le slug de la page de collection
     const { data: pageData, error: pageError } = await supabase
       .from('collection_element')
@@ -184,7 +187,7 @@ router.post('/deleteRouteBlogSitemap',authenticateToken, async (req, res) => {
 // Route pour modifier un article de blog
 router.post('/updateRouteBlogSitemap',authenticateToken, async (req, res) => {
   const idUser = req.user.idUser;
-  const {idBlog, idBlogPage, slug, date } = req.body.params;
+  const {idBlog, idWebsite, idBlogPage, slug, date } = req.body.params;
   try {
     // Utiliser le token du header Authorization (format Bearer TOKEN)
     const authHeader = req.headers.authorization;
@@ -192,9 +195,9 @@ router.post('/updateRouteBlogSitemap',authenticateToken, async (req, res) => {
     const supabase = supabaseServer(token);
     // Récupérer le dossier de l'utilisateur
     const { data: userData, error: userError } = await supabase
-      .from('users')
+      .from('websites')
       .select('folder_project')
-      .eq('id', idUser)
+      .eq('id', idWebsite)
       .maybeSingle();
     if (userError) throw userError;
     if (!userData || !userData.folder_project) {

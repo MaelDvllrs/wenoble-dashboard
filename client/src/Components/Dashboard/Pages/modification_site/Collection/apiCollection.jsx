@@ -74,7 +74,7 @@ export const createVideoBlog = async (fields, blogPageId, token) => {
     }
 };
 
-export const createBlogPage = async (id, mainText, date, status, idUser, token) => {
+export const createBlogPage = async (id, mainText, date, status, idWebsite, token) => {
 
     try {
         const createBlogResponse = await Axios.post(`${apiUrl}/createCollectionElement`, {
@@ -93,7 +93,7 @@ export const createBlogPage = async (id, mainText, date, status, idUser, token) 
         if (status === 1) {
             await Axios.post(`${apiUrl}/addRouteBlogSitemap`, {
                 params: {
-                    idUser: idUser,
+                    idWebsite: idWebsite,
                     idBlog: id,
                     slug: mainText[1].value,
                     date: date,
@@ -170,12 +170,13 @@ export const createMultiReferenceBlog = async (id, multiReference, token) => {
     }
 };
 
-export const updateBlogPage = async (idBlogPage, mainText, date, status, setpublishDate, oldStatus, idUser, idBlog, token) => {
+export const updateBlogPage = async (idBlogPage, mainText, date, status, setpublishDate, oldStatus, idWebsite, idBlog, token) => {
+    
     try {
         if (status === 1 && oldStatus === 0) {
             await Axios.post(`${apiUrl}/addRouteBlogSitemap`, {
                 params: {
-                    idUser: idUser,
+                    idWebsite: idWebsite,
                     idBlog: idBlog,
                     slug: mainText[1].value,
                     date: date,
@@ -189,7 +190,7 @@ export const updateBlogPage = async (idBlogPage, mainText, date, status, setpubl
         } else if (status === 0 && oldStatus === 1) {
             await Axios.post(`${apiUrl}/deleteRouteCollectionSitemap`, {
                 params: {
-                    idUser: idUser,
+                    idWebsite: idWebsite,
                     idBlog: idBlog,
                     idBlogPage: idBlogPage,
                 }
@@ -202,7 +203,7 @@ export const updateBlogPage = async (idBlogPage, mainText, date, status, setpubl
         } else if (status === 1 && oldStatus === 1) {
             await Axios.post(`${apiUrl}/updateRouteCollectionSitemap`, {
                 params: {
-                    idUser: idUser,
+                    idWebsite: idWebsite,
                     idBlog: idBlog,
                     idBlogPage: idBlogPage,
                     slug: mainText[1].value,
