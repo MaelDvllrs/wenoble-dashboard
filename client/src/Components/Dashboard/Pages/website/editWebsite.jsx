@@ -14,6 +14,8 @@ import { WorkspaceContext } from '../../../../Context/WorkspaceContext';
 import { DefaultButton, SecondaryButton, RedButton, SelectField, DefaultSwitch } from '../../../../Theme/element';
 // Reuse static site generation util from collection pages
 import { generateStaticSite } from '../modification_site/Collection/apiCollection';
+// API Tokens Manager component
+import APITokensManager from './APITokensManager';
 
 // Small local badge component for publishing steps
 const StatusBadge = ({ label, active }) => {
@@ -680,6 +682,14 @@ const EditWebsite = () => {
                     Enregistrer
                   </DefaultButton>
                 </div>
+              </div>
+
+              <div className="line_horizontal is_big_margin" style={{backgroundColor: theme.palette.primary.third}}></div>
+
+              {/* Gestion des tokens API */}
+
+              <div className="input-container" style={{ padding: 0 }}>
+                <APITokensManager websiteId={id} />
               </div>
 
               <div className="line_horizontal is_big_margin" style={{backgroundColor: theme.palette.primary.third}}></div>

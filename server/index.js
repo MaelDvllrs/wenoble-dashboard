@@ -33,6 +33,10 @@ const contactEmailRouter = require('./contact/contactEmail');
 const newsletterRouter = require('./newsletter/newsletter');
 const signUpNewsletterRouter = require('./newsletter/signUpNewsletter');  
 //
+// API externe
+const externalAPIRouter = require('./external/externalAPI');
+// API Tokens
+const apiTokensRouter = require('./api/apiTokens');
 //
 const { notificationRouter, notificationServer } = require('./users/notification');
 
@@ -228,6 +232,10 @@ app.use(searchConsoleRouter);
 app.use(newsletterRouter);
 //app.use(updateCacheRouter);
 app.use(generationStaticRouter);
+// API externe
+app.use('/external-api', externalAPIRouter);
+// API Tokens management
+app.use(apiTokensRouter);
 
 
 
