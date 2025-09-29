@@ -151,11 +151,21 @@
                 }
             });
 
-            const dataBlog = await blogPageResponse.json();
+            let dataBlog = null;
+            try {
+                if (blogPageResponse.ok) {
+                    dataBlog = await blogPageResponse.json();
+                } else {
+                    console.error('Réponse API non OK pour sendBlog:', blogPageResponse.status, blogPageResponse.statusText);
+                }
+            } catch (e) {
+                console.error('Erreur de parsing JSON pour sendBlog:', e);
+                dataBlog = null;
+            }
 
 
 
-            if (!dataBlog.blog || dataBlog.blog.length === 0) {
+            if (!dataBlog || !Array.isArray(dataBlog.blog) || dataBlog.blog.length === 0) {
                 // Si c'est un select, ajouter une option "Aucun élément"
                 if (el.tagName === 'SELECT') {
                     const emptyOption = document.createElement('option');
@@ -173,13 +183,21 @@
                     const template = el.querySelector("[wn-collection-box]");
                     if (template) template.remove();
                 }
+                // Toujours marquer comme traité même si aucun élément
+                const collectionMarker = document.createElement('div');
+                collectionMarker.className = 'ssr-wn-collection-box';
+                collectionMarker.style.display = 'none';
+                collectionMarker.setAttribute('data-collection-processed', 'true');
+                collectionMarker.setAttribute('data-items-count', 0);
+                collectionMarker.setAttribute('data-processed-time', new Date().toISOString());
+                el.appendChild(collectionMarker);
                 return;
             }
 
             // Vérifier si l'élément est un SELECT
             if (el.tagName === 'SELECT') {
                 // Mode SELECT : remplir les options avec slug en value et title en text
-                const allBlogs = Array.isArray(dataBlog.blog) ? dataBlog.blog : [];
+                const allBlogs = Array.isArray(dataBlog?.blog) ? dataBlog.blog : [];
                 
                 // Vider le select d'abord (garder seulement les options existantes non-générées)
                 const existingOptions = Array.from(el.querySelectorAll('option:not([data-wn-generated])'));
@@ -215,7 +233,7 @@
             }
 
             // Pagination handling (client-side) if enabled
-            let allBlogs = Array.isArray(dataBlog.blog) ? dataBlog.blog : [];
+            let allBlogs = Array.isArray(dataBlog?.blog) ? dataBlog.blog : [];
             let currentPage = 1;
             let perPage = itemsPerPage || limit || 10;
             let totalPages = 1;
@@ -679,7 +697,7 @@
             collectionMarker.className = 'ssr-wn-collection-box';
             collectionMarker.style.display = 'none';
             collectionMarker.setAttribute('data-collection-processed', 'true');
-            collectionMarker.setAttribute('data-items-count', Array.isArray(dataBlog.blog) ? dataBlog.blog.length : 0);
+            collectionMarker.setAttribute('data-items-count', Array.isArray(dataBlog?.blog) ? dataBlog.blog.length : 0);
             collectionMarker.setAttribute('data-processed-time', new Date().toISOString());
             el.appendChild(collectionMarker);
 

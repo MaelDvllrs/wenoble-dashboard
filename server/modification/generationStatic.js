@@ -84,8 +84,11 @@ router.post('/generateSite', authenticateToken, async (req, res) => {
     let templateSlugs = [];
 
     if (!collections || collections.length === 0) {
-      await generateSite(siteDir, templateSlugs, templateTypes);
-      return;
+      const result = await generateSite(siteDir, templateSlugs, templateTypes);
+      if (result.success) {
+        return res.status(200).json(result);
+      }
+      return res.status(500).json(result);
     }
 
     // 3. Pour chaque collection, extraire le type et récupérer les pages publiées
@@ -109,9 +112,12 @@ router.post('/generateSite', authenticateToken, async (req, res) => {
     }
 
     // 4. Construire l'objet siteConfig et lancer la génération
-    await generateSite(siteDir, templateSlugs, templateTypes);
-    // Ancien code SQL/MySQL supprimé car tout est géré via Supabase ci-dessus
-    return res.status(200).send({ success: true, message: 'Génération statique lancée.' });
+    const result = await generateSite(siteDir, templateSlugs, templateTypes);
+    if (result.success) {
+      return res.status(200).json(result);
+    }
+    return res.status(500).json(result);
+
     async function generateSite(siteDir, templateSlugs, templateTypes) {
       const siteConfig = {
         siteDir,
@@ -125,29 +131,29 @@ router.post('/generateSite', authenticateToken, async (req, res) => {
           console.log('✅ Génération réussie!');
           console.log(`📊 ${response.data.pageResults.length} pages standards générées`);
           console.log(`📊 ${response.data.templateResults.length} pages de templates générées`);
-          res.json({
+          return {
             success: true,
             message: response.data.message,
             pageCount: response.data.pageResults.length,
             templateCount: response.data.templateResults.length,
             config: siteConfig
-          });
+          };
         } else {
           console.error('❌ Erreur lors de la génération:', response.data.message);
-          res.status(500).json({
+          return {
             success: false,
             message: response.data.message,
             config: siteConfig
-          });
+          };
         }
       } catch (error) {
         console.error('❌ Erreur lors de la génération:', error.message);
-        res.status(500).json({
+        return {
           success: false,
           message: 'Erreur lors de la génération du site',
           error: error.message,
           config: siteConfig
-        });
+        };
       }
     }
   } catch (err) {

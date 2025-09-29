@@ -274,7 +274,10 @@
                         }
                         if (title) title.textContent = imageData.alt_image || '';
                     }
+                } else {
+                    el.style.display = "none";
                 }
+
             }
 
             if (el.hasAttribute("wn-text")) {
