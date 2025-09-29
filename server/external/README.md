@@ -45,7 +45,7 @@ Ajoute un nouvel élément à une collection spécifiée.
 - `name` (string, obligatoire) : Nom de l'élément
 - `slug` (string, obligatoire) : Slug unique pour l'élément
 - `status` (integer, optionnel) : Statut de l'élément (0 = brouillon, 1 = publié). Par défaut: 0
-- `fields` (object, optionnel) : Champs personnalisés de l'élément
+- `fields` (object, optionnel) : Champs personnalisés de l'élément. **La clé doit être le nom du champ** tel que défini dans la configuration de la collection (pas l'ID)
 
 #### Réponse de succès (201)
 ```json
@@ -87,12 +87,9 @@ curl -X POST "http://localhost:3002/external-api/collection/1/elements" \
 
 ### 2. Publier un site web
 
-**POST** `/websites/{websiteId}/publish`
+**POST** `/websites/publish`
 
-Déclenche la publication/génération statique d'un site web.
-
-#### Paramètres de l'URL
-- `websiteId` (obligatoire) : ID du site web
+Déclenche la publication/génération statique du site web associé au token API.
 
 #### Réponse de succès (200)
 ```json
@@ -107,18 +104,15 @@ Déclenche la publication/génération statique d'un site web.
 
 #### Exemple de requête
 ```bash
-curl -X POST "http://localhost:3002/external-api/websites/1/publish" \
+curl -X POST "http://localhost:3002/external-api/websites/publish" \
   -H "x-api-key: YOUR_API_KEY"
 ```
 
-### 3. Récupérer les collections d'un site
+### 3. Récupérer les collections du site
 
-**GET** `/websites/{websiteId}/collections`
+**GET** `/collections`
 
-Récupère la liste des collections d'un site web.
-
-#### Paramètres de l'URL
-- `websiteId` (obligatoire) : ID du site web
+Récupère la liste des collections du site web associé au token API.
 
 #### Réponse de succès (200)
 ```json
@@ -138,7 +132,7 @@ Récupère la liste des collections d'un site web.
 
 #### Exemple de requête
 ```bash
-curl -X GET "http://localhost:3002/external-api/websites/1/collections" \
+curl -X GET "http://localhost:3002/external-api/collections" \
   -H "x-api-key: YOUR_API_KEY"
 ```
 
@@ -181,7 +175,7 @@ curl -X GET "http://localhost:3002/external-api/collections/1/config" \
 ## Types de champs supportés
 
 ### Text
-Champ texte simple.
+Champ texte simple. Utilisez le nom du champ comme clé.
 ```json
 {
   "fields": {
@@ -191,7 +185,7 @@ Champ texte simple.
 ```
 
 ### RichText  
-Champ de texte enrichi. Peut accepter :
+Champ de texte enrichi. Utilisez le nom du champ comme clé. Peut accepter :
 - Une chaîne de caractères (sera convertie en format DraftJS)
 - Un objet DraftJS complet
 
@@ -217,10 +211,10 @@ Champ de texte enrichi. Peut accepter :
 
 ## Workflow recommandé
 
-1. **Obtenir les collections** : `GET /websites/{websiteId}/collections`
+1. **Obtenir les collections** : `GET /collections`
 2. **Obtenir la configuration** : `GET /collections/{collectionId}/config`
 3. **Créer un élément** : `POST /collection/{collectionId}/elements`
-4. **Publier le site** : `POST /websites/{websiteId}/publish`
+4. **Publier le site** : `POST /websites/publish`
 
 ## Exemple complet
 
@@ -229,7 +223,7 @@ const API_KEY = 'your_api_key_here';
 const BASE_URL = 'http://localhost:3002/external-api';
 
 // 1. Récupérer les collections
-const collections = await fetch(`${BASE_URL}/websites/1/collections`, {
+const collections = await fetch(`${BASE_URL}/collections`, {
   headers: { 'x-api-key': API_KEY }
 }).then(r => r.json());
 
@@ -245,6 +239,7 @@ const newElement = await fetch(`${BASE_URL}/collection/1/elements`, {
     slug: 'mon-article',
     status: 1,
     fields: {
+      // Utilisez le nom du champ (name_field) comme clé, pas l'ID
       description: 'Description de l\'article',
       content: 'Contenu de l\'article'
     }
@@ -252,7 +247,7 @@ const newElement = await fetch(`${BASE_URL}/collection/1/elements`, {
 }).then(r => r.json());
 
 // 3. Publier le site
-const publish = await fetch(`${BASE_URL}/websites/1/publish`, {
+const publish = await fetch(`${BASE_URL}/websites/publish`, {
   method: 'POST',
   headers: { 'x-api-key': API_KEY }
 }).then(r => r.json());

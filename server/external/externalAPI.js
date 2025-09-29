@@ -272,21 +272,15 @@ router.post('/collection/:collectionId/elements', authenticateAPIKey, async (req
 });
 
 // Endpoint pour publier le site
-router.post('/websites/:websiteId/publish', authenticateAPIKey, async (req, res) => {
+router.post('/websites/publish', authenticateAPIKey, async (req, res) => {
   try {
-    const { websiteId } = req.params;
+    // Récupérer l'ID du site depuis le token
+    const websiteId = req.tokenData.website_id;
 
     // Vérifier les permissions CMS
     if (!req.tokenData.permissions.includes('cms')) {
       return res.status(403).json({ 
         error: 'Ce token n\'a pas les permissions CMS nécessaires.' 
-      });
-    }
-
-    // Vérifier que le websiteId correspond au token
-    if (req.tokenData.website_id !== websiteId) {
-      return res.status(403).json({ 
-        error: 'Ce token n\'est pas autorisé pour ce site web.' 
       });
     }
 
@@ -346,9 +340,10 @@ router.post('/websites/:websiteId/publish', authenticateAPIKey, async (req, res)
 });
 
 // Endpoint pour récupérer les collections d'un site
-router.get('/websites/:websiteId/collections', authenticateAPIKey, async (req, res) => {
+router.get('/collections', authenticateAPIKey, async (req, res) => {
   try {
-    const { websiteId } = req.params;
+    // Récupérer l'ID du site depuis le token
+    const websiteId = req.tokenData.website_id;
     const supabase = req.supabase;
 
     const { data: collections, error } = await supabase
