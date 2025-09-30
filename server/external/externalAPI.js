@@ -289,6 +289,54 @@ router.post('/collection/:collectionId/elements', authenticateAPIKey, async (req
             }
             break;
 
+          case 'image':
+            // Pour les images, on attend un objet avec { url, alt } ou juste une URL string
+            let imageData;
+            if (typeof fieldValue === 'string') {
+              // Si c'est juste une URL, utiliser l'URL comme alt aussi
+              imageData = {
+                url: fieldValue,
+                alt: fieldValue,
+                name: fieldValue
+              };
+            } else if (typeof fieldValue === 'object' && fieldValue.url) {
+              // Si c'est un objet avec url, alt, etc.
+              imageData = {
+                url: fieldValue.url,
+                alt: fieldValue.alt || fieldValue.url,
+                name: fieldValue.name || fieldValue.alt || fieldValue.url
+              };
+            } else {
+              console.error(`Format invalide pour le champ image "${fieldName}":`, fieldValue);
+              continue;
+            }
+
+            console.log('Insertion champ image avec:', {
+              collection_element_id: elementId,
+              id_config: configId,
+              image_url: imageData.url,
+              image_alt: imageData.alt,
+              image_name: imageData.name
+            });
+
+            const { error: imageError } = await supabase
+              .from('collection_field_image')
+              .insert({
+                collection_element_id: elementId,
+                id_config: configId,
+                image_url: imageData.url,
+                image_alt: imageData.alt,
+                image_name: imageData.name
+              });
+
+            if (imageError) {
+              console.error('Erreur insertion champ image:', imageError);
+            } else {
+              console.log('Champ image inséré avec succès');
+              processedFields[fieldName] = { type: 'image', value: imageData };
+            }
+            break;
+
           default:
             console.warn(`Type de champ "${fieldType}" non supporté pour le moment`);
         }

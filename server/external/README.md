@@ -36,7 +36,12 @@ Ajoute un nouvel élément à une collection spécifiée.
   "fields": {
     "description": "Description de l'élément",
     "content": "Contenu riche de l'article",
-    "autre_champ": "Valeur du champ"
+    "photo": "https://example.com/image.jpg",
+    "photo_principale": {
+      "url": "https://example.com/main-image.jpg",
+      "alt": "Photo principale de l'article",
+      "name": "Photo principale"
+    }
   }
 }
 ```
@@ -200,6 +205,26 @@ Champ de texte enrichi. Utilisez le nom du champ comme clé. Peut accepter :
   }
 }
 ```
+
+### Image
+Champ image. Utilisez le nom du champ comme clé. Peut accepter :
+- Une URL simple (sera utilisée comme url, alt et name)
+- Un objet avec url, alt et name
+
+```json
+{
+  "fields": {
+    "photo": "https://example.com/image.jpg",
+    "photo_avancee": {
+      "url": "https://example.com/image.jpg",
+      "alt": "Description de l'image",
+      "name": "Nom de l'image"
+    }
+  }
+}
+```
+
+**Note** : Si seule l'URL est fournie, elle sera utilisée pour l'alt et le name également.
 
 ## Codes d'erreur
 
