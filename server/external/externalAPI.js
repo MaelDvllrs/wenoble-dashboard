@@ -300,6 +300,7 @@ router.post('/collection/:collectionId/elements', authenticateAPIKey, async (req
                 name: fieldValue
               };
             } else if (typeof fieldValue === 'object' && fieldValue.url) {
+              console.log('Champ image reçu comme objet:', fieldValue);
               // Si c'est un objet avec url, alt, etc.
               imageData = {
                 url: fieldValue.url,

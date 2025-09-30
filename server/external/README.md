@@ -37,10 +37,10 @@ Ajoute un nouvel élément à une collection spécifiée.
     "description": "Description de l'élément",
     "content": "Contenu riche de l'article",
     "photo": "https://example.com/image.jpg",
-    "photo_principale": {
+    "photo_avec_details": {
       "url": "https://example.com/main-image.jpg",
-      "alt": "Photo principale de l'article",
-      "name": "Photo principale"
+      "alt": "Photo avec description détaillée",
+      "name": "Photo détaillée"
     },
     "galerie": [
       "https://example.com/gallery1.jpg",
@@ -59,6 +59,8 @@ Ajoute un nouvel élément à une collection spécifiée.
 - `slug` (string, obligatoire) : Slug unique pour l'élément
 - `status` (integer, optionnel) : Statut de l'élément (0 = brouillon, 1 = publié). Par défaut: 0
 - `fields` (object, optionnel) : Champs personnalisés de l'élément. **La clé doit être le nom du champ** tel que défini dans la configuration de la collection (pas l'ID)
+
+**Note** : Dans l'exemple ci-dessus, `"photo"` et `"photo_avec_details"` sont deux champs différents qui montrent les deux formats possibles pour les images (simple vs détaillé). Dans un projet réel, vous n'auriez probablement qu'un seul champ photo selon vos besoins.
 
 #### Réponse de succès (201)
 ```json
