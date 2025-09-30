@@ -2,6 +2,16 @@ const { supabaseServer } = require('../supabase');
 
 // Middleware pour vérifier le token et extraire l'ID utilisateur
 const authenticateToken = async (req, res, next) => {
+  // Ignorer l'authentification pour les routes de l'API externe
+  if (req.path.startsWith('/external-api') || req.originalUrl.includes('/external-api')) {
+    return next();
+  }
+
+  // Ignorer aussi si c'est une requête avec une clé API (headers x-api-key ou api-key)
+  if (req.headers['x-api-key'] || req.headers['api-key']) {
+    return next();
+  }
+
   // Récupérer le token de l'en-tête Authorization
   const authHeader = req.headers.authorization;
   const token = authHeader && authHeader.split(' ')[1]; // Format "Bearer TOKEN"
