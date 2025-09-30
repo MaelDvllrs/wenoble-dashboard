@@ -3,6 +3,7 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const { supabaseServer } = require('../supabase');
+const { fi } = require('date-fns/locale/fi');
 
 const router = express.Router();
 
@@ -290,6 +291,7 @@ router.post('/collection/:collectionId/elements', authenticateAPIKey, async (req
             break;
 
           case 'image':
+            console.log(typeof fieldValue, fieldValue);
             // Pour les images, on attend un objet avec { url, alt } ou juste une URL string
             let imageData;
             if (typeof fieldValue === 'string') {
