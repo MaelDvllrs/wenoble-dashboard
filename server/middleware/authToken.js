@@ -4,11 +4,13 @@ const { supabaseServer } = require('../supabase');
 const authenticateToken = async (req, res, next) => {
   // Ignorer l'authentification pour les routes de l'API externe
   if (req.path.startsWith('/external-api') || req.originalUrl.includes('/external-api')) {
+    console.log('Ignoring auth for external API route:', req.path);
     return next();
   }
 
   // Ignorer aussi si c'est une requête avec une clé API (headers x-api-key ou api-key)
   if (req.headers['x-api-key'] || req.headers['api-key']) {
+    console.log('Ignoring auth for API key request');
     return next();
   }
 

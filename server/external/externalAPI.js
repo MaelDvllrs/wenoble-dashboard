@@ -33,12 +33,18 @@ const authenticateAPIKey = async (req, res, next) => {
       });
     }
 
-    // Utiliser une instance Supabase avec les credentials de service
+    // Utiliser l'instance Supabase configurée avec service key (bypass RLS)
     const { createClient } = require('@supabase/supabase-js');
+    
+    // Vérifier que la service key existe
+    if (!process.env.SUPABASE_SERVICE_KEY) {
+      console.error('SUPABASE_SERVICE_KEY manquante dans les variables d\'environnement');
+      return res.status(500).json({ error: 'Configuration serveur incorrecte' });
+    }
+    
     const supabase = createClient(
       process.env.SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_KEY,
-      { auth: { autoRefreshToken: false, persistSession: false } }
+      process.env.SUPABASE_SERVICE_KEY
     );
     
     // Vérifier que le token existe et est actif en base
@@ -120,6 +126,8 @@ router.post('/collection/:collectionId/elements', authenticateAPIKey, async (req
       .eq('website_id', req.tokenData.website_id)
       .single();
 
+    console.log(collection, collectionError);
+
     if (collectionError || !collection) {
       return res.status(404).json({ 
         error: 'Collection non trouvée ou non autorisée pour ce token.' 
@@ -140,22 +148,33 @@ router.post('/collection/:collectionId/elements', authenticateAPIKey, async (req
       });
     }
 
+    console.log('Création de l\'élément dans la collection', collectionId);
+
     // Créer l'élément de collection
     const elementData = {
-      collection_id: parseInt(collectionId),
+      collection_id: collectionId, // UUID, ne pas convertir en integer
       collection_element_name: name,
       collection_element_slug: slug,
       collection_element_status: status,
       collection_element_create_date: currentDate,
-      collection_element_update_date: currentDate,
-      created_by: req.tokenData.userId
+      collection_element_update_date: currentDate
     };
+
+    // Ajouter created_by seulement si c'est un UUID valide
+    if (req.tokenData.userId && req.tokenData.userId.length === 36) {
+      elementData.created_by = req.tokenData.userId;
+    }
 
     if (status === 1) {
       elementData.collection_element_publish_date = currentDate;
-      elementData.published_by = req.tokenData.userId;
+      if (req.tokenData.userId && req.tokenData.userId.length === 36) {
+        elementData.published_by = req.tokenData.userId;
+      }
     }
 
+    console.log('Données de l\'élément à créer:', elementData);
+
+    // Essayer l'insertion avec service role bypass
     const { data: createdElement, error: createError } = await supabase
       .from('collection_element')
       .insert(elementData)
@@ -163,6 +182,7 @@ router.post('/collection/:collectionId/elements', authenticateAPIKey, async (req
       .single();
 
     if (createError) {
+      console.error('Erreur lors de la création de l\'élément:', createError);
       throw createError;
     }
 
@@ -170,12 +190,16 @@ router.post('/collection/:collectionId/elements', authenticateAPIKey, async (req
     const elementId = createdElement.id;
     const processedFields = {};
 
+    console.log('Champs reçus à traiter:', fields);
+    console.log('ID de l\'élément créé:', elementId);
+
     // Récupérer la configuration des champs pour cette collection
     const { data: fieldConfigs, error: configError } = await supabase
       .from('collection_config')
       .select('id, tab_field, name_field')
       .eq('collection_id', collectionId);
 
+    console.log('Configuration des champs récupérée:', fieldConfigs);
     if (configError) {
       console.warn('Erreur lors de la récupération des configurations de champs:', configError);
     }
@@ -183,21 +207,30 @@ router.post('/collection/:collectionId/elements', authenticateAPIKey, async (req
     // Traiter chaque champ fourni
     for (const [fieldName, fieldValue] of Object.entries(fields)) {
       try {
+        console.log(`\nTraitement du champ "${fieldName}" avec la valeur:`, fieldValue);
+        
         const fieldConfig = fieldConfigs?.find(config => 
           config.name_field.toLowerCase() === fieldName.toLowerCase()
         );
 
         if (!fieldConfig) {
           console.warn(`Champ "${fieldName}" non trouvé dans la configuration de la collection`);
+          console.log('Champs disponibles:', fieldConfigs?.map(c => c.name_field));
           continue;
         }
 
         const fieldType = fieldConfig.tab_field;
         const configId = fieldConfig.id;
+        console.log(`Type de champ: ${fieldType}, Config ID: ${configId}`);
 
         // Traiter selon le type de champ
         switch (fieldType) {
           case 'text':
+            console.log('Insertion champ text avec:', {
+              collection_element_id: elementId,
+              id_config: configId,
+              text: String(fieldValue)
+            });
             const { error: textError } = await supabase
               .from('collection_field_text')
               .insert({
@@ -205,7 +238,12 @@ router.post('/collection/:collectionId/elements', authenticateAPIKey, async (req
                 id_config: configId,
                 text: String(fieldValue)
               });
-            if (!textError) processedFields[fieldName] = { type: 'text', value: fieldValue };
+            if (textError) {
+              console.error('Erreur insertion champ text:', textError);
+            } else {
+              console.log('Champ text inséré avec succès');
+              processedFields[fieldName] = { type: 'text', value: fieldValue };
+            }
             break;
 
           case 'richText':
@@ -229,6 +267,12 @@ router.post('/collection/:collectionId/elements', authenticateAPIKey, async (req
               });
             }
 
+            console.log('Insertion champ richText avec:', {
+              collection_element_id: elementId,
+              id_config: configId,
+              text_json: richTextJSON,
+              size: 0
+            });
             const { error: richTextError } = await supabase
               .from('collection_field_richtext')
               .insert({
@@ -237,7 +281,12 @@ router.post('/collection/:collectionId/elements', authenticateAPIKey, async (req
                 text_json: richTextJSON,
                 size: 0
               });
-            if (!richTextError) processedFields[fieldName] = { type: 'richText', value: fieldValue };
+            if (richTextError) {
+              console.error('Erreur insertion champ richText:', richTextError);
+            } else {
+              console.log('Champ richText inséré avec succès');
+              processedFields[fieldName] = { type: 'richText', value: fieldValue };
+            }
             break;
 
           default:
@@ -299,18 +348,12 @@ router.post('/websites/publish', authenticateAPIKey, async (req, res) => {
       });
     }
 
-    // Déclencher la génération statique via une requête interne
-    const axios = require('axios');
-    
+    // Déclencher la génération statique directement
     try {
-      const generateResponse = await axios.post(`http://localhost:3002/generateSite`, {
-        websiteId: parseInt(websiteId)
-      }, {
-        headers: {
-          'Authorization': `Bearer ${req.apiKey}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      // Appel direct à la fonction de génération sans passer par HTTP
+      const { generateFiles } = require('../function');
+      
+      const generateResponse = await generateFiles(parseInt(websiteId));
 
       res.status(200).json({
         success: true,
@@ -318,7 +361,7 @@ router.post('/websites/publish', authenticateAPIKey, async (req, res) => {
         website_id: websiteId,
         folder_project: website.folder_project,
         timestamp: new Date().toISOString(),
-        generation_result: generateResponse.data
+        generation_result: generateResponse
       });
 
     } catch (generateError) {
@@ -326,7 +369,7 @@ router.post('/websites/publish', authenticateAPIKey, async (req, res) => {
       res.status(500).json({
         success: false,
         error: 'Erreur lors de la génération du site',
-        details: generateError.response?.data || generateError.message
+        details: generateError.message
       });
     }
 
