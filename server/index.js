@@ -181,6 +181,10 @@ app.use(express.json({ limit: '500mb' }));
 
 app.use(bodyParser.json({ limit: '500mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+
+// API externe (monté en premier pour éviter les conflits d'authentification)
+app.use('/external-api', externalAPIRouter);
+
 //
 app.use('/api', apiRouter);
 app.use(express.static('public'));
@@ -232,8 +236,6 @@ app.use(searchConsoleRouter);
 app.use(newsletterRouter);
 //app.use(updateCacheRouter);
 app.use(generationStaticRouter);
-// API externe
-app.use('/external-api', externalAPIRouter);
 // API Tokens management
 app.use(apiTokensRouter);
 
