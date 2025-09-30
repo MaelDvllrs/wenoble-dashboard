@@ -41,7 +41,15 @@ Ajoute un nouvel élément à une collection spécifiée.
       "url": "https://example.com/main-image.jpg",
       "alt": "Photo principale de l'article",
       "name": "Photo principale"
-    }
+    },
+    "galerie": [
+      "https://example.com/gallery1.jpg",
+      {
+        "url": "https://example.com/gallery2.jpg",
+        "alt": "Deuxième image de la galerie",
+        "name": "Galerie 2"
+      }
+    ]
   }
 }
 ```
@@ -225,6 +233,42 @@ Champ image. Utilisez le nom du champ comme clé. Peut accepter :
 ```
 
 **Note** : Si seule l'URL est fournie, elle sera utilisée pour l'alt et le name également.
+
+### Gallery
+Champ galerie d'images. Utilisez le nom du champ comme clé. Doit être un tableau d'images. Chaque image peut être :
+- Une URL simple (sera utilisée comme url, alt et name)
+- Un objet avec url, alt et name
+
+```json
+{
+  "fields": {
+    "galerie_simple": [
+      "https://example.com/image1.jpg",
+      "https://example.com/image2.jpg"
+    ],
+    "galerie_avancee": [
+      {
+        "url": "https://example.com/image1.jpg",
+        "alt": "Première image",
+        "name": "Image 1"
+      },
+      {
+        "url": "https://example.com/image2.jpg",
+        "alt": "Deuxième image", 
+        "name": "Image 2"
+      }
+    ],
+    "galerie_mixte": [
+      "https://example.com/simple.jpg",
+      {
+        "url": "https://example.com/avancee.jpg",
+        "alt": "Image avec description",
+        "name": "Image avancée"
+      }
+    ]
+  }
+}
+```
 
 ## Codes d'erreur
 

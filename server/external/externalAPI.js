@@ -337,6 +337,64 @@ router.post('/collection/:collectionId/elements', authenticateAPIKey, async (req
             }
             break;
 
+          case 'gallery':
+            // Pour les galeries, on attend un tableau d'objets images
+            let galleryData = [];
+            
+            if (Array.isArray(fieldValue)) {
+              galleryData = fieldValue.map(item => {
+                if (typeof item === 'string') {
+                  // Si c'est juste une URL, utiliser l'URL comme alt et name aussi
+                  return {
+                    url: item,
+                    alt: item,
+                    name: item
+                  };
+                } else if (typeof item === 'object' && item.url) {
+                  // Si c'est un objet avec url, alt, etc.
+                  return {
+                    url: item.url,
+                    alt: item.alt || item.url,
+                    name: item.name || item.alt || item.url
+                  };
+                }
+                return null;
+              }).filter(item => item !== null);
+            } else {
+              console.error(`Format invalide pour le champ galerie "${fieldName}": doit être un tableau`, fieldValue);
+              continue;
+            }
+
+            if (galleryData.length === 0) {
+              console.warn(`Aucune image valide trouvée pour la galerie "${fieldName}"`);
+              continue;
+            }
+
+            console.log('Insertion champ galerie avec:', {
+              collection_element_id: elementId,
+              id_config: configId,
+              gallery_data: galleryData
+            });
+
+            // Convertir le tableau d'images en JSON pour la base de données
+            const galleryJSON = JSON.stringify(galleryData);
+
+            const { error: galleryError } = await supabase
+              .from('collection_field_gallery')
+              .insert({
+                collection_element_id: elementId,
+                id_config: configId,
+                gallery_json: galleryJSON
+              });
+
+            if (galleryError) {
+              console.error('Erreur insertion champ galerie:', galleryError);
+            } else {
+              console.log('Champ galerie inséré avec succès');
+              processedFields[fieldName] = { type: 'gallery', value: galleryData };
+            }
+            break;
+
           default:
             console.warn(`Type de champ "${fieldType}" non supporté pour le moment`);
         }
