@@ -317,9 +317,9 @@ router.post('/collection/:collectionId/elements', authenticateAPIKey, async (req
             console.log('Insertion champ image avec:', {
               collection_element_id: elementId,
               id_config: configId,
-              image_url: imageData.url,
-              image_alt: imageData.alt,
-              image_name: imageData.name
+              src_image: imageData.url,
+              alt_image: imageData.alt,
+              name_image: imageData.name
             });
 
             const { error: imageError } = await supabase
@@ -327,9 +327,9 @@ router.post('/collection/:collectionId/elements', authenticateAPIKey, async (req
               .insert({
                 collection_element_id: elementId,
                 id_config: configId,
-                image_url: imageData.url,
-                image_alt: imageData.alt,
-                image_name: imageData.name
+                src_image: imageData.url,
+                alt_image: imageData.alt,
+                name_image: imageData.name
               });
 
             if (imageError) {
