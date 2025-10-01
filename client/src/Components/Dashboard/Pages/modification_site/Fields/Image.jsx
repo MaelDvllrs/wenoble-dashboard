@@ -84,7 +84,7 @@ const ImageUpload = ({ id_blog_page, type, id_config, onChange, dataValue, theme
           data: dataValue.data, // Utilisez les données d'image en base64 de dataValue
           name: dataValue.name, // Utilisez le nom de l'image de dataValue
           alt: dataValue.alt, // Utilisez le texte alternatif de l'image de dataValue
-          url: `${imageDirectory}${dataValue.src}`, 
+          url: dataValue.src.startsWith('http') ? dataValue.src : `${imageDirectory}${dataValue.src}`, 
           size: dataValue.size, // Utilisez la taille de l'image de dataValue
           type: 'images', // Définissez le type comme 'images'
         }];
