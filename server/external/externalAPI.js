@@ -507,6 +507,391 @@ router.post('/collection/:collectionId/elements', authenticateAPIKey, async (req
   }
 });
 
+// Endpoint pour mettre à jour un élément de collection
+router.put('/collection/:collectionId/elements/:elementId', authenticateAPIKey, async (req, res) => {
+  try {
+    const { collectionId, elementId } = req.params;
+    const { 
+      name, 
+      slug, 
+      status,
+      fields = {} // Objet contenant les champs personnalisés
+    } = req.body;
+
+    // Vérifier les permissions CMS
+    if (!req.tokenData.permissions.includes('cms')) {
+      return res.status(403).json({ 
+        error: 'Ce token n\'a pas les permissions CMS nécessaires.' 
+      });
+    }
+
+    const supabase = req.supabase;
+    const currentDate = new Date().toISOString();
+
+    // Vérifier que la collection existe et appartient au bon site
+    const { data: collection, error: collectionError } = await supabase
+      .from('collection')
+      .select('id, website_id')
+      .eq('id', collectionId)
+      .eq('website_id', req.tokenData.website_id)
+      .single();
+
+    if (collectionError || !collection) {
+      return res.status(404).json({ 
+        error: 'Collection non trouvée ou non autorisée pour ce token.' 
+      });
+    }
+
+    // Vérifier que l'élément existe dans cette collection
+    const { data: existingElement, error: elementError } = await supabase
+      .from('collection_element')
+      .select('*')
+      .eq('id', elementId)
+      .eq('collection_id', collectionId)
+      .single();
+
+    if (elementError || !existingElement) {
+      return res.status(404).json({ 
+        error: 'Élément non trouvé dans cette collection.' 
+      });
+    }
+
+    // Vérifier que le slug n'existe pas déjà (sauf pour cet élément)
+    if (slug && slug !== existingElement.collection_element_slug) {
+      const { data: duplicateElement } = await supabase
+        .from('collection_element')
+        .select('id')
+        .eq('collection_id', collectionId)
+        .eq('collection_element_slug', slug)
+        .neq('id', elementId)
+        .maybeSingle();
+
+      if (duplicateElement) {
+        return res.status(409).json({ 
+          error: 'Un autre élément avec ce slug existe déjà dans cette collection.' 
+        });
+      }
+    }
+
+    console.log('Mise à jour de l\'élément', elementId, 'dans la collection', collectionId);
+
+    // Préparer les données de mise à jour de l'élément
+    const updateData = {
+      collection_element_update_date: currentDate
+    };
+
+    if (name !== undefined) updateData.collection_element_name = name;
+    if (slug !== undefined) updateData.collection_element_slug = slug;
+    if (status !== undefined) {
+      updateData.collection_element_status = status;
+      if (status === 1 && existingElement.collection_element_status !== 1) {
+        // Publication pour la première fois
+        updateData.collection_element_publish_date = currentDate;
+        if (req.tokenData.userId && req.tokenData.userId.length === 36) {
+          updateData.published_by = req.tokenData.userId;
+        }
+      }
+    }
+
+    console.log('Données de mise à jour de l\'élément:', updateData);
+
+    // Mettre à jour l'élément de collection
+    const { data: updatedElement, error: updateError } = await supabase
+      .from('collection_element')
+      .update(updateData)
+      .eq('id', elementId)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error('Erreur lors de la mise à jour de l\'élément:', updateError);
+      throw updateError;
+    }
+
+    // Traiter les champs personnalisés (mise à jour ou création)
+    const processedFields = {};
+
+    console.log('Champs reçus à traiter:', fields);
+
+    if (Object.keys(fields).length > 0) {
+      // Récupérer la configuration des champs pour cette collection
+      const { data: fieldConfigs, error: configError } = await supabase
+        .from('collection_config')
+        .select('id, tab_field, name_field')
+        .eq('collection_id', collectionId);
+
+      console.log('Configuration des champs récupérée:', fieldConfigs);
+      if (configError) {
+        console.warn('Erreur lors de la récupération des configurations de champs:', configError);
+      }
+
+      // Traiter chaque champ fourni
+      for (const [fieldName, fieldValue] of Object.entries(fields)) {
+        try {
+          console.log(`\nTraitement du champ "${fieldName}" avec la valeur:`, fieldValue);
+          
+          const fieldConfig = fieldConfigs?.find(config => 
+            config.name_field.toLowerCase() === fieldName.toLowerCase()
+          );
+
+          if (!fieldConfig) {
+            console.warn(`Champ "${fieldName}" non trouvé dans la configuration de la collection`);
+            console.log('Champs disponibles:', fieldConfigs?.map(c => c.name_field));
+            continue;
+          }
+
+          const fieldType = fieldConfig.tab_field;
+          const configId = fieldConfig.id;
+          console.log(`Type de champ: ${fieldType}, Config ID: ${configId}`);
+
+          // Supprimer les anciens champs de ce type pour cet élément et cette config
+          const tableName = `collection_field_${fieldType === 'richText' ? 'richtext' : fieldType === 'multiReference' ? 'multireference' : fieldType}`;
+          
+          const { error: deleteError } = await supabase
+            .from(tableName)
+            .delete()
+            .eq('collection_element_id', elementId)
+            .eq('id_config', configId);
+
+          if (deleteError) {
+            console.warn(`Erreur lors de la suppression des anciens champs ${fieldType}:`, deleteError);
+          }
+
+          // Traiter selon le type de champ (même logique que dans la création)
+          switch (fieldType) {
+            case 'text':
+              console.log('Mise à jour champ text avec:', {
+                collection_element_id: elementId,
+                id_config: configId,
+                text: String(fieldValue)
+              });
+              const { error: textError } = await supabase
+                .from('collection_field_text')
+                .insert({
+                  collection_element_id: elementId,
+                  id_config: configId,
+                  text: String(fieldValue)
+                });
+              if (textError) {
+                console.error('Erreur mise à jour champ text:', textError);
+              } else {
+                console.log('Champ text mis à jour avec succès');
+                processedFields[fieldName] = { type: 'text', value: fieldValue };
+              }
+              break;
+
+            case 'richText':
+              let richTextJSON;
+              if (typeof fieldValue === 'object') {
+                richTextJSON = JSON.stringify(fieldValue);
+              } else {
+                richTextJSON = JSON.stringify({
+                  blocks: [{
+                    key: uuidv4(),
+                    text: String(fieldValue),
+                    type: 'unstyled',
+                    depth: 0,
+                    inlineStyleRanges: [],
+                    entityRanges: [],
+                    data: {}
+                  }],
+                  entityMap: {}
+                });
+              }
+
+              const { error: richTextError } = await supabase
+                .from('collection_field_richtext')
+                .insert({
+                  collection_element_id: elementId,
+                  id_config: configId,
+                  text_json: richTextJSON,
+                  size: 0
+                });
+              if (richTextError) {
+                console.error('Erreur mise à jour champ richText:', richTextError);
+              } else {
+                console.log('Champ richText mis à jour avec succès');
+                processedFields[fieldName] = { type: 'richText', value: fieldValue };
+              }
+              break;
+
+            case 'image':
+              let imageData;
+              if (typeof fieldValue === 'string') {
+                imageData = {
+                  url: fieldValue,
+                  alt: fieldValue,
+                  name: fieldValue
+                };
+              } else if (typeof fieldValue === 'object' && fieldValue.url) {
+                imageData = {
+                  url: fieldValue.url,
+                  alt: fieldValue.alt || fieldValue.url,
+                  name: fieldValue.name || fieldValue.alt || fieldValue.url
+                };
+              } else {
+                console.error(`Format invalide pour le champ image "${fieldName}":`, fieldValue);
+                continue;
+              }
+
+              const imageId = uuidv4();
+              const { error: imageError } = await supabase
+                .from('collection_field_image')
+                .insert({
+                  id: imageId,
+                  collection_element_id: elementId,
+                  id_config: configId,
+                  src_image: imageData.url,
+                  alt_image: imageData.alt,
+                  name_image: imageData.name
+                });
+
+              if (imageError) {
+                console.error('Erreur mise à jour champ image:', imageError);
+              } else {
+                console.log('Champ image mis à jour avec succès');
+                processedFields[fieldName] = { type: 'image', value: imageData };
+              }
+              break;
+
+            case 'gallery':
+              let galleryData = [];
+              
+              if (Array.isArray(fieldValue)) {
+                galleryData = fieldValue.map(item => {
+                  if (typeof item === 'string') {
+                    return {
+                      url: item,
+                      alt: item,
+                      name: item
+                    };
+                  } else if (typeof item === 'object' && item.url) {
+                    return {
+                      url: item.url,
+                      alt: item.alt || item.url,
+                      name: item.name || item.alt || item.url
+                    };
+                  }
+                  return null;
+                }).filter(item => item !== null);
+              } else {
+                console.error(`Format invalide pour le champ galerie "${fieldName}": doit être un tableau`, fieldValue);
+                continue;
+              }
+
+              if (galleryData.length === 0) {
+                console.warn(`Aucune image valide trouvée pour la galerie "${fieldName}"`);
+                continue;
+              }
+
+              const galleryId = uuidv4();
+              const galleryJSON = JSON.stringify(galleryData);
+
+              const { error: galleryError } = await supabase
+                .from('collection_field_gallery')
+                .insert({
+                  id: galleryId,
+                  collection_element_id: elementId,
+                  id_config: configId,
+                  gallery: galleryJSON,
+                  size: 0
+                });
+
+              if (galleryError) {
+                console.error('Erreur mise à jour champ galerie:', galleryError);
+              } else {
+                console.log('Champ galerie mis à jour avec succès');
+                processedFields[fieldName] = { type: 'gallery', value: galleryData };
+              }
+              break;
+
+            case 'multiReference':
+              let multiRefData = [];
+              
+              if (Array.isArray(fieldValue)) {
+                multiRefData = fieldValue.map(item => {
+                  if (typeof item === 'string') {
+                    return {
+                      value: String(item),
+                      label: String(item)
+                    };
+                  } else if (typeof item === 'number') {
+                    return {
+                      value: String(item),
+                      label: String(item)
+                    };
+                  } else if (typeof item === 'object' && item.label) {
+                    return {
+                      value: String(item.label),
+                      label: String(item.label)
+                    };
+                  }
+                  return null;
+                }).filter(item => item !== null);
+              } else {
+                console.error(`Format invalide pour le champ multiReference "${fieldName}": doit être un tableau`, fieldValue);
+                continue;
+              }
+
+              if (multiRefData.length === 0) {
+                console.warn(`Aucune référence valide trouvée pour la multiReference "${fieldName}"`);
+                continue;
+              }
+
+              const multiRefId = uuidv4();
+              const multiRefJSON = JSON.stringify(multiRefData);
+
+              const { error: multiRefError } = await supabase
+                .from('collection_field_multireference')
+                .insert({
+                  id: multiRefId,
+                  collection_element_id: elementId,
+                  id_config: configId,
+                  info_ref: multiRefJSON
+                });
+
+              if (multiRefError) {
+                console.error('Erreur mise à jour champ multiReference:', multiRefError);
+              } else {
+                console.log('Champ multiReference mis à jour avec succès');
+                processedFields[fieldName] = { type: 'multiReference', value: multiRefData };
+              }
+              break;
+
+            default:
+              console.warn(`Type de champ "${fieldType}" non supporté pour le moment`);
+          }
+        } catch (fieldError) {
+          console.error(`Erreur lors du traitement du champ "${fieldName}":`, fieldError);
+        }
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Élément de collection mis à jour avec succès',
+      element: {
+        id: updatedElement.id,
+        name: updatedElement.collection_element_name,
+        slug: updatedElement.collection_element_slug,
+        status: updatedElement.collection_element_status,
+        collection_id: updatedElement.collection_id,
+        created_at: updatedElement.collection_element_create_date,
+        updated_at: updatedElement.collection_element_update_date,
+        published_at: updatedElement.collection_element_publish_date
+      },
+      processedFields
+    });
+
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour de l\'élément:', error);
+    res.status(500).json({ 
+      error: 'Erreur serveur lors de la mise à jour de l\'élément.',
+      details: error.message 
+    });
+  }
+});
+
 // Endpoint pour publier le site
 router.post('/websites/publish', authenticateAPIKey, async (req, res) => {
   try {

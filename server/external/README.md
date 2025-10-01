@@ -105,7 +105,81 @@ curl -X POST "http://localhost:3002/external-api/collection/1/elements" \
   }'
 ```
 
-### 2. Publier un site web
+### 2. Mettre à jour un élément de collection
+
+**PUT** `/collection/{collectionId}/elements/{elementId}`
+
+Met à jour un élément existant dans une collection spécifiée.
+
+#### Paramètres de l'URL
+- `collectionId` (obligatoire) : ID de la collection
+- `elementId` (obligatoire) : ID de l'élément à mettre à jour
+
+#### Corps de la requête
+```json
+{
+  "name": "Nouveau nom de l'élément",
+  "slug": "nouveau-slug-element", 
+  "status": 1,
+  "fields": {
+    "description": "Nouvelle description de l'élément",
+    "content": "Nouveau contenu riche de l'article",
+    "categories": [
+      "Nouvelle Catégorie",
+      "Design"
+    ]
+  }
+}
+```
+
+#### Paramètres
+- `name` (string, optionnel) : Nouveau nom de l'élément
+- `slug` (string, optionnel) : Nouveau slug unique pour l'élément
+- `status` (integer, optionnel) : Nouveau statut de l'élément (0 = brouillon, 1 = publié)
+- `fields` (object, optionnel) : Nouveaux champs personnalisés de l'élément
+
+**Note** : Seuls les champs fournis seront mis à jour. Les champs non mentionnés restent inchangés. Les champs personnalisés fournis remplaceront complètement les anciens.
+
+#### Réponse de succès (200)
+```json
+{
+  "success": true,
+  "message": "Élément de collection mis à jour avec succès",
+  "element": {
+    "id": 123,
+    "name": "Nouveau nom de l'élément",
+    "slug": "nouveau-slug-element",
+    "status": 1,
+    "collection_id": 456,
+    "created_at": "2025-09-29T10:00:00.000Z",
+    "updated_at": "2025-10-01T14:30:00.000Z",
+    "published_at": "2025-10-01T14:30:00.000Z"
+  },
+  "processedFields": {
+    "description": {
+      "type": "text",
+      "value": "Nouvelle description de l'élément"
+    }
+  }
+}
+```
+
+#### Exemple de requête
+```bash
+curl -X PUT "http://localhost:3002/external-api/collection/827cf408-3f8b-405b-b475-8d69fd2d6ff3/elements/123" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Article mis à jour",
+    "status": 1,
+    "fields": {
+      "description": "Description mise à jour",
+      "content": "Nouveau contenu de l'\''article"
+    }
+  }'
+```
+
+### 3. Publier un site web
 
 **POST** `/websites/publish`
 
@@ -128,7 +202,7 @@ curl -X POST "http://localhost:3002/external-api/websites/publish" \
   -H "x-api-key: YOUR_API_KEY"
 ```
 
-### 3. Récupérer les collections du site
+### 4. Récupérer les collections du site
 
 **GET** `/collections`
 
@@ -156,7 +230,7 @@ curl -X GET "http://localhost:3002/external-api/collections" \
   -H "x-api-key: YOUR_API_KEY"
 ```
 
-### 4. Récupérer la configuration d'une collection
+### 5. Récupérer la configuration d'une collection
 
 **GET** `/collections/{collectionId}/config`
 
@@ -192,7 +266,7 @@ curl -X GET "http://localhost:3002/external-api/collections/1/config" \
   -H "x-api-key: YOUR_API_KEY"
 ```
 
-### 5. Récupérer les éléments d'une collection
+### 6. Récupérer les éléments d'une collection
 
 **GET** `/collections/{collectionId}/elements`
 
@@ -367,7 +441,8 @@ Champ de références multiples vers d'autres éléments de collection. Utilisez
 2. **Obtenir la configuration** : `GET /collections/{collectionId}/config`
 3. **Lister les éléments existants** : `GET /collections/{collectionId}/elements` (optionnel)
 4. **Créer un élément** : `POST /collection/{collectionId}/elements`
-5. **Publier le site** : `POST /websites/publish`
+5. **Mettre à jour un élément** : `PUT /collection/{collectionId}/elements/{elementId}` (optionnel)
+6. **Publier le site** : `POST /websites/publish`
 
 ## Exemple complet
 
