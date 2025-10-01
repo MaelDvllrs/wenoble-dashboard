@@ -314,7 +314,11 @@ router.post('/collection/:collectionId/elements', authenticateAPIKey, async (req
               continue;
             }
 
+            // Générer un ID unique pour l'image (comme dans collection.js)
+            const imageId = uuidv4();
+
             console.log('Insertion champ image avec:', {
+              id: imageId,
               collection_element_id: elementId,
               id_config: configId,
               src_image: imageData.url,
@@ -325,6 +329,7 @@ router.post('/collection/:collectionId/elements', authenticateAPIKey, async (req
             const { error: imageError } = await supabase
               .from('collection_field_image')
               .insert({
+                id: imageId,
                 collection_element_id: elementId,
                 id_config: configId,
                 src_image: imageData.url,
@@ -373,21 +378,27 @@ router.post('/collection/:collectionId/elements', authenticateAPIKey, async (req
               continue;
             }
 
+            // Générer un ID unique pour la galerie (comme dans collection.js)
+            const galleryId = uuidv4();
+
             console.log('Insertion champ galerie avec:', {
+              id: galleryId,
               collection_element_id: elementId,
               id_config: configId,
               gallery_data: galleryData
             });
 
-            // Convertir le tableau d'images en JSON pour la base de données
+            // Convertir le tableau d'images en JSON pour la base de données (utiliser 'gallery' pas 'gallery_json')
             const galleryJSON = JSON.stringify(galleryData);
 
             const { error: galleryError } = await supabase
               .from('collection_field_gallery')
               .insert({
+                id: galleryId,
                 collection_element_id: elementId,
                 id_config: configId,
-                gallery_json: galleryJSON
+                gallery: galleryJSON,
+                size: 0 // Taille par défaut, pourrait être calculée si nécessaire
               });
 
             if (galleryError) {
