@@ -838,13 +838,11 @@ router.put('/collection/:collectionId/elements/:elementId', authenticateAPIKey, 
                 continue;
               }
 
-              const multiRefId = uuidv4();
               const multiRefJSON = JSON.stringify(multiRefData);
 
               const { error: multiRefError } = await supabase
                 .from('collection_field_multireference')
                 .insert({
-                  id: multiRefId,
                   collection_element_id: elementId,
                   id_config: configId,
                   info_ref: multiRefJSON
