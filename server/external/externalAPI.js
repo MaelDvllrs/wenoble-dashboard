@@ -409,6 +409,73 @@ router.post('/collection/:collectionId/elements', authenticateAPIKey, async (req
             }
             break;
 
+          case 'multiReference':
+            // Pour les multiréférences, on attend un tableau d'objets avec { value, label } ou juste des IDs
+            let multiRefData = [];
+            
+            if (Array.isArray(fieldValue)) {
+              multiRefData = fieldValue.map(item => {
+                if (typeof item === 'string') {
+                  // Si c'est un string, c'est le label directement
+                  return {
+                    value: String(item), // On utilise le label comme value aussi
+                    label: String(item)
+                  };
+                } else if (typeof item === 'number') {
+                  // Si c'est un number, on le convertit en string pour le label
+                  return {
+                    value: String(item),
+                    label: String(item)
+                  };
+                } else if (typeof item === 'object' && item.label) {
+                  // Si c'est un objet avec un label, on utilise le label
+                  return {
+                    value: String(item.label),
+                    label: String(item.label)
+                  };
+                }
+                return null;
+              }).filter(item => item !== null);
+            } else {
+              console.error(`Format invalide pour le champ multiReference "${fieldName}": doit être un tableau`, fieldValue);
+              continue;
+            }
+
+            if (multiRefData.length === 0) {
+              console.warn(`Aucune référence valide trouvée pour la multiReference "${fieldName}"`);
+              continue;
+            }
+
+            // Générer un ID unique pour la multiReference
+            const multiRefId = uuidv4();
+
+            console.log('Insertion champ multiReference avec:', {
+              id: multiRefId,
+              collection_element_id: elementId,
+              id_config: configId,
+              info_ref: multiRefData
+            });
+
+            // Convertir le tableau de références en JSON pour la base de données
+            const multiRefJSON = JSON.stringify(multiRefData);
+
+            const { error: multiRefError } = await supabase
+              .from('collection_field_multireference')
+              .insert({
+                id: multiRefId,
+                collection_element_id: elementId,
+                id_config: configId,
+                info_ref: multiRefJSON
+              });
+
+            if (multiRefError) {
+              console.error('Erreur insertion champ multiReference:', multiRefError);
+            } else {
+              console.log('Champ multiReference inséré avec succès');
+              processedFields[fieldName] = { type: 'multiReference', value: multiRefData };
+            }
+            break;
+
           default:
             console.warn(`Type de champ "${fieldType}" non supporté pour le moment`);
         }

@@ -49,6 +49,11 @@ Ajoute un nouvel élément à une collection spécifiée.
         "alt": "Deuxième image de la galerie",
         "name": "Galerie 2"
       }
+    ],
+    "categories": [
+      "Catégorie Technologie",
+      "Catégorie Design",
+      "Catégorie Marketing"
     ]
   }
 }
@@ -330,6 +335,23 @@ Champ galerie d'images. Utilisez le nom du champ comme clé. Doit être un table
   }
 }
 ```
+
+### MultiReference
+Champ de références multiples vers d'autres éléments de collection. Utilisez le nom du champ comme clé. Doit être un tableau de labels (strings).
+
+```json
+{
+  "fields": {
+    "categories": [
+      "Catégorie Technologie",
+      "Catégorie Design", 
+      "Catégorie Marketing"
+    ]
+  }
+}
+```
+
+**Note** : Fournissez directement le label de chaque référence. La valeur sera automatiquement définie avec le même contenu que le label.
 
 ## Codes d'erreur
 
