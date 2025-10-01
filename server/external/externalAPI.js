@@ -446,11 +446,7 @@ router.post('/collection/:collectionId/elements', authenticateAPIKey, async (req
               continue;
             }
 
-            // Générer un ID unique pour la multiReference
-            const multiRefId = uuidv4();
-
             console.log('Insertion champ multiReference avec:', {
-              id: multiRefId,
               collection_element_id: elementId,
               id_config: configId,
               info_ref: multiRefData
