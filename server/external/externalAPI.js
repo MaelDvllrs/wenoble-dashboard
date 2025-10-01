@@ -334,7 +334,8 @@ router.post('/collection/:collectionId/elements', authenticateAPIKey, async (req
                 id_config: configId,
                 src_image: imageData.url,
                 alt_image: imageData.alt,
-                name_image: imageData.name
+                name_image: imageData.name,
+                size: 0 
               });
 
             if (imageError) {
