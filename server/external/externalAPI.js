@@ -458,7 +458,6 @@ router.post('/collection/:collectionId/elements', authenticateAPIKey, async (req
             const { error: multiRefError } = await supabase
               .from('collection_field_multireference')
               .insert({
-                id: multiRefId,
                 collection_element_id: elementId,
                 id_config: configId,
                 info_ref: multiRefJSON
