@@ -564,4 +564,104 @@ router.get('/collections/:collectionId/config', authenticateAPIKey, async (req, 
   }
 });
 
+// Endpoint pour récupérer les éléments d'une collection
+router.get('/collections/:collectionId/elements', authenticateAPIKey, async (req, res) => {
+  try {
+    const { collectionId } = req.params;
+    const { status, limit = 50, offset = 0 } = req.query;
+    const supabase = req.supabase;
+
+    // Vérifier que la collection existe et appartient au bon site
+    const { data: collection, error: collectionError } = await supabase
+      .from('collection')
+      .select('id, website_id, collection_name')
+      .eq('id', collectionId)
+      .eq('website_id', req.tokenData.website_id)
+      .single();
+
+    if (collectionError || !collection) {
+      return res.status(404).json({ 
+        error: 'Collection non trouvée ou non autorisée pour ce token.' 
+      });
+    }
+
+    // Construire la requête pour récupérer les éléments
+    let query = supabase
+      .from('collection_element')
+      .select(`
+        id,
+        collection_element_name,
+        collection_element_slug,
+        collection_element_status,
+        collection_element_create_date,
+        collection_element_update_date,
+        collection_element_publish_date,
+        created_by,
+        published_by
+      `)
+      .eq('collection_id', collectionId)
+      .order('collection_element_create_date', { ascending: false })
+      .range(parseInt(offset), parseInt(offset) + parseInt(limit) - 1);
+
+    // Filtrer par statut si spécifié
+    if (status !== undefined) {
+      query = query.eq('collection_element_status', parseInt(status));
+    }
+
+    const { data: elements, error: elementsError } = await query;
+
+    if (elementsError) {
+      throw elementsError;
+    }
+
+    // Compter le total d'éléments pour la pagination
+    let countQuery = supabase
+      .from('collection_element')
+      .select('id', { count: 'exact', head: true })
+      .eq('collection_id', collectionId);
+
+    if (status !== undefined) {
+      countQuery = countQuery.eq('collection_element_status', parseInt(status));
+    }
+
+    const { count, error: countError } = await countQuery;
+
+    if (countError) {
+      console.warn('Erreur lors du comptage des éléments:', countError);
+    }
+
+    res.status(200).json({
+      success: true,
+      collection: {
+        id: collection.id,
+        name: collection.collection_name
+      },
+      elements: (elements || []).map(element => ({
+        id: element.id,
+        name: element.collection_element_name,
+        slug: element.collection_element_slug,
+        status: element.collection_element_status,
+        created_at: element.collection_element_create_date,
+        updated_at: element.collection_element_update_date,
+        published_at: element.collection_element_publish_date,
+        created_by: element.created_by,
+        published_by: element.published_by
+      })),
+      pagination: {
+        total: count || 0,
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        has_more: count ? (parseInt(offset) + parseInt(limit)) < count : false
+      }
+    });
+
+  } catch (error) {
+    console.error('Erreur lors de la récupération des éléments:', error);
+    res.status(500).json({ 
+      error: 'Erreur serveur lors de la récupération des éléments.',
+      details: error.message 
+    });
+  }
+});
+
 module.exports = router;

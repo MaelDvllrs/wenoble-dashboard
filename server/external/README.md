@@ -187,6 +187,65 @@ curl -X GET "http://localhost:3002/external-api/collections/1/config" \
   -H "x-api-key: YOUR_API_KEY"
 ```
 
+### 5. Récupérer les éléments d'une collection
+
+**GET** `/collections/{collectionId}/elements`
+
+Récupère la liste des éléments d'une collection avec pagination.
+
+#### Paramètres de l'URL
+- `collectionId` (obligatoire) : ID de la collection
+
+#### Paramètres de requête (optionnels)
+- `status` (integer) : Filtrer par statut (0 = brouillon, 1 = publié)
+- `limit` (integer) : Nombre d'éléments par page (défaut: 50, max: 100)
+- `offset` (integer) : Décalage pour la pagination (défaut: 0)
+
+#### Réponse de succès (200)
+```json
+{
+  "success": true,
+  "collection": {
+    "id": "827cf408-3f8b-405b-b475-8d69fd2d6ff3",
+    "name": "Articles"
+  },
+  "elements": [
+    {
+      "id": 123,
+      "name": "Mon article",
+      "slug": "mon-article",
+      "status": 1,
+      "created_at": "2025-10-01T10:00:00.000Z",
+      "updated_at": "2025-10-01T10:30:00.000Z",
+      "published_at": "2025-10-01T10:30:00.000Z",
+      "created_by": "user-uuid",
+      "published_by": "user-uuid"
+    }
+  ],
+  "pagination": {
+    "total": 25,
+    "limit": 50,
+    "offset": 0,
+    "has_more": false
+  }
+}
+```
+
+#### Exemples de requêtes
+```bash
+# Récupérer tous les éléments
+curl -X GET "http://localhost:3002/external-api/collections/827cf408-3f8b-405b-b475-8d69fd2d6ff3/elements" \
+  -H "x-api-key: YOUR_API_KEY"
+
+# Récupérer seulement les éléments publiés
+curl -X GET "http://localhost:3002/external-api/collections/827cf408-3f8b-405b-b475-8d69fd2d6ff3/elements?status=1" \
+  -H "x-api-key: YOUR_API_KEY"
+
+# Récupérer avec pagination
+curl -X GET "http://localhost:3002/external-api/collections/827cf408-3f8b-405b-b475-8d69fd2d6ff3/elements?limit=10&offset=20" \
+  -H "x-api-key: YOUR_API_KEY"
+```
+
 ## Types de champs supportés
 
 ### Text
@@ -284,8 +343,9 @@ Champ galerie d'images. Utilisez le nom du champ comme clé. Doit être un table
 
 1. **Obtenir les collections** : `GET /collections`
 2. **Obtenir la configuration** : `GET /collections/{collectionId}/config`
-3. **Créer un élément** : `POST /collection/{collectionId}/elements`
-4. **Publier le site** : `POST /websites/publish`
+3. **Lister les éléments existants** : `GET /collections/{collectionId}/elements` (optionnel)
+4. **Créer un élément** : `POST /collection/{collectionId}/elements`
+5. **Publier le site** : `POST /websites/publish`
 
 ## Exemple complet
 
