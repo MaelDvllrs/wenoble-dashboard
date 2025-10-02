@@ -30,6 +30,24 @@ html{
     margin: 0;
 }
 
+/* Force Montserrat sur tous les éléments avec fallbacks */
+*, *::before, *::after {
+    font-family: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif !important;
+}
+
+/* Reset des polices Material-UI */
+.MuiTypography-root,
+.MuiButton-root,
+.MuiTextField-root,
+.MuiInputBase-root,
+.MuiFormLabel-root,
+div,
+span,
+p,
+h1, h2, h3, h4, h5, h6 {
+    font-family: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif !important;
+}
+
 body{
     margin: 0;
 }
@@ -45,7 +63,7 @@ a{
 }
 
 button{
-    font-family: 'Montserrat',sans-serif;
+    font-family: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif !important;
 }
 
 .showMessage{
