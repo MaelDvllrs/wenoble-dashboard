@@ -147,6 +147,8 @@ const whitelist =
 
 
   'https://mildesign.webflow.io',
+  'https://marieluttringer.fr',
+  'https://www.marieluttringer.fr',
 
   'https://bule.webflow.io',
   'https://bulearchitecture.fr',
@@ -157,6 +159,8 @@ const whitelist =
   'https://elena-ivanoff.webflow.io',
   'https://elena-ivanoff.com',
   'https://www.elena-ivanoff.com',
+
+  
 
   'https://next-immo.webflow.io'
 
