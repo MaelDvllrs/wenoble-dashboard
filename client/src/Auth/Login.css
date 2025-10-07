@@ -17,8 +17,47 @@
     gap: 8px;
     width: 100%;
     transition: box-shadow 0.2s;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    box-shadow: var(--color-shadow-main);
     border: none;
+    color: var(--color-text-primary);
+    background-color: transparent;
+}
+
+.line-login-wrapper{
+    color: var(--color-text-secondary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    text-wrap: nowrap;
+    gap: 1rem;
+}
+
+.line-login{
+    width: 50%;
+    height: 1px;
+    background-color: var(--color-text-secondary);
+}
+
+.successMessage {
+    text-align: center;
+    padding: 2rem;
+}
+
+.successMessage .loginTitle {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+.successMessage .loginPresentation {
+    line-height: 1.6;
+    margin-bottom: 2rem;
+}
+
+.successMessage strong {
+    color: var(--color-text-primary);
+    font-weight: 600;
 }
 
 
@@ -37,6 +76,20 @@
     object-fit: contain;
 }
 
+.loading-spinner {
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    border-top: 3px solid #646cff;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
 
 .loginPage{
     position: relative;
@@ -103,18 +156,16 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 1rem;
-    position: absolute;
-    top: 0;
-    right: 0;
+    gap: 0.5rem;
 }
 
 .SignUpText{
     font-size: 0.8rem;
 }
 
-.SignUpButton{
+.SignUpLink{
     font-size: 0.8rem !important;
+    color: var(--primary-color);
 }
 
 .loginTextContain{
@@ -215,7 +266,56 @@
     align-items: center;
     gap: 0.2rem;
     font-size: 0.8rem;
+}
 
+/* Styles pour la modal de mot de passe oublié */
+.modal_overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.modal_content {
+    background-color: var(--color-background-secondary);
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slideIn 0.3s ease-out;
+}
+
+.modal_actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideIn {
+    from { 
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to { 
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 

@@ -36,8 +36,14 @@ router.post('/user/change-email', authenticateToken, async (req, res) => {
 });
 
 // POST /user/change-password { currentPassword, newPassword }
-router.post('/user/change-password', authenticateToken, async (req, res) => {
+router.post('/user/change-password', async (req, res) => {
   const token = req.headers['authorization']?.split(' ')[1];
+  
+  // Vérifier que le token est présent
+  if (!token) {
+    return res.status(401).json({ success: false, message: 'Token manquant' });
+  }
+  
   const { currentPassword, newPassword } = req.body;
   if (!currentPassword || !newPassword) {
     return res.status(400).json({ success: false, message: 'currentPassword et newPassword requis' });
@@ -47,22 +53,52 @@ router.post('/user/change-password', authenticateToken, async (req, res) => {
   }
   try {
     const supabase = supabaseServer(token);
+    
+    // Récupérer les informations utilisateur avec le token actuel
     const { data: authUser, error: authGetError } = await supabase.auth.getUser(token);
-    if (authGetError) return res.status(401).json({ success: false, message: 'Token invalide' });
+    if (authGetError) {
+      console.log('Token invalide lors de la récupération utilisateur:', authGetError);
+      return res.status(401).json({ success: false, message: 'Token invalide' });
+    }
+    
     const email = authUser.user.email;
-    // Re-auth
-    const { error: reauthError } = await supabase.auth.signInWithPassword({ email, password: currentPassword });
+    console.log('Changement de mot de passe demandé pour:', email);
+    
+    // Vérifier l'ancien mot de passe en essayant une connexion
+    const { error: reauthError } = await supabase.auth.signInWithPassword({ 
+      email, 
+      password: currentPassword 
+    });
+    
     if (reauthError) {
+      console.log('Mot de passe actuel incorrect pour:', email);
       return res.status(401).json({ success: false, message: 'Mot de passe actuel incorrect' });
     }
+    
+    // Changer le mot de passe (ceci invalide TOUS les tokens existants)
     const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
     if (updateError) {
+      console.error('Erreur lors du changement de mot de passe:', updateError);
       return res.status(400).json({ success: false, message: updateError.message });
     }
-    return res.json({ success: true, message: 'Mot de passe modifié' });
+    
+    console.log('✅ Mot de passe changé avec succès pour:', email);
+    console.log('🔐 Tous les tokens ont été invalidés pour la sécurité');
+    
+    // Réponse immédiate - l'utilisateur devra se reconnecter
+    return res.json({ 
+      success: true, 
+      message: 'Mot de passe modifié avec succès !',
+      requiresReconnection: true,
+      info: 'Pour votre sécurité, vous devez vous reconnecter sur tous vos appareils.'
+    });
+    
   } catch (e) {
-    console.error('change-password error:', e);
-    return res.status(500).json({ success: false, message: 'Erreur interne' });
+    console.error('❌ Erreur lors du changement de mot de passe:', e);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Erreur interne du serveur' 
+    });
   }
 });
 

@@ -2,7 +2,10 @@ import React, { useContext } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import ThemeContext from '../../../../Theme/themeContext';
-import { SecondaryButton } from '../../../../Theme/element';
+import SecurityIcon from '@mui/icons-material/Security';
+import NotificationsNoneRoundedIcon from '@mui/icons-material/NotificationsNoneRounded';
+import PersonOutlineRoundedIcon from '@mui/icons-material/PersonOutlineRounded';
+
 import './AccountSettings.css';
 const AccountSettings = () => {
   const theme = useTheme();
@@ -29,15 +32,21 @@ const AccountSettings = () => {
           <NavLink 
             to="/dashboard/account/general"
             className={({ isActive }) => `account-sidebar-link${isActive ? ' account-sidebar-link-active' : ''}`}
-          >Paramètres généraux</NavLink>
+          >
+            <PersonOutlineRoundedIcon fontSize='small'/>
+            Paramètres généraux</NavLink>
           <NavLink 
             to="/dashboard/account/security"
             className={({ isActive }) => `account-sidebar-link${isActive ? ' account-sidebar-link-active' : ''}`}
-          >Sécurité</NavLink>
+          >
+            <SecurityIcon fontSize="small"/>
+            Sécurité</NavLink>
           <NavLink 
             to="/dashboard/account/email"
             className={({ isActive }) => `account-sidebar-link${isActive ? ' account-sidebar-link-active' : ''}`}
-          >Email & Notifications</NavLink>
+          >
+            <NotificationsNoneRoundedIcon fontSize='small'/>
+            Email & Notifications</NavLink>
         </aside>
         <main className="account-main">
           <Outlet />

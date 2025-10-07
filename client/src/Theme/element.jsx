@@ -71,12 +71,30 @@ export const CssTextField = styled(TextField)(({ theme }) => ({
 
 export const LoginTextField = styled(TextField)(({ theme }) => ({
     '& .MuiOutlinedInput-root': {
-        ' input': {
+        '& input': {
+            // Styles pour l'autofill
+            '&:-webkit-autofill': {
+                WebkitBoxShadow: `0 0 0 1000px ${theme.palette.background.secondary} inset`,
+                WebkitTextFillColor: theme.palette.text.primary,
+                borderRadius: '0.8rem',
+                transition: 'background-color 5000s ease-in-out 0s',
+            },
+            '&:-webkit-autofill:hover': {
+                WebkitBoxShadow: `0 0 0 1000px ${theme.palette.background.secondary} inset`,
+                WebkitTextFillColor: theme.palette.text.primary,
+            },
+            '&:-webkit-autofill:focus': {
+                WebkitBoxShadow: `0 0 0 1000px ${theme.palette.background.secondary} inset`,
+                WebkitTextFillColor: theme.palette.text.primary,
+            },
+            '&:-webkit-autofill:active': {
+                WebkitBoxShadow: `0 0 0 1000px ${theme.palette.background.secondary} inset`,
+                WebkitTextFillColor: theme.palette.text.primary,
+            },
         },
         '& fieldset': {
             borderColor: theme.palette.primary.third,
             borderRadius: '0.8rem',
-            
         },
         '&:hover fieldset': {
             borderColor: theme.palette.primary.third,
@@ -84,7 +102,6 @@ export const LoginTextField = styled(TextField)(({ theme }) => ({
         '&.Mui-focused fieldset': {
             borderWidth: '1px',
             borderColor: '#2ec96d'
-
         },
     },
     '& .MuiInputLabel-root': {
@@ -92,7 +109,6 @@ export const LoginTextField = styled(TextField)(({ theme }) => ({
     },
     '& .MuiInputLabel-root.Mui-focused': {
         color: theme.palette.text.secondary,
-
     },
 }));
 
@@ -372,7 +388,7 @@ export const LoadingButtonBase = styled(LoadingButton)(({ theme }) => ({
     },
 }));
 
-export const LoadingDefaultButton = ({ loading, ...props }) => (
+export const LoginDefaultButton = ({ loading, ...props }) => (
     <LoadingButtonBase
         loading={loading}
         loadingIndicator={<WhiteCircularProgress size={24} />}

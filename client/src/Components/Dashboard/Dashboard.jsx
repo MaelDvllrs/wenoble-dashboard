@@ -532,12 +532,12 @@ const Dashboard = () => {
                                                         <div className='user_details'>
                                                             {infoUser && infoUser.user && infoUser.user[0] && (
                                                                 <>
-                                                                    <div className='user_name_large' style={{ color: theme.palette.text.primary }}>
-                                                                        <b>{infoUser.user[0].username}</b>
-                                                                    </div>
-                                                                    <div className='user_email' style={{ color: theme.palette.text.secondary }}>
+                                                                    <p className='user_name_large' style={{ color: theme.palette.text.primary, marginBottom: "0" }}>
+                                                                        {infoUser.user[0].username}
+                                                                    </p>
+                                                                    <p className='user_email' style={{ color: theme.palette.text.secondary ,marginBottom:"0"}}>
                                                                         {infoUser.user[0].email}
-                                                                    </div>
+                                                                    </p>
                                                                 </>
                                                             )}
                                                         </div>

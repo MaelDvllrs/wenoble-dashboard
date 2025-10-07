@@ -12,6 +12,7 @@ const authRoutes = require('./users/auth');
 const authorisationRouter = require('./users/authorisation');
 const infoUserRouter = require('./users/infoUser');
 const securityRouter = require('./users/security');
+const profileRouter = require('./users/profile');
 const portfolioRouter = require('./modification/portfolio');
 const pageRouter = require('./modification/page');
 const collectionRouter = require('./modification/collection');
@@ -203,6 +204,7 @@ app.use(videoRouter);
 //
 
 //
+app.use(profileRouter); // Charger profile.js avant infoUser.js pour éviter les conflits de routes
 app.use(infoUserRouter);
 app.use(securityRouter);
 app.use(portfolioRouter);

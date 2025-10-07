@@ -1,9 +1,15 @@
 const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
 
+// Configuration avec la clé de service pour les opérations privilégiées
+function supabaseServerAdmin() {
+  return createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_KEY, // Clé SERVICE pour les opérations administratives
+  );
+}
 
-
-// Configuration pour le serveur (utilise la clé de service)
+// Configuration pour le serveur (utilise la clé ANON avec token utilisateur)
 function supabaseServer(token) {
   return createClient(
     process.env.SUPABASE_URL,
@@ -12,4 +18,4 @@ function supabaseServer(token) {
   );
 }
 
-module.exports = { supabaseServer };
+module.exports = { supabaseServer, supabaseServerAdmin };

@@ -17,6 +17,9 @@ import './App.css';
 // Authentication
 import Login from './Auth/Login';
 import Register from './Auth/Register';
+import ResetPassword from './Auth/ResetPassword';
+import OAuthCallback from './Auth/OAuthCallback';
+import EmailConfirmation from './Auth/EmailConfirmation';
 import { IsAuthenticated, IsAuthenticatedAdmin } from './Auth/ProtectedRoutes';
 
 // Authorization
@@ -129,6 +132,9 @@ function App() {
                             <Route path="/" element={<Login />} />
                             <Route path="/login" element={<Login />} />
                             <Route path="/register" element={<Register />} />
+                            <Route path="/reset-password" element={<ResetPassword />} />
+                            <Route path="/oauth-callback" element={<OAuthCallback />} />
+                            <Route path="/email-confirmation" element={<EmailConfirmation />} />
 
                             {/* Dashboard routes */}
                             <Route path="/dashboard">

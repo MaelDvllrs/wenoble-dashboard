@@ -37,10 +37,90 @@ export const signInWithEmail = async (email, password, rememberMe = true) => {
   return data;
 };
 
+// Inscription avec email/mot de passe
+export const signUpWithEmail = async (email, password, username) => {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        username: username,
+        is_admin: false
+      }
+    }
+  });
+  
+  if (error) throw error;
+  
+  return data;
+};
+
 // Déconnexion
 export const signOut = async () => {
   await supabase.auth.signOut();
   Cookies.remove('token');
+};
+
+// Réinitialisation du mot de passe
+export const resetPassword = async (email) => {
+  console.log('resetPassword appelé avec:', email);
+  console.log('Redirect URL sera:', `${window.location.origin}/reset-password`);
+  
+  const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/reset-password`
+  });
+  
+  console.log('Réponse Supabase resetPasswordForEmail:', { data, error });
+  
+  if (error) {
+    console.error('Erreur Supabase:', error);
+    throw error;
+  }
+  
+  // Note: Supabase ne révèle pas si l'email existe ou non pour des raisons de sécurité
+  // La fonction retourne toujours un succès, même si l'email n'existe pas
+  console.log('✅ Demande de réinitialisation traitée par Supabase');
+  
+  return data;
+};
+
+// Changement d'email avec confirmation
+export const changeEmail = async (newEmail, currentPassword) => {
+  console.log('changeEmail appelé avec:', newEmail);
+  
+  // D'abord, vérifier le mot de passe actuel en tentant une reconnexion
+  const { data: currentUser } = await supabase.auth.getUser();
+  if (!currentUser?.user?.email) {
+    throw new Error('Utilisateur non connecté');
+  }
+  
+  const currentEmail = currentUser.user.email;
+  
+  // Vérifier le mot de passe actuel
+  const { error: signInError } = await supabase.auth.signInWithPassword({
+    email: currentEmail,
+    password: currentPassword
+  });
+  
+  if (signInError) {
+    console.error('Mot de passe incorrect:', signInError);
+    throw new Error('Mot de passe actuel incorrect');
+  }
+  
+  // Changer l'email (Supabase enverra un email de confirmation automatiquement)
+  const { data, error } = await supabase.auth.updateUser({
+    email: newEmail
+  });
+  
+  console.log('Réponse Supabase updateUser email:', { data, error });
+  
+  if (error) {
+    console.error('Erreur changement email:', error);
+    throw error;
+  }
+  
+  console.log('✅ Demande de changement d\'email envoyée');
+  return data;
 };
 
 // Récupérer la session actuelle

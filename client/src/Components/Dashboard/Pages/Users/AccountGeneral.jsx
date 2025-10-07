@@ -40,32 +40,91 @@ const AccountGeneral = () => {
   const onPickImage = () => fileInputRef.current?.click();
   const onFileChange = async (file) => {
     if (!file) return;
+    
+    console.log('🔄 Début upload image:', {
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type
+    });
+
+    // Sauvegarder l'URL précédente pour la restaurer en cas d'erreur
+    const previousImageUrl = user.imageUrl;
+    
     try {
       const localUrl = URL.createObjectURL(file);
       setUser(prev => ({ ...prev, imageUrl: localUrl }));
+      
       const form = new FormData();
       form.append('image', file);
-      form.append('username', draft.username || user.username);
-      await Axios.post(`${apiUrl}/uploadProfileImage`, form, {
+      
+      console.log('📤 Envoi de la requête d\'upload...');
+      const response = await Axios.post(`${apiUrl}/uploadProfileImage`, form, {
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
       });
-      showSnackbar('success', 'Photo de profil mise à jour');
+      
+      console.log('📥 Réponse serveur:', response.data);
+      
+      // Gérer les deux formats de réponse : JSON {success: true} ou string de succès
+      const isSuccess = 
+        (response.data && response.data.success) || 
+        (typeof response.data === 'string' && response.data.includes('succès'));
+      
+      if (isSuccess) {
+        showSnackbar('success', 'Photo de profil mise à jour avec succès');
+        // Nettoyer l'URL temporaire
+        URL.revokeObjectURL(localUrl);
+      } else {
+        console.error('❌ Réponse serveur invalide:', response.data);
+        throw new Error(response.data?.error || 'Réponse serveur invalide');
+      }
     } catch (e) {
-      console.error('uploadProfileImage failed:', e);
-      showSnackbar('error', 'Échec de la mise à jour de la photo');
+      console.error('❌ Erreur upload image:', e);
+      console.error('❌ Détails erreur:', {
+        message: e.message,
+        response: e.response?.data,
+        status: e.response?.status,
+        statusText: e.response?.statusText
+      });
+      
+      const errorMessage = e.response?.data?.error || e.message || 'Échec de la mise à jour de la photo';
+      showSnackbar('error', errorMessage);
+      
+      // Restaurer l'image précédente
+      setUser(prev => ({ ...prev, imageUrl: previousImageUrl }));
     }
   };
 
   const saveProfile = async () => {
     try {
-      if (draft.username && draft.username !== user.username) {
-        await Axios.post(`${apiUrl}/users/update-username`, { username: draft.username }, { headers: { 'Authorization': `Bearer ${token}` } });
+      // Utiliser la nouvelle route pour mettre à jour tous les champs en une fois
+      const updateData = {};
+      
+      if (draft.first_name !== undefined) updateData.first_name = draft.first_name;
+      if (draft.last_name !== undefined) updateData.last_name = draft.last_name;
+      if (draft.username && draft.username !== user.username) updateData.username = draft.username;
+
+      if (Object.keys(updateData).length > 0) {
+        const response = await Axios.post(`${apiUrl}/update-profile`, updateData, { 
+          headers: { 'Authorization': `Bearer ${token}` } 
+        });
+        
+        if (response.data.success) {
+          // Mettre à jour l'état local avec les nouvelles données
+          setUser(prev => ({ 
+            ...prev, 
+            username: updateData.username || prev.username 
+          }));
+          showSnackbar('success', 'Profil enregistré avec succès');
+        } else {
+          throw new Error(response.data.error || 'Erreur inconnue');
+        }
+      } else {
+        showSnackbar('info', 'Aucune modification à enregistrer');
       }
-      // Optional: API calls for first_name/last_name if backend exists
-      showSnackbar('success', 'Profil enregistré');
     } catch (e) {
       console.error('saveProfile failed:', e);
-      showSnackbar('error', "Échec de l'enregistrement");
+      const errorMessage = e.response?.data?.error || e.message || "Échec de l'enregistrement";
+      showSnackbar('error', errorMessage);
     }
   };
 

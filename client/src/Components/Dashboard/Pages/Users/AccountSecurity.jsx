@@ -2,11 +2,12 @@ import React, { useState,  useEffect, useMemo } from 'react';
 import ComputerOutlinedIcon from '@mui/icons-material/ComputerOutlined';
 import SmartphoneOutlinedIcon from '@mui/icons-material/SmartphoneOutlined';
 import { useTheme } from '@mui/material/styles';
-import { DefaultButton } from '../../../../Theme/element';
+import { DefaultButton, SecondaryButton } from '../../../../Theme/element';
 import { useSnackbar } from '../../../../Theme/snackbar';
 import Axios from '../../../../service/AxiosConfig';
 import Cookies from 'js-cookie';
 import config from '../../../../config';
+import '../website/website.css'; // Import des styles pour les modales
 
 const AccountSecurity = () => {
   const theme = useTheme();
@@ -14,35 +15,83 @@ const AccountSecurity = () => {
   const [password, setPassword] = useState({ current: '', new: '', confirm: '' });
   const [logs, setLogs] = useState([]); 
   const [loadingLogs, setLoadingLogs] = useState(false);
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
 
   const apiUrl = config.apiUrl;
   const token = Cookies.get('token');
 
-  const changePassword = async (e) => {
+  // Fonction pour gérer la déconnexion après changement de mot de passe
+  const handleLogout = () => {
+    console.log('🔐 Déconnexion pour sécurité après changement de mot de passe');
+    Cookies.remove('token');
+    window.location.href = '/login';
+  };
+
+  // Fonction pour annuler le changement de mot de passe
+  const handleCancelPasswordChange = () => {
+    console.log('❌ Changement de mot de passe annulé');
+    setShowLogoutDialog(false);
+    showSnackbar('info', 'Changement de mot de passe annulé');
+  };
+
+  // Fonction de validation qui affiche la popup de confirmation
+  const validateAndShowConfirmation = (e) => {
     e.preventDefault();
+    
+    // Validations côté client
+    if (!password.current) {
+      showSnackbar('error', 'Entrez votre mot de passe actuel');
+      return;
+    }
+    if (!password.new || password.new.length < 8) {
+      showSnackbar('error', 'Mot de passe trop court (min 8)');
+      return;
+    }
+    if (password.new !== password.confirm) {
+      showSnackbar('error', 'Confirmation incorrecte');
+      return;
+    }
+
+    // Si toutes les validations passent, afficher la popup de confirmation
+    console.log('✅ Validation réussie, affichage de la popup de confirmation');
+    setShowLogoutDialog(true);
+  };
+
+  // Fonction qui exécute réellement le changement de mot de passe
+  const executePasswordChange = async () => {
     try {
-      if (!password.current) {
-        showSnackbar('error', 'Entrez votre mot de passe actuel');
-        return;
-      }
-      if (!password.new || password.new.length < 8) {
-        showSnackbar('error', 'Mot de passe trop court (min 8)');
-        return;
-      }
-      if (password.new !== password.confirm) {
-        showSnackbar('error', 'Confirmation incorrecte');
-        return;
-      }
-      await Axios.post(`${apiUrl}/user/change-password`, {
+      console.log('🔄 Exécution du changement de mot de passe...');
+      
+      const response = await Axios.post(`${apiUrl}/user/change-password`, {
         currentPassword: password.current,
         newPassword: password.new
       }, { headers: { 'Authorization': `Bearer ${token}` } });
-      setPassword({ current: '', new: '', confirm: '' });
-      showSnackbar('success', 'Mot de passe modifié');
+      
+      // Gérer la réponse du serveur
+      if (response.data.success) {
+        console.log('✅ Mot de passe changé avec succès');
+        
+        // Nettoyer les champs
+        setPassword({ current: '', new: '', confirm: '' });
+        
+        // Déconnexion immédiate
+        handleLogout();
+      }
     } catch (e) {
-      console.error('changePassword failed:', e);
-      showSnackbar('error', 'Échec du changement de mot de passe');
+      console.error('❌ Erreur changement mot de passe:', e);
+      
+      // Fermer la popup d'abord
+      setShowLogoutDialog(false);
+      
+      // Afficher l'erreur
+      if (e.response?.status === 401) {
+        showSnackbar('error', 'Mot de passe actuel incorrect');
+      } else if (e.response?.status === 400) {
+        showSnackbar('error', e.response.data.message || 'Données invalides');
+      } else {
+        showSnackbar('error', 'Erreur lors du changement de mot de passe');
+      }
     }
   };
 
@@ -84,7 +133,7 @@ const AccountSecurity = () => {
         <h3 className='titlePage'>Sécurité</h3>
         <div className='line-sidebar'/>
         <h4 className='account-setting-title'>Mot de passe</h4>
-        <form onSubmit={changePassword} style={{ width: '100%', marginBottom: '1rem' }}>
+        <form onSubmit={validateAndShowConfirmation} style={{ width: '100%', marginBottom: '1rem' }}>
           <div className='input-container'>
             <p className='blogField_name collection_edit_name'>Mot de passe actuel</p>
             <input className='input_text_blog' type='password' value={password.current} onChange={(e) => setPassword(prev => ({ ...prev, current: e.target.value }))} />
@@ -166,6 +215,34 @@ const AccountSecurity = () => {
           </div>
         )}
       </div>
+
+      {/* Popup de confirmation de déconnexion après changement de mot de passe */}
+      {/* Modal de confirmation du changement de mot de passe */}
+      {showLogoutDialog && (
+        <div className="modal_overlay" onClick={handleCancelPasswordChange}>
+          <div className="modal_content" onClick={(e) => e.stopPropagation()}>
+            <h3>Confirmer le changement de mot de passe</h3>
+            <p>
+              Vous êtes sur le point de changer votre mot de passe.
+            </p>
+            <p>
+              <strong>Pour votre sécurité :</strong> Tous vos appareils seront automatiquement déconnectés 
+              et vous devrez vous reconnecter avec votre nouveau mot de passe.
+            </p>
+            <p style={{ color: '#f57c00', fontSize: '0.9rem', marginTop: '1rem' }}>
+              Cette action est irréversible. Assurez-vous de bien retenir votre nouveau mot de passe.
+            </p>
+            <div className="modal_actions">
+              <SecondaryButton onClick={handleCancelPasswordChange}>
+                Annuler
+              </SecondaryButton>
+              <DefaultButton onClick={executePasswordChange}>
+                Confirmer et changer le mot de passe
+              </DefaultButton>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
