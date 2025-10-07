@@ -1,13 +1,12 @@
 document.addEventListener('DOMContentLoaded', handleCollectionFiltersPagination);
 
-let allCollectionData = []; // Stocke toutes les données de toutes les pages
-let filteredData = []; // Données après application des filtres
+let allElements = []; // Stocke tous les éléments HTML de toutes les pages
+let filteredElements = []; // Éléments après application des filtres
 let currentPage = 1;
 let itemsPerPage = 10; // Valeur par défaut
 let isLoading = false;
 let collectionConfig = null; // Configuration de la collection
-let apiUrl = "https://api-wenoble.wenoble.fr/";
-let userKey = null;
+let originalTemplate = null; // Template original sauvegardé
 
 async function waitForCollectionBox(container) {
   return new Promise((resolve) => {
@@ -85,15 +84,10 @@ async function handleCollectionFiltersPagination() {
     collectionConfig = JSON.parse(atob(encodedData));
     itemsPerPage = collectionConfig.itemsPerPage || collectionConfig.limit || 10;
     
-    // Récupérer l'API key depuis le script tag
-    const scriptTag = document.querySelector('script[data-user-id]');
-    if (scriptTag) {
-      userKey = scriptTag.getAttribute('data-user-id');
-    }
-    
-    if (!userKey) {
-      console.error('User Key manquant pour les filtres');
-      return;
+    // Sauvegarder le template original avant qu'il ne soit supprimé
+    const template = collection.querySelector('[wn-collection-box]');
+    if (template) {
+      originalTemplate = template.cloneNode(true);
     }
 
   } catch (error) {
@@ -101,8 +95,14 @@ async function handleCollectionFiltersPagination() {
     return;
   }
 
-  // Charger toutes les données de toutes les pages
-  await loadAllCollectionData();
+  // Attendre que collection-loader.js termine le chargement de la page actuelle
+  await waitForCollectionLoaded(collection);
+
+  // Récupérer les éléments de la page actuelle
+  collectCurrentPageElements();
+
+  // Charger les éléments des autres pages
+  await loadAllPagesElements();
 
   // Initialiser les filtres depuis l'URL
   initializeFiltersFromURL();
@@ -110,7 +110,7 @@ async function handleCollectionFiltersPagination() {
   // Configurer les événements de filtres
   setupFilterEvents();
 
-  // Appliquer les filtres initiaux et regénérer la collection
+  // Appliquer les filtres initiaux
   await applyFiltersAndPagination(true);
 
   // Activer les animations après initialisation
@@ -124,56 +124,102 @@ async function handleCollectionFiltersPagination() {
   }, 50);
 }
 
-async function loadAllCollectionData() {
+// Attendre que collection-loader.js termine le chargement
+async function waitForCollectionLoaded(collection) {
+  return new Promise((resolve) => {
+    const checkLoaded = () => {
+      const marker = collection.querySelector('.ssr-wn-collection-box');
+      if (marker && marker.getAttribute('data-collection-processed') === 'true') {
+        resolve();
+      } else {
+        setTimeout(checkLoaded, 100);
+      }
+    };
+    checkLoaded();
+  });
+}
+
+// Récupérer les éléments de la page actuelle
+function collectCurrentPageElements() {
+  const collection = document.querySelector('[wn-filter="list"]');
+  if (!collection) return;
+
+  const currentElements = Array.from(collection.querySelectorAll('[wn-collection-element]'));
+  currentElements.forEach(element => {
+    element.setAttribute('data-original-page', '1');
+    allElements.push(element.cloneNode(true));
+  });
+  
+  console.log(`Collecté ${currentElements.length} éléments de la page actuelle`);
+}
+
+// Charger les éléments HTML des autres pages
+async function loadAllPagesElements() {
   if (isLoading) return;
   isLoading = true;
 
   try {
-    // Construire les paramètres de requête pour récupérer TOUTES les données
-    const paramsObj = {
-      order: collectionConfig.order,
-      colone: collectionConfig.colone,
-      joinTable: collectionConfig.joinTable,
-      configs: JSON.stringify(collectionConfig.config)
-    };
-    
-    // Ajouter les paramètres de tri si définis
-    if (collectionConfig.sorts && Object.keys(collectionConfig.sorts).length > 0) {
-      paramsObj.sorts = JSON.stringify(collectionConfig.sorts);
+    // Détecter s'il y a d'autres pages à charger
+    const paginationWrapper = document.querySelector('[wn-collection-pagination]');
+    if (!paginationWrapper) {
+      console.log('Pas de pagination détectée');
+      isLoading = false;
+      return;
     }
+
+    // Compter le nombre de pages depuis les liens de pagination
+    const pageLinks = paginationWrapper.querySelectorAll('[wn-pagination-number]:not([style*="display: none"])');
+    const totalPages = pageLinks.length;
     
-    // Ajouter les filtres dynamiques si définis
-    if (collectionConfig.filters && collectionConfig.filters.length > 0) {
-      paramsObj.filters = JSON.stringify(collectionConfig.filters);
+    if (totalPages <= 1) {
+      console.log('Une seule page détectée');
+      isLoading = false;
+      return;
     }
-    
-    // Ne pas limiter le nombre d'éléments pour récupérer tout
-    // paramsObj.limit sera omis pour récupérer tous les éléments
-    
-    const params = new URLSearchParams(paramsObj);
 
-    const response = await fetch(`${apiUrl}/api/sendBlog?${params.toString()}`, {
-      method: "GET",
-      headers: {
-        'api_key': userKey,
-        'ids': collectionConfig.blogId,
-      }
-    });
+    console.log(`Chargement de ${totalPages - 1} pages supplémentaires...`);
 
-    if (response.ok) {
-      const data = await response.json();
-      allCollectionData = Array.isArray(data?.blog) ? data.blog : [];
-      console.log(`Chargé ${allCollectionData.length} éléments de collection pour les filtres`);
-    } else {
-      console.error('Erreur lors du chargement des données:', response.status);
-      allCollectionData = [];
+    // Charger chaque page supplémentaire
+    for (let pageNum = 2; pageNum <= totalPages; pageNum++) {
+      await loadPageElements(pageNum);
     }
 
   } catch (error) {
-    console.error('Erreur lors du chargement des données de collection:', error);
-    allCollectionData = [];
+    console.error('Erreur lors du chargement des pages:', error);
   } finally {
     isLoading = false;
+  }
+}
+
+// Charger les éléments d'une page spécifique
+async function loadPageElements(pageNumber) {
+  try {
+    // Construire l'URL de la page
+    const currentURL = new URL(window.location);
+    currentURL.searchParams.set('page', pageNumber.toString());
+    
+    console.log(`Chargement de la page ${pageNumber}...`);
+    
+    const response = await fetch(currentURL.toString());
+    const html = await response.text();
+    
+    // Parser le HTML
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    
+    // Extraire les éléments de collection de cette page
+    const pageElements = Array.from(doc.querySelectorAll('[wn-filter="list"] [wn-collection-element]'));
+    
+    pageElements.forEach(element => {
+      const clonedElement = element.cloneNode(true);
+      clonedElement.setAttribute('data-original-page', pageNumber.toString());
+      allElements.push(clonedElement);
+    });
+    
+    console.log(`Page ${pageNumber}: ${pageElements.length} éléments collectés`);
+    
+  } catch (error) {
+    console.error(`Erreur lors du chargement de la page ${pageNumber}:`, error);
   }
 }
 
@@ -299,10 +345,10 @@ function updateURLFilters() {
 }
 
 async function applyFiltersAndPagination(initial = false) {
-  // Appliquer les filtres sur toutes les données
+  // Appliquer les filtres sur tous les éléments HTML
   const filterForms = document.querySelectorAll('[wn-filter="filter"]');
   
-  filteredData = allCollectionData.filter(blog => {
+  filteredElements = allElements.filter(element => {
     let visible = true;
     
     filterForms.forEach((form) => {
@@ -316,9 +362,13 @@ async function applyFiltersAndPagination(initial = false) {
         if (input && input.checked) {
           const filterValue = field.textContent.trim().toLowerCase();
           
-          // Vérifier si cette valeur correspond aux données du blog
-          if (!matchesFilter(blog, identifier, filterValue)) {
-            visible = false;
+          // Chercher l'élément correspondant dans l'élément HTML
+          const elementFilterField = element.querySelector(`[wn-filter-field="${identifier}"]`);
+          if (elementFilterField) {
+            const elementValue = elementFilterField.textContent.trim().toLowerCase();
+            if (elementValue !== filterValue) {
+              visible = false;
+            }
           }
         }
         
@@ -328,9 +378,13 @@ async function applyFiltersAndPagination(initial = false) {
           const selectedOption = select.options[select.selectedIndex];
           const filterValue = selectedOption ? selectedOption.textContent.trim().toLowerCase() : select.value.toLowerCase();
           
-          // Vérifier si cette valeur correspond aux données du blog
-          if (!matchesFilter(blog, identifier, filterValue)) {
-            visible = false;
+          // Chercher l'élément correspondant dans l'élément HTML
+          const elementFilterField = element.querySelector(`[wn-filter-field="${identifier}"]`);
+          if (elementFilterField) {
+            const elementValue = elementFilterField.textContent.trim().toLowerCase();
+            if (elementValue !== filterValue) {
+              visible = false;
+            }
           }
         }
       });
@@ -339,14 +393,16 @@ async function applyFiltersAndPagination(initial = false) {
     return visible;
   });
   
+  console.log(`Filtres appliqués: ${filteredElements.length}/${allElements.length} éléments`);
+  
   // Calculer la pagination
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredElements.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentPageData = filteredData.slice(startIndex, endIndex);
+  const currentPageElements = filteredElements.slice(startIndex, endIndex);
   
-  // Regénérer la collection avec les données filtrées de la page actuelle
-  await regenerateCollection(currentPageData, initial);
+  // Afficher les éléments de la page actuelle
+  displayFilteredElements(currentPageElements, initial);
   
   // Mettre à jour les contrôles de pagination existants
   updateExistingPaginationControls();
@@ -354,7 +410,7 @@ async function applyFiltersAndPagination(initial = false) {
 
 // Fonction pour aller à une page spécifique
 function goToPage(pageNumber) {
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredElements.length / itemsPerPage);
   if (pageNumber < 1 || pageNumber > totalPages) {
     return;
   }
@@ -414,206 +470,53 @@ function clearFilters() {
   applyFiltersAndPagination();
 }
 
-// Fonction pour vérifier si un blog correspond à un filtre
-function matchesFilter(blog, identifier, filterValue) {
-  // Cette fonction doit être adaptée selon la structure de vos données
-  // et comment les champs de filtres correspondent aux données du blog
-  
-  // Exemples de correspondance basés sur des champs courants :
-  switch (identifier) {
-    case 'title':
-      return blog.collection_element_name?.toLowerCase().includes(filterValue);
-    case 'slug':
-      return blog.collection_element_slug?.toLowerCase().includes(filterValue);
-    case 'category':
-      // Si vous avez des catégories dans vos données
-      return blog.category?.toLowerCase() === filterValue;
-    default:
-      // Par défaut, chercher dans le nom de l'élément
-      return blog.collection_element_name?.toLowerCase().includes(filterValue);
-  }
-}
-
-// Fonction pour regénérer la collection avec les nouvelles données
-async function regenerateCollection(pageData, initial = false) {
+// Fonction pour afficher les éléments filtrés
+function displayFilteredElements(elementsToShow, initial = false) {
   const collection = document.querySelector('[wn-filter="list"]');
   if (!collection) return;
   
-  // Masquer les éléments existants avec animation
+  // Masquer tous les éléments existants avec animation
   if (!initial) {
     const existingElements = collection.querySelectorAll('[wn-collection-element]');
     existingElements.forEach(el => el.classList.add('wn-hidden'));
     
-    // Attendre la fin de l'animation avant de supprimer
-    await new Promise(resolve => setTimeout(resolve, 250));
+    // Attendre la fin de l'animation avant de continuer
+    setTimeout(() => {
+      replaceCollectionElements(collection, elementsToShow);
+    }, 250);
+  } else {
+    replaceCollectionElements(collection, elementsToShow);
   }
-  
-  // Supprimer tous les éléments générés précédemment
+}
+
+// Fonction pour remplacer les éléments de la collection
+function replaceCollectionElements(collection, newElements) {
+  // Supprimer tous les éléments de collection existants
   const existingElements = collection.querySelectorAll('[wn-collection-element]');
   existingElements.forEach(el => el.remove());
   
-  // Récupérer ou recréer le template
-  let template = collection.querySelector('[wn-collection-box]');
-  if (!template) {
-    // Si le template a été supprimé, essayer de le récupérer depuis les données sauvegardées
-    console.error('Template wn-collection-box manquant pour la régénération');
-    return;
+  // Restaurer le template s'il n'existe plus
+  if (!collection.querySelector('[wn-collection-box]') && originalTemplate) {
+    collection.appendChild(originalTemplate.cloneNode(true));
   }
   
-  // Générer les nouveaux éléments avec les données filtrées
-  for (const blog of pageData) {
-    try {
-      const clone = template.cloneNode(true);
-      clone.removeAttribute("wn-collection-box");
-      clone.setAttribute("wn-collection-element", "true");
-      
-      // Récupérer le contenu de ce blog
-      const response = await fetch(`${apiUrl}/api/sendBlogContent`, {
-        method: "GET",
-        headers: {
-          'api_key': userKey,
-          'id_blog': blog.collection_id,
-          'id_blog_page': blog.id,
-        }
-      });
-
-      const data = await response.json();
-      if (!data) continue;
-
-      // Traiter tous les éléments wn-* dans le clone (logique similaire à collection-loader.js)
-      await processCollectionElement(clone, blog, data);
-      
-      // Ajouter le clone au DOM
-      collection.appendChild(clone);
-      
-    } catch (error) {
-      console.error("Erreur lors de la génération de l'élément:", error);
-    }
-  }
+  // Ajouter les nouveaux éléments filtrés
+  newElements.forEach(element => {
+    const clonedElement = element.cloneNode(true);
+    // S'assurer que l'élément a les bonnes classes pour les animations
+    clonedElement.classList.remove('wn-hidden');
+    clonedElement.classList.add('wn-animate');
+    collection.appendChild(clonedElement);
+  });
   
-  // Afficher les nouveaux éléments avec animation
-  if (!initial) {
-    const newElements = collection.querySelectorAll('[wn-collection-element]');
-    newElements.forEach(el => {
-      void el.offsetWidth; // force reflow
-      el.classList.remove('wn-hidden');
-    });
-  }
+  console.log(`Affichage de ${newElements.length} éléments sur la page ${currentPage}`);
 }
 
-// Fonction pour traiter un élément de collection (extraite de collection-loader.js)
-async function processCollectionElement(clone, blog, data) {
-  const urlVideoBucket = "https://xgwszpuiiacukrvvtrze.supabase.co/storage/v1/object/public/collection-video//";
-  const urlGalleryBucket = "https://xgwszpuiiacukrvvtrze.supabase.co/storage/v1/object/public/collection-gallery//";
-  
-  function isWebflowPreview() {
-    return window.location.hostname.includes("webflow.io");
-  }
-  
-  function getDateFormatOptions(formatString) {
-    const options = {};
-    const formatArray = formatString.split(' ');
-    formatArray.forEach(part => {
-      switch (part.toLowerCase()) {
-        case 'dd': options.day = '2-digit'; break;
-        case 'mm': options.month = '2-digit'; break;
-        case 'yyyy': options.year = 'numeric'; break;
-        case 'yy': options.year = '2-digit'; break;
-        case 'month': options.month = 'long'; break;
-        case 'day': options.weekday = 'long'; break;
-      }
-    });
-    return options;
-  }
-  
-  const elementsToProcess = [...clone.querySelectorAll("[wn-title], [wn-link], [wn-id], [wn-for], [wn-date-published], [wn-image], [wn-richtext], [wn-text], [wn-input], [wn-gallery], [wn-gallery-index],[wn-gallery-modal], [wn-video], [wn-multiReference-wrapper], [wn-filter-field]")];
-  
-  for (const el of elementsToProcess) {
-    if (el.hasAttribute("wn-title")) {
-      el.textContent = blog.collection_element_name;
-    }
-    
-    if (el.hasAttribute("wn-filter-field")) {
-      const identifier = el.getAttribute("wn-filter-field");
-      // Définir le contenu de l'élément de filtre selon l'identifiant
-      switch (identifier) {
-        case 'title':
-          el.textContent = blog.collection_element_name;
-          break;
-        case 'slug':
-          el.textContent = blog.collection_element_slug;
-          break;
-        case 'category':
-          el.textContent = blog.category || '';
-          break;
-        default:
-          el.textContent = blog.collection_element_name;
-      }
-    }
-
-    if (el.hasAttribute("wn-link")) {
-      const prelinkAttr = el.getAttribute("wn-link");
-      const linkData = blog.collection_element_slug;
-      
-      if (linkData) {
-        if (prelinkAttr.includes(',')) {
-          const [normalPrelink, webflowPrelink] = prelinkAttr.split(',', 2).map(p => p.trim());
-          if (isWebflowPreview()) {
-            const webflowPath = webflowPrelink || 'template';
-            el.href = `./${webflowPath}?slug=${linkData}`;
-          } else {
-            el.href = `/${normalPrelink}/${linkData}`;
-          }
-        } else {
-          if (isWebflowPreview()) {
-            el.href = `./template?slug=${linkData}`;
-          } else {
-            el.href = `/${prelinkAttr}/${linkData}`;
-          }
-        }
-      }
-    }
-
-    if (el.hasAttribute("wn-date-published")) {
-      const format = el.getAttribute("wn-date-published");
-      const date = new Date(blog.collection_element_publish_date);
-      let options;
-      try {
-        options = getDateFormatOptions(format);
-      } catch (e) {
-        options = { year: 'numeric', month: 'long', day: 'numeric' };
-      }
-      el.textContent = date.toLocaleDateString(undefined, options);
-    }
-    
-    if (el.hasAttribute("wn-image")) {
-      const key = el.getAttribute("wn-image");
-      const imageData = data.content.image.find(img => img.id_config == key);
-      if (imageData && imageData.url) {
-        el.src = `${imageData.url}`;
-        el.alt = imageData.alt_image;
-      } else {
-        el.style.display = "none"; 
-      }
-    }
-
-    if (el.hasAttribute("wn-text")) {
-      const key = el.getAttribute("wn-text");
-      const textData = data.content.text.find(text => text.id_config == key);
-      if (textData) {
-        el.textContent = textData.text;
-      } else {
-        el.style.display = "none";
-      }
-    }
-    
-    // Ajouter d'autres traitements selon vos besoins...
-  }
-}
+// Cette fonction n'est plus nécessaire car nous utilisons les éléments HTML déjà générés
 
 // Fonction pour mettre à jour les contrôles de pagination existants
 function updateExistingPaginationControls() {
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredElements.length / itemsPerPage);
   const paginationWrapper = document.querySelector('[wn-collection-pagination]');
   
   if (!paginationWrapper || totalPages <= 1) {
@@ -641,6 +544,15 @@ function updateExistingPaginationControls() {
   if (prevEl) {
     const prevPage = Math.max(1, currentPage - 1);
     prevEl.setAttribute('href', currentPage === 1 ? '#' : buildHref(prevPage));
+    
+    // Ajouter event listener pour navigation via filtres
+    prevEl.onclick = (e) => {
+      if (currentPage > 1) {
+        e.preventDefault();
+        goToPage(currentPage - 1);
+      }
+    };
+    
     if (currentPage === 1) {
       prevEl.setAttribute('aria-disabled', 'true');
       prevEl.classList.add('disabled');
@@ -653,6 +565,15 @@ function updateExistingPaginationControls() {
   if (nextEl) {
     const nextPage = Math.min(totalPages, currentPage + 1);
     nextEl.setAttribute('href', currentPage >= totalPages ? '#' : buildHref(nextPage));
+    
+    // Ajouter event listener pour navigation via filtres
+    nextEl.onclick = (e) => {
+      if (currentPage < totalPages) {
+        e.preventDefault();
+        goToPage(currentPage + 1);
+      }
+    };
+    
     if (currentPage >= totalPages) {
       nextEl.setAttribute('aria-disabled', 'true');
       nextEl.classList.add('disabled');
@@ -672,12 +593,21 @@ function updateExistingPaginationControls() {
       clone.setAttribute('data-generated', 'true');
       clone.setAttribute('href', buildHref(i));
       clone.textContent = String(i);
+      
+      // Ajouter event listener pour navigation via filtres
+      clone.onclick = (e) => {
+        e.preventDefault();
+        goToPage(i);
+      };
+      
       if (i === currentPage) clone.classList.add('active');
       else clone.classList.remove('active');
       numberTpl.parentNode.appendChild(clone);
     }
     numberTpl.style.display = 'none';
   }
+  
+  console.log(`Pagination mise à jour: page ${currentPage}/${totalPages} (${filteredElements.length} éléments)`);
 }
 
 // Gérer les changements d'historique (boutons précédent/suivant du navigateur)
