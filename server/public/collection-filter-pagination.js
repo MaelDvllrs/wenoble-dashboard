@@ -228,10 +228,23 @@ function initializeFiltersFromURL() {
       const filterValue = urlParams.get(`filter_${identifier}`);
       
       if (filterValue) {
+        // Gérer les checkboxes et radio buttons
         const parent = field.closest('label') || field.parentElement;
         const input = parent.querySelector('input[type="checkbox"], input[type="radio"]');
         if (input && field.textContent.trim().toLowerCase() === filterValue.toLowerCase()) {
           input.checked = true;
+        }
+        
+        // Gérer les selects
+        const select = parent.querySelector('select') || field.closest('select');
+        if (select) {
+          const options = select.querySelectorAll('option');
+          options.forEach(option => {
+            if (option.textContent.trim().toLowerCase() === filterValue.toLowerCase() ||
+                option.value.toLowerCase() === filterValue.toLowerCase()) {
+              select.value = option.value;
+            }
+          });
         }
       }
     });
@@ -245,9 +258,20 @@ function setupFilterEvents() {
     const fields = form.querySelectorAll('[wn-filter-field]');
     fields.forEach((field) => {
       const parent = field.closest('label') || field.parentElement;
+      
+      // Gérer les checkboxes et radio buttons
       const input = parent.querySelector('input[type="checkbox"], input[type="radio"]');
       if (input) {
         input.addEventListener('change', () => {
+          updateURLFilters();
+          applyFiltersAndPagination();
+        });
+      }
+      
+      // Gérer les selects
+      const select = parent.querySelector('select') || field.closest('select');
+      if (select) {
+        select.addEventListener('change', () => {
           updateURLFilters();
           applyFiltersAndPagination();
         });
@@ -281,10 +305,20 @@ function updateURLFilters() {
     fields.forEach((field) => {
       const identifier = field.getAttribute('wn-filter-field');
       const parent = field.closest('label') || field.parentElement;
-      const input = parent.querySelector('input[type="checkbox"], input[type="radio"]');
       
+      // Gérer les checkboxes et radio buttons
+      const input = parent.querySelector('input[type="checkbox"], input[type="radio"]');
       if (input && input.checked) {
         const filterValue = field.textContent.trim();
+        url.searchParams.set(`filter_${identifier}`, filterValue);
+      }
+      
+      // Gérer les selects
+      const select = parent.querySelector('select') || field.closest('select');
+      if (select && select.value && select.value !== '' && select.value !== 'default') {
+        // Utiliser le texte de l'option sélectionnée
+        const selectedOption = select.options[select.selectedIndex];
+        const filterValue = selectedOption ? selectedOption.textContent.trim() : select.value;
         url.searchParams.set(`filter_${identifier}`, filterValue);
       }
     });
@@ -310,10 +344,24 @@ function applyFiltersAndPagination(initial = false) {
       fields.forEach((field) => {
         const identifier = field.getAttribute('wn-filter-field');
         const parent = field.closest('label') || field.parentElement;
-        const input = parent.querySelector('input[type="checkbox"], input[type="radio"]');
         
+        // Gérer les checkboxes et radio buttons
+        const input = parent.querySelector('input[type="checkbox"], input[type="radio"]');
         if (input && input.checked) {
           const filterValue = field.textContent.trim().toLowerCase();
+          const itemValue = item.textContent.trim().toLowerCase();
+          const itemField = item.getAttribute('wn-filter-field');
+          
+          if (itemField === identifier && itemValue !== filterValue) {
+            visible = false;
+          }
+        }
+        
+        // Gérer les selects
+        const select = parent.querySelector('select') || field.closest('select');
+        if (select && select.value && select.value !== '' && select.value !== 'default') {
+          const selectedOption = select.options[select.selectedIndex];
+          const filterValue = selectedOption ? selectedOption.textContent.trim().toLowerCase() : select.value.toLowerCase();
           const itemValue = item.textContent.trim().toLowerCase();
           const itemField = item.getAttribute('wn-filter-field');
           
@@ -508,8 +556,16 @@ function clearFilters() {
     const fields = form.querySelectorAll('[wn-filter-field]');
     fields.forEach((field) => {
       const parent = field.closest('label') || field.parentElement;
+      
+      // Réinitialiser les checkboxes et radio buttons
       const input = parent.querySelector('input[type="checkbox"], input[type="radio"]');
       if (input) input.checked = false;
+      
+      // Réinitialiser les selects
+      const select = parent.querySelector('select') || field.closest('select');
+      if (select) {
+        select.selectedIndex = 0; // Sélectionner la première option (généralement vide ou "Tous")
+      }
     });
   });
   
