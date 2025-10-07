@@ -28,6 +28,17 @@ async function waitForCollectionBox(container) {
 }
 
 async function handleCollectionFiltersPagination() {
+  // Vérifier s'il y a des filtres dans l'URL ou des formulaires de filtres
+  const urlParams = new URLSearchParams(window.location.search);
+  const hasUrlFilters = Array.from(urlParams.keys()).some(key => key.startsWith('filter_'));
+  const hasFilterForms = document.querySelectorAll('[wn-filter="filter"]').length > 0;
+  
+  // Si aucun filtre n'est présent, ne pas activer le système de filtres
+  if (!hasUrlFilters && !hasFilterForms) {
+    console.log('Aucun filtre détecté, système de filtres désactivé');
+    return;
+  }
+
   // Injecter les styles nécessaires
   const style = document.createElement('style');
   style.textContent = `
