@@ -1,6 +1,8 @@
 import React, { useState,  useEffect, useMemo } from 'react';
 import ComputerOutlinedIcon from '@mui/icons-material/ComputerOutlined';
 import SmartphoneOutlinedIcon from '@mui/icons-material/SmartphoneOutlined';
+import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
+import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import { useTheme } from '@mui/material/styles';
 import { DefaultButton, SecondaryButton } from '../../../../Theme/element';
 import { useSnackbar } from '../../../../Theme/snackbar';
@@ -16,10 +18,31 @@ const AccountSecurity = () => {
   const [logs, setLogs] = useState([]); 
   const [loadingLogs, setLoadingLogs] = useState(false);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const [page, setPage] = useState(0);
+  const rowsPerPage = 5;
 
+  // Fonction pour vérifier si le formulaire de mot de passe est valide
+  const isPasswordFormValid = () => {
+    return password.current.trim() !== '' && 
+           password.new.trim() !== '' && 
+           password.confirm.trim() !== '' &&
+           password.new.length >= 8 &&
+           password.new === password.confirm;
+  };
 
   const apiUrl = config.apiUrl;
   const token = Cookies.get('token');
+
+  // Fonctions de pagination
+  const handlePrev = () => setPage((p) => Math.max(0, p - 1));
+  const handleNext = () => setPage((p) => (p + 1) * rowsPerPage < logs.length ? p + 1 : p);
+
+  // Obtenir les logs de la page actuelle
+  const getCurrentPageLogs = () => {
+    const startIndex = page * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    return logs.slice(startIndex, endIndex);
+  };
 
   // Fonction pour gérer la déconnexion après changement de mot de passe
   const handleLogout = () => {
@@ -110,6 +133,7 @@ const AccountSecurity = () => {
         if (mounted) {
           if (data?.success) {
             setLogs(Array.isArray(data.logs) ? data.logs : []);
+            setPage(0); // Remettre à la première page
           } else {
             showSnackbar('error', data?.message || 'Impossible de récupérer les connexions');
           }
@@ -146,7 +170,7 @@ const AccountSecurity = () => {
               <p className='blogField_name collection_edit_name'>Confirmer le nouveau mot de passe</p>
               <input className='input_text_blog' type='password' value={password.confirm} onChange={(e) => setPassword(prev => ({ ...prev, confirm: e.target.value }))} />
             </div>
-          <DefaultButton type='submit'>Enregistrer</DefaultButton>
+          <DefaultButton type='submit' disabled={!isPasswordFormValid()}>Enregistrer</DefaultButton>
         </form>
         <div className='line-sidebar'/>
         <h4 className='account-setting-title'>Connexions récentes</h4>
@@ -171,7 +195,7 @@ const AccountSecurity = () => {
                 </tr>
               </thead>
               <tbody>
-                {logs.map((log) => {
+                {getCurrentPageLogs().map((log) => {
                   const d = new Date(log.created_at);
                   const dateStr = isNaN(d) ? '-' : d.toLocaleDateString('fr-FR');
                   const timeStr = isNaN(d) ? '-' : d.toLocaleTimeString('fr-FR');
@@ -212,6 +236,22 @@ const AccountSecurity = () => {
                 })}
               </tbody>
             </table>
+            {logs.length > rowsPerPage && (
+              <div className='table-footer table-footer-security'>
+                <span></span>
+                <div className='table-footer-info'>
+                  <span>{logs.length === 0 ? '0' : `${page * rowsPerPage + 1} - ${Math.min((page + 1) * rowsPerPage, logs.length)} sur ${logs.length}`}</span>
+                  <div className='table-footer-buttons'>
+                    <button className='table-arrow-button' onClick={handlePrev} disabled={page === 0}>
+                      <ArrowBackIosRoundedIcon fontSize='16'/>
+                    </button>   
+                    <button className='table-arrow-button' onClick={handleNext} disabled={(page + 1) * rowsPerPage >= logs.length}>
+                      <ArrowForwardIosRoundedIcon fontSize='16'/>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

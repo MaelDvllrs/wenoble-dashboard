@@ -143,6 +143,11 @@
 .security-logs-table .col-device { width: 110px; }
 .security-logs-table .col-location { min-width: 120px; }
 
+.table-footer-security{
+  padding: 0;
+  border-top: 1px var(--color-primary-third) solid;
+}
+
 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size: 0.7rem; }
 
 /* Badges */

@@ -219,16 +219,16 @@ const AccountEmail = () => {
                 Vous êtes sur le point de changer votre adresse email :
               </p>
               <div style={{ 
-                backgroundColor: theme.palette.background.paper,
+                backgroundColor: theme.palette.primary.main,
                 padding: '1rem',
                 borderRadius: '6px',
                 marginBottom: '1rem',
                 border: `1px solid ${theme.palette.divider}`
               }}>
-                <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', color: theme.palette.text.secondary }}>
+                <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', color: theme.palette.text.primary }}>
                   <strong>De :</strong> {currentEmail}
                 </p>
-                <p style={{ margin: '0', fontSize: '0.9rem', color: theme.palette.text.secondary }}>
+                <p style={{ margin: '0', fontSize: '0.9rem', color: theme.palette.text.primary }}>
                   <strong>Vers :</strong> {newEmail}
                 </p>
               </div>
@@ -238,7 +238,7 @@ const AccountEmail = () => {
                 fontSize: '0.9rem',
                 lineHeight: '1.4'
               }}>
-                Un email de confirmation sera envoyé à la nouvelle adresse. Vous devrez cliquer sur le lien dans cet email pour finaliser le changement.
+                Un email de confirmation sera envoyé à l'ancienne adresse. Vous devrez cliquer sur le lien dans cet email pour finaliser le changement.
               </p>
               <p style={{ 
                 marginBottom: '1.5rem', 
@@ -249,7 +249,7 @@ const AccountEmail = () => {
                 borderRadius: '4px',
                 border: `1px solid ${theme.palette.warning.main}`
               }}>
-                ⚠️ Assurez-vous d'avoir accès à cette nouvelle adresse email avant de continuer.
+                Assurez-vous d'avoir accès à cette nouvelle adresse email avant de continuer.
               </p>
               
               <div className="modal_actions" style={{ gap: '1rem' }}>

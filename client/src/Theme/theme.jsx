@@ -80,19 +80,8 @@ const LIGHT_THEME = createTheme({
         },
 
         shadow: {
-            // Effet "liquid glass" version clair : couche externe + halo doux + relief interne
-            main: [
-                '0 0 0 1px rgba(0,0,0,0.06)',                // stroke externe discret
-                '0 2px 3px -1px rgba(0,0,0,0.10)',           // petite ombre proche
-                '0 6px 18px -6px rgba(0,0,0,0.10)',          // profondeur
-                'inset 0 0 0 1px rgba(255,255,255,0.65)',    // liseré interne lumineux
-                'inset 0 1px 4px rgba(255,255,255,0.35)'     // diffusion interne verre
-            ].join(', '),
-            secondary: [
-                '0 0 0 1px rgba(0,0,0,0.10)',
-                '0 4px 10px -2px rgba(0,0,0,0.18)',
-                'inset 0 0 0 1px rgba(255,255,255,0.55)'
-            ].join(', ')
+            main: '0 0 0 1px rgba(0, 0, 0, 0.12)',
+            secondary: '0 0 0 1px rgba(0, 0, 0, 0.25)'
         },
         globe: {
             dark: '0',

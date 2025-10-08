@@ -15,7 +15,7 @@ import { supabase } from '../../service/supabaseAuth';
 import { BsChevronCompactDown } from "react-icons/bs";
 
 import { PiSidebarSimpleLight, PiLockBold, PiUserBold, PiGearSixBold, PiPowerBold, PiChatCircleDotsBold, PiBellBold,  PiPlusBold } from "react-icons/pi";
-import { LuMoon, LuSun } from "react-icons/lu";
+
 import CreateOutlinedIcon from '@mui/icons-material/CreateOutlined';
 import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined';
 import EqualizerOutlinedIcon from '@mui/icons-material/EqualizerOutlined';
@@ -63,7 +63,9 @@ const Dashboard = () => {
     const [notifications, setNotifications] = useState([]);
     const [notifRead, setNotifRead] = useState(false);
     // Sidebar mode: 'open' (always expanded), 'closed' (always collapsed), 'hover' (expand on hover)
-    const [menuMode, setMenuMode] = useState('open');
+    const [menuMode, setMenuMode] = useState(() => {
+        return localStorage.getItem('sidebarMode') || 'open';
+    });
     const [hoveringSidebar, setHoveringSidebar] = useState(false);
     const isSidebarOpen = menuMode === 'open' || (menuMode === 'hover' && hoveringSidebar);
     
@@ -88,7 +90,7 @@ const Dashboard = () => {
     const [openUserMenu, setOpenUserMenu] = useState(false);
 
     // Context
-    const { isDark, toggleTheme } = useContext(ThemeContext);
+    const { isDark } = useContext(ThemeContext);
 
     // Refs
     const anchorRef = useRef(null);
@@ -149,6 +151,19 @@ const Dashboard = () => {
         fetchUserInfoLocal(token);
         setLoadingProfile(false);
     }, [token]);
+
+    // Écouter les changements de sidebar depuis les Settings
+    useEffect(() => {
+        const handleSidebarModeChange = (event) => {
+            setMenuMode(event.detail.mode);
+        };
+        
+        window.addEventListener('sidebarModeChanged', handleSidebarModeChange);
+        
+        return () => {
+            window.removeEventListener('sidebarModeChanged', handleSidebarModeChange);
+        };
+    }, []);
 
     // Charger les sites web de l'utilisateur - maintenant géré par le contexte
     // Plus besoin de cette logique ici
@@ -244,6 +259,7 @@ const Dashboard = () => {
     const handleCloseSidebarModeMenu = () => setOpenSidebarModeMenu(false);
     const handleSelectSidebarMode = (mode) => {
         setMenuMode(mode);
+        localStorage.setItem('sidebarMode', mode);
         setOpenSidebarModeMenu(false);
     };
 
@@ -475,8 +491,6 @@ const Dashboard = () => {
                 </div>
             </div>
             <div className='header_box right'>
-                <Checkbox key='theme' style={{ color: theme.palette.text.primary }} checked={isDark} onChange={toggleTheme} icon={<LuMoon className='icon' />} checkedIcon={<LuSun  className='icon'/>}/>
-            
                 <IconButton key='menu' style={{ color: theme.palette.text.primary }}  onClick={handleOpenNotif} ref={anchorRef}>
                     <Badge color="error" variant="dot" invisible={!notifRead}>
                         <PiBellBold className='icon' />
@@ -561,7 +575,7 @@ const Dashboard = () => {
                                             </Link>
                                             
                                             <Link 
-                                                to="/dashboard/parameter" 
+                                                to="/dashboard/settings" 
                                                 className='user_action_item'
                                                 onClick={() => handleUserMenuAction('settings')}
                                                 style={{ color: theme.palette.text.primary }}

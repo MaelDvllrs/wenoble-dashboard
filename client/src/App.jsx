@@ -38,6 +38,8 @@ import Account from './Components/Dashboard/Pages/Users/Account';
 import AccountGeneral from './Components/Dashboard/Pages/Users/AccountGeneral';
 import AccountSecurity from './Components/Dashboard/Pages/Users/AccountSecurity';
 import AccountEmail from './Components/Dashboard/Pages/Users/AccountEmail';
+import Settings from './Components/Dashboard/Pages/Settings/Settings';
+import SettingsGeneral from './Components/Dashboard/Pages/Settings/SettingsGeneral';
 import ModificationHome from './Components/Dashboard/Pages/modification_site/modificationHome';
 import Portfolio from './Components/Dashboard/Pages/modification_site/Portfolio/portfolio';
 import EditPortfolio from './Components/Dashboard/Pages/modification_site/Portfolio/EditPortfolio';
@@ -145,6 +147,10 @@ function App() {
                                         <Route path="general" element={<AccountGeneral />} />
                                         <Route path="security" element={<AccountSecurity />} />
                                         <Route path="email" element={<AccountEmail />} />
+                                    </Route>
+                                    <Route path="/dashboard/settings" element={<Settings />}>
+                                        <Route index element={<Navigate to="/dashboard/settings/general" />} />
+                                        <Route path="general" element={<SettingsGeneral />} />
                                     </Route>
                                     <Route path="/dashboard/workspace" element={<WorkspaceManager />} />
                                     <Route path="/dashboard/modification" element={<ModificationHome />} />

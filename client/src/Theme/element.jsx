@@ -39,6 +39,7 @@ import { formatTime } from '../utils/numberFormatted';
 import { min } from "date-fns";
 import { color } from "framer-motion";
 import { pad } from 'crypto-js';
+import { BorderStyle } from '@mui/icons-material';
 
 
 
@@ -300,16 +301,23 @@ export const DefaultButton = styled(Button)(({ theme }) => ({
         backgroundColor: "var(--primary-color)",
         color: 'rgba(255, 255, 255, 0.8)',
         fontSize: '0.9rem',
-        padding: '0.15rem 0.5rem 0.15rem 0.5rem',
+        padding: '0.05rem 0.5rem 0.05rem 0.5rem',
         boxShadow: 'none',
         textTransform: 'none',
+        border: "1px solid",
+        BorderStyle : "inset",
+        borderColor : "var(--primary-color)"
         
     },
     '&:hover': {
         backgroundColor: "var(--primary-color-hover)",
     },
     '&.Mui-disabled': {
-        opacity: 0.8,
+        backgroundColor: theme.palette.primary.third,
+        border: "1px solid",
+        borderColor: theme.palette.primary.third,
+        color: theme.palette.text.primary,
+        opacity: 0.6,
         cursor: 'not-allowed',
     },
     '& .MuiButton-startIcon': {

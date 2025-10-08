@@ -17,6 +17,7 @@ const AccountGeneral = () => {
 
   const [user, setUser] = useState({ email: '', username: '', imageUrl: '' });
   const [draft, setDraft] = useState({ first_name: '', last_name: '', username: '' });
+  const [initialValues, setInitialValues] = useState({ first_name: '', last_name: '', username: '' });
 
   useEffect(() => {
     let mounted = true;
@@ -27,8 +28,10 @@ const AccountGeneral = () => {
         const u = payload?.user?.[0];
         const img = payload?.image?.[0]?.src_profile_image;
         if (mounted && u) {
+          const userValues = { first_name: u.first_name || '', last_name: u.last_name || '', username: u.username || '' };
           setUser({ email: u.email || '', username: u.username || '', imageUrl: img ? `${apiUrl}/media/profile/${img}` : '' });
-          setDraft({ first_name: u.first_name || '', last_name: u.last_name || '', username: u.username || '' });
+          setDraft(userValues);
+          setInitialValues(userValues);
         }
       } catch (e) {
         console.error('getUserInfoBasic failed:', e);
@@ -36,6 +39,13 @@ const AccountGeneral = () => {
     })();
     return () => { mounted = false; };
   }, [apiUrl, token]);
+
+  // Fonction pour vérifier si des changements ont été effectués
+  const hasChanges = () => {
+    return draft.first_name !== initialValues.first_name ||
+           draft.last_name !== initialValues.last_name ||
+           draft.username !== initialValues.username;
+  };
 
   const onPickImage = () => fileInputRef.current?.click();
   const onFileChange = async (file) => {
@@ -114,6 +124,8 @@ const AccountGeneral = () => {
             ...prev, 
             username: updateData.username || prev.username 
           }));
+          // Mettre à jour les valeurs initiales pour refléter les changements sauvegardés
+          setInitialValues(draft);
           showSnackbar('success', 'Profil enregistré avec succès');
         } else {
           throw new Error(response.data.error || 'Erreur inconnue');
@@ -166,7 +178,16 @@ const AccountGeneral = () => {
             <input className='input_text_blog' type='text' value={draft.username} onChange={(e) => setDraft(prev => ({ ...prev, username: e.target.value }))} />
           </div>
           <div className='profile-actions'>
-            <DefaultButton onClick={saveProfile}>Enregistrer</DefaultButton>
+            <DefaultButton 
+              onClick={saveProfile} 
+              disabled={!hasChanges()}
+              style={{ 
+                opacity: hasChanges() ? 1 : 0.5,
+                cursor: hasChanges() ? 'pointer' : 'not-allowed'
+              }}
+            >
+              Enregistrer
+            </DefaultButton>
           </div>
         </div>
       </div>
