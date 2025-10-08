@@ -1,5 +1,5 @@
 // External libraries
-import React, { useState, useEffect, useContext, useRef } from 'react';
+import React, { useState, useEffect, useContext, useRef, useMemo } from 'react';
 import Axios from '../../service/AxiosConfig';
 import { jwtDecode } from 'jwt-decode';
 import Cookies from 'js-cookie';
@@ -15,7 +15,7 @@ import { supabase } from '../../service/supabaseAuth';
 import { BsChevronCompactDown } from "react-icons/bs";
 
 import { PiSidebarSimpleLight, PiLockBold, PiUserBold, PiGearSixBold, PiPowerBold, PiChatCircleDotsBold, PiBellBold,  PiPlusBold } from "react-icons/pi";
-import { LuMoon, LuSun } from "react-icons/lu";
+
 import CreateOutlinedIcon from '@mui/icons-material/CreateOutlined';
 import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined';
 import EqualizerOutlinedIcon from '@mui/icons-material/EqualizerOutlined';
@@ -36,7 +36,7 @@ import Logo from '../../assets/icon/logo.svg?react';
 import config from '../../config';
 import { SkeletonProfile, SkeletonMenuList, SkeletonFullSelector } from '../skeleton/skeleton';
 import ThemeContext from '../../Theme/themeContext';
-import { notificationTitle, notificationLink } from '../../Theme/element';
+import { notificationTitle, notificationLink, SimpleSearchField } from '../../Theme/element';
 import { checkAuthorization } from '../../Authorisation/Authorisation';
 import { fetchUserInfo } from './Pages/Users/apiAccount';
 import InstallPWA from '../InstallPWA';
@@ -63,13 +63,26 @@ const Dashboard = () => {
     const [notifications, setNotifications] = useState([]);
     const [notifRead, setNotifRead] = useState(false);
     // Sidebar mode: 'open' (always expanded), 'closed' (always collapsed), 'hover' (expand on hover)
-    const [menuMode, setMenuMode] = useState('open');
+    const [menuMode, setMenuMode] = useState(() => {
+        return localStorage.getItem('sidebarMode') || 'open';
+    });
     const [hoveringSidebar, setHoveringSidebar] = useState(false);
     const isSidebarOpen = menuMode === 'open' || (menuMode === 'hover' && hoveringSidebar);
     
     // Website selector from context
     const { websites, selectedWebsite, loading: loadingWebsites, selectWebsite, refreshWebsites } = useWebsite();
     const [openWebsiteMenu, setOpenWebsiteMenu] = useState(false);
+    const [websiteSearch, setWebsiteSearch] = useState('');
+    const websiteSearchInputRef = useRef(null);
+    const filteredWebsites = useMemo(() => {
+        const q = websiteSearch.trim().toLowerCase();
+        if (!q) return websites || [];
+        return (websites || []).filter(w => {
+            const name = (w.website_name || '').toLowerCase();
+            const slug = (w.website_slug || '').toLowerCase();
+            return name.includes(q) || slug.includes(q);
+        });
+    }, [websites, websiteSearch]);
 
     // Workspace selector from context
     const { workspaces, selectedWorkspace, loading: loadingWorkspaces, initialLoading: initialWorkspaceLoading, selectWorkspace } = useWorkspace();
@@ -77,7 +90,7 @@ const Dashboard = () => {
     const [openUserMenu, setOpenUserMenu] = useState(false);
 
     // Context
-    const { isDark, toggleTheme } = useContext(ThemeContext);
+    const { isDark } = useContext(ThemeContext);
 
     // Refs
     const anchorRef = useRef(null);
@@ -138,6 +151,19 @@ const Dashboard = () => {
         fetchUserInfoLocal(token);
         setLoadingProfile(false);
     }, [token]);
+
+    // Écouter les changements de sidebar depuis les Settings
+    useEffect(() => {
+        const handleSidebarModeChange = (event) => {
+            setMenuMode(event.detail.mode);
+        };
+        
+        window.addEventListener('sidebarModeChanged', handleSidebarModeChange);
+        
+        return () => {
+            window.removeEventListener('sidebarModeChanged', handleSidebarModeChange);
+        };
+    }, []);
 
     // Charger les sites web de l'utilisateur - maintenant géré par le contexte
     // Plus besoin de cette logique ici
@@ -211,9 +237,17 @@ const Dashboard = () => {
         handleClickAway(event);
     };
 
-    const logoutUser = () => {
-        Cookies.remove('token');
-        navigateTo('/');
+    const logoutUser = async () => {
+        try {
+            // Déconnexion complète (révoque le refresh token sur tous les appareils)
+            await supabase.auth.signOut({ scope: 'global' });
+        } catch (e) {
+            console.error('Erreur de déconnexion Supabase:', e);
+        } finally {
+            // Nettoyage côté app
+            Cookies.remove('token');
+            navigateTo('/');
+        }
     };
 
     // Sidebar mode popper
@@ -225,6 +259,7 @@ const Dashboard = () => {
     const handleCloseSidebarModeMenu = () => setOpenSidebarModeMenu(false);
     const handleSelectSidebarMode = (mode) => {
         setMenuMode(mode);
+        localStorage.setItem('sidebarMode', mode);
         setOpenSidebarModeMenu(false);
     };
 
@@ -243,7 +278,20 @@ const Dashboard = () => {
         setOpenWorkspaceMenu(false);
         setOpenUserMenu(false);
         setOpenNotif(false);
-        setOpenWebsiteMenu((prevOpen) => !prevOpen);
+        setOpenWebsiteMenu((prevOpen) => {
+            const next = !prevOpen;
+            if (next) {
+                setWebsiteSearch(''); // reset à l’ouverture
+                // Focus après le rendu du Popper
+                setTimeout(() => {
+                    if (websiteSearchInputRef.current) {
+                        // MUI TextField input element
+                        websiteSearchInputRef.current.focus();
+                    }
+                }, 60);
+            }
+            return next;
+        });
     };
 
     const handleCloseWebsiteMenu = () => {
@@ -443,8 +491,6 @@ const Dashboard = () => {
                 </div>
             </div>
             <div className='header_box right'>
-                <Checkbox key='theme' style={{ color: theme.palette.text.primary }} checked={isDark} onChange={toggleTheme} icon={<LuMoon className='icon' />} checkedIcon={<LuSun  className='icon'/>}/>
-            
                 <IconButton key='menu' style={{ color: theme.palette.text.primary }}  onClick={handleOpenNotif} ref={anchorRef}>
                     <Badge color="error" variant="dot" invisible={!notifRead}>
                         <PiBellBold className='icon' />
@@ -500,12 +546,12 @@ const Dashboard = () => {
                                                         <div className='user_details'>
                                                             {infoUser && infoUser.user && infoUser.user[0] && (
                                                                 <>
-                                                                    <div className='user_name_large' style={{ color: theme.palette.text.primary }}>
-                                                                        <b>{infoUser.user[0].username}</b>
-                                                                    </div>
-                                                                    <div className='user_email' style={{ color: theme.palette.text.secondary }}>
+                                                                    <p className='user_name_large' style={{ color: theme.palette.text.primary, marginBottom: "0" }}>
+                                                                        {infoUser.user[0].username}
+                                                                    </p>
+                                                                    <p className='user_email' style={{ color: theme.palette.text.secondary ,marginBottom:"0"}}>
                                                                         {infoUser.user[0].email}
-                                                                    </div>
+                                                                    </p>
                                                                 </>
                                                             )}
                                                         </div>
@@ -529,7 +575,7 @@ const Dashboard = () => {
                                             </Link>
                                             
                                             <Link 
-                                                to="/dashboard/parameter" 
+                                                to="/dashboard/settings" 
                                                 className='user_action_item'
                                                 onClick={() => handleUserMenuAction('settings')}
                                                 style={{ color: theme.palette.text.primary }}
@@ -676,13 +722,20 @@ const Dashboard = () => {
                                                             <div className='user_name_large' style={{ color: theme.palette.text.primary }}>
                                                                 <b>Sites web</b>
                                                             </div>
-                                                            <div className='user_email' style={{ color: theme.palette.text.secondary }}>
-                                                                Sélectionner un site
-                                                            </div>
+                                                            
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
+
+                                            <SimpleSearchField
+                                                theme={theme}
+                                                placeholder="Rechercher un site..."
+                                                value={websiteSearch}
+                                                onChange={(e) => setWebsiteSearch(e.target.value)}
+                                                inputRef={websiteSearchInputRef}
+                                                style={{ width: '100%' }}
+                                            />
                                             
                                             <div className="line_horizontal" style={{ backgroundColor: theme.palette.primary.third }}></div>
 
@@ -690,19 +743,17 @@ const Dashboard = () => {
                                             <div className='user_menu_actions'>
                                                 {loadingWebsites ? (
                                                     <SkeletonMenuList lines={4} />
-                                                ) : websites.length === 0 ? (
+                                                ) : (filteredWebsites.length === 0) ? (
                                                     <div className='user_action_item' style={{ color: theme.palette.text.secondary }}>
-                                                        Aucun site web disponible
+                                                        Aucun site web trouvé
                                                     </div>
                                                 ) : (
-                                                    websites.map((website) => (
+                                                    filteredWebsites.map((website) => (
                                                         <div
                                                             key={website.id}
                                                             className={`user_action_item ${selectedWebsite?.id === website.id ? 'selected' : ''}`}
                                                             onClick={() => handleSelectWebsite(website)}
-                                                            style={{
-                                                                color: theme.palette.text.primary
-                                                            }}
+                                                            style={{ color: theme.palette.text.primary }}
                                                         >
                                                             <div className='button-selector'>
                                                                 <div><b>{website.website_name}</b></div>

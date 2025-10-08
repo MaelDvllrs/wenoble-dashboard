@@ -2,14 +2,14 @@ import React, { useContext } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import ThemeContext from '../../../../Theme/themeContext';
-import SecurityIcon from '@mui/icons-material/Security';
-import NotificationsNoneRoundedIcon from '@mui/icons-material/NotificationsNoneRounded';
-import PersonOutlineRoundedIcon from '@mui/icons-material/PersonOutlineRounded';
+import SettingsIcon from '@mui/icons-material/Settings';
 
-import './AccountSettings.css';
-const AccountSettings = () => {
+import '../Users/AccountSettings.css';
+
+const Settings = () => {
   const theme = useTheme();
   const { isDark } = useContext(ThemeContext);
+  
   return (
     <div className='outlet'>
       <div className="title_section">
@@ -23,37 +23,26 @@ const AccountSettings = () => {
           </NavLink>
           <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
           <span className="breadcrumb-item-active" style={{ color: theme.palette.text.primary }}>
-            Compte
+            Paramètres
           </span>
-            </div>
-          </div>
+        </div>
+      </div>
       <div className="account-settings-root" style={{ backgroundColor: theme.palette.background.default }}>
         <aside className="account-sidebar" style={{ borderColor: theme.palette.primary.third }}>
           <NavLink 
-            to="/dashboard/account/general"
+            to="/dashboard/settings/general"
             className={({ isActive }) => `account-sidebar-link${isActive ? ' account-sidebar-link-active' : ''}`}
           >
-            <PersonOutlineRoundedIcon fontSize='small'/>
-            Paramètres généraux</NavLink>
-          <NavLink 
-            to="/dashboard/account/security"
-            className={({ isActive }) => `account-sidebar-link${isActive ? ' account-sidebar-link-active' : ''}`}
-          >
-            <SecurityIcon fontSize="small"/>
-            Sécurité</NavLink>
-          <NavLink 
-            to="/dashboard/account/email"
-            className={({ isActive }) => `account-sidebar-link${isActive ? ' account-sidebar-link-active' : ''}`}
-          >
-            <NotificationsNoneRoundedIcon fontSize='small'/>
-            Email & Notifications</NavLink>
+            <SettingsIcon fontSize='small'/>
+            Paramètres généraux
+          </NavLink>
         </aside>
         <main className="account-main">
           <Outlet />
         </main>
-        </div>
+      </div>
     </div>
   );
 };
 
-export default AccountSettings;
+export default Settings;

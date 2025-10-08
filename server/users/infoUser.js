@@ -39,7 +39,7 @@ router.get('/getUserInfoBasic', authenticateToken, async (req, res) => {
     // 2. Récupérer les informations complémentaires depuis public.users
     const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('username, website, api_key')
+      .select('username, first_name, last_name')
       .eq('id', userId)
       .single();
 
@@ -60,8 +60,9 @@ router.get('/getUserInfoBasic', authenticateToken, async (req, res) => {
     const user = [{
       email: authUser.user.email,
       username: userData.username,
+      first_name: userData.first_name || '',
+      last_name: userData.last_name || '',
       id_user: userId,
-      website: userData.website || ''
     }];
     
     const image = imageData ? [{ src_profile_image: imageData.src_profile_image }] : [];
@@ -95,32 +96,8 @@ router.get('/getUserInfoBasic', authenticateToken, async (req, res) => {
   //});
 
 
-  const uploadProfile = multer({ dest: '../images/uploads/' });
-
-  router.post('/uploadProfileImage', uploadProfile.single('image'), (req, res) => {
-    if (!req.file) {
-      return res.status(400).send('Aucune image n\'a été téléchargée.');
-    }
-  
-    const tempFilePath = req.file.path;
-    const originalFileName = req.file.originalname;
-    const fileExtension = path.extname(originalFileName);
-  
-    const username = req.headers.username; 
-
-    const newFileName = `profile_${username}${fileExtension}`;
-  
-    const newFilePath = path.join(__dirname, '..',  'images', 'profile_image', newFileName);
-    
-    fs.rename(tempFilePath, newFilePath, (err) => {
-      if (err) {
-        console.error('Erreur lors du déplacement du fichier :', err);
-        return res.status(500).send('Une erreur s\'est produite lors du téléchargement de l\'image.');
-      }
-  
-      res.status(200).send('L\'image a été téléchargée avec succès.');
-    });
-  });
+  // Route uploadProfileImage déplacée vers users/profile.js pour une meilleure gestion
+  // Cette ancienne route a été supprimée pour éviter les conflits
 
 
   router.get('/getProfileImages', (req, res) => {

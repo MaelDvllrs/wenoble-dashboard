@@ -42,12 +42,17 @@ const DARK_THEME = createTheme({
         },
         background: {
             default: 'rgba(5, 5, 10, 1)',
-            secondary: 'rgba(0, 0, 0, 1)'
+            secondary: '#08090b'
         },
         text: {
             primary: 'rgba(255, 255, 255, 0.8)',
             secondary: 'rgba(255, 255, 255, 0.5)'
         },
+        gradients: {
+            // Plus sombre globalement: linear plus profond + highlight plus doux et un peu remonté
+            surface: 'radial-gradient(at 50% 118%, rgba(255,255,255,0.08) 0%, rgba(160,170,180,0.035) 22%, rgba(18,20,23,0) 48%) , linear-gradient(180deg, #060708 0%, #090b0d 55%, #0d1013 100%)',
+            surfaceHover: 'radial-gradient(at 50% 120%, rgba(255,255,255,0.12) 0%, rgba(180,190,200,0.05) 26%, rgba(18,20,23,0) 52%) , linear-gradient(180deg, #07080a 0%, #0b0d10 55%, #111519 100%)'
+        }
     }
 });
 
@@ -58,7 +63,7 @@ const LIGHT_THEME = createTheme({
         primary: {
             main: 'rgb(246, 247, 248)',
             secondary: 'rgba(255, 255, 255, 1)',
-            third: 'rgba(240, 240, 240, 1)'
+            third: 'rgba(209, 209, 209, 1)'
         },
         secondary: {
             main: 'rgba(20, 20, 20, 1)',
@@ -75,8 +80,8 @@ const LIGHT_THEME = createTheme({
         },
 
         shadow: {
-            main: '0 0 0 1px rgba(0, 0, 0, 0.08)',
-            secondary: '0 0 0 1px rgba(0, 0, 0, 0.30)'
+            main: '0 0 0 1px rgba(0, 0, 0, 0.12)',
+            secondary: '0 0 0 1px rgba(0, 0, 0, 0.25)'
         },
         globe: {
             dark: '0',

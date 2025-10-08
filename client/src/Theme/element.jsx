@@ -39,6 +39,7 @@ import { formatTime } from '../utils/numberFormatted';
 import { min } from "date-fns";
 import { color } from "framer-motion";
 import { pad } from 'crypto-js';
+import { BorderStyle } from '@mui/icons-material';
 
 
 
@@ -71,15 +72,37 @@ export const CssTextField = styled(TextField)(({ theme }) => ({
 
 export const LoginTextField = styled(TextField)(({ theme }) => ({
     '& .MuiOutlinedInput-root': {
+        '& input': {
+            // Styles pour l'autofill
+            '&:-webkit-autofill': {
+                WebkitBoxShadow: `0 0 0 1000px ${theme.palette.background.secondary} inset`,
+                WebkitTextFillColor: theme.palette.text.primary,
+                borderRadius: '0.8rem',
+                transition: 'background-color 5000s ease-in-out 0s',
+            },
+            '&:-webkit-autofill:hover': {
+                WebkitBoxShadow: `0 0 0 1000px ${theme.palette.background.secondary} inset`,
+                WebkitTextFillColor: theme.palette.text.primary,
+            },
+            '&:-webkit-autofill:focus': {
+                WebkitBoxShadow: `0 0 0 1000px ${theme.palette.background.secondary} inset`,
+                WebkitTextFillColor: theme.palette.text.primary,
+            },
+            '&:-webkit-autofill:active': {
+                WebkitBoxShadow: `0 0 0 1000px ${theme.palette.background.secondary} inset`,
+                WebkitTextFillColor: theme.palette.text.primary,
+            },
+        },
         '& fieldset': {
-            borderColor: theme.palette.text.secondary,
-            borderRadius: '0.5rem',
+            borderColor: theme.palette.primary.third,
+            borderRadius: '0.8rem',
         },
         '&:hover fieldset': {
-            borderColor: theme.palette.text.secondary,
+            borderColor: theme.palette.primary.third,
         },
         '&.Mui-focused fieldset': {
-            borderColor: theme.palette.text.secondary,
+            borderWidth: '1px',
+            borderColor: '#2ec96d'
         },
     },
     '& .MuiInputLabel-root': {
@@ -278,16 +301,23 @@ export const DefaultButton = styled(Button)(({ theme }) => ({
         backgroundColor: "var(--primary-color)",
         color: 'rgba(255, 255, 255, 0.8)',
         fontSize: '0.9rem',
-        padding: '0.15rem 0.5rem 0.15rem 0.5rem',
+        padding: '0.05rem 0.5rem 0.05rem 0.5rem',
         boxShadow: 'none',
         textTransform: 'none',
+        border: "1px solid",
+        BorderStyle : "inset",
+        borderColor : "var(--primary-color)"
         
     },
     '&:hover': {
         backgroundColor: "var(--primary-color-hover)",
     },
     '&.Mui-disabled': {
-        opacity: 0.8,
+        backgroundColor: theme.palette.primary.third,
+        border: "1px solid",
+        borderColor: theme.palette.primary.third,
+        color: theme.palette.text.primary,
+        opacity: 0.6,
         cursor: 'not-allowed',
     },
     '& .MuiButton-startIcon': {
@@ -358,13 +388,15 @@ export const LoadingButtonBase = styled(LoadingButton)(({ theme }) => ({
     '&.MuiButton-root': {
         backgroundColor: "var(--primary-color)",
         color: 'rgba(255, 255, 255, 0.8)',
+        borderRadius: '6px !important',
+        padding: '1.5rem'
     },
     '&:hover': {
         backgroundColor: "var(--primary-color)",
     },
 }));
 
-export const LoadingDefaultButton = ({ loading, ...props }) => (
+export const LoginDefaultButton = ({ loading, ...props }) => (
     <LoadingButtonBase
         loading={loading}
         loadingIndicator={<WhiteCircularProgress size={24} />}
@@ -391,7 +423,18 @@ export const Popup = styled('div')(({ theme }) => ({
 }));
 
 // Champ de texte simple avec loupe, placeholder, fond transparent et bordure personnalisée
-export function SimpleSearchField({ value, onChange, placeholder = "Rechercher...", theme, ...props }) {
+export function SimpleSearchField({
+  value,
+  onChange,
+  placeholder = 'Rechercher...',
+  theme,
+  sx = {},
+  InputProps = {},
+  ...rest
+}) {
+  const borderColor = theme?.palette?.primary?.third;
+  const focusColor =  '#2ec96d';
+
   return (
     <TextField
       variant="outlined"
@@ -399,56 +442,35 @@ export function SimpleSearchField({ value, onChange, placeholder = "Rechercher..
       onChange={onChange}
       placeholder={placeholder}
       autoComplete="off"
-      {...props}
+      size="small"
       InputProps={{
         startAdornment: (
           <InputAdornment position="start">
-            <FiSearch  style={{ color: theme?.palette?.text?.secondary || '#888' }} />
+            <FiSearch style={{ color: theme?.palette?.text?.secondary || '#888' }} />
           </InputAdornment>
         ),
-        style: {
-          background: 'transparent',
-          borderRadius: 6,
-          padding: '0.2rem 0.5rem 0.1rem 0.5rem',
-          height: '2rem',
-        },
-        ...props.InputProps,
+        ...InputProps,
       }}
       sx={{
         minWidth: 160,
-        background: 'transparent',
         height: '2rem',
-
-        '& .MuiFormControl-root': {
-            height: '2rem',
-        },
+        
         '& .MuiOutlinedInput-root': {
-          background: 'transparent',
-          borderRadius: 1,
           height: '2rem',
           fontSize: '0.8rem',
-          '& fieldset': {
-            borderColor: theme?.palette?.primary?.third || '#1976d2',
-          },
-          '&:hover fieldset': {
-            borderColor: theme?.palette?.primary?.third || '#1976d2',
-          },
-          '&.Mui-focused fieldset': {
-            borderColor: theme?.palette?.primary?.third || '#1976d2',
-          },
-          '& input': {
-            background: 'transparent !important',
-          },
-        },
-        '& input': {
-          background: 'transparent !important',
-          padding: 0,
-          fontSize: '0.8rem',
-        },
-        '& .MuiAutocomplete-listbox': {
           background: 'transparent',
+          borderRadius: '6px !important',
+          paddingRight: 0.5,
+          paddingLeft: '0.5rem !important',
+          '& fieldset': { borderColor, borderWidth: '1px !important' },
+          '&:hover fieldset': { borderColor },
+          '&.Mui-focused fieldset': { borderColor: focusColor, borderWidth: '1px !important' },
+          '& input': { p: 0, background: 'transparent !important' },
         },
+        '& input': { p: 0, fontSize: '0.8rem' },
+        ...sx,
       }}
+      {...rest}
     />
   );
 }
@@ -480,7 +502,7 @@ export function SimpleInputField({ value, onChange, placeholder = "", theme, ...
           fontSize: "0.8rem",
           background: "transparent",
           color: theme?.palette?.text?.secondary,
-          border: `1px solid ${isFocused ? '#2ec96d' : (theme?.palette?.primary?.third || '#ccc')}`,
+          border: `0.5px solid ${isFocused ? '#2e38c9ff' : (theme?.palette?.primary?.third || '#ccc')}`,
           borderRadius: 4,
           padding: "0.2rem 0.5rem",
           outline: "none",
