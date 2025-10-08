@@ -9,7 +9,7 @@ import { useTheme } from '@mui/material/styles';
 import { IconButton, InputAdornment } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 
-import { signInWithEmail, resetPassword } from '../service/supabaseAuth';
+import { signInWithEmail, resetPassword, signInWithGoogle } from '../service/supabaseAuth';
 
 // Internal imports
 import './Login.css';
@@ -116,6 +116,18 @@ const Login = () => {
             console.error("Erreur lors de la connexion:", error);
             setStatusHolder('showMessage');
             setLoading(false);
+        }
+    };
+
+    // Fonction pour gérer la connexion Google
+    const handleGoogleLogin = async () => {
+        try {
+            await signInWithGoogle();
+            // La redirection vers Google se fait automatiquement
+            // Après authentification, l'utilisateur sera redirigé vers /oauth-callback
+        } catch (error) {
+            console.error('Erreur lors de la connexion Google:', error);
+            setStatusHolder('showMessage');
         }
     };
 
@@ -266,7 +278,7 @@ const Login = () => {
                             <button
                                 type="button"
                                 className="oauthButton oauthGoogle"
-                                onClick={() => window.location.href = `${config.supabaseUrl}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(window.location.origin + '/oauth-callback')}`}
+                                onClick={handleGoogleLogin}
                             >
                                 <img src="https://upload.wikimedia.org/wikipedia/commons/2/2d/Google-favicon-2015.png" alt="Google" className="oauthIcon" />
                                 Se connecter avec Google

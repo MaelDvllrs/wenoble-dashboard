@@ -1,32 +1,21 @@
 const express = require('express');
+const jwt = require('jsonwebtoken');
+const cors = require('cors');
 const { supabaseServer } = require('../supabase');
 const { authenticateToken } = require('../middleware/authToken');
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+
+require('dotenv').config();
+const secretKey = process.env.SECRET_KEY;
 
 const router = express.Router();
 
-// Configuration multer pour les images de profil
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const uploadPath = path.join(__dirname, '..', 'images', 'profile_image');
-    // Créer le dossier s'il n'existe pas
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-    cb(null, uploadPath);
-  },
-  filename: function (req, file, cb) {
-    // Utiliser l'ID utilisateur comme nom de fichier
-    const userId = req.user.idUser;
-    const extension = path.extname(file.originalname);
-    cb(null, `profile_${userId}${extension}`);
-  }
-});
+router.use(cors());
+router.use(express.json());
 
+// Configuration multer pour les images de profil (stockage en mémoire pour Supabase Storage)
 const upload = multer({ 
-  storage: storage,
+  storage: multer.memoryStorage(), // Stockage en mémoire pour upload vers Supabase
   limits: {
     fileSize: 5 * 1024 * 1024 // 5MB max
   },
@@ -39,6 +28,69 @@ const upload = multer({
     }
   }
 });
+
+// ===========================
+// ROUTES DE CONSULTATION
+// ===========================
+
+// Récupérer les informations de base de l'utilisateur (format chiffré JWT)
+router.get('/getUserInfoBasic', authenticateToken, async (req, res) => {
+  try {
+    const token = req.headers['authorization']?.split(' ')[1];
+    const userId = req.user.idUser;
+    const supabase = supabaseServer(token);
+    
+    // 1. Récupérer les informations de base de l'utilisateur depuis auth.users
+    const { data: authUser, error: authError } = await supabase.auth.getUser(token);
+    
+    if (authError) throw authError;
+
+    // 2. Récupérer les informations complémentaires depuis public.users
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('username, first_name, last_name')
+      .eq('id', userId)
+      .single();
+    
+    if (userError) throw userError;
+    
+    // 3. Récupérer l'image de profil
+    const { data: imageData, error: imageError } = await supabase
+      .from('profile_images')
+      .select('src_profile_image')
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    // Combiner toutes les informations
+    const user = [{
+      email: authUser.user.email,
+      username: userData.username,
+      first_name: userData.first_name || '',
+      last_name: userData.last_name || '',
+      id_user: userId,
+    }];
+    
+    const image = imageData ? [{ src_profile_image: imageData.src_profile_image }] : [];
+    
+    // Chiffrer la réponse avec JWT
+    const userCrypt = jwt.sign({
+      user: user,
+      image: image
+    }, secretKey);
+    
+    res.send(userCrypt);
+  } catch (error) {
+    console.error('Erreur lors de la récupération des infos utilisateur:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Note: Les images de profil sont maintenant stockées dans Supabase Storage (bucket: profile-image)
+// et sont accessibles directement via leur URL publique retournée par getUserInfoBasic et /profile
+
+// ===========================
+// ROUTES DE MODIFICATION
+// ===========================
 
 // Route pour mettre à jour les informations de profil utilisateur
 router.post('/update-profile', authenticateToken, async (req, res) => {
@@ -141,7 +193,7 @@ router.post('/update-username', authenticateToken, async (req, res) => {
   }
 });
 
-// Route pour upload d'image de profil
+// Route pour upload d'image de profil vers Supabase Storage
 router.post('/uploadProfileImage', authenticateToken, upload.single('image'), async (req, res) => {
   try {
     const userId = req.user.idUser;
@@ -152,56 +204,111 @@ router.post('/uploadProfileImage', authenticateToken, upload.single('image'), as
       return res.status(400).json({ error: 'Aucune image n\'a été téléchargée' });
     }
 
-    console.log('Upload image profil pour user:', userId, 'fichier:', req.file.filename);
+    console.log('Upload image profil pour user:', userId, 'type:', req.file.mimetype);
 
-    // Enregistrer ou mettre à jour l'information dans la base de données
-    console.log('Tentative d\'enregistrement en base:', {
-      user_id: userId,
-      src_profile_image: req.file.filename
-    });
-
-    const { data, error } = await supabase
+    // Supprimer l'ancienne image s'il y en a une
+    const { data: oldImage } = await supabase
       .from('profile_images')
-      .upsert({
-        user_id: userId,
-        src_profile_image: req.file.filename,
-        updated_at: new Date().toISOString()
-      })
-      .select();
+      .select('src_profile_image')
+      .eq('user_id', userId)
+      .maybeSingle();
 
-    if (error) {
-      console.error('Erreur enregistrement image profil:', error);
-      // Supprimer le fichier en cas d'erreur DB
-      try {
-        fs.unlinkSync(req.file.path);
-      } catch (unlinkError) {
-        console.error('Erreur suppression fichier:', unlinkError);
+    if (oldImage?.src_profile_image) {
+      // Le nom du fichier est déjà stocké directement (pas d'URL)
+      const oldFileName = oldImage.src_profile_image;
+      console.log('Suppression ancienne image:', oldFileName);
+      
+      const { error: deleteError } = await supabase.storage
+        .from('profile-image')
+        .remove([oldFileName]);
+      
+      if (deleteError) {
+        console.warn('Erreur suppression ancienne image (non bloquant):', deleteError);
       }
+    }
+
+    // Générer un nom de fichier unique
+    const fileExtension = req.file.originalname.split('.').pop();
+    const fileName = `${userId}_${Date.now()}.${fileExtension}`;
+
+    console.log('Upload vers Supabase Storage:', fileName);
+
+    // Upload vers Supabase Storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('profile-image')
+      .upload(fileName, req.file.buffer, {
+        contentType: req.file.mimetype,
+        upsert: false
+      });
+
+    if (uploadError) {
+      console.error('Erreur upload Supabase Storage:', uploadError);
       return res.status(500).json({ 
         success: false,
-        error: 'Erreur lors de l\'enregistrement de l\'image: ' + error.message 
+        error: 'Erreur lors de l\'upload de l\'image: ' + uploadError.message 
       });
     }
 
-    console.log('Image profil enregistrée avec succès:', data);
+    console.log('Image uploadée avec succès:', uploadData);
+
+    // Vérifier si l'utilisateur a déjà une image de profil
+    const { data: existingImage } = await supabase
+      .from('profile_images')
+      .select('id')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    let dbData, dbError;
+    
+    if (existingImage) {
+      // Mettre à jour l'enregistrement existant
+      const result = await supabase
+        .from('profile_images')
+        .update({
+          src_profile_image: fileName, // Stocker uniquement le nom du fichier
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', userId)
+        .select();
+      
+      dbData = result.data;
+      dbError = result.error;
+    } else {
+      // Créer un nouvel enregistrement
+      const result = await supabase
+        .from('profile_images')
+        .insert({
+          user_id: userId,
+          src_profile_image: fileName, // Stocker uniquement le nom du fichier
+          updated_at: new Date().toISOString()
+        })
+        .select();
+      
+      dbData = result.data;
+      dbError = result.error;
+    }
+
+    if (dbError) {
+      console.error('Erreur enregistrement en base:', dbError);
+      // Tenter de supprimer le fichier uploadé
+      await supabase.storage.from('profile-image').remove([fileName]);
+      
+      return res.status(500).json({ 
+        success: false,
+        error: 'Erreur lors de l\'enregistrement de l\'image: ' + dbError.message 
+      });
+    }
+
+    console.log('Image profil enregistrée avec succès:', dbData);
     res.json({ 
       success: true, 
       message: 'Image de profil mise à jour avec succès',
-      filename: req.file.filename 
+      filename: fileName // Retourner le nom du fichier au lieu de l'URL
     });
 
   } catch (error) {
     console.error('Erreur serveur upload image:', error);
     console.error('Stack trace:', error.stack);
-    // Supprimer le fichier en cas d'erreur
-    if (req.file) {
-      try {
-        fs.unlinkSync(req.file.path);
-        console.log('Fichier supprimé après erreur:', req.file.path);
-      } catch (unlinkError) {
-        console.error('Erreur suppression fichier:', unlinkError);
-      }
-    }
     res.status(500).json({ 
       success: false,
       error: `Erreur serveur lors de l'upload de l'image: ${error.message}` 

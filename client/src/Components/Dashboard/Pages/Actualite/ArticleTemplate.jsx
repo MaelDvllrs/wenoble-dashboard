@@ -5,6 +5,7 @@ import {useArticlesTemplates} from './useArticleTemplate'
 import { NavLink, useParams } from 'react-router-dom';
 import {formatDate} from '../../../../utils/dateUtils'
 import ArrowLeftIcon from '@mui/icons-material/ArrowLeft';
+import { getProfileImageUrl } from '../../../../service/profileImageService';
 
 const ArticleTemplate = () => {
   const theme = useTheme();
@@ -37,7 +38,7 @@ const ArticleTemplate = () => {
           
           <div className='textBoxArticle textBoxArticleTemplate' style={{borderColor : theme.palette.text.secondary}}>
               <div className="auteurArticleContain">
-                <img src={`${apiUrl}/media/profile/${article.auteurPhoto}`} alt={article.auteurName} className="auteurArticlePhoto" />
+                <img src={getProfileImageUrl(article.auteurPhoto)} alt={article.auteurName} className="auteurArticlePhoto" />
                 <p style={{color : theme.palette.text.secondary}}>{article.auteurName}</p>
               </div>
               <p style={{color : theme.palette.text.secondary}}>{formatDate(article.date)}</p>

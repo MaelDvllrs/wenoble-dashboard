@@ -5,6 +5,7 @@ import {useArticles} from './useArticle'
 import WhatshotIcon from '@mui/icons-material/Whatshot';
 import { NavLink } from 'react-router-dom';
 import {formatDistanceWithoutApprox} from '../../../../utils/dateUtils'
+import { getProfileImageUrl } from '../../../../service/profileImageService';
 
 export const TrendingArticle = () => {
     const theme = useTheme();
@@ -31,7 +32,7 @@ export const TrendingArticle = () => {
                     }}>
                 <div className='textBoxArticle'>
                     <div className="auteurArticleContain">
-                        <img src={`${apiUrl}/media/profile/${article.auteurPhoto}`} alt={article.auteurName} className="auteurArticlePhoto" />
+                        <img src={getProfileImageUrl(article.auteurPhoto)} alt={article.auteurName} className="auteurArticlePhoto" />
                         <p style={{color : theme.palette.text.secondary}}>{article.auteurName}</p>
                     </div>
                     <div className="categorieArticleContain">{article.categorie}</div>

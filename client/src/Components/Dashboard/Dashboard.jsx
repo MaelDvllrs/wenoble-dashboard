@@ -10,6 +10,7 @@ import { useTheme } from '@mui/material/styles';
 import { formatDistance } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { supabase } from '../../service/supabaseAuth';
+import { getProfileImageUrl } from '../../service/profileImageService';
 
 // Icons
 import { BsChevronCompactDown } from "react-icons/bs";
@@ -508,7 +509,7 @@ const Dashboard = () => {
                             <Avatar alt="Avatar par défaut" className='profile_photo_header' />
                         ) : (
                             infoUser && infoUser.image && infoUser.image[0] && infoUser.image[0].src_profile_image ? (
-                                <img src={`${apiUrl}/media/profile/${infoUser.image[0].src_profile_image}`} className='profile_photo_header' alt="Profile" />
+                                <img src={getProfileImageUrl(infoUser.image[0].src_profile_image)} className='profile_photo_header' alt="Profile" />
                             ) : (
                                 <Avatar alt="Avatar par défaut" className='profile_photo_header' />
                             )
@@ -538,7 +539,7 @@ const Dashboard = () => {
                                                     <div className='user_profile_info'>
                                                         <div className='user_avatar_large'>
                                                             {infoUser && infoUser.image && infoUser.image[0] && infoUser.image[0].src_profile_image ? (
-                                                                <img src={`${apiUrl}/media/profile/${infoUser.image[0].src_profile_image}`} className='profile_photo_large' alt="Profile" />
+                                                                <img src={getProfileImageUrl(infoUser.image[0].src_profile_image)} className='profile_photo_large' alt="Profile" />
                                                             ) : (
                                                                 <Avatar alt="Avatar par défaut" className='profile_photo_large' />
                                                             )}

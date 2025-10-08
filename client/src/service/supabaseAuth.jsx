@@ -123,6 +123,27 @@ export const changeEmail = async (newEmail, currentPassword) => {
   return data;
 };
 
+// Authentification avec Google OAuth
+export const signInWithGoogle = async () => {
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${window.location.origin}/oauth-callback`, // Redirection après authentification
+      queryParams: {
+        access_type: 'offline',
+        prompt: 'consent',
+      }
+    }
+  });
+  
+  if (error) {
+    console.error('Erreur lors de la connexion Google:', error);
+    throw error;
+  }
+  
+  return data;
+};
+
 // Récupérer la session actuelle
 export const getCurrentSession = async () => {
   const { data: { session } } = await supabase.auth.getSession();

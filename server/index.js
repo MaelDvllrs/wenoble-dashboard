@@ -10,7 +10,6 @@ const apiRouter = require('./api/api');
 
 const authRoutes = require('./users/auth');
 const authorisationRouter = require('./users/authorisation');
-const infoUserRouter = require('./users/infoUser');
 const securityRouter = require('./users/security');
 const profileRouter = require('./users/profile');
 const portfolioRouter = require('./modification/portfolio');
@@ -226,8 +225,7 @@ app.use(videoRouter);
 //
 
 //
-app.use(profileRouter); // Charger profile.js avant infoUser.js pour éviter les conflits de routes
-app.use(infoUserRouter);
+app.use(profileRouter); // Routes de gestion du profil utilisateur (regroupé avec anciennes routes infoUser)
 app.use(securityRouter);
 app.use(portfolioRouter);
 app.use(pageRouter);

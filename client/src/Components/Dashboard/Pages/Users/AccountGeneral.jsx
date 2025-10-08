@@ -7,6 +7,7 @@ import { jwtDecode } from 'jwt-decode';
 import { DefaultButton } from '../../../../Theme/element';
 import { useSnackbar } from '../../../../Theme/snackbar';
 import config from '../../../../config';
+import { getProfileImageUrl } from '../../../../service/profileImageService';
 
 const AccountGeneral = () => {
   const theme = useTheme();
@@ -29,7 +30,7 @@ const AccountGeneral = () => {
         const img = payload?.image?.[0]?.src_profile_image;
         if (mounted && u) {
           const userValues = { first_name: u.first_name || '', last_name: u.last_name || '', username: u.username || '' };
-          setUser({ email: u.email || '', username: u.username || '', imageUrl: img ? `${apiUrl}/media/profile/${img}` : '' });
+          setUser({ email: u.email || '', username: u.username || '', imageUrl: getProfileImageUrl(img) || '' });
           setDraft(userValues);
           setInitialValues(userValues);
         }
