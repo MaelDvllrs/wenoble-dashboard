@@ -72,12 +72,16 @@ const useAuthorization = (type) => {
 export const AuthorisedRoute = ({ children, authType }) => {
     const { isAuthorized, verifyAuthorization } = useAuthorization(authType);
 
-    if (isAuthorized && verifyAuthorization) {
+    // Afficher le contenu immédiatement, la vérification se fait en arrière-plan
+    if (!verifyAuthorization) {
+        // Pendant la vérification, on affiche le contenu (pas de clignotement)
         return children;
-    } else if (verifyAuthorization) {
-        return <Navigate to='/login' />;
+    }
+
+    if (isAuthorized) {
+        return children;
     } else {
-        return null;
+        return <Navigate to='/login' />;
     }
 };
 

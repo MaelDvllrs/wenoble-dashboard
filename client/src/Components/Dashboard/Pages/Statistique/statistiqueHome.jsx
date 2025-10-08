@@ -1,9 +1,9 @@
 import React, { useRef, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { useTheme } from '@mui/material/styles';
-import { MdArrowForwardIos } from "react-icons/md";
 import { BsFillBarChartFill } from "react-icons/bs";
 import { HiSearch } from "react-icons/hi";
+import { MdArrowForwardIos } from "react-icons/md"
 
 import "./statistiqueHome.css";
 
@@ -15,7 +15,17 @@ const StatistiqueHome = () => {
     <div className="outlet">
       <div className="title_section">
         <div className="breadCrumbs">
-          <NavLink style={{ color: theme.palette.text.primary }} className={"breadCrumbsLink"} to={'/dashboard/home'}>Dashboard</NavLink> &gt; Statistiques
+          <NavLink 
+            className={'breadCrumbsLink'}
+            to="/dashboard/home"
+            style={{ textDecoration: 'none', color: 'inherit' }}
+          >
+            Dashboard
+          </NavLink>
+          <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
+          <span className="breadcrumb-item-active" style={{ color: theme.palette.text.primary }}>
+            Statistiques
+          </span>
         </div>
       </div>
       <div className="modification_page_contain">

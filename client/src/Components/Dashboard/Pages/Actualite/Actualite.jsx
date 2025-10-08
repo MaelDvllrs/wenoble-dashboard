@@ -31,8 +31,21 @@ const Actualite = () => {
 
     return(
         <div className="outlet">
+            {/* Section titre avec breadcrumb */}
             <div className="title_section">
-                <div className="breadCrumbs"><NavLink style={{color: theme.palette.text.primary}} className={"breadCrumbsLink"} to={'/dashboard/home'}>Dashboard</NavLink> &gt; Actualité</div>
+                <div className="breadCrumbs">
+                    <NavLink 
+                        className={'breadCrumbsLink'}
+                        to="/dashboard/home"
+                        style={{ textDecoration: 'none', color: 'inherit' }}
+                    >
+                        Dashboard
+                    </NavLink>
+                    <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
+                    <span className="breadcrumb-item-active" style={{ color: theme.palette.text.primary }}>
+                        Actualité
+                    </span>
+                </div>
             </div>
             <div className="actualite_section">
                 <div className="actu_contain">

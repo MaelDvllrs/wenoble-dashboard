@@ -405,7 +405,7 @@ const Dashboard = () => {
                                     {selectedWorkspace.user_role}
                                 </span>
                             )}
-                            <UnfoldMoreIcon className='icon' style={{color: theme.palette.text.secondary}} />
+                            <UnfoldMoreIcon fontSize='small' className='icon' style={{color: theme.palette.text.secondary}} />
                         </>
                     )}
                     </IconButton>
@@ -690,7 +690,7 @@ const Dashboard = () => {
                                                 {selectedWebsite.user_role}
                                             </span>
                                         )}
-                                        <UnfoldMoreIcon className='icon' style={{color: theme.palette.text.secondary}} />
+                                        <UnfoldMoreIcon fontSize='small' className='icon' style={{color: theme.palette.text.secondary}} />
                                     </div>
                                 )}
                                 

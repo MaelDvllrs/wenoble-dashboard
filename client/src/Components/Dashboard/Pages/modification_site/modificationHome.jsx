@@ -320,7 +320,22 @@ const bgStyle = surfaceGradient
 
 return(
     <div className="outlet">
-        <div className="breadCrumbs"><NavLink style={{color: theme.palette.text.primary}} className={"breadCrumbsLink"} to={'/dashboard/home'}>Dashboard</NavLink> &gt; Modification</div>
+        {/* Section titre avec breadcrumb */}
+        <div className="title_section">
+            <div className="breadCrumbs">
+                <NavLink 
+                    className={'breadCrumbsLink'}
+                    to="/dashboard/home"
+                    style={{ textDecoration: 'none', color: 'inherit' }}
+                >
+                    Dashboard
+                </NavLink>
+                <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
+                <span className="breadcrumb-item-active" style={{ color: theme.palette.text.primary }}>
+                    Modification
+                </span>
+            </div>
+        </div>
         <div className="modification_contain">
           {
             (authPortfolio === true || authPage === true || authBlog === true) && selectedWebsite && (

@@ -39,10 +39,7 @@ const NewsLetters = () => {
 
     // --- Effects ---
     const fetchNewsletters = async () => {
-        if (!selectedWebsite?.id || websiteLoading) {
-            console.log('Aucun site web sélectionné ou en cours de chargement');
-            setInfoListeMail([]);
-            setLoadingMessage(false);
+        if (!selectedWebsite?.id) {
             return;
         }
 
@@ -57,7 +54,7 @@ const NewsLetters = () => {
                     'Content-Type': 'application/json'
                 }
             });
-            setInfoListeMail(jwtDecode(response.data).mail);
+            setInfoListeMail(jwtDecode(response.data).mail || []);
             setLoadingMessage(false);
         } catch (error) {
             showSnackbar('error', '[NEWSLET-001] Erreur lors de la récupération des newsletters');
@@ -68,7 +65,7 @@ const NewsLetters = () => {
 
     useEffect(() => {
         fetchNewsletters();
-    }, [selectedWebsite, websiteLoading]);
+    }, [selectedWebsite?.id]);
 
     // --- Handlers & Functions ---
     const handleExport = () => {
@@ -196,9 +193,20 @@ const NewsLetters = () => {
     // --- Render ---
     return (
         <div className="outlet">
+            {/* Section titre avec breadcrumb */}
             <div className="title_section">
                 <div className="breadCrumbs">
-                    <NavLink style={{ color: theme.palette.text.primary }} className={"breadCrumbsLink"} to={'/dashboard/home'}>Dashboard</NavLink> &gt; Newsletter
+                    <NavLink 
+                        className={'breadCrumbsLink'}
+                        to="/dashboard/home"
+                        style={{ textDecoration: 'none', color: 'inherit' }}
+                    >
+                        Dashboard
+                    </NavLink>
+                    <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
+                    <span className="breadcrumb-item-active" style={{ color: theme.palette.text.primary }}>
+                        Newsletter
+                    </span>
                 </div>
             </div>
             <div className="dashboard_case_empty edit-case_empty">

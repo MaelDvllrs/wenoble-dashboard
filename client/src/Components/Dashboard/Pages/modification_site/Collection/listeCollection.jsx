@@ -69,7 +69,9 @@ const ListeCollection = () => {
     const { selectedWebsite, loading: websiteLoading } = useWebsite();
 
     useEffect(() => {    
-        if (!selectedWebsite || websiteLoading) return;
+        if (!selectedWebsite?.id) {
+            return;
+        }
 
         const user = Cookies.get('token');
         const decodedUser = jwtDecode(user);
@@ -89,9 +91,10 @@ const ListeCollection = () => {
             }).catch((error) => {
                 showSnackbar('error', '[LIST-COLL-001] Erreur lors de la récupération des collections');
                 console.error('Erreur lors de la récupération de la du Blog :', error);
+                setLoadingBlog(false);
             });
             
-    }, [idCollection, selectedWebsite, websiteLoading]);
+    }, [idCollection, selectedWebsite?.id]);
 
     // Fonction pour cocher/décocher toutes les cases
     const handleCheckAll = (e) => {

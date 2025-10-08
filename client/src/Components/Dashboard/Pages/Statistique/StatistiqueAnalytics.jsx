@@ -20,7 +20,27 @@ const StatistiqueAnalytics = () => {
     return(
         <div className="outlet">
             <div className="title_section">
-                <div className="breadCrumbs"><NavLink style={{color: theme.palette.text.primary}} className={"breadCrumbsLink"} to={'/dashboard/home'}>Dashboard</NavLink> &gt; <NavLink style={{color: theme.palette.text.primary}} className={"breadCrumbsLink"} to={'/dashboard/stats'}>Statistiques</NavLink> &gt; Analytics</div>
+                <div className="breadCrumbs">
+                    <NavLink 
+                        className={'breadCrumbsLink'}
+                        to="/dashboard/home"
+                        style={{ textDecoration: 'none', color: 'inherit' }}
+                    >
+                        Dashboard
+                    </NavLink>
+                    <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
+                    <NavLink 
+                        className={'breadCrumbsLink'}
+                        to="/dashboard/stats"
+                        style={{ textDecoration: 'none', color: 'inherit' }}
+                    >
+                        Statistiques
+                    </NavLink>
+                    <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
+                    <span className="breadcrumb-item-active" style={{ color: theme.palette.text.primary }}>
+                        Analytics
+                    </span>
+                </div>
             </div>
             
             <div className="statistique-section">

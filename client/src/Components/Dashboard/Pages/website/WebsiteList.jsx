@@ -1,7 +1,6 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { useNavigate, NavLink } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
-import { CircularProgress } from '@mui/material';
 import OpenInNewOutlinedIcon from '@mui/icons-material/OpenInNewOutlined';
 import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
 import GridViewRoundedIcon from '@mui/icons-material/GridViewRounded';
@@ -18,7 +17,7 @@ import config from '../../../../config';
 import Axios from '../../../../service/AxiosConfig';
 import { useSnackbar } from '../../../../Theme/snackbar';
 import { WebsiteContext } from '../../../../Context/WebsiteContext';
-import { DefaultButton, SecondaryButton, RedButton, IconButton, SimpleSearchField } from '../../../../Theme/element';
+import { DefaultButton, SecondaryButton, IconButton, SimpleSearchField } from '../../../../Theme/element';
 
 const WebsiteList = () => {
   const theme = useTheme();
@@ -26,11 +25,9 @@ const WebsiteList = () => {
   const token = Cookies.get('token');
   const apiUrl = config.apiUrl;
   const { showSnackbar } = useSnackbar();
-  const { websites, deleteWebsite } = useContext(WebsiteContext);
+  const { websites } = useContext(WebsiteContext);
   
-  // États pour les modales
-  const [deleteModal, setDeleteModal] = useState({ open: false, websiteId: null, websiteName: '' });
-  const [loading, setLoading] = useState(false);
+  // États
   const [viewMode, setViewMode] = useState('grid'); // 'list' | 'grid'
   const [search, setSearch] = useState('');
 
@@ -57,30 +54,7 @@ const WebsiteList = () => {
     });
   }, [websites, search]);
 
-  const handleDeleteConfirm = (website) => {
-    setDeleteModal({ 
-      open: true, 
-      websiteId: website.id, 
-      websiteName: website.website_name 
-    });
-  };
 
-  const handleDelete = async () => {
-    setLoading(true);
-    try {
-      await Axios.delete(`${apiUrl}/deleteWebsite?websiteId=${deleteModal.websiteId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      
-      deleteWebsite(deleteModal.websiteId);
-      setDeleteModal({ open: false, websiteId: null, websiteName: '' });
-      showSnackbar('Site web supprimé avec succès', 'success');
-    } catch (error) {
-      const errorMessage = error.response?.data?.error || 'Erreur lors de la suppression du site web';
-      showSnackbar(errorMessage, 'error');
-    }
-    setLoading(false);
-  };
 
 
   const getScreenshotUrl = (slug) =>
@@ -227,18 +201,6 @@ const WebsiteList = () => {
                               <PiGearSixBold />
                             </SecondaryButton>
                           )}
-                          {website.user_role === 'admin' && (
-                            <RedButton
-                              variant="outlined"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteConfirm(website);
-                              }}
-                              size="small"
-                            >
-                              Supprimer
-                            </RedButton>
-                          )}
                         </div>
                       </div>
                     </div>
@@ -327,18 +289,6 @@ const WebsiteList = () => {
                             <PiGearSixBold />
                           </SecondaryButton>
                         )}
-                        {website.user_role === 'admin' && (
-                          <RedButton
-                            variant="outlined"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteConfirm(website);
-                            }}
-                            size="small"
-                          >
-                            Supprimer
-                          </RedButton>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -375,28 +325,7 @@ const WebsiteList = () => {
 
         </div>
 
-        {/* Modal de confirmation de suppression */}
-        {deleteModal.open && (
-          <div className="modal_overlay" onClick={() => setDeleteModal({ open: false, websiteId: null, websiteName: '' })}>
-            <div className="modal_content" onClick={(e) => e.stopPropagation()}>
-              <h3 style={{ color: '#f44336' }}>Supprimer le site web</h3>
-              <p>
-                Êtes-vous sûr de vouloir supprimer définitivement le site web <strong>{deleteModal.websiteName}</strong> ? 
-                Cette action supprimera toutes les données associées et ne peut pas être annulée.
-              </p>
-              <div className="modal_actions">
-                <SecondaryButton 
-                  onClick={() => setDeleteModal({ open: false, websiteId: null, websiteName: '' })}
-                >
-                  Annuler
-                </SecondaryButton>
-                <RedButton onClick={handleDelete} disabled={loading}>
-                  {loading ? <CircularProgress size={20} /> : 'Supprimer définitivement'}
-                </RedButton>
-              </div>
-            </div>
-          </div>
-        )}
+
       </div>
     </div>
   );

@@ -94,8 +94,29 @@ const Collection = () => {
 
     return(
         <div className="outlet">
+            {/* Section titre avec breadcrumb */}
             <div className="title_section">
-            <div className="breadCrumbs"><NavLink style={{color: theme.palette.text.primary}} className={"breadCrumbsLink"} to={'/dashboard/home'}>Dashboard</NavLink> &gt; <NavLink style={{color: theme.palette.text.primary}} className={"breadCrumbsLink"} to={'/dashboard/modification'}>Modification</NavLink> &gt; Cms</div>
+                <div className="breadCrumbs">
+                    <NavLink 
+                        className={'breadCrumbsLink'}
+                        to="/dashboard/home"
+                        style={{ textDecoration: 'none', color: 'inherit' }}
+                    >
+                        Dashboard
+                    </NavLink>
+                    <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
+                    <NavLink 
+                        className={'breadCrumbsLink'}
+                        to="/dashboard/modification"
+                        style={{ textDecoration: 'none', color: 'inherit' }}
+                    >
+                        Modification
+                    </NavLink>
+                    <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
+                    <span className="breadcrumb-item-active" style={{ color: theme.palette.text.primary }}>
+                        Cms
+                    </span>
+                </div>
             </div>
             <div className="dashboard_case_empty edit-case_empty">
                 <div className="header_modification">
@@ -103,31 +124,33 @@ const Collection = () => {
                     <h3 className="heading_h3">Gestion des collections CMS</h3>
                 </div>
                 
-                {websiteLoading ? (
-                    <div style={{ padding: '2rem', textAlign: 'center', color: theme.palette.text.secondary }}>
-                        Chargement des sites web...
-                    </div>
-                ) : !selectedWebsite ? (
-                    <div style={{ padding: '2rem', textAlign: 'center', color: theme.palette.text.secondary }}>
-                        Veuillez sélectionner un site web dans le header pour gérer les collections.
-                    </div>
-                ) : (
-                    <>
-                        <div className="link_menu_box link_menu_box_scroll">
-                            {decodedBlog && decodedBlog.blog.map((blogItem) => (
-                                <NavLink to={'/dashboard/modification/collection/' + blogItem.id} className={({ isActive }) => `link_menu ${isActive ? ' link_menu_active' : ''}`} key={blogItem.id}>
-                                    <p style={{color: theme.palette.text.primary}}>{blogItem.collection_name}</p>
+                <>
+                    <div className="link_menu_box link_menu_box_scroll">
+                        {websiteLoading ? (
+                            <div style={{ padding: '1rem', textAlign: 'center', color: theme.palette.text.secondary }}>
+                                Chargement...
+                            </div>
+                        ) : !selectedWebsite ? (
+                            <div style={{ padding: '1rem', textAlign: 'center', color: theme.palette.text.secondary }}>
+                                Sélectionnez un site web
+                            </div>
+                        ) : (
+                            <>
+                                {decodedBlog && decodedBlog.blog.map((blogItem) => (
+                                    <NavLink to={'/dashboard/modification/collection/' + blogItem.id} className={({ isActive }) => `link_menu ${isActive ? ' link_menu_active' : ''}`} key={blogItem.id}>
+                                        <p style={{color: theme.palette.text.primary}}>{blogItem.collection_name}</p>
+                                    </NavLink>
+                                ))}
+                                <NavLink to={'/dashboard/modification/collection/createCollection'} className='link_menu' key={'createCollection'}>
+                                    <AddIcon style={{color: theme.palette.text.primary}}/>
                                 </NavLink>
-                            ))}
-                            <NavLink to={'/dashboard/modification/collection/createCollection'} className='link_menu' key={'createCollection'}>
-                                <AddIcon style={{color: theme.palette.text.primary}}/>
-                            </NavLink>
-                        </div>
-                        <div className='dashboard_section secondaire shutter_section'>
-                                <Outlet />
-                        </div>
-                    </>
-                )}
+                            </>
+                        )}
+                    </div>
+                    <div className='dashboard_section secondaire shutter_section'>
+                        <Outlet />
+                    </div>
+                </>
             </div>       
         </div>
     )
