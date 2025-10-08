@@ -38,7 +38,7 @@ import Account from './Components/Dashboard/Pages/Users/Account';
 import AccountGeneral from './Components/Dashboard/Pages/Users/AccountGeneral';
 import AccountSecurity from './Components/Dashboard/Pages/Users/AccountSecurity';
 import AccountEmail from './Components/Dashboard/Pages/Users/AccountEmail';
-import Settings from './Components/Dashboard/Pages/Settings/Settings';
+import Settings from './Components/Dashboard/Pages/Settings/setting';
 import SettingsGeneral from './Components/Dashboard/Pages/Settings/SettingsGeneral';
 import ModificationHome from './Components/Dashboard/Pages/modification_site/modificationHome';
 import Portfolio from './Components/Dashboard/Pages/modification_site/Portfolio/portfolio';
