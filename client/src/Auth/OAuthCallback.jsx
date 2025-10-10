@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../service/supabaseAuth';
+import { supabase, extractOAuthUserData } from '../service/supabaseAuth';
 import Axios from '../service/AxiosConfig';
 import config from '../config';
 import { useTheme } from '@mui/material/styles';
@@ -28,7 +28,9 @@ const OAuthCallback = () => {
 
                 if (data.session) {
                     const user = data.session.user;
-                    console.log('Utilisateur OAuth connecté:', user);
+
+                    // Extraire les données OAuth (nom, photo, etc.)
+                    const oauthData = extractOAuthUserData(user);
 
                     // Vérifier si l'utilisateur existe déjà dans votre base de données
                     try {
@@ -36,23 +38,78 @@ const OAuthCallback = () => {
                             headers: { Authorization: `Bearer ${data.session.access_token}` }
                         });
                         
-                        console.log('Profil utilisateur trouvé:', response.data);
+                        // Mettre à jour le profil avec les dernières infos OAuth si nécessaire
+                        if (oauthData.firstName || oauthData.lastName || oauthData.fullName || oauthData.avatarUrl) {
+                            try {
+                                // Extraire le profil de la réponse
+                                const currentUser = response.data.profile || response.data.user?.[0];
+                                
+                                // Vérifier si le username est vide ou basé sur l'email (à mettre à jour)
+                                const shouldUpdateUsername = !currentUser?.username || 
+                                                            currentUser.username === user.email.split('@')[0];
+                                
+                                // Préparer les données à mettre à jour
+                                const updateData = {};
+                                if (oauthData.firstName) updateData.first_name = oauthData.firstName;
+                                if (oauthData.lastName) updateData.last_name = oauthData.lastName;
+                                
+                                // Mettre à jour le username avec le nom Google si nécessaire
+                                if (shouldUpdateUsername && oauthData.fullName) {
+                                    const suggestedUsername = oauthData.fullName.replace(/\s+/g, '').toLowerCase();
+                                    updateData.username = suggestedUsername;
+                                }
+                                
+                                // Mettre à jour le profil si des données existent
+                                if (Object.keys(updateData).length > 0) {
+                                    await Axios.post(`${config.apiUrl}/update-profile`, updateData, {
+                                        headers: { Authorization: `Bearer ${data.session.access_token}` }
+                                    });
+                                }
+                                
+                                // Télécharger et sauvegarder l'avatar Google si disponible
+                                if (oauthData.avatarUrl) {
+                                    try {
+                                        await Axios.post(`${config.apiUrl}/sync-oauth-avatar`, {
+                                            avatarUrl: oauthData.avatarUrl
+                                        }, {
+                                            headers: { Authorization: `Bearer ${data.session.access_token}` }
+                                        });
+                                    } catch (avatarError) {
+                                        console.error('Erreur synchronisation avatar:', avatarError);
+                                    }
+                                }
+                            } catch (updateError) {
+                                console.warn('Erreur lors de la mise à jour du profil OAuth:', updateError);
+                            }
+                        }
                     } catch (profileError) {
                         // Si l'utilisateur n'existe pas, le créer
                         if (profileError.response?.status === 404) {
-                            console.log('Création du profil utilisateur...');
-                            
                             try {
                                 // Pour OAuth, utiliser le nom complet ou générer un username basé sur l'email
-                                const suggestedUsername = user.user_metadata?.full_name?.replace(/\s+/g, '').toLowerCase() || user.email.split('@')[0];
+                                const suggestedUsername = oauthData.fullName?.replace(/\s+/g, '').toLowerCase() || user.email.split('@')[0];
                                 
                                 await Axios.post(`${config.apiUrl}/register`, {
                                     email: user.email,
                                     username: suggestedUsername,
+                                    first_name: oauthData.firstName,
+                                    last_name: oauthData.lastName,
                                     oauth_provider: 'google',
                                     oauth_id: user.id
                                 });
-                                console.log('Profil utilisateur créé avec succès');
+                                
+                                // Télécharger l'avatar Google après la création du compte
+                                if (oauthData.avatarUrl) {
+                                    try {
+                                        await Axios.post(`${config.apiUrl}/user/sync-oauth-avatar`, {
+                                            avatarUrl: oauthData.avatarUrl
+                                        }, {
+                                            headers: { Authorization: `Bearer ${data.session.access_token}` }
+                                        });
+                                    } catch (avatarError) {
+                                        console.error('Erreur sync avatar:', avatarError);
+                                    }
+                                }
                             } catch (createError) {
                                 console.error('Erreur lors de la création du profil:', createError);
                             }

@@ -1,5 +1,5 @@
 // Organize imports: external libraries first, then internal modules
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import Axios from '../service/AxiosConfig';
 import { jwtDecode } from 'jwt-decode';
@@ -9,7 +9,7 @@ import { useTheme } from '@mui/material/styles';
 import { IconButton, InputAdornment } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 
-import { signInWithEmail, resetPassword, signInWithGoogle } from '../service/supabaseAuth';
+import { signInWithEmail, resetPassword, signInWithGoogle, getCurrentSession } from '../service/supabaseAuth';
 
 // Internal imports
 import './Login.css';
@@ -33,6 +33,7 @@ const Login = () => {
     const [statusHolder, setStatusHolder] = useState('message');
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [checkingSession, setCheckingSession] = useState(true);
     
     // Mot de passe oublié
     const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
@@ -43,17 +44,41 @@ const Login = () => {
     // Navigation
     const navigateTo = useNavigate();
 
-    // Authentication checks
-    const isClient = IsAuthenticated();
-    const isAdmin = IsAuthenticatedAdmin();
+    // Vérifier la session Supabase au chargement
+    useEffect(() => {
+        const checkExistingSession = async () => {
+            try {
+                const session = await getCurrentSession();
+                if (session && session.access_token) {
+                    // L'utilisateur a déjà une session active
+                    const token = session.access_token;
+                    
+                    // Vérifier le rôle via l'API ou le token
+                    try {
+                        const decodedToken = jwtDecode(token);
+                        const isAdmin = decodedToken.isAdmin || session.user?.user_metadata?.isAdmin;
+                        
+                        // Redirection basée sur le rôle
+                        if (isAdmin) {
+                            navigateTo('/dashboard-admin/home');
+                        } else {
+                            navigateTo('/dashboard/home');
+                        }
+                    } catch (error) {
+                        console.error('Erreur lors du décodage du token:', error);
+                        // Par défaut, rediriger vers le dashboard client
+                        navigateTo('/dashboard/home');
+                    }
+                }
+            } catch (error) {
+                console.error('Erreur lors de la vérification de la session:', error);
+            } finally {
+                setCheckingSession(false);
+            }
+        };
 
-    if (isClient.isAuthenticating) {
-        navigateTo('/dashboard/home');
-    }
-
-    if (isAdmin.isAuthenticating) {
-        navigateTo('/dashboard-admin/home');
-    }
+        checkExistingSession();
+    }, [navigateTo]);
 
     // Functions
     const handleTogglePasswordVisibility = () => {
@@ -193,6 +218,21 @@ const Login = () => {
     };
 
     // JSX
+    // Afficher un loader pendant la vérification de la session
+    if (checkingSession) {
+        return (
+            <div className="loginPage" style={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                minHeight: '100vh',
+                backgroundColor: theme.palette.background.secondary 
+            }}>
+                <CircularProgress size={50} />
+            </div>
+        );
+    }
+
     return (
         <div className="loginPage">
             <div className="loginContain" style={{ backgroundColor: theme.palette.background.secondary }}>

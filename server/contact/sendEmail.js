@@ -49,10 +49,60 @@ const apiKeyMiddleware = async (req, res, next) => {
     }
 };
 
+// === SYSTÈME ANTI-BOT ===
 const emailLocks = new Set();
+const ipLocks = new Map(); // Track submissions by IP
+const suspiciousIPs = new Map(); // Track suspicious behavior
 
+const EMAIL_LOCK_TIMEOUT = 60 * 1000; // 1 minute entre chaque email
+const IP_LOCK_TIMEOUT = 30 * 1000; // 30 secondes entre submissions par IP
+const MAX_SUBMISSIONS_PER_HOUR = 5; // Maximum 5 soumissions par heure par IP
+const MIN_SUBMIT_TIME = 3000; // Minimum 3 secondes pour remplir le formulaire
 
-const EMAIL_LOCK_TIMEOUT = 10 * 1000;
+// Fonction pour vérifier les patterns de spam
+function isSpamContent(text) {
+    if (!text || typeof text !== 'string') return false;
+    
+    const spamPatterns = [
+        /viagra|cialis|pharmacy|casino|poker|lottery|winner|prize/i,
+        /(http:\/\/|https:\/\/|www\.)[^\s]{50,}/g,
+        /(.)\1{10,}/g,
+        /<script|<iframe|javascript:|onclick|onerror/i,
+        /\b(buy now|click here|limited time|act now)\b/i,
+    ];
+    
+    return spamPatterns.some(pattern => pattern.test(text));
+}
+
+// Fonction pour obtenir l'IP du client
+function getClientIP(req) {
+    return req.headers['x-forwarded-for']?.split(',')[0].trim() || 
+           req.headers['x-real-ip'] || 
+           req.connection.remoteAddress || 
+           req.socket.remoteAddress;
+}
+
+// Nettoyer les anciennes entrées de IP tracking
+setInterval(() => {
+    const oneHourAgo = Date.now() - (60 * 60 * 1000);
+    
+    // Nettoyer les soumissions anciennes
+    for (const [ip, submissions] of ipLocks.entries()) {
+        const recentSubmissions = submissions.filter(time => time > oneHourAgo);
+        if (recentSubmissions.length === 0) {
+            ipLocks.delete(ip);
+        } else {
+            ipLocks.set(ip, recentSubmissions);
+        }
+    }
+    
+    // Nettoyer les IPs suspectes anciennes
+    for (const [ip, data] of suspiciousIPs.entries()) {
+        if (data.lastSeen < oneHourAgo) {
+            suspiciousIPs.delete(ip);
+        }
+    }
+}, 10 * 60 * 1000); // Nettoyer toutes les 10 minutes
 
 router.post('/sendEmail', apiKeyMiddleware, async (req, res) => {
     const apiKey = req.apiKey;
@@ -62,12 +112,88 @@ router.post('/sendEmail', apiKeyMiddleware, async (req, res) => {
     const html = req.html;
     const emailSender = req.emailSender;
     const dateSend = new Date();
+    
+    // Nouvelles données anti-bot
+    const formData = req.body.formData || {};
+    const submitTime = req.body.submitTime || 0;
+    const userAgent = req.body.userAgent || '';
+    const clientIP = getClientIP(req);
 
+    // === VALIDATIONS ANTI-BOT CÔTÉ SERVEUR ===
+    
+    // 1. Vérifier si l'IP est déjà bloquée
+    if (suspiciousIPs.has(clientIP)) {
+        const suspiciousData = suspiciousIPs.get(clientIP);
+        if (suspiciousData.blocked && suspiciousData.lastSeen > Date.now() - 3600000) {
+            console.warn(`IP bloquée: ${clientIP}`);
+            return res.status(403).json({ message: 'Trop de tentatives. Veuillez réessayer plus tard.' });
+        }
+    }
+    
+    // 2. Rate limiting par email
     if (emailLocks.has(emailSender)) {
+        console.warn(`Rate limit email: ${emailSender}`);
         return res.status(429).json({ message: 'Vous avez déjà envoyé un email. Veuillez patienter.' });
     }
-
+    
+    // 3. Rate limiting par IP
+    const ipSubmissions = ipLocks.get(clientIP) || [];
+    const recentSubmissions = ipSubmissions.filter(time => time > Date.now() - 3600000);
+    
+    if (recentSubmissions.length >= MAX_SUBMISSIONS_PER_HOUR) {
+        console.warn(`Rate limit IP: ${clientIP} - ${recentSubmissions.length} soumissions`);
+        
+        // Marquer cette IP comme suspecte
+        suspiciousIPs.set(clientIP, {
+            count: (suspiciousIPs.get(clientIP)?.count || 0) + 1,
+            lastSeen: Date.now(),
+            blocked: true
+        });
+        
+        return res.status(429).json({ message: 'Trop de soumissions. Veuillez réessayer dans une heure.' });
+    }
+    
+    // 4. Vérifier le temps de soumission (protection contre soumission instantanée)
+    if (submitTime < MIN_SUBMIT_TIME) {
+        console.warn(`Soumission trop rapide: ${submitTime}ms depuis IP ${clientIP}`);
+        
+        // Marquer comme suspect
+        const suspiciousData = suspiciousIPs.get(clientIP) || { count: 0, lastSeen: 0 };
+        suspiciousIPs.set(clientIP, {
+            count: suspiciousData.count + 1,
+            lastSeen: Date.now(),
+            blocked: suspiciousData.count >= 2 // Bloquer après 3 tentatives suspectes
+        });
+        
+        return res.status(400).json({ message: 'Soumission invalide.' });
+    }
+    
+    // 5. Vérifier le contenu pour spam
+    const allContent = Object.values(formData).join(' ') + ' ' + subject;
+    if (isSpamContent(allContent)) {
+        console.warn(`Contenu spam détecté depuis ${clientIP}`);
+        
+        // Marquer comme suspect
+        const suspiciousData = suspiciousIPs.get(clientIP) || { count: 0, lastSeen: 0 };
+        suspiciousIPs.set(clientIP, {
+            count: suspiciousData.count + 2, // Plus sévère pour spam
+            lastSeen: Date.now(),
+            blocked: true
+        });
+        
+        return res.status(400).json({ message: 'Contenu rejeté.' });
+    }
+    
+    // 6. Vérifier le User-Agent (bot detection basique)
+    if (!userAgent || userAgent.length < 10) {
+        console.warn(`User-Agent suspect: ${userAgent} depuis ${clientIP}`);
+        return res.status(400).json({ message: 'Client non autorisé.' });
+    }
+    
+    // Ajouter les locks
     emailLocks.add(emailSender);
+    recentSubmissions.push(Date.now());
+    ipLocks.set(clientIP, recentSubmissions);
 
     setTimeout(() => {
         emailLocks.delete(emailSender);

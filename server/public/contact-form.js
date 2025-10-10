@@ -4,6 +4,16 @@
     [wn-error-form]{
       display: none !important;
     }
+    /* Honeypot - champ caché pour piéger les bots */
+    .wn-honeypot {
+      position: absolute !important;
+      left: -9999px !important;
+      width: 1px !important;
+      height: 1px !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      tab-index: -1 !important;
+    }
   `;
   document.head.appendChild(styleElement);
 })();
@@ -12,9 +22,23 @@
 function initContactForm(apiEndpoint, apiKey, formElement, submitButtonSelector = '#contact_submit_button', triggerButtonSelector = '#contact_button') {
     // Fonction modifiée pour utiliser les éléments frères avec attributs wn-success-form et wn-error-form
     
+    // Variables anti-bot
+    let formLoadTime = Date.now();
+    const MIN_SUBMIT_TIME = 3000; // Minimum 3 secondes avant soumission
     
+    // Ajouter un champ honeypot si pas déjà présent
+    if (!formElement.querySelector('.wn-honeypot')) {
+        const honeypot = document.createElement('input');
+        honeypot.type = 'text';
+        honeypot.name = 'website';
+        honeypot.className = 'wn-honeypot';
+        honeypot.tabIndex = -1;
+        honeypot.autocomplete = 'off';
+        honeypot.setAttribute('aria-hidden', 'true');
+        formElement.appendChild(honeypot);
+    }
     
-    async function sendEmail(emailSender, subject, html) {
+    async function sendEmail(emailSender, subject, html, formData) {
         // Trouver les éléments de succès et d'erreur (frères du formulaire)
         const parentElement = formElement.parentNode;
         const successElement = parentElement.querySelector('[wn-success-form]');
@@ -38,6 +62,9 @@ function initContactForm(apiEndpoint, apiKey, formElement, submitButtonSelector 
             btn.innerHTML = '<span class="loader"></span> Envoi en cours...';
         });
 
+        // Calculer le temps écoulé depuis le chargement du formulaire
+        const submitTime = Date.now() - formLoadTime;
+        
         const queryParams = new URLSearchParams({
             apiKey: apiKey,
             emailSender: emailSender,
@@ -55,7 +82,11 @@ function initContactForm(apiEndpoint, apiKey, formElement, submitButtonSelector 
                     apiKey: apiKey,
                     emailSender: emailSender,
                     subject: subject,
-                    html: html
+                    html: html,
+                    formData: formData,
+                    submitTime: submitTime,
+                    userAgent: navigator.userAgent,
+                    timestamp: Date.now()
                 })
             });
     
@@ -106,6 +137,29 @@ function initContactForm(apiEndpoint, apiKey, formElement, submitButtonSelector 
         formElement.addEventListener("submit", function (event) {
             event.preventDefault();
             
+            // === PROTECTIONS ANTI-BOT ===
+            
+            // 1. Vérifier le honeypot (si rempli = bot)
+            const honeypot = formElement.querySelector('.wn-honeypot');
+            if (honeypot && honeypot.value !== '') {
+                console.warn('Bot détecté: honeypot rempli');
+                // Ne rien afficher, juste ignorer silencieusement
+                return;
+            }
+            
+            // 2. Vérifier le temps minimum de soumission
+            const submitTime = Date.now() - formLoadTime;
+            if (submitTime < MIN_SUBMIT_TIME) {
+                const parentElement = formElement.parentNode;
+                const errorElement = parentElement.querySelector('[wn-error-form]');
+                if (errorElement) {
+                    errorElement.textContent = 'Veuillez prendre le temps de remplir le formulaire.';
+                    errorElement.style.display = 'block';
+                }
+                console.warn('Bot détecté: soumission trop rapide', submitTime, 'ms');
+                return;
+            }
+            
             // Collecte des champs avec attribut wn-element-form
             const formFields = formElement.querySelectorAll('[wn-element-form]');
             const formData = {};
@@ -147,6 +201,51 @@ function initContactForm(apiEndpoint, apiKey, formElement, submitButtonSelector 
                     }
                 }
             });
+            
+            // 3. Validation des patterns spam
+            const spamPatterns = [
+                /viagra|cialis|pharmacy|casino|poker|lottery|winner|prize/i,
+                /(http:\/\/|https:\/\/|www\.)[^\s]{50,}/g, // URLs très longues
+                /(.)\1{10,}/g, // Caractères répétés (ex: aaaaaaaaaaa)
+                /<script|<iframe|javascript:/i, // Tentatives XSS
+            ];
+            
+            let isSpam = false;
+            Object.values(formData).forEach(value => {
+                if (typeof value === 'string') {
+                    spamPatterns.forEach(pattern => {
+                        if (pattern.test(value)) {
+                            isSpam = true;
+                        }
+                    });
+                }
+            });
+            
+            if (isSpam) {
+                console.warn('Spam détecté: contenu suspect');
+                const parentElement = formElement.parentNode;
+                const errorElement = parentElement.querySelector('[wn-error-form]');
+                if (errorElement) {
+                    errorElement.textContent = 'Le contenu du message a été rejeté.';
+                    errorElement.style.display = 'block';
+                }
+                return;
+            }
+            
+            // 4. Vérifier que les champs obligatoires ne sont pas juste des espaces
+            let hasEmptyRequired = false;
+            formFields.forEach(field => {
+                if (field.required && typeof field.value === 'string') {
+                    if (field.value.trim() === '') {
+                        hasEmptyRequired = true;
+                    }
+                }
+            });
+            
+            if (hasEmptyRequired) {
+                console.warn('Champs obligatoires vides ou contenant uniquement des espaces');
+                return;
+            }
             
             // Construire le message HTML avec un template moderne
             let messageContent = `
@@ -242,8 +341,8 @@ function initContactForm(apiEndpoint, apiKey, formElement, submitButtonSelector 
                 subject = 'Message de ' + formData.nom;
             }
             
-            // Envoyer l'email
-            sendEmail(senderEmail || 'contact@example.com', subject, messageContent);
+            // Envoyer l'email avec les données pour validation côté serveur
+            sendEmail(senderEmail || 'contact@example.com', subject, messageContent, formData);
         });
     }
 }

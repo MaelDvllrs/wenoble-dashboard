@@ -46,11 +46,66 @@ router.get('/getUserInfoBasic', authenticateToken, async (req, res) => {
     if (authError) throw authError;
 
     // 2. Récupérer les informations complémentaires depuis public.users
-    const { data: userData, error: userError } = await supabase
+    let userData = null;
+    let userError = null;
+    
+    const userResult = await supabase
       .from('users')
       .select('username, first_name, last_name')
       .eq('id', userId)
-      .single();
+      .maybeSingle(); // Utiliser maybeSingle() au lieu de single() pour gérer les nouveaux utilisateurs
+    
+    userData = userResult.data;
+    userError = userResult.error;
+    
+    // Si l'utilisateur n'existe pas encore dans public.users (nouveau compte OAuth),
+    // attendre 2 secondes pour le trigger et réessayer
+    if (!userData && !userError) {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      const userRetry = await supabase
+        .from('users')
+        .select('username, first_name, last_name')
+        .eq('id', userId)
+        .maybeSingle();
+      
+      userData = userRetry.data;
+      userError = userRetry.error;
+      
+      if (!userData && !userError) {
+        // Créer un enregistrement minimal si le trigger a échoué
+        // Extraire le fullName depuis les métadonnées OAuth si disponible
+        const fullName = authUser.user.user_metadata?.full_name || 
+                        authUser.user.user_metadata?.name ||
+                        (authUser.user.user_metadata?.given_name && authUser.user.user_metadata?.family_name 
+                          ? `${authUser.user.user_metadata.given_name} ${authUser.user.user_metadata.family_name}`
+                          : null);
+        
+        // Générer un username depuis le fullName ou utiliser l'email en dernier recours
+        const username = fullName 
+          ? fullName.replace(/\s+/g, '').toLowerCase() 
+          : authUser.user.email.split('@')[0];
+        
+        const insertResult = await supabase
+          .from('users')
+          .insert({ 
+            id: userId, 
+            email: authUser.user.email,
+            username: username,
+            first_name: authUser.user.user_metadata?.given_name || '',
+            last_name: authUser.user.user_metadata?.family_name || ''
+          })
+          .select()
+          .single();
+        
+        if (insertResult.error) {
+          console.error('Erreur création utilisateur:', insertResult.error);
+          throw insertResult.error;
+        }
+        
+        userData = insertResult.data;
+      }
+    }
     
     if (userError) throw userError;
     
@@ -312,6 +367,203 @@ router.post('/uploadProfileImage', authenticateToken, upload.single('image'), as
     res.status(500).json({ 
       success: false,
       error: `Erreur serveur lors de l'upload de l'image: ${error.message}` 
+    });
+  }
+});
+
+// Route pour synchroniser l'avatar depuis OAuth (Google, etc.)
+router.post('/sync-oauth-avatar', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.idUser;
+    const { avatarUrl } = req.body;
+    const token = req.headers['authorization']?.split(' ')[1];
+    const supabase = supabaseServer(token);
+
+    if (!avatarUrl) {
+      return res.status(400).json({ error: 'URL de l\'avatar manquante' });
+    }
+
+    // Vérifier que l'utilisateur existe dans la table users
+    const { data: userExists, error: userCheckError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('id', userId)
+      .maybeSingle();
+    
+    if (userCheckError) {
+      console.error('Erreur vérification utilisateur:', userCheckError);
+    }
+    
+    if (!userExists) {
+      // Attendre que le trigger de création d'utilisateur soit exécuté
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Réessayer
+      const { data: userRetry } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', userId)
+        .maybeSingle();
+      
+      if (!userRetry) {
+        return res.status(404).json({ 
+          success: false,
+          error: 'Utilisateur non trouvé dans la base de données. Veuillez réessayer.' 
+        });
+      }
+    }
+
+    // Télécharger l'image depuis l'URL Google
+    const https = require('https');
+    const http = require('http');
+    const { URL } = require('url');
+    
+    const downloadImage = (url) => {
+      return new Promise((resolve, reject) => {
+        try {
+          const urlObj = new URL(url);
+          const client = urlObj.protocol === 'https:' ? https : http;
+          
+          const request = client.get(url, (response) => {
+            // Gérer les redirections
+            if (response.statusCode === 301 || response.statusCode === 302) {
+              const redirectUrl = response.headers.location;
+              return downloadImage(redirectUrl).then(resolve).catch(reject);
+            }
+            
+            if (response.statusCode !== 200) {
+              reject(new Error(`Failed to download image: ${response.statusCode}`));
+              return;
+            }
+            
+            const chunks = [];
+            response.on('data', (chunk) => chunks.push(chunk));
+            response.on('end', () => {
+              const buffer = Buffer.concat(chunks);
+              resolve(buffer);
+            });
+            response.on('error', reject);
+          });
+          
+          request.on('error', reject);
+          request.setTimeout(10000, () => {
+            request.destroy();
+            reject(new Error('Download timeout'));
+          });
+        } catch (error) {
+          reject(error);
+        }
+      });
+    };
+
+    let imageBuffer;
+    try {
+      imageBuffer = await downloadImage(avatarUrl);
+    } catch (downloadError) {
+      console.error('Erreur lors du téléchargement de l\'avatar:', downloadError);
+      return res.status(400).json({ 
+        success: false,
+        error: 'Impossible de télécharger l\'avatar depuis l\'URL fournie: ' + downloadError.message 
+      });
+    }
+    
+    // Supprimer l'ancienne image s'il y en a une
+    const { data: oldImage } = await supabase
+      .from('profile_images')
+      .select('src_profile_image')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (oldImage?.src_profile_image) {
+      const oldFileName = oldImage.src_profile_image;
+      await supabase.storage
+        .from('profile-image')
+        .remove([oldFileName]);
+    }
+
+    // Générer un nom de fichier unique
+    const fileExtension = 'jpg'; // Les avatars Google sont généralement en JPG
+    const fileName = `${userId}_${Date.now()}.${fileExtension}`;
+
+    // Upload vers Supabase Storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('profile-image')
+      .upload(fileName, imageBuffer, {
+        contentType: 'image/jpeg',
+        upsert: false
+      });
+
+    if (uploadError) {
+      console.error('Erreur upload Supabase Storage:', uploadError);
+      return res.status(500).json({ 
+        success: false,
+        error: 'Erreur lors de l\'upload de l\'avatar: ' + uploadError.message 
+      });
+    }
+
+    // Vérifier si l'utilisateur a déjà une image de profil
+    const { data: existingImage, error: selectError } = await supabase
+      .from('profile_images')
+      .select('id')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (selectError) {
+      console.error('Erreur vérification image:', selectError);
+    }
+
+    let dbData, dbError;
+    
+    if (existingImage) {
+      // Mettre à jour l'enregistrement existant
+      const result = await supabase
+        .from('profile_images')
+        .update({
+          src_profile_image: fileName,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', userId)
+        .select();
+      
+      dbData = result.data;
+      dbError = result.error;
+    } else {
+      // Créer un nouvel enregistrement
+      const result = await supabase
+        .from('profile_images')
+        .insert({
+          user_id: userId,
+          src_profile_image: fileName
+        })
+        .select();
+      
+      dbData = result.data;
+      dbError = result.error;
+    }
+
+    if (dbError) {
+      console.error('Erreur enregistrement avatar:', dbError);
+      
+      // Tenter de supprimer le fichier uploadé
+      await supabase.storage.from('profile-image').remove([fileName]);
+      
+      return res.status(500).json({ 
+        success: false,
+        error: 'Erreur lors de l\'enregistrement de l\'avatar: ' + dbError.message 
+      });
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'Avatar synchronisé avec succès',
+      filename: fileName
+    });
+
+  } catch (error) {
+    console.error('Erreur sync avatar OAuth:', error);
+    res.status(500).json({ 
+      success: false,
+      error: `Erreur lors de la synchronisation de l'avatar: ${error.message}` 
     });
   }
 });

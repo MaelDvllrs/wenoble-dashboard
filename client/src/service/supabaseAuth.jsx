@@ -128,7 +128,7 @@ export const signInWithGoogle = async () => {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${window.location.origin}/oauth-callback`, // Redirection après authentification
+      redirectTo: window.location.origin,
       queryParams: {
         access_type: 'offline',
         prompt: 'consent',
@@ -154,6 +154,38 @@ export const getCurrentSession = async () => {
 export const getCurrentUser = async () => {
   const { data: { user } } = await supabase.auth.getUser();
   return user;
+};
+
+// Extraire les informations OAuth de l'utilisateur
+export const extractOAuthUserData = (user) => {
+  if (!user) return null;
+  
+  // Google OAuth fournit ces métadonnées
+  const metadata = user.user_metadata || {};
+  
+  // Extraire le nom complet
+  const fullName = metadata.full_name || metadata.name || '';
+  
+  // Si given_name et family_name ne sont pas fournis, les extraire du full_name
+  let firstName = metadata.given_name || '';
+  let lastName = metadata.family_name || '';
+  
+  if (!firstName && !lastName && fullName) {
+    const nameParts = fullName.trim().split(/\s+/);
+    if (nameParts.length > 0) {
+      firstName = nameParts[0];
+      lastName = nameParts.slice(1).join(' '); // Le reste = nom de famille
+    }
+  }
+  
+  return {
+    email: user.email,
+    fullName: fullName,
+    firstName: firstName,
+    lastName: lastName,
+    avatarUrl: metadata.avatar_url || metadata.picture || '',
+    provider: user.app_metadata?.provider || 'email',
+  };
 };
 
 // --- Persistence & Sync Cookie -> Access Token Rotation ---
