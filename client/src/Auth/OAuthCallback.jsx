@@ -26,6 +26,8 @@ const OAuthCallback = () => {
                     return;
                 }
 
+                console.log(data.session)
+
                 if (data.session) {
                     const user = data.session.user;
 
@@ -37,6 +39,7 @@ const OAuthCallback = () => {
                         const response = await Axios.get(`${config.apiUrl}/user/profile`, {
                             headers: { Authorization: `Bearer ${data.session.access_token}` }
                         });
+
                         
                         // Mettre à jour le profil avec les dernières infos OAuth si nécessaire
                         if (oauthData.firstName || oauthData.lastName || oauthData.fullName || oauthData.avatarUrl) {
