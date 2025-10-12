@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import Axios from '../service/AxiosConfig';
 import { useTheme } from '@mui/material/styles';
 
-import { signUpWithEmail } from '../service/supabaseAuth';
+import { signUpWithEmail, signInWithGoogle } from '../service/supabaseAuth';
 
 // Internal imports
 import './Login.css';
@@ -99,6 +99,18 @@ const Register = () => {
         }
     };
 
+    // Fonction pour gérer l'inscription Google
+    const handleGoogleSignUp = async () => {
+        try {
+            await signInWithGoogle();
+            // La redirection vers Google se fait automatiquement
+            // Après authentification, l'utilisateur sera redirigé vers /oauth-callback
+        } catch (error) {
+            console.error('Erreur lors de l\'inscription Google:', error);
+            setStatusHolder('showMessage');
+        }
+    };
+
     // JSX
     return (
         <div className="loginPage">
@@ -181,7 +193,7 @@ const Register = () => {
                             <button
                                 type="button"
                                 className="oauthButton oauthGoogle"
-                                onClick={() => window.location.href = `${config.supabaseUrl}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(window.location.origin + '/oauth-callback')}`}
+                                onClick={handleGoogleSignUp}
                             >
                                 <img src="https://upload.wikimedia.org/wikipedia/commons/2/2d/Google-favicon-2015.png" alt="Google" className="oauthIcon" />
                                 S'inscrire avec Google
