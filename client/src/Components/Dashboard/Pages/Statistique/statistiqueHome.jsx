@@ -12,7 +12,7 @@ const StatistiqueHome = () => {
   const theme = useTheme();
 
   return (
-    <div className="outlet">
+    <div className="outlet-box">
       <div className="title_section">
         <div className="breadCrumbs">
           <NavLink 
@@ -31,7 +31,7 @@ const StatistiqueHome = () => {
       <div className="modification_page_contain">
         <div className="modification_link_contain statistique_contain">
             <NavLink
-              to={'/dashboard/stats/analytics'}
+              to={'/dashboard/website/stats/analytics'}
               className="modification_box"
               style={{backgroundColor : theme.palette.primary.secondary, boxShadow: theme.palette.shadow.main}}
             >
@@ -46,7 +46,7 @@ const StatistiqueHome = () => {
                   Suivez les statistiques de visites, les sources de trafic et les pages vues de votre site.
                 </div>
             </NavLink>
-            <NavLink to={'/dashboard/stats/search-console'} className="modification_box" style={{backgroundColor : theme.palette.primary.secondary, boxShadow: theme.palette.shadow.main}}>
+            <NavLink to={'/dashboard/website/stats/search-console'} className="modification_box" style={{backgroundColor : theme.palette.primary.secondary, boxShadow: theme.palette.shadow.main}}>
                 <div className="modification_title_box" style={{color: theme.palette.text.primary}}>
                   <div className="modification_title">
                     <HiSearch className="icon_modifiaction_title" />

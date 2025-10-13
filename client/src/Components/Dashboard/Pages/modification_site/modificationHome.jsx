@@ -319,7 +319,7 @@ const bgStyle = surfaceGradient
 
 
 return(
-    <div className="outlet">
+    <div className="outlet-box">
         {/* Section titre avec breadcrumb */}
         <div className="title_section">
             <div className="breadCrumbs">
@@ -364,7 +364,7 @@ return(
           
           <div className="modification_page_contain">
               <div ref={containerRef} className="modification_link_contain">
-                  <NavLink to={authPortfolio === true ? '/dashboard/modification/portfolio' : '#'}  className="modification_box" ref={portfolioContainerRef} style={{ ...bgStyle, boxShadow: theme.palette.shadow.main }}>
+                  <NavLink to={authPortfolio === true ? '/dashboard/website/modification/portfolio' : '#'}  className="modification_box" ref={portfolioContainerRef} style={{ ...bgStyle, boxShadow: theme.palette.shadow.main }}>
                       <div className="modification_title_box" style={{color: theme.palette.text.primary}}>
                           <div className="modification_title"><MdImportContacts  className="icon_modifiaction_title"/>
                             <b>Portfolio</b>
@@ -448,7 +448,7 @@ return(
                           </div>
                       </div>
                   </NavLink>
-                  <NavLink to={authPage === true ? '/dashboard/modification/page' : '#'} className="modification_box" ref={pageContainerRef} style={{ ...bgStyle, boxShadow: theme.palette.shadow.main }}>
+                  <NavLink to={authPage === true ? '/dashboard/website/modification/page' : '#'} className="modification_box" ref={pageContainerRef} style={{ ...bgStyle, boxShadow: theme.palette.shadow.main }}>
                       <div className="modification_title_box" style={{color: theme.palette.text.primary}}>
                         <div className="modification_title">
                           <FaElementor  className="icon_modifiaction_title"/>
@@ -473,7 +473,7 @@ return(
                         <img src={sphere_page} alt="shere page" className="shere_page" />                          
                       </div>
                   </NavLink>
-                  <NavLink to={authBlog === true ? '/dashboard/modification/collection' : '#'} className="modification_box box_blog" ref={iconContainerRef} style={{ ...bgStyle, boxShadow: theme.palette.shadow.main }}>
+                  <NavLink to={authBlog === true ? '/dashboard/website/modification/collection' : '#'} className="modification_box box_blog" ref={iconContainerRef} style={{ ...bgStyle, boxShadow: theme.palette.shadow.main }}>
                       <div className="modification_title_box" style={{color: theme.palette.text.primary}}>
                         <div className="modification_title"><RiDatabase2Fill className="icon_modifiaction_title"/><b>CMS</b>
                         {

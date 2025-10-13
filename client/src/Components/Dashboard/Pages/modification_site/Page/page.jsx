@@ -61,7 +61,7 @@ const Page = () => {
     }, [Infopage, initialNavigationDone, navigate]);
 
     return(
-        <div className="outlet">
+        <div className="outlet-box">
             <div className="title_section">
             <div className="breadCrumbs"><NavLink style={{color: theme.palette.text.primary}} className={"breadCrumbsLink"} to={'/dashboard/home'}>Dashboard</NavLink> &gt; <NavLink style={{color: theme.palette.text.primary}} className={"breadCrumbsLink"} to={'/dashboard/modification'}>Modification</NavLink> &gt; Page</div>
             </div>

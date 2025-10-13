@@ -158,7 +158,7 @@ const ContactList = () => {
 
 
     return(
-        <div className="outlet">
+        <div className="outlet-box">
             {/* Section titre avec breadcrumb */}
             <div className="title_section">
                 <div className="breadCrumbs">
@@ -209,7 +209,7 @@ const ContactList = () => {
                               sx={{
                                 height:'2rem'
                               }}
-                              onClick={() => navigate('/dashboard/contact/settings')}
+                              onClick={() => navigate('/dashboard/website/contact/settings')}
                             >
                                 <PiGearSixBold/>
                             </SecondaryButton>

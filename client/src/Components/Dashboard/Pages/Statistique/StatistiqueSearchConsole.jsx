@@ -13,7 +13,7 @@ const StatistiqueSearchConsole = () => {
 
 
     return(
-        <div className="outlet">
+        <div className="outlet-box">
             <div className="title_section">
                 <div className="breadCrumbs">
                     <NavLink 

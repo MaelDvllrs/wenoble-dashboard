@@ -17,9 +17,9 @@
 .account-sidebar-link{
     font-size: 0.87rem;
     color: var(--color-text-secondary);
-    font-weight: 600;
     padding: 0.4rem 0.8rem;
     border-radius: 0.5rem;
+    font-weight: 500;
     transition: background-color 200ms ease;
     transition: color 200ms ease;
     display: flex;
@@ -34,6 +34,7 @@
 .account-sidebar-link-active{
   background-color: var(--color-primary-third);
   color: var(--color-text-primary);
+  font-weight: 600;
 }
 
 .account-setting-title{

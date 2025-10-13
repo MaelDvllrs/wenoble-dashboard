@@ -171,7 +171,7 @@ const ContactSettings = () => {
 
   if (!selectedWebsite && !websiteLoading) {
     return (
-      <div className="outlet">
+      <div className="outlet-box">
         <div className="dashboard_case_empty edit-case_empty">
           <div className="empty_state">
             <h3 style={{ color: theme.palette.text.secondary }}>
@@ -187,7 +187,7 @@ const ContactSettings = () => {
   }
 
   return (
-    <div className="outlet">
+    <div className="outlet-box">
       {/* Section titre avec breadcrumb */}
       <div className="title_section">
         <div className="breadCrumbs">

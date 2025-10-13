@@ -40,7 +40,7 @@ const StatusBadge = ({ label, active }) => {
 
 const EditWebsite = () => {
   const theme = useTheme();
-  const { id } = useParams();
+  const { websiteId } = useParams();
   const navigate = useNavigate();
   const token = Cookies.get('token');
   const apiUrl = config.apiUrl;
@@ -88,8 +88,8 @@ const EditWebsite = () => {
 
   // Charger les données du site web
   useEffect(() => {
-    if (websites && id) {
-      const currentWebsite = websites.find(w => w.id === id);
+    if (websites && websiteId) {
+      const currentWebsite = websites.find(w => w.id === websiteId);
       if (currentWebsite) {
         setWebsite(currentWebsite);
         setWebsiteData({
@@ -104,7 +104,7 @@ const EditWebsite = () => {
         setInitialLoading(false);
       }
     }
-  }, [websites, id]);
+  }, [websites, websiteId]);
 
   // Recharger les membres disponibles quand les utilisateurs changent
   useEffect(() => {
@@ -116,7 +116,7 @@ const EditWebsite = () => {
   // Charger les features du site web
   const loadWebsiteFeatures = async () => {
     try {
-      const response = await Axios.get(`${apiUrl}/getFeaturesWebsite?websiteId=${id}`, {
+      const response = await Axios.get(`${apiUrl}/getFeaturesWebsite?websiteId=${websiteId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -132,7 +132,7 @@ const EditWebsite = () => {
   // Charger les utilisateurs du site web
   const loadWebsiteUsers = async () => {
     try {
-      const response = await Axios.get(`${apiUrl}/getUsersWebsite?websiteId=${id}`, {
+      const response = await Axios.get(`${apiUrl}/getUsersWebsite?websiteId=${websiteId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -198,7 +198,7 @@ const EditWebsite = () => {
   const handleSaveFeatures = async () => {
     setLoading(true);
     try {
-      await Axios.put(`${apiUrl}/website-features/${id}`, 
+      await Axios.put(`${apiUrl}/website-features/${websiteId}`, 
         { features },
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
@@ -206,7 +206,7 @@ const EditWebsite = () => {
       showSnackbar('Fonctionnalités mises à jour avec succès', 'success');
     } catch (error) {
       const errorMessage = error.response?.data?.error || 'Erreur lors de la mise à jour des fonctionnalités';
-      showSnackbar(errorMessage, 'error');
+      showSnackbar('error', errorMessage);
     }
     setLoading(false);
   };
@@ -321,7 +321,7 @@ const EditWebsite = () => {
   // Vérifier les permissions - seuls les admins peuvent accéder aux paramètres
   if (website.user_role !== 'admin') {
     return (
-      <div className="outlet">
+      <div className="outlet-box">
         <div className="title_section">
           <div className="breadCrumbs">
             <NavLink 
@@ -369,7 +369,7 @@ const EditWebsite = () => {
   }
 
   return (
-    <div className="outlet">
+    <div className="outlet-box">
       {/* Section titre avec breadcrumb */}
       <div className="title_section">
         <div className="breadCrumbs">
@@ -689,7 +689,7 @@ const EditWebsite = () => {
               {/* Gestion des tokens API */}
 
               <div className="input-container" style={{ padding: 0 }}>
-                <APITokensManager websiteId={id} />
+                <APITokensManager websiteId={websiteId} />
               </div>
 
               <div className="line_horizontal is_big_margin" style={{backgroundColor: theme.palette.primary.third}}></div>

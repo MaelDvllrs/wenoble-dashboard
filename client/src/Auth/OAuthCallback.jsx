@@ -4,6 +4,7 @@ import { supabase, extractOAuthUserData } from '../service/supabaseAuth';
 import Axios from '../service/AxiosConfig';
 import config from '../config';
 import { useTheme } from '@mui/material/styles';
+import CircularProgress from '@mui/material/CircularProgress';
 import { GlobeComponent } from './globeComponent';
 import './Login.css';
 
@@ -168,7 +169,7 @@ const OAuthCallback = () => {
                             </p>
                         </div>
                         <div style={{ textAlign: 'center', padding: '2rem' }}>
-                            <div className="loading-spinner"></div>
+                            <CircularProgress size={60} sx={{ color: theme.palette.colors.verPrimary }} />
                         </div>
                     </div>
                 </div>

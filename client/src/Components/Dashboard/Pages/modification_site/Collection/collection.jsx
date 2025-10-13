@@ -86,14 +86,14 @@ const Collection = () => {
             const decoded = jwtDecode(Infoblog);
             setDecodedBlog(decoded);
             if(decoded && decoded.blog.length > 0 && !initialNavigationDone) {
-                navigate('/dashboard/modification/collection/' + decoded.blog[0].id);
+                navigate('/dashboard/website/modification/collection/' + decoded.blog[0].id);
                 setInitialNavigationDone(true);
             }
         }
     }, [Infoblog, initialNavigationDone, navigate]);
 
     return(
-        <div className="outlet">
+        <div className="outlet-box">
             {/* Section titre avec breadcrumb */}
             <div className="title_section">
                 <div className="breadCrumbs">
