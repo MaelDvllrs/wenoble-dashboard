@@ -63,13 +63,6 @@ const CreateWebsite = () => {
     };
 
     const handleCreateWebsite = async () => {
-        console.log('Creating website with data:', {
-            websiteName,
-            websiteSlug,
-            websiteDescription,
-            selectedWorkspaceId,
-            visibility
-        });
         if (!websiteName.trim()) {
             showSnackbar('error', 'Le nom du site web est requis');
             return;

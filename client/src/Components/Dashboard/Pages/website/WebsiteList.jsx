@@ -64,7 +64,7 @@ const WebsiteList = () => {
 
 
   return (
-    <div className="outlet">
+    <div className="outlet-box">
       {/* Section titre avec breadcrumb */}
       <div className="title_section">
         <div className="breadCrumbs">

@@ -158,7 +158,7 @@ const ContactList = () => {
 
 
     return(
-        <div className="outlet">
+        <div className="outlet-box">
             {/* Section titre avec breadcrumb */}
             <div className="title_section">
                 <div className="breadCrumbs">
@@ -170,8 +170,16 @@ const ContactList = () => {
                         Dashboard
                     </NavLink>
                     <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
+                    <NavLink 
+                        className={'breadCrumbsLink'}
+                        to="/dashboard/website"
+                        style={{ textDecoration: 'none', color: 'inherit' }}
+                    >
+                        {selectedWebsite?.website_name || 'Site'}
+                    </NavLink>
+                    <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
                     <span className="breadcrumb-item-active" style={{ color: theme.palette.text.primary }}>
-                        Contact
+                        Contacts
                     </span>
                 </div>
             </div>
@@ -209,7 +217,7 @@ const ContactList = () => {
                               sx={{
                                 height:'2rem'
                               }}
-                              onClick={() => navigate('/dashboard/contact/settings')}
+                              onClick={() => navigate('/dashboard/website/contact/settings')}
                             >
                                 <PiGearSixBold/>
                             </SecondaryButton>

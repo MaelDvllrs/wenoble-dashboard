@@ -34,7 +34,6 @@ const ContactMessage = () => {
     useEffect(() => {
         const fetchMessageDetail = async () => {
             if (!selectedWebsite?.id || websiteLoading || !id) {
-                console.log('Site web non sélectionné, en cours de chargement, ou ID de message manquant');
                 return;
             }
 
@@ -79,7 +78,7 @@ const ContactMessage = () => {
 
 
     return(
-        <div className="outlet">
+        <div className="outlet-box">
             <div className="title_section">
             <div className="breadCrumbs"><NavLink style={{color: theme.palette.text.primary}} className={"breadCrumbsLink"} to={'/dashboard/home'}>Dashboard</NavLink> &gt; <NavLink style={{color: theme.palette.text.primary}} className={"breadCrumbsLink"} to={'/dashboard/contact'}>Contact</NavLink> &gt; Message</div>
             </div>

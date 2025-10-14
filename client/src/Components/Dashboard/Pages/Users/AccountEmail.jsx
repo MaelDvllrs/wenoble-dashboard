@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { NavLink } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import { DefaultButton, SecondaryButton } from '../../../../Theme/element';
 import { useSnackbar } from '../../../../Theme/snackbar';
@@ -77,10 +78,8 @@ const AccountEmail = () => {
     setLoading(true);
     
     try {
-      console.log('Changement d\'email de', currentEmail, 'vers', newEmail);
       
       const result = await changeEmail(newEmail, currentPassword);
-      console.log('Résultat changement email:', result);
       
       // Mettre à jour les états
       setPendingEmail(newEmail);
@@ -116,6 +115,32 @@ const AccountEmail = () => {
   };
 
   return (
+    <div className='outlet-box'>
+      {/* Breadcrumbs */}
+      <div className="title_section">
+        <div className="breadCrumbs">
+          <NavLink 
+            className={'breadCrumbsLink'}
+            to="/dashboard/home"
+            style={{ textDecoration: 'none', color: 'inherit' }}
+          >
+            Dashboard
+          </NavLink>
+          <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
+          <NavLink 
+            className={'breadCrumbsLink'}
+            to="/dashboard/account/general"
+            style={{ textDecoration: 'none', color: 'inherit' }}
+          >
+            Mon Compte
+          </NavLink>
+          <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
+          <span className="breadcrumb-item-active" style={{ color: theme.palette.text.primary }}>
+            Email & Notifications
+          </span>
+        </div>
+      </div>
+
     <div className='email-form'>
       <div className='profile-form-row' style={{ backgroundColor: theme.palette.primary.main, boxShadow: theme.palette.shadow.main }}>
         <h3 className='titlePage'>Email & Notifications</h3>
@@ -271,6 +296,7 @@ const AccountEmail = () => {
           </div>
         )}
       </div>
+    </div>
     </div>
   );
 };

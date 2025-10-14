@@ -1,4 +1,5 @@
 import React, { useContext, useState, useEffect } from 'react';
+import { NavLink } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import ThemeContext from '../../../../Theme/themeContext';
 import { DefaultButton, SelectField } from '../../../../Theme/element';
@@ -106,6 +107,32 @@ const SettingsGeneral = () => {
   };
 
   return (
+    <div className='outlet-box'>
+      {/* Breadcrumbs */}
+      <div className="title_section">
+        <div className="breadCrumbs">
+          <NavLink 
+            className={'breadCrumbsLink'}
+            to="/dashboard/home"
+            style={{ textDecoration: 'none', color: 'inherit' }}
+          >
+            Dashboard
+          </NavLink>
+          <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
+          <NavLink 
+            className={'breadCrumbsLink'}
+            to="/dashboard/settings/general"
+            style={{ textDecoration: 'none', color: 'inherit' }}
+          >
+            Paramètres
+          </NavLink>
+          <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
+          <span className="breadcrumb-item-active" style={{ color: theme.palette.text.primary }}>
+            Paramètres généraux
+          </span>
+        </div>
+      </div>
+
     <div className='security-form'>
       <div className='profile-form-row' style={{ backgroundColor: theme.palette.primary.main, boxShadow: theme.palette.shadow.main }}>
         <h3 className='titlePage'>Paramètres généraux</h3>
@@ -164,6 +191,7 @@ const SettingsGeneral = () => {
           </DefaultButton>
         </div>
       </div>
+    </div>
     </div>
   );
 };

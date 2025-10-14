@@ -42,7 +42,6 @@ const Collection = () => {
     const loadCollections = () => {
         // Vérifier qu'un site web est sélectionné
         if (!selectedWebsite) {
-            console.log('Aucun site web sélectionné');
             return;
         }
 
@@ -86,14 +85,14 @@ const Collection = () => {
             const decoded = jwtDecode(Infoblog);
             setDecodedBlog(decoded);
             if(decoded && decoded.blog.length > 0 && !initialNavigationDone) {
-                navigate('/dashboard/modification/collection/' + decoded.blog[0].id);
+                navigate('/dashboard/website/modification/collection/' + decoded.blog[0].id);
                 setInitialNavigationDone(true);
             }
         }
     }, [Infoblog, initialNavigationDone, navigate]);
 
     return(
-        <div className="outlet">
+        <div className="outlet-box">
             {/* Section titre avec breadcrumb */}
             <div className="title_section">
                 <div className="breadCrumbs">
@@ -107,14 +106,22 @@ const Collection = () => {
                     <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
                     <NavLink 
                         className={'breadCrumbsLink'}
-                        to="/dashboard/modification"
+                        to="/dashboard/website"
                         style={{ textDecoration: 'none', color: 'inherit' }}
                     >
-                        Modification
+                        {selectedWebsite?.website_name || 'Site'}
+                    </NavLink>
+                    <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
+                    <NavLink 
+                        className={'breadCrumbsLink'}
+                        to="/dashboard/website/modification/"
+                        style={{ textDecoration: 'none', color: 'inherit' }}
+                    >
+                        Modifications
                     </NavLink>
                     <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
                     <span className="breadcrumb-item-active" style={{ color: theme.palette.text.primary }}>
-                        Cms
+                        CMS
                     </span>
                 </div>
             </div>
@@ -137,11 +144,11 @@ const Collection = () => {
                         ) : (
                             <>
                                 {decodedBlog && decodedBlog.blog.map((blogItem) => (
-                                    <NavLink to={'/dashboard/modification/collection/' + blogItem.id} className={({ isActive }) => `link_menu ${isActive ? ' link_menu_active' : ''}`} key={blogItem.id}>
+                                    <NavLink to={'/dashboard/website/modification/collection/' + blogItem.id} className={({ isActive }) => `link_menu ${isActive ? ' link_menu_active' : ''}`} key={blogItem.id}>
                                         <p style={{color: theme.palette.text.primary}}>{blogItem.collection_name}</p>
                                     </NavLink>
                                 ))}
-                                <NavLink to={'/dashboard/modification/collection/createCollection'} className='link_menu' key={'createCollection'}>
+                                <NavLink to={'/dashboard/website/modification/collection/createCollection'} className='link_menu' key={'createCollection'}>
                                     <AddIcon style={{color: theme.palette.text.primary}}/>
                                 </NavLink>
                             </>

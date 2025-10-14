@@ -65,7 +65,7 @@ const Dashboard = () => {
     const [notifRead, setNotifRead] = useState(false);
     // Sidebar mode: 'open' (always expanded), 'closed' (always collapsed), 'hover' (expand on hover)
     const [menuMode, setMenuMode] = useState(() => {
-        return localStorage.getItem('sidebarMode') || 'open';
+        return localStorage.getItem('sidebarMode') || 'hover';
     });
     const [hoveringSidebar, setHoveringSidebar] = useState(false);
     const isSidebarOpen = menuMode === 'open' || (menuMode === 'hover' && hoveringSidebar);
@@ -345,7 +345,6 @@ const Dashboard = () => {
     // Gestion du menu utilisateur
     const handleOpenUserMenu = (event) => {
         event.stopPropagation();
-        // Fermer les autres poppers avant d'ouvrir celui-ci
         setOpenWebsiteMenu(false);
         setOpenWorkspaceMenu(false);
         setOpenNotif(false);
@@ -656,141 +655,15 @@ const Dashboard = () => {
                 <motion.div 
                     className="menu_dashboard" 
                     animate={{width: isSidebarOpen ? "15rem" : "4rem"}} 
-                    style={{backgroundColor: theme.palette.primary.main, boxShadow : theme.palette.shadow.main}}
+                    style={{
+                        backgroundColor: theme.palette.primary.main, 
+                        boxShadow : theme.palette.shadow.main,
+                        position: menuMode === 'hover' ? 'absolute' : 'relative',
+                        zIndex: menuMode === 'hover' ? 50 : 'auto'
+                    }}
                     onMouseEnter={() => setHoveringSidebar(true)}
                     onMouseLeave={() => setHoveringSidebar(false)}
                 >
-                    {/* Sélecteur de site web */}
-                    <div className='website-selector'>
-                        <IconButton 
-                            className='website-selector-button'
-                            onClick={handleOpenWebsiteMenu} 
-                            ref={websiteMenuRef}
-                            sx={{ 
-                                color: theme.palette.text.primary, 
-                                padding: '0.5rem !important',
-                                display: 'flex !important',
-                                justifyContent: isSidebarOpen ? 'space-between !important' : 'center !important',
-                                width: isSidebarOpen ? '100% !important' : '2.3rem !important'
-                            }}
-                            disabled={loadingWebsites}
-                        >
-                            
-                        {loadingWebsites ? (
-                            <SkeletonFullSelector />
-                        ) : (
-                            <>
-                                <LanguageIcon fontSize='small' style={{color: theme.palette.text.secondary}}/>
-                                { isSidebarOpen && (
-                                    <div className='website-info-button'>
-                                        <span className='website-selector-text'>
-                                            <b>{selectedWebsite ? selectedWebsite.website_name : 'Aucun site sélectionné'}</b>
-                                        </span>
-                                        {selectedWebsite && (
-                                            <span className={`website-selector-role ${selectedWebsite.user_role}`}>
-                                                {selectedWebsite.user_role}
-                                            </span>
-                                        )}
-                                        <UnfoldMoreIcon fontSize='small' className='icon' style={{color: theme.palette.text.secondary}} />
-                                    </div>
-                                )}
-                                
-                            </>
-                        )}
-    
-                        </IconButton>
-                        
-                        <ClickAwayListener onClickAway={handleCloseWebsiteMenu}>
-                            <Popper 
-                                open={openWebsiteMenu} 
-                                anchorEl={websiteMenuRef.current} 
-                                transition 
-                                placement="bottom-start" 
-                                style={{zIndex: 100}}
-                            >
-                                {({ TransitionProps }) => (
-                                    <Grow {...TransitionProps} timeout={350}>
-                                        <div className='dashboard_case_empty user_menu_case' style={{
-                                            backgroundColor: theme.palette.primary.main, 
-                                            minWidth: '280px'
-                                        }}>
-                                            {/* En-tête avec infos site web */}
-                                            <div className='user_menu_header'>
-                                                <div className='user_info_section'>
-                                                    <div className='user_profile_info'>
-                                                        
-                                                        <div className='user_details'>
-                                                            <div className='user_name_large' style={{ color: theme.palette.text.primary }}>
-                                                                <b>Sites web</b>
-                                                            </div>
-                                                            
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <SimpleSearchField
-                                                theme={theme}
-                                                placeholder="Rechercher un site..."
-                                                value={websiteSearch}
-                                                onChange={(e) => setWebsiteSearch(e.target.value)}
-                                                inputRef={websiteSearchInputRef}
-                                                style={{ width: '100%' }}
-                                            />
-                                            
-                                            <div className="line_horizontal" style={{ backgroundColor: theme.palette.primary.third }}></div>
-
-                                            {/* Liste des sites */}
-                                            <div className='user_menu_actions'>
-                                                {loadingWebsites ? (
-                                                    <SkeletonMenuList lines={4} />
-                                                ) : (filteredWebsites.length === 0) ? (
-                                                    <div className='user_action_item' style={{ color: theme.palette.text.secondary }}>
-                                                        Aucun site web trouvé
-                                                    </div>
-                                                ) : (
-                                                    filteredWebsites.map((website) => (
-                                                        <div
-                                                            key={website.id}
-                                                            className={`user_action_item ${selectedWebsite?.id === website.id ? 'selected' : ''}`}
-                                                            onClick={() => handleSelectWebsite(website)}
-                                                            style={{ color: theme.palette.text.primary }}
-                                                        >
-                                                            <div className='button-selector'>
-                                                                <div><b>{website.website_name}</b></div>
-                                                                <div style={{ color: theme.palette.text.secondary, fontSize: '0.8rem' }}>
-                                                                    {website.user_role}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    ))
-                                                )}
-                                            </div>
-                                            <div className="line_horizontal" style={{ backgroundColor: theme.palette.primary.third }}></div>
-                                                
-                                            {/* Actions */}
-                                            <div 
-                                                className='user_action_item'
-                                                onClick={handleCreateWebsite}
-                                                style={{ color: theme.palette.text.primary }}
-                                            >
-                                                <PiPlusBold className='action_icon' />
-                                                <span>Créer un nouveau site</span>
-                                            </div>
-                                            <div 
-                                                className='user_action_item'
-                                                onClick={handleWebsiteSettings}
-                                                style={{ color: theme.palette.text.primary }}
-                                            >
-                                                <PiGearSixBold className='action_icon' />
-                                                <span>Gérer les sites</span>
-                                            </div>
-                                        </div>
-                                    </Grow>
-                                )}
-                            </Popper>
-                        </ClickAwayListener>
-                    </div>
                     <div className='navigation'>
                         <NavLink key="home" to='/dashboard/home' className={({ isActive }) => (isActive ? 'menuDashboard menuActive' : 'menuDashboard')}>
                             <AnimatePresence initial={false}>
@@ -800,57 +673,13 @@ const Dashboard = () => {
                                 </motion.div>
                             </AnimatePresence>
                         </NavLink>
-                        <div className='line-sidebar'></div>
-                        <NavLink key="modification" to='/dashboard/modification' className={({ isActive }) => (isActive ? 'menuDashboard menuActive' : 'menuDashboard')}>
+                        <NavLink key="websites" to='/dashboard/website' className={({ isActive }) => (isActive ? 'menuDashboard menuActive' : 'menuDashboard')}>
                             <AnimatePresence initial={false}>
                                 <motion.div className={isSidebarOpen ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
-                                    <motion.div animate={{marginRight: isSidebarOpen ? "0.5rem" : "0rem"}} className='icon_navigation'><CreateOutlinedIcon fontSize='small'/></motion.div>
-                                    <motion.span className={isSidebarOpen ? "menu_text_open" : "menu_text_close"}>Modifications</motion.span>
+                                    <motion.div animate={{marginRight: isSidebarOpen ? "0.5rem" : "0rem"}} className='icon_navigation'><LanguageIcon fontSize='small'/></motion.div>
+                                    <motion.span className={isSidebarOpen ? "menu_text_open" : "menu_text_close"}>Sites Web</motion.span>
                                 </motion.div>
                             </AnimatePresence>
-                        </NavLink>
-                        <NavLink key="ecommerce" to={ecommAuth === true ? '/dashboard/ecommerce' : '#'} className={({ isActive, ecommAuth }) => (isActive, ecommAuth ? 'menuDashboard menuActive' : 'menuDashboard')}>
-                            <AnimatePresence initial={false}>
-                                <motion.div className={isSidebarOpen ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
-                                    <motion.div animate={{marginRight: isSidebarOpen ? "0.5rem" : "0rem"}} className='icon_navigation'><ShoppingCartOutlinedIcon fontSize='small'/></motion.div>
-                                    <motion.span className={isSidebarOpen ? "menu_text_open" : "menu_text_close"}>E-commerce</motion.span>
-                                    {
-                                        ecommAuth === true || isSidebarOpen === false ? (
-                                            null
-                                        ) : <motion.div animate={{marginRight: isSidebarOpen ? "1.5rem" : "0rem", marginLeft: isSidebarOpen ? "1rem" : "0.5rem"}} style={{color: theme.palette.text.secondary}} className='icon_navigation icon_lock'><PiLockBold /></motion.div>
-                                    }
-                                </motion.div>
-                            </AnimatePresence>
-                        </NavLink>
-                        <NavLink key="stats" to='/dashboard/stats' className={({ isActive }) => (isActive ? 'menuDashboard menuActive' : 'menuDashboard')}>
-                            <AnimatePresence initial={false}>
-                                <motion.div className={isSidebarOpen ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
-                                    <motion.div animate={{marginRight: isSidebarOpen ? "0.5rem" : "0rem"}} className='icon_navigation'><EqualizerOutlinedIcon fontSize='small'/></motion.div>
-                                    <motion.span className={isSidebarOpen ? "menu_text_open" : "menu_text_close"}>Statistiques</motion.span>
-                                </motion.div>
-                            </AnimatePresence>
-                        </NavLink>
-                        <NavLink key="contact" to='/dashboard/contact' className={({ isActive }) => (isActive ? 'menuDashboard menuActive' : 'menuDashboard')}>
-                            <AnimatePresence initial={false}>
-                                <motion.div className={isSidebarOpen ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
-                                    <motion.div animate={{marginRight: isSidebarOpen ? "0.5rem" : "0rem"}} className='icon_navigation'><PiChatCircleDotsBold  /></motion.div>
-                                    <motion.span className={isSidebarOpen ? "menu_text_open" : "menu_text_close"}>Contacts</motion.span>
-                                </motion.div>
-                            </AnimatePresence>
-                        </NavLink>
-                        <NavLink key="newsletter" to={newsAuth === true ? '/dashboard/newsletter' : '#'} className={({ isActive }) => (isActive && newsAuth === true ? 'menuDashboard menuActive' : 'menuDashboard')}>
-                            <AnimatePresence initial={false}>
-                                <motion.div className={isSidebarOpen ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
-                                    <motion.div animate={{marginRight: isSidebarOpen ? "0.5rem" : "0rem"}} className='icon_navigation'><NewspaperOutlinedIcon fontSize='small'/></motion.div>
-                                    <motion.span className={isSidebarOpen ? "menu_text_open" : "menu_text_close"}>Newsletter</motion.span>
-                                    {
-                                        newsAuth === true || isSidebarOpen === false ? (
-                                            null
-                                        ) : <motion.div animate={{marginRight: isSidebarOpen ? "1.5rem" : "0rem", marginLeft: isSidebarOpen ? "1rem" : "0.5rem"}} style={{color: theme.palette.text.secondary}} className='icon_navigation icon_lock'><PiLockBold /></motion.div>
-                                    }
-                                </motion.div>
-                            </AnimatePresence>
-
                         </NavLink>
                         <div className='line-sidebar'></div>
                         <NavLink key="actu" to='/dashboard/actu/' className={({ isActive }) => (isActive ? 'menuDashboard menuActive' : 'menuDashboard')}>
@@ -929,7 +758,15 @@ const Dashboard = () => {
                 </motion.div>
             </AnimatePresence>
             <AnimatePresence initial={false}>
-                <motion.div className='dashboard_page' animate={{width : isSidebarOpen ? "calc(100% - 15rem)" : "calc(100% - 4rem)"}}>
+                <motion.div 
+                    className='dashboard_page' 
+                    animate={{
+                        width: menuMode === 'hover' 
+                            ? "calc(100% - 4rem)" 
+                            : (isSidebarOpen ? "calc(100% - 15rem)" : "calc(100% - 4rem)"),
+                        marginLeft: menuMode === 'hover' ? "4rem" : "0"
+                    }}
+                >
                     <div className='dashboard_section principal'>
                         <Outlet />
                     </div>

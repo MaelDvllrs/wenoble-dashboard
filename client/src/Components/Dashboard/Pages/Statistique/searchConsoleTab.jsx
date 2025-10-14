@@ -58,7 +58,6 @@ export const SearchConsoleTab = () => {
   useEffect(() => {
     const fetchData = async () => {
       if (!selectedWebsite?.id) {
-        console.log('Aucun site web sélectionné');
         setLoading(false);
         setAllData([]);
         setTotalRows(0);

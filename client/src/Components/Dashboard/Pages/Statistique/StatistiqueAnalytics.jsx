@@ -1,6 +1,7 @@
 import React from "react"
 import {  NavLink } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
+import { useWebsite } from '../../../../Context/WebsiteContext';
 
 import { UserStatistique } from './userStatistique';
 import { EventStatistique } from "./eventStatistique";
@@ -15,10 +16,11 @@ import { SearchConsoleTab } from "./searchConsoleTab";
 const StatistiqueAnalytics = () => {
 
     const theme = useTheme();
+    const { selectedWebsite } = useWebsite();
 
 
     return(
-        <div className="outlet">
+        <div className="outlet-box">
             <div className="title_section">
                 <div className="breadCrumbs">
                     <NavLink 
@@ -31,7 +33,15 @@ const StatistiqueAnalytics = () => {
                     <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
                     <NavLink 
                         className={'breadCrumbsLink'}
-                        to="/dashboard/stats"
+                        to="/dashboard/website"
+                        style={{ textDecoration: 'none', color: 'inherit' }}
+                    >
+                        {selectedWebsite?.website_name || 'Site'}
+                    </NavLink>
+                    <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
+                    <NavLink 
+                        className={'breadCrumbsLink'}
+                        to="/dashboard/website/stats"
                         style={{ textDecoration: 'none', color: 'inherit' }}
                     >
                         Statistiques

@@ -858,7 +858,7 @@ const EditElementCollection = () => {
                                 </Tooltip>
                             )
                         }
-                        <SecondaryButton variant="contained" theme={theme} onClick={() => navigate(`/dashboard/modification/collection/${idCollection}`)} disabled={isPublishing || isSaving || isUnpublishing || isSavingDraft}>Annuler</SecondaryButton>
+                        <SecondaryButton variant="contained" theme={theme} onClick={() => navigate(`/dashboard/website/modification/collection/${idCollection}`)} disabled={isPublishing || isSaving || isUnpublishing || isSavingDraft}>Annuler</SecondaryButton>
                         {
                             DecodeBlog.blogPage[0].status === true ? (
                                 <DefaultButton 

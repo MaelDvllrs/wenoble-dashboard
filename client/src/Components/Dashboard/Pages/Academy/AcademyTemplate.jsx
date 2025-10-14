@@ -51,7 +51,6 @@ const AcademyTemplate = () => {
 
   const { info, content } = academyData;
   
-  console.log("Academy Template Content:", content);
   const categories = content.multiReference?.map(ref => ref.label) || [];
   const videoSource = `${config.urlBucketCollectionVideo}${content.video?.[0]?.src_video}`;
   const thumbnail = content.image?.[0]?.url;
@@ -64,10 +63,8 @@ const AcademyTemplate = () => {
   const richTextContent = content.richText?.[0]?.text_html || "";
 
 
-  console.log("Academy Template Data:", academyData);
-
   return (
-    <div className="outlet">
+    <div className="outlet-box">
       <div className="title_section">
         <div className="breadCrumbs">
           <NavLink

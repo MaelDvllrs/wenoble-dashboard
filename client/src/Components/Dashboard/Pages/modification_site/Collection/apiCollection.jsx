@@ -337,7 +337,6 @@ export const updateImageBlog = async (fields, blogPageId, token) => {
         formData.append('name', fields.name);
         formData.append('size', fields.size);
 
-        console.log('fields', fields);
 
         if (fields.create) {
             await Axios.post(`${apiUrl}/updateImageCollection`, formData, {

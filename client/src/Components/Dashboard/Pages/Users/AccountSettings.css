@@ -17,14 +17,15 @@
 .account-sidebar-link{
     font-size: 0.87rem;
     color: var(--color-text-secondary);
-    font-weight: 600;
     padding: 0.4rem 0.8rem;
     border-radius: 0.5rem;
+    font-weight: 500;
     transition: background-color 200ms ease;
     transition: color 200ms ease;
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    text-wrap: nowrap;
 }
 
 .account-sidebar-link:hover{
@@ -32,8 +33,9 @@
 }
 
 .account-sidebar-link-active{
-  background-color: var(--color-primary-third);
+  background-color: var(--color-secondary-third);
   color: var(--color-text-primary);
+  font-weight: 600;
 }
 
 .account-setting-title{

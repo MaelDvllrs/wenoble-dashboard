@@ -130,6 +130,39 @@ router.get('/getCollection', authenticateToken, async (req, res) => {
   }
 });
 
+// Récupérer le nombre de collections pour un site web
+router.get('/getCollectionCount', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.idUser;
+    const websiteId = req.query.websiteId;
+    const token = req.headers['authorization']?.split(' ')[1];
+    const supabase = supabaseServer(token);
+
+    if (!websiteId) {
+      return res.status(400).send({ error: 'websiteId est requis' });
+    }
+
+    // Vérifier l'accès de l'utilisateur au site web
+    const { hasAccess } = await checkUserWebsiteAccess(supabase, userId, websiteId);
+    if (!hasAccess) {
+      return res.status(403).send({ error: 'Vous n\'avez pas accès à ce site web' });
+    }
+
+    // Compter les collections du site web
+    const { count, error } = await supabase
+      .from('collection')
+      .select('*', { count: 'exact', head: true })
+      .eq('website_id', websiteId);
+    
+    if (error) throw error;
+    
+    res.send({ count: count || 0 });
+  } catch (error) {
+    console.error('Erreur lors de la récupération du nombre de collections:', error);
+    res.status(500).send({ error: error.message });
+  }
+});
+
 // Récupérer la liste des pages d'un blog
 router.get('/getListeCollection', authenticateToken, async (req, res) => {
   try {

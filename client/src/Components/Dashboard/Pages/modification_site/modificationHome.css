@@ -55,6 +55,10 @@
     
 }
 
+.portrait-box{
+    aspect-ratio: 4/5;
+}
+
 .box_blog{
     cursor: none;
 }
@@ -103,7 +107,7 @@
 /* Pour les écrans très larges */
 @media (min-width: 1540px) {
     .modification_link_contain {
-        grid-template-columns: repeat(5, 1fr); /* Cinq colonnes */
+        grid-template-columns: repeat(4, 1fr); /* Cinq colonnes */
     }
 }
 

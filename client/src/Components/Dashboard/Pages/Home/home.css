@@ -18,6 +18,19 @@
 
 }
 
+.home-wrapper{
+    overflow-y: auto;
+    padding: 1px;
+    height: calc(100% - 2rem);
+    /* For Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-primary-third) transparent;
+    /* Optionally force overlay gutter if supported */
+    scrollbar-gutter: stable overlay;
+    box-sizing: border-box;
+
+}
+
 .academy_announcement_title{
     height: 2.5rem;
     display: flex;
@@ -37,6 +50,7 @@
 }
 
 .homeNews{
+    aspect-ratio: 1 / 1;
     background: linear-gradient(135deg, #00c853, #69f0ae);
     border-radius: 1rem;
     display: flex;
@@ -129,4 +143,95 @@
 
 .welcomeMessage{
     border-radius: 1rem;
+}
+
+/* Nouvelles classes pour la page Home */
+.home-welcome-section {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+    margin-bottom: 3rem;
+}
+
+.home-welcome-card {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.home-welcome-title {
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.home-welcome-subtitle {
+    margin: 0;
+    font-size: 0.87rem;
+}
+
+.home-section {
+    margin-bottom: 3rem;
+}
+
+.home-section-title {
+    margin: 0 0 16px 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.home-stats-container {
+    display: flex;
+    gap: 1rem;
+}
+
+.home-stat-card {
+    flex: 1;
+    padding: 1rem;
+    display: flex;
+    flex-direction: row !important;
+    gap: 1rem;
+}
+
+.home-stat-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 1.5rem;
+}
+
+.home-stat-icon svg {
+    font-size: 1.5rem;
+}
+
+.home-stat-content {
+    flex: 1;
+}
+
+.home-stat-label {
+    font-size: 0.875rem;
+    margin: 0 0 0.5rem 0;
+    white-space: nowrap;
+}
+
+.home-stat-value {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.home-news-container {
+    display: flex;
+    gap: 20px;
+}
+
+.home-news-trending {
+    flex: 2;
+}
+
+.home-news-updates {
+    flex: 1;
+    aspect-ratio: 1/1;
 }

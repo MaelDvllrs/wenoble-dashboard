@@ -76,6 +76,8 @@ import AcademyTemplate from './Components/Dashboard/Pages/Academy/AcademyTemplat
 import CreateWebsite from './Components/Dashboard/Pages/website/createWebsite';
 import EditWebsite from './Components/Dashboard/Pages/website/editWebsite';
 import WebsiteList from './Components/Dashboard/Pages/website/WebsiteList';
+import WebsiteManager from './Components/Dashboard/Pages/website/WebsiteManager';
+import WebsiteHome from './Components/Dashboard/Pages/website/WebsiteHome';
 import WorkspaceManager from './Components/Dashboard/Pages/workspace/WorkspaceManager';
 
 // Admin components
@@ -153,48 +155,55 @@ function App() {
                                         <Route path="general" element={<SettingsGeneral />} />
                                     </Route>
                                     <Route path="/dashboard/workspace" element={<WorkspaceManager />} />
-                                    <Route path="/dashboard/modification" element={<ModificationHome />} />
-                                    <Route path="/dashboard/modification/portfolio" element={<AuthorisedRoutePortfolio><Portfolio /></AuthorisedRoutePortfolio>}>
-                                        <Route path="/dashboard/modification/portfolio/:id" element={<EditPortfolio />} />
-                                    </Route>
-                                    <Route path="/dashboard/modification/page" element={<AuthorisedRoutePage><Page /></AuthorisedRoutePage>}>
-                                        <Route path="/dashboard/modification/page/:idPage" element={<EditPage />} />
-                                    </Route>
-                                    <Route path="/dashboard/modification/collection" element={<AuthorisedRouteBlog><Collection /></AuthorisedRouteBlog>}>
-                                        <Route path="/dashboard/modification/collection/createCollection" element={<CreateCollection />} />
-                                        <Route path="/dashboard/modification/collection/:idCollection/editCollection" element={<EditCollection />} />
-                                        <Route path="/dashboard/modification/collection/:idCollection" element={<ListeCollection />} />
-                                        <Route path="/dashboard/modification/collection/:idCollection/createPage" element={<CreateElementCollection />} />
-                                        <Route path="/dashboard/modification/collection/:idCollection/editPage/:idCollectionElement" element={<EditElementCollection />} />
-                                    </Route>
-                                    <Route path="/dashboard/stats" element={<StatistiqueHome />}/>
-                                    <Route path="/dashboard/stats/analytics" element={<StatistiqueAnalytics />} />
-                                    <Route path="/dashboard/stats/search-console" element={<StatistiqueSearchConsole />} />
-                                    <Route path="/dashboard/contact" element={<ContactList />} />
-                                    <Route path="/dashboard/contact/settings" element={<ContactSettings />} />
-                                    <Route path="/dashboard/contact/message/:id" element={<ContactMessage />} />
-                                    <Route path="/dashboard/ecommerce" element={<AuthorisedRouteEcomm><Ecommerce /></AuthorisedRouteEcomm>}>
-                                        <Route path="/dashboard/ecommerce/stats" element={<EcommerceStatistique />} />
-                                        <Route path="/dashboard/ecommerce/product" element={<EcommerceProduct />} />
-                                        <Route path="/dashboard/ecommerce/order" element={<EcommerceOrder />}>
-                                            <Route path="/dashboard/ecommerce/order/pending" element={<EcommerceOrderPending />} />
-                                            <Route path="/dashboard/ecommerce/order/shipping" element={<EcommerceOrderShipping />} />
-                                            <Route path="/dashboard/ecommerce/order/delivered" element={<EcommerceOrderDelivered />} />
-                                            <Route path="/dashboard/ecommerce/order/orderAll" element={<EcommerceOrderAll />} />
+                                    
+                                    {/* Website Management with secondary sidebar */}
+                                    <Route path="/dashboard/website" element={<WebsiteManager />}>
+                                        <Route index element={<WebsiteHome />} />
+                                        <Route path="modification/" element={<ModificationHome />} />
+                                        <Route path="modification/portfolio" element={<AuthorisedRoutePortfolio><Portfolio /></AuthorisedRoutePortfolio>}>
+                                            <Route path=":id" element={<EditPortfolio />} />
                                         </Route>
+                                        <Route path="modification/page/" element={<AuthorisedRoutePage><Page /></AuthorisedRoutePage>}>
+                                            <Route path=":idPage" element={<EditPage />} />
+                                        </Route>
+                                        <Route path="modification/collection/" element={<AuthorisedRouteBlog><Collection /></AuthorisedRouteBlog>}>
+                                            <Route path="createCollection" element={<CreateCollection />} />
+                                            <Route path=":idCollection/editCollection" element={<EditCollection />} />
+                                            <Route path=":idCollection" element={<ListeCollection />} />
+                                            <Route path=":idCollection/createPage" element={<CreateElementCollection />} />
+                                            <Route path=":idCollection/editPage/:idCollectionElement" element={<EditElementCollection />} />
+                                        </Route>
+                                        <Route path="stats" element={<StatistiqueHome />}/>
+                                        <Route path="stats/analytics" element={<StatistiqueAnalytics />} />
+                                        <Route path="stats/search-console" element={<StatistiqueSearchConsole />} />
+                                        <Route path="contact" element={<ContactList />} />
+                                        <Route path="contact/settings" element={<ContactSettings />} />
+                                        <Route path="contact/message/:id" element={<ContactMessage />} />
+                                        <Route path="ecommerce" element={<AuthorisedRouteEcomm><Ecommerce /></AuthorisedRouteEcomm>}>
+                                            <Route path="stats" element={<EcommerceStatistique />} />
+                                            <Route path="product" element={<EcommerceProduct />} />
+                                            <Route path="order" element={<EcommerceOrder />}>
+                                                <Route path="pending" element={<EcommerceOrderPending />} />
+                                                <Route path="shipping" element={<EcommerceOrderShipping />} />
+                                                <Route path="delivered" element={<EcommerceOrderDelivered />} />
+                                                <Route path="orderAll" element={<EcommerceOrderAll />} />
+                                            </Route>
+                                        </Route>
+                                        <Route path="newsletter" element={<AuthorisedRouteNewsletter><NewsLetters /></AuthorisedRouteNewsletter>} />
+                                        <Route path="settings/:websiteId" element={<EditWebsite />} />
                                     </Route>
+                                    
+                                    {/* Standalone pages */}
                                     <Route path="/dashboard/actu" element={<Actualite />}>
-                                        <Route path="/dashboard/actu/article" element={<Article />} />
-                                        <Route path="/dashboard/actu/update" element={<Update />} />
-                                        <Route path="/dashboard/actu/article/:slug" element={<ArticleTemplate />} />
-                                        <Route path="/dashboard/actu/update/:slug" element={<UpdateTemplate />} />
+                                        <Route path="article" element={<Article />} />
+                                        <Route path="update" element={<Update />} />
+                                        <Route path="article/:slug" element={<ArticleTemplate />} />
+                                        <Route path="update/:slug" element={<UpdateTemplate />} />
                                     </Route>
-                                    <Route path="/dashboard/newsletter" element={<AuthorisedRouteNewsletter><NewsLetters /></AuthorisedRouteNewsletter>} />
                                     <Route path="/dashboard/academy" element={<Academy />} />
                                     <Route path="/dashboard/academy/:slug" element={<AcademyTemplate />} />
                                     <Route path="/dashboard/websites" element={<WebsiteList />} />
                                     <Route path="/dashboard/website/create" element={<CreateWebsite />} />
-                                    <Route path="/dashboard/website/:id/settings" element={<EditWebsite />} />
                                 </Route>
                             </Route>
 

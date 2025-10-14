@@ -50,7 +50,6 @@ export const SearchConsoleStatistique = () => {
   useEffect(() => {
     const fetchStatistique = async () => {
       if (!selectedWebsite?.id) {
-        console.log('Aucun site web sélectionné');
         setLoading(false);
         return;
       }

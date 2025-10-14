@@ -52,7 +52,6 @@ const EditCollection = () => {
     const navigate = useNavigate();
     const params = useParams('idCollection');
     const collectionId = params.idCollection;
-    console.log('EditCollection - collectionId:', collectionId);
     const token = Cookies.get('token');
     const idUser = jwtDecode(token).idUser;
     const apiUrl = config.apiUrl;
@@ -236,7 +235,7 @@ const EditCollection = () => {
         } catch (error) {
             console.error('Erreur lors du chargement de la collection:', error);
             showSnackbar('error', 'Erreur lors du chargement de la collection');
-            navigate('/dashboard/modification/collection');
+            navigate('/dashboard/website/modification/collection');
         } finally {
             setLoadingData(false);
         }
@@ -264,7 +263,6 @@ const EditCollection = () => {
                 // Charger les champs de configuration pour chaque collection
                 const collectionsWithFields = await Promise.all(collections.map(async (collection) => {
                     try {
-                        console.log(`Chargement des champs pour la collection ${collection.id} (${collection.collection_name})`);
                         const configResponse = await Axios.get(`${apiUrl}/getConfigCollection`, {
                             params: { collectionId: collection.id },
                             headers: {
@@ -273,7 +271,6 @@ const EditCollection = () => {
                             }
                         });
                         
-                        console.log(`Réponse pour collection ${collection.id}:`, configResponse.data);
                         
                         if (configResponse.data && configResponse.data.data) {
                             return {
@@ -610,7 +607,7 @@ const EditCollection = () => {
             showSnackbar('success', 'Collection mise à jour avec succès !');
             
             // Naviguer avec refresh des collections si le nom a changé
-            navigate(`/dashboard/modification/collection/${collectionId}`, { 
+            navigate(`/dashboard/website/modification/collection/${collectionId}`, { 
                 replace: true,
                 state: { refreshCollections: true }
             });
@@ -643,7 +640,7 @@ const EditCollection = () => {
                     <h3>Aucun site web sélectionné</h3>
                     <p>Veuillez sélectionner un site web depuis le menu principal pour modifier une collection.</p>
                     <SecondaryButton 
-                        onClick={() => navigate('/dashboard/modification/collection')}
+                        onClick={() => navigate('/dashboard/website/modification/collection')}
                         style={{ marginTop: '1rem' }}
                     >
                         Retour aux collections
@@ -667,7 +664,7 @@ const EditCollection = () => {
                         Votre rôle actuel : <strong>{selectedWebsite.user_role}</strong>
                     </p>
                     <SecondaryButton 
-                        onClick={() => navigate('/dashboard/modification/collection')}
+                        onClick={() => navigate('/dashboard/website/modification/collection')}
                         style={{ marginTop: '1rem' }}
                     >
                         Retour aux collections
@@ -707,7 +704,7 @@ const EditCollection = () => {
 
                     <SecondaryButton
                         variant="outlined"
-                        onClick={() => navigate(`/dashboard/modification/collection/${collectionId}`)}
+                        onClick={() => navigate(`/dashboard/website/modification/collection/${collectionId}`)}
                         disabled={loading}
                     >
                         Annuler
