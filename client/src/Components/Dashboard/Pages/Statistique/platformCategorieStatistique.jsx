@@ -54,7 +54,6 @@ export const PlatformCategorieStatistique = () => {
   useEffect(() => {
     const fetchPlatformCategorieStatistique = async () => {
       if (!selectedWebsite?.id) {
-        console.log('Aucun site web sélectionné');
         setLoading(false);
         return;
       }

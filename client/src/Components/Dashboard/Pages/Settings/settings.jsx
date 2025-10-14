@@ -12,23 +12,11 @@ const Settings = () => {
   
   return (
     <div className='outlet'>
-      <div className="title_section">
-        <div className="breadCrumbs">
-          <NavLink 
-            className={'breadCrumbsLink'}
-            to="/dashboard/home"
-            style={{ textDecoration: 'none', color: 'inherit' }}
-          >
-            Dashboard
-          </NavLink>
-          <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
-          <span className="breadcrumb-item-active" style={{ color: theme.palette.text.primary }}>
-            Paramètres
-          </span>
-        </div>
-      </div>
-      <div className="account-settings-root" style={{ backgroundColor: theme.palette.background.default }}>
-        <aside className="account-sidebar" style={{ borderColor: theme.palette.primary.third }}>
+      <div className="outlet-sidebar">
+        <aside className="sidebar-secondary" style={{ borderColor: theme.palette.primary.third }}>
+          <div className='sidebar-secondary-title-box'>
+            <h3 className='sidebar-secondary-title'>Paramètres</h3>
+          </div>
           <NavLink 
             to="/dashboard/settings/general"
             className={({ isActive }) => `account-sidebar-link${isActive ? ' account-sidebar-link-active' : ''}`}
@@ -37,8 +25,10 @@ const Settings = () => {
             Paramètres généraux
           </NavLink>
         </aside>
-        <main className="account-main">
-          <Outlet />
+        <main className="outlet-sidebar-wrapper">
+          <div className='outlet'>
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

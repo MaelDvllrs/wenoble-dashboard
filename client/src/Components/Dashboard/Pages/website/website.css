@@ -428,6 +428,44 @@
   padding-top: 1px;
 }
 
+  .website-home-link-contain{
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    
+  }
+
+  .website-icon{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .website-home-title{
+    font-size: 1.6rem;
+    margin: 0;
+  }
+
+  .website-home-link{
+    color: var(--color-text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .website-home-title-h2{
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0;
+    margin-bottom: 1rem;
+  }
+
+  .website-graph-wrapper{
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
 /* Responsive behavior for mobile */
 @media (max-width: 768px) {
   .website_name_element,
@@ -442,6 +480,10 @@
   .website_actions_element {
     justify-content: flex-end;
   }
+
+
+
+
 }
 
 

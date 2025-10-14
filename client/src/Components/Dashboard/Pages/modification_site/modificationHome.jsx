@@ -293,6 +293,7 @@ useEffect(() => {
             'Content-Type': 'application/json'
           }
       })
+
       const totalSize = (response.data.totalSize / 1024);
       
       
@@ -331,8 +332,16 @@ return(
                     Dashboard
                 </NavLink>
                 <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
+                <NavLink 
+                    className={'breadCrumbsLink'}
+                    to="/dashboard/website"
+                    style={{ textDecoration: 'none', color: 'inherit' }}
+                >
+                    {selectedWebsite?.website_name || 'Site'}
+                </NavLink>
+                <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
                 <span className="breadcrumb-item-active" style={{ color: theme.palette.text.primary }}>
-                    Modification
+                    Modifications
                 </span>
             </div>
         </div>
@@ -364,7 +373,7 @@ return(
           
           <div className="modification_page_contain">
               <div ref={containerRef} className="modification_link_contain">
-                  <NavLink to={authPortfolio === true ? '/dashboard/website/modification/portfolio' : '#'}  className="modification_box" ref={portfolioContainerRef} style={{ ...bgStyle, boxShadow: theme.palette.shadow.main }}>
+                  <NavLink to={authPortfolio === true ? '/dashboard/website/modification/portfolio' : '#'}  className="modification_box portrait-box" ref={portfolioContainerRef} style={{ ...bgStyle, boxShadow: theme.palette.shadow.main }}>
                       <div className="modification_title_box" style={{color: theme.palette.text.primary}}>
                           <div className="modification_title"><MdImportContacts  className="icon_modifiaction_title"/>
                             <b>Portfolio</b>
@@ -448,7 +457,7 @@ return(
                           </div>
                       </div>
                   </NavLink>
-                  <NavLink to={authPage === true ? '/dashboard/website/modification/page' : '#'} className="modification_box" ref={pageContainerRef} style={{ ...bgStyle, boxShadow: theme.palette.shadow.main }}>
+                  <NavLink to={authPage === true ? '/dashboard/website/modification/page' : '#'} className="modification_box portrait-box" ref={pageContainerRef} style={{ ...bgStyle, boxShadow: theme.palette.shadow.main }}>
                       <div className="modification_title_box" style={{color: theme.palette.text.primary}}>
                         <div className="modification_title">
                           <FaElementor  className="icon_modifiaction_title"/>
@@ -473,7 +482,7 @@ return(
                         <img src={sphere_page} alt="shere page" className="shere_page" />                          
                       </div>
                   </NavLink>
-                  <NavLink to={authBlog === true ? '/dashboard/website/modification/collection' : '#'} className="modification_box box_blog" ref={iconContainerRef} style={{ ...bgStyle, boxShadow: theme.palette.shadow.main }}>
+                  <NavLink to={authBlog === true ? '/dashboard/website/modification/collection' : '#'} className="modification_box portrait-box box_blog" ref={iconContainerRef} style={{ ...bgStyle, boxShadow: theme.palette.shadow.main }}>
                       <div className="modification_title_box" style={{color: theme.palette.text.primary}}>
                         <div className="modification_title"><RiDatabase2Fill className="icon_modifiaction_title"/><b>CMS</b>
                         {

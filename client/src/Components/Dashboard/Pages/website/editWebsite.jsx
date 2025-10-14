@@ -380,17 +380,17 @@ const EditWebsite = () => {
           >
             Dashboard
           </NavLink>
-          <span> / </span>
+          <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
           <NavLink 
             className={'breadCrumbsLink'}
-            to="/dashboard/websites"
+            to="/dashboard/website"
             style={{ textDecoration: 'none', color: 'inherit' }}
           >
-            Sites Web
+            {website.website_name}
           </NavLink>
           <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
           <span className="breadcrumb-item-active" style={{ color: theme.palette.text.primary }}>
-            Paramètres - {website.website_name}
+            Paramètres
           </span>
         </div>
       </div>

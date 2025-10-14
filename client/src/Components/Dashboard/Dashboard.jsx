@@ -65,7 +65,7 @@ const Dashboard = () => {
     const [notifRead, setNotifRead] = useState(false);
     // Sidebar mode: 'open' (always expanded), 'closed' (always collapsed), 'hover' (expand on hover)
     const [menuMode, setMenuMode] = useState(() => {
-        return localStorage.getItem('sidebarMode') || 'open';
+        return localStorage.getItem('sidebarMode') || 'hover';
     });
     const [hoveringSidebar, setHoveringSidebar] = useState(false);
     const isSidebarOpen = menuMode === 'open' || (menuMode === 'hover' && hoveringSidebar);

@@ -23,8 +23,10 @@ const Academy = () => {
 
 
     return (
-        <div className="outlet">
+      <div className="outlet">
+        <div className="outlet-box">
             {/* Section titre avec breadcrumb */}
+            
             <div className="title_section">
                 <div className="breadCrumbs">
                     <NavLink 
@@ -40,7 +42,7 @@ const Academy = () => {
                     </span>
                 </div>
             </div>
-
+            
             <div className="academy_section">
                 <div className="academy_contain">
                     <h1 className="academy_title">Academy</h1>
@@ -147,6 +149,7 @@ const Academy = () => {
                 </div>
             </div>
         </div>
+      </div>
     );
 };
 

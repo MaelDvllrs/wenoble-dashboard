@@ -26,6 +26,7 @@
     align-items: left;
     padding: 0.8rem;
     z-index: 999;
+    overflow: hidden;
 }
 
 .sidebar-secondary{
@@ -41,6 +42,19 @@
     position: relative;
     margin-right: auto;
     margin-left: 0;
+    width: 18rem;
+}
+
+.sidebar-secondary-title-box{
+    padding: 0.5rem;
+    padding-bottom: 1rem;
+    padding-left: 1rem;
+    border-bottom: solid 1px var(--color-primary-third);
+    margin-bottom: 1rem;
+}
+
+.sidebar-secondary-title{
+    margin: 0;
 }
 
 .outlet-sidebar{

@@ -82,7 +82,6 @@ const GalleryUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fie
     useEffect(() => {
       // Vérifiez si dataValue existe, si le type est 'gallery' et si les images n'ont pas déjà été ajoutées
       if (dataValue && Object.keys(dataValue).length > 0 && type === 'gallery' && !imagesAdded) {
-        console.log("dataValue", dataValue);
         let galleryArray = [];
         if (Array.isArray(dataValue.gallery)) {
           galleryArray = dataValue.gallery;

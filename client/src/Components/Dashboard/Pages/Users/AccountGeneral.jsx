@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { NavLink } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import Avatar from '@mui/material/Avatar';
 import Axios from '../../../../service/AxiosConfig';
@@ -52,11 +53,7 @@ const AccountGeneral = () => {
   const onFileChange = async (file) => {
     if (!file) return;
     
-    console.log('🔄 Début upload image:', {
-      fileName: file.name,
-      fileSize: file.size,
-      fileType: file.type
-    });
+
 
     // Sauvegarder l'URL précédente pour la restaurer en cas d'erreur
     const previousImageUrl = user.imageUrl;
@@ -68,12 +65,10 @@ const AccountGeneral = () => {
       const form = new FormData();
       form.append('image', file);
       
-      console.log('📤 Envoi de la requête d\'upload...');
       const response = await Axios.post(`${apiUrl}/uploadProfileImage`, form, {
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
       });
       
-      console.log('📥 Réponse serveur:', response.data);
       
       // Gérer les deux formats de réponse : JSON {success: true} ou string de succès
       const isSuccess = 
@@ -142,53 +137,80 @@ const AccountGeneral = () => {
   };
 
   return (
-    <div className='profile-form'>
-      
-      <div className='profile-form-row' style={{ backgroundColor: theme.palette.primary.main, boxShadow: theme.palette.shadow.main }}>
-        <h3 className='titlePage'>Informations générales</h3>
-        <div className='line-sidebar'/> 
-        <h4 className='account-setting-title'>Avatar</h4>
-        <div className='profile-avatar'>
-          {user.imageUrl ? (
-            <img src={user.imageUrl} alt='avatar' className='profile_photo account_photo' />
-          ) : (
-            <Avatar className='profile_photo account_photo' />
-          )}
-          <input type='file' ref={fileInputRef} style={{ display: 'none' }} onChange={(e) => onFileChange(e.target.files[0])} />
-          <div className='profile-avatar-info'>
-            <DefaultButton onClick={onPickImage}>Modifier l'avatar</DefaultButton>
-            <p className='account-settings-subtitle'>
-                Importer une image de profile
-            </p>
-          </div>
-          
+    <div className='outlet-box'>
+      {/* Breadcrumbs */}
+      <div className="title_section">
+        <div className="breadCrumbs">
+          <NavLink 
+            className={'breadCrumbsLink'}
+            to="/dashboard/home"
+            style={{ textDecoration: 'none', color: 'inherit' }}
+          >
+            Dashboard
+          </NavLink>
+          <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
+          <NavLink 
+            className={'breadCrumbsLink'}
+            to="/dashboard/account/general"
+            style={{ textDecoration: 'none', color: 'inherit' }}
+          >
+            Mon Compte
+          </NavLink>
+          <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
+          <span className="breadcrumb-item-active" style={{ color: theme.palette.text.primary }}>
+            Paramètres généraux
+          </span>
         </div>
-        <div className='line-sidebar'/>
-        <h4 className='account-setting-title'>Informations générales</h4>
-        <div className='profile-fields'>
-          <div className='input-container'>
-            <p className='blogField_name collection_edit_name'>Nom</p>
-            <input className='input_text_blog' type='text' value={draft.first_name} onChange={(e) => setDraft(prev => ({ ...prev, first_name: e.target.value }))} />
+      </div>
+
+      <div className='profile-form'>
+        
+        <div className='profile-form-row' style={{ backgroundColor: theme.palette.primary.main, boxShadow: theme.palette.shadow.main }}>
+          <h3 className='titlePage'>Informations générales</h3>
+          <div className='line-sidebar'/> 
+          <h4 className='account-setting-title'>Avatar</h4>
+          <div className='profile-avatar'>
+            {user.imageUrl ? (
+              <img src={user.imageUrl} alt='avatar' className='profile_photo account_photo' />
+            ) : (
+              <Avatar className='profile_photo account_photo' />
+            )}
+            <input type='file' ref={fileInputRef} style={{ display: 'none' }} onChange={(e) => onFileChange(e.target.files[0])} />
+            <div className='profile-avatar-info'>
+              <DefaultButton onClick={onPickImage}>Modifier l'avatar</DefaultButton>
+              <p className='account-settings-subtitle'>
+                  Importer une image de profile
+              </p>
+            </div>
+            
           </div>
-          <div className='input-container'>
-            <p className='blogField_name collection_edit_name'>Prénom</p>
-            <input className='input_text_blog' type='text' value={draft.last_name} onChange={(e) => setDraft(prev => ({ ...prev, last_name: e.target.value }))} />
-          </div>
-          <div className='input-container'>
-            <p className='blogField_name collection_edit_name'>Nom d'utilisateur</p>
-            <input className='input_text_blog' type='text' value={draft.username} onChange={(e) => setDraft(prev => ({ ...prev, username: e.target.value }))} />
-          </div>
-          <div className='profile-actions'>
-            <DefaultButton 
-              onClick={saveProfile} 
-              disabled={!hasChanges()}
-              style={{ 
-                opacity: hasChanges() ? 1 : 0.5,
-                cursor: hasChanges() ? 'pointer' : 'not-allowed'
-              }}
-            >
-              Enregistrer
-            </DefaultButton>
+          <div className='line-sidebar'/>
+          <h4 className='account-setting-title'>Informations générales</h4>
+          <div className='profile-fields'>
+            <div className='input-container'>
+              <p className='blogField_name collection_edit_name'>Nom</p>
+              <input className='input_text_blog' type='text' value={draft.first_name} onChange={(e) => setDraft(prev => ({ ...prev, first_name: e.target.value }))} />
+            </div>
+            <div className='input-container'>
+              <p className='blogField_name collection_edit_name'>Prénom</p>
+              <input className='input_text_blog' type='text' value={draft.last_name} onChange={(e) => setDraft(prev => ({ ...prev, last_name: e.target.value }))} />
+            </div>
+            <div className='input-container'>
+              <p className='blogField_name collection_edit_name'>Nom d'utilisateur</p>
+              <input className='input_text_blog' type='text' value={draft.username} onChange={(e) => setDraft(prev => ({ ...prev, username: e.target.value }))} />
+            </div>
+            <div className='profile-actions'>
+              <DefaultButton 
+                onClick={saveProfile} 
+                disabled={!hasChanges()}
+                style={{ 
+                  opacity: hasChanges() ? 1 : 0.5,
+                  cursor: hasChanges() ? 'pointer' : 'not-allowed'
+                }}
+              >
+                Enregistrer
+              </DefaultButton>
+            </div>
           </div>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import React, { useRef, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { useTheme } from '@mui/material/styles';
+import { useWebsite } from '../../../../Context/WebsiteContext';
 import { BsFillBarChartFill } from "react-icons/bs";
 import { HiSearch } from "react-icons/hi";
 import { MdArrowForwardIos } from "react-icons/md"
@@ -10,6 +11,7 @@ import "./statistiqueHome.css";
 const StatistiqueHome = () => {
   
   const theme = useTheme();
+  const { selectedWebsite } = useWebsite();
 
   return (
     <div className="outlet-box">
@@ -21,6 +23,14 @@ const StatistiqueHome = () => {
             style={{ textDecoration: 'none', color: 'inherit' }}
           >
             Dashboard
+          </NavLink>
+          <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
+          <NavLink 
+            className={'breadCrumbsLink'}
+            to="/dashboard/website"
+            style={{ textDecoration: 'none', color: 'inherit' }}
+          >
+            {selectedWebsite?.website_name || 'Site'}
           </NavLink>
           <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
           <span className="breadcrumb-item-active" style={{ color: theme.palette.text.primary }}>

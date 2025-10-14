@@ -234,7 +234,6 @@ const EditPage = () => {
             if (pageData.text.length > 0) {
                 try {
                     const response = await updateTextPage(idPage, pageData.text, token);
-                    console.log(response);
                 } catch (error) {
                     console.error('Erreur lors de la création des textes :', error);
                     return;
@@ -270,7 +269,6 @@ const EditPage = () => {
             }
 
             if (deletedItems.length > 0) {
-                console.log(deletedItems); 
                 try {
                     await Axios.delete(`${apiUrl}/deletePageData`, {
                         data: {

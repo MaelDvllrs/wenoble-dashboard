@@ -34,7 +34,6 @@ const ContactMessage = () => {
     useEffect(() => {
         const fetchMessageDetail = async () => {
             if (!selectedWebsite?.id || websiteLoading || !id) {
-                console.log('Site web non sélectionné, en cours de chargement, ou ID de message manquant');
                 return;
             }
 

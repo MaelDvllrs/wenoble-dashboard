@@ -25,6 +25,7 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    text-wrap: nowrap;
 }
 
 .account-sidebar-link:hover{
@@ -32,7 +33,7 @@
 }
 
 .account-sidebar-link-active{
-  background-color: var(--color-primary-third);
+  background-color: var(--color-secondary-third);
   color: var(--color-text-primary);
   font-weight: 600;
 }

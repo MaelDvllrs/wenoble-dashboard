@@ -608,7 +608,6 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
           ref={addonTooltipRef}
           position={addonTooltipPosition}
           onAddImage={handleImageClick}
-          onAddAttribute={() => console.log('Add Attribute clicked')}
           theme={theme}
           onImage={handleImageClick}
         />

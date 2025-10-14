@@ -294,7 +294,7 @@ const CreateElementCollection = () => {
                 }, 1500);
             }
             showSnackbar('success', 'Création de la collection réussie !');
-            navigate(`/dashboard/modification/collection/${idCollection}`);
+            navigate(`/dashboard/website/modification/collection/${idCollection}`);
             
         } catch (error) {
             showSnackbar('error', '[CREA-COLL-010] Erreur lors de la création de la collection');
@@ -317,7 +317,7 @@ const CreateElementCollection = () => {
                         </SecondaryButton>
                         </span>
                     </Tooltip>
-                    <SecondaryButton  variant="contained" theme={theme} onClick={() => navigate(`/dashboard/modification/collection/${idCollection}`)} disabled={isSavingDraft || isPublishing}>Annuler</SecondaryButton>
+                    <SecondaryButton  variant="contained" theme={theme} onClick={() => navigate(`/dashboard/website/modification/collection/${idCollection}`)} disabled={isSavingDraft || isPublishing}>Annuler</SecondaryButton>
                     <DefaultButton type="submit" variant="contained" onClick={ async () => {await handleSave(1)}} disabled={isPublishing || isSavingDraft}>
                       {isPublishing && (
                         <CircularProgress className="circularProgressButton" sx={{color: theme.palette.text.primary, marginRight: 1}}/>

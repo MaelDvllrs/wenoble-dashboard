@@ -1,4 +1,5 @@
 import React, { useState,  useEffect, useMemo } from 'react';
+import { NavLink } from 'react-router-dom';
 import ComputerOutlinedIcon from '@mui/icons-material/ComputerOutlined';
 import SmartphoneOutlinedIcon from '@mui/icons-material/SmartphoneOutlined';
 import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
@@ -46,14 +47,12 @@ const AccountSecurity = () => {
 
   // Fonction pour gérer la déconnexion après changement de mot de passe
   const handleLogout = () => {
-    console.log('🔐 Déconnexion pour sécurité après changement de mot de passe');
     Cookies.remove('token');
     window.location.href = '/login';
   };
 
   // Fonction pour annuler le changement de mot de passe
   const handleCancelPasswordChange = () => {
-    console.log('❌ Changement de mot de passe annulé');
     setShowLogoutDialog(false);
     showSnackbar('info', 'Changement de mot de passe annulé');
   };
@@ -77,14 +76,12 @@ const AccountSecurity = () => {
     }
 
     // Si toutes les validations passent, afficher la popup de confirmation
-    console.log('✅ Validation réussie, affichage de la popup de confirmation');
     setShowLogoutDialog(true);
   };
 
   // Fonction qui exécute réellement le changement de mot de passe
   const executePasswordChange = async () => {
     try {
-      console.log('🔄 Exécution du changement de mot de passe...');
       
       const response = await Axios.post(`${apiUrl}/user/change-password`, {
         currentPassword: password.current,
@@ -93,7 +90,6 @@ const AccountSecurity = () => {
       
       // Gérer la réponse du serveur
       if (response.data.success) {
-        console.log('✅ Mot de passe changé avec succès');
         
         // Nettoyer les champs
         setPassword({ current: '', new: '', confirm: '' });
@@ -152,6 +148,32 @@ const AccountSecurity = () => {
 
 
   return (
+    <div className='outlet-box'>
+      {/* Breadcrumbs */}
+      <div className="title_section">
+        <div className="breadCrumbs">
+          <NavLink 
+            className={'breadCrumbsLink'}
+            to="/dashboard/home"
+            style={{ textDecoration: 'none', color: 'inherit' }}
+          >
+            Dashboard
+          </NavLink>
+          <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
+          <NavLink 
+            className={'breadCrumbsLink'}
+            to="/dashboard/account/general"
+            style={{ textDecoration: 'none', color: 'inherit' }}
+          >
+            Mon Compte
+          </NavLink>
+          <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
+          <span className="breadcrumb-item-active" style={{ color: theme.palette.text.primary }}>
+            Sécurité
+          </span>
+        </div>
+      </div>
+
     <div className='security-form'>
       <div className='profile-form-row' style={{ backgroundColor: theme.palette.primary.main, boxShadow: theme.palette.shadow.main }}>
         <h3 className='titlePage'>Sécurité</h3>
@@ -283,6 +305,7 @@ const AccountSecurity = () => {
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 };

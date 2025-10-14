@@ -31,7 +31,6 @@ export const useAcademy = () => {
 
             if (!blogPages.blog) return [];
 
-            console.log("Blog Pages:", blogPages);
             const detailPromises = blogPages.blog.map(async (blog) => {
                 const { data: detailData } = await axios.get(`${apiUrl}/api/sendBlogContent`, {
                     headers: {

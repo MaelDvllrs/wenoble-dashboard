@@ -124,7 +124,6 @@ const WorkspaceManager = () => {
     // Changer le rôle d'un utilisateur
     const handleChangeUserRole = async (userId, newRole) => {
         try {
-            console.log(`Changement du rôle de l'utilisateur ${userId} à ${newRole}`);
             // Appel API pour changer le rôle
             const response = await Axios.post(`${apiUrl}/updateUserWorkspaceRole`, {
                 workspace_id: currentWorkspaceForMembers.id,

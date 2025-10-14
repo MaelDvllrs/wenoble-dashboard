@@ -739,16 +739,6 @@ const CollectionField = ({ id_blog_page,type, id_config, onChange, slugValue, fi
                           );
 
 
-
-
-
-
-
-
-
-
-
-
                     case 'image':
                         return (
                             <div className='image_blog' style={{backgroundColor : theme.palette.primary.main, color : theme.palette.text.primary, borderColor : theme.palette.primary.main}}>

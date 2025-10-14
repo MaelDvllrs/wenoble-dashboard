@@ -288,7 +288,7 @@ const CreateCollection = () => {
             });
             const collectionId = res.data.id;
             showSnackbar('success', 'Collection créée avec succès !');
-            navigate(`/dashboard/modification/collection/${collectionId}`, { 
+            navigate(`/dashboard/website/modification/collection/${collectionId}`, { 
                 replace: true,
                 state: { refreshCollections: true }
             });
@@ -322,7 +322,7 @@ const CreateCollection = () => {
                     <h3>Aucun site web sélectionné</h3>
                     <p>Veuillez sélectionner un site web depuis le menu principal pour créer une collection.</p>
                     <SecondaryButton 
-                        onClick={() => navigate('/dashboard/modification/collection')}
+                        onClick={() => navigate('/dashboard/website/modification/collection')}
                         style={{ marginTop: '1rem' }}
                     >
                         Retour aux collections
@@ -340,7 +340,7 @@ const CreateCollection = () => {
                         Votre rôle actuel : <strong>{selectedWebsite.user_role}</strong>
                     </p>
                     <SecondaryButton 
-                        onClick={() => navigate('/dashboard/modification/collection')}
+                        onClick={() => navigate('/dashboard/website/modification/collection')}
                         style={{ marginTop: '1rem' }}
                     >
                         Retour aux collections
@@ -362,7 +362,7 @@ const CreateCollection = () => {
 
                     <SecondaryButton
                         variant="outlined"
-                        onClick={() => navigate('/dashboard/modification/collection')}
+                        onClick={() => navigate('/dashboard/website/modification/collection')}
                         disabled={loading}
                     >
                         Annuler
@@ -724,7 +724,6 @@ const CreateCollection = () => {
                                                         label: availableCollections.find(c => c.id === newFieldData.collection_id_ref)?.collection_name
                                                     } : null}
                                                     onChange={(selectedOption) => {
-                                                        console.log('Selected option:', selectedOption); // Debug
                                                         setNewFieldData({
                                                             ...newFieldData, 
                                                             collection_id_ref: selectedOption?.value || null

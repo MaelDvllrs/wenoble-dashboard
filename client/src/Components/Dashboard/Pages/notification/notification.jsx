@@ -73,7 +73,6 @@ export const Notification = () => {
             }
         }).then((response) => {
             setNotifRead(false);
-            console.log(response.data);
         });
     };
 

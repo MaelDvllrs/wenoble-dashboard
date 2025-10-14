@@ -287,13 +287,15 @@ const WebsiteManager = () => {
                 {!newsAuth && <span style={{ marginLeft: 'auto', fontSize: '0.75rem' }}><LockIcon fontSize='tiny'/></span>}
               </NavLink>
               
-              <NavLink 
-                to={`/dashboard/website/settings/${selectedWebsite.id}`}
-                className={({ isActive }) => `account-sidebar-link${isActive ? ' account-sidebar-link-active' : ''}`}
-              >
-                <SettingsIcon fontSize='small'/>
-                Paramètres
-              </NavLink>
+              {selectedWebsite.user_role === 'admin' && (
+                <NavLink 
+                  to={`/dashboard/website/settings/${selectedWebsite.id}`}
+                  className={({ isActive }) => `account-sidebar-link${isActive ? ' account-sidebar-link-active' : ''}`}
+                >
+                  <SettingsIcon fontSize='small'/>
+                  Paramètres
+                </NavLink>
+              )}
             </>
           )}
         </aside>

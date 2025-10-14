@@ -170,8 +170,16 @@ const ContactList = () => {
                         Dashboard
                     </NavLink>
                     <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
+                    <NavLink 
+                        className={'breadCrumbsLink'}
+                        to="/dashboard/website"
+                        style={{ textDecoration: 'none', color: 'inherit' }}
+                    >
+                        {selectedWebsite?.website_name || 'Site'}
+                    </NavLink>
+                    <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
                     <span className="breadcrumb-item-active" style={{ color: theme.palette.text.primary }}>
-                        Contact
+                        Contacts
                     </span>
                 </div>
             </div>
