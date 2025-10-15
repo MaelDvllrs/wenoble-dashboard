@@ -54,6 +54,7 @@ import EditElementCollection from './Components/Dashboard/Pages/modification_sit
 import StatistiqueHome from './Components/Dashboard/Pages/Statistique/statistiqueHome';
 import StatistiqueAnalytics from './Components/Dashboard/Pages/Statistique/StatistiqueAnalytics';
 import StatistiqueSearchConsole from './Components/Dashboard/Pages/Statistique/StatistiqueSearchConsole';
+import SubscriptionPlans from './Components/Dashboard/Pages/Subscription/SubscriptionPlans';
 import Actualite from './Components/Dashboard/Pages/Actualite/Actualite';
 import Article from './Components/Dashboard/Pages/Actualite/Article';
 import Update from './Components/Dashboard/Pages/Actualite/Update';
@@ -190,6 +191,7 @@ function App() {
                                             </Route>
                                         </Route>
                                         <Route path="newsletter" element={<AuthorisedRouteNewsletter><NewsLetters /></AuthorisedRouteNewsletter>} />
+                                        <Route path="subscription/:websiteId" element={<SubscriptionPlans />} />
                                         <Route path="settings/:websiteId" element={<EditWebsite />} />
                                     </Route>
                                     

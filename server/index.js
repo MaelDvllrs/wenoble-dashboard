@@ -13,6 +13,7 @@ const authorisationRouter = require('./users/authorisation');
 const securityRouter = require('./users/security');
 const profileRouter = require('./users/profile');
 const userStatsRouter = require('./users/userStats');
+const subscriptionRouter = require('./subscription/subscription');
 const portfolioRouter = require('./modification/portfolio');
 const pageRouter = require('./modification/page');
 const collectionRouter = require('./modification/collection');
@@ -231,6 +232,7 @@ app.use(videoRouter);
 app.use(profileRouter); // Routes de gestion du profil utilisateur (regroupé avec anciennes routes infoUser)
 app.use(securityRouter);
 app.use(userStatsRouter);
+app.use(subscriptionRouter);
 app.use(portfolioRouter);
 app.use(pageRouter);
 app.use(collectionRouter);

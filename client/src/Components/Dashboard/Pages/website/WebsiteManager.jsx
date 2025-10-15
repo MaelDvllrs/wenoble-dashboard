@@ -19,6 +19,7 @@ import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore';
 import MailIcon from '@mui/icons-material/Mail';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LockIcon from '@mui/icons-material/Lock';
+import CardMembershipIcon from '@mui/icons-material/CardMembership';
 
 import '../Users/AccountSettings.css';
 
@@ -285,6 +286,14 @@ const WebsiteManager = () => {
                 <NewspaperOutlinedIcon fontSize='small'/>
                 Newsletter
                 {!newsAuth && <span style={{ marginLeft: 'auto', fontSize: '0.75rem' }}><LockIcon fontSize='tiny'/></span>}
+              </NavLink>
+              
+              <NavLink 
+                to={`/dashboard/website/subscription/${selectedWebsite.id}`}
+                className={({ isActive }) => `account-sidebar-link${isActive ? ' account-sidebar-link-active' : ''}`}
+              >
+                <CardMembershipIcon fontSize='small'/>
+                Abonnement
               </NavLink>
               
               {selectedWebsite.user_role === 'admin' && (
