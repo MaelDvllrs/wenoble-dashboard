@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, forwardRef } from 'react';
-import { Editor, EditorState, RichUtils, CompositeDecorator, convertFromRaw, AtomicBlockUtils, convertToRaw, getVisibleSelectionRect } from 'draft-js';
+import { Editor, EditorState, RichUtils, CompositeDecorator, convertFromRaw, AtomicBlockUtils, convertToRaw, getVisibleSelectionRect, Modifier } from 'draft-js';
 import 'draft-js/dist/Draft.css';
 import ButtonTooltip from './ButtonTooltip';
 import LinkTooltip from './LinkTooltip';
@@ -430,6 +430,8 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
         const reader = new FileReader();
         reader.onload = () => {
           const imageSrc = reader.result;
+          
+          // Créer l'entité d'image
           const contentState = editorState.getCurrentContent();
           const contentStateWithEntity = contentState.createEntity('IMAGE', 'IMMUTABLE', { 
             src: imageSrc, 
@@ -437,19 +439,44 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
             alt: file.name || ''
           });
           const entityKey = contentStateWithEntity.getLastCreatedEntityKey();
+          
           if (!entityKey) {
             console.error('Erreur : entityKey non défini');
             return;
           }
-          const newEditorState = EditorState.set(editorState, { currentContent: contentStateWithEntity });
-          const editorStateWithImage = AtomicBlockUtils.insertAtomicBlock(newEditorState, entityKey, ' ');
+
+          // Créer un nouvel état d'éditeur avec le contenu mis à jour
+          const newEditorState = EditorState.set(editorState, { 
+            currentContent: contentStateWithEntity 
+          });
+          
+          // Insérer le bloc atomique avec un caractère espace unique
+          const editorStateWithImage = AtomicBlockUtils.insertAtomicBlock(
+            newEditorState, 
+            entityKey, 
+            ' '  // Un seul caractère espace pour éviter la duplication
+          );
+          
+          // Mettre à jour l'état immédiatement
           setEditorState(editorStateWithImage);
+          
+          // Déclencher le onChange pour sauvegarder
+          const data = {
+            id_config: id_config,
+            type: 'richText',
+            value: editorStateWithImage.getCurrentContent(),
+            create: createBoolRichText
+          };
+          onChange({ data });
         };
         reader.readAsDataURL(fileToUse);
       } catch (error) {
         console.error("Erreur lors du traitement de l'image :", error);
       }
     }
+    
+    // Réinitialiser la valeur de l'input file pour permettre de re-sélectionner le même fichier
+    event.target.value = '';
   };
 
 
