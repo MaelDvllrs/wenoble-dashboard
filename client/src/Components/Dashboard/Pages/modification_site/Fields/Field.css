@@ -573,3 +573,198 @@
 
 
 
+.richtext-image-container{
+    position: relative;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    margin: 0.75rem 0;
+}
+
+.richtext-image-frame{
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+    width: 100%;
+}
+
+.richtext-image{
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+    box-shadow: var(--color-shadow-main);
+}
+
+.richtext-image-options-btn-wrapper{
+    position: absolute;
+    top: 0.5rem;
+    left: 0.75rem;
+    right: auto;
+    z-index: 2;
+    padding-bottom: 0.2rem;
+    padding-top: 0.2rem;
+    border-radius: 0.5rem;
+    background-color: var(--color-primary-main);
+}
+
+
+
+.richtext-image-options-popup{
+    position: absolute;
+    z-index: 110;
+    min-width: 16rem;
+    background-color: var(--color-primary-secondary);
+    box-shadow: var(--color-shadow-main);
+    border-radius: 0.6rem;
+    padding: 0.8rem;
+}
+
+.richtext-image-options-form{
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.richtext-image-options-header{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.richtext-image-options-title{
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.richtext-image-options-close{
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-text-primary);
+    border-radius: 0.4rem;
+    padding: 0.15rem 0.4rem;
+    font-weight: 600;
+}
+
+.richtext-image-options-close:hover{
+    background-color: var(--button-hover-color);
+}
+
+.richtext-image-options-body{
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.richtext-image-options-label{
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+}
+
+.richtext-image-options-input{
+    background-color: var(--color-primary-main);
+    border: none;
+    border-radius: 0.4rem;
+    padding: 0.45rem 0.6rem;
+    color: var(--color-text-primary);
+    box-shadow: inset 0 0 0 1px var(--color-primary-third);
+    font-family: "Montserrat", sans-serif !important;
+}
+
+.richtext-image-options-input:focus{
+    outline: none;
+    box-shadow: inset 0 0 0 2px var(--button-hover-color);
+}
+
+.richtext-image-options-range-group{
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.richtext-image-options-range-wrapper{
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.richtext-image-options-range{
+    flex: 1 1 auto;
+    appearance: none;
+    height: 0.35rem;
+    border-radius: 999px;
+    background: var(--color-primary-third);
+    outline: none;
+    cursor: pointer;
+}
+
+.richtext-image-options-range::-webkit-slider-runnable-track{
+    height: 0.35rem;
+    border-radius: 999px;
+    background: var(--color-primary-third);
+}
+
+.richtext-image-options-range::-webkit-slider-thumb{
+    appearance: none;
+    width: 0.85rem;
+    height: 0.85rem;
+    border-radius: 50%;
+    background: var(--color-primary-third);
+    border: 2px solid var(--color-primary-main);
+    box-shadow: var(--color-shadow-main);
+    cursor: pointer;
+    margin-top: -0.25rem;
+}
+
+.richtext-image-options-range::-moz-range-track{
+    height: 0.35rem;
+    border-radius: 999px;
+    background: var(--color-primary-third);
+}
+
+.richtext-image-options-range::-moz-range-thumb{
+    width: 0.85rem;
+    height: 0.85rem;
+    border-radius: 50%;
+    background: var(--color-primary-third);
+    border: 2px solid var(--color-primary-main);
+    box-shadow: var(--color-shadow-main);
+    cursor: pointer;
+}
+
+.richtext-image-options-range-value{
+    min-width: 2.5rem;
+    text-align: right;
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.richtext-image-options-range-scale{
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    color: var(--color-text-secondary);
+}
+
+.richtext-image-options-range-scale-item.active{
+    color: var(--color-text-primary);
+    font-weight: 600;
+}
+
+.richtext-image-options-footer{
+    display: flex;
+    justify-content: flex-end;
+}
+
+
+
+
+
+

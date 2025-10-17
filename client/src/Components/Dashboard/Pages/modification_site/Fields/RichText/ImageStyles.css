@@ -1,0 +1,229 @@
+/* Styles pour les images dans RichText avec options */
+
+.image-container {
+  position: relative;
+  display: block;
+  margin: 10px 0;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.image-container:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+}
+
+.image-options-button {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  transition: all 0.2s ease;
+  z-index: 10;
+  background-color: var(--color-primary-main);
+  color: var(--color-text-primary);
+}
+
+.image-container:hover .image-options-button {
+  opacity: 0.8;
+}
+
+.image-options-button:hover {
+  opacity: 1 !important;
+  transform: scale(1.05);
+}
+
+.image-options-button:active {
+  transform: scale(0.95);
+}
+
+.image-options-popup {
+  position: fixed;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  z-index: 10000;
+  min-width: 280px;
+  max-width: 320px;
+  backdrop-filter: blur(10px);
+  background-color: var(--color-primary-main);
+  border: 1px solid var(--color-primary-third);
+  color: var(--color-text-primary);
+  pointer-events: all;
+}
+
+.image-options-header {
+  margin-bottom: 12px;
+}
+
+.image-options-title {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.image-options-section {
+  margin-bottom: 16px;
+}
+
+.image-options-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.image-options-slider-container {
+  margin-bottom: 8px;
+}
+
+.image-options-input-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.image-options-width-input {
+  width: 60px;
+  padding: 6px 8px;
+  border: 1px solid var(--color-primary-third);
+  border-radius: 4px;
+  background-color: var(--color-primary-secondary);
+  color: var(--color-text-primary);
+  font-size: 12px;
+  text-align: center;
+}
+
+.image-options-percentage {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.image-options-alt-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--color-primary-third);
+  border-radius: 4px;
+  background-color: var(--color-primary-secondary);
+  color: var(--color-text-primary);
+  font-size: 12px;
+  box-sizing: border-box;
+}
+
+.image-options-alt-input::placeholder {
+  color: var(--color-text-secondary);
+  opacity: 0.7;
+}
+
+.image-options-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.image-options-button-cancel {
+  padding: 6px 12px;
+  border: 1px solid var(--color-primary-third);
+  border-radius: 4px;
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.image-options-button-apply {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  background-color: var(--color-green);
+  color: white;
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.width-range-slider {
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+  background: var(--color-primary-third);
+}
+
+.width-range-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-green);
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.1s ease;
+}
+
+.width-range-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+}
+
+.width-range-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-green);
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.1s ease;
+}
+
+.image-options-width-input:focus,
+.image-options-alt-input:focus {
+  outline: 2px solid var(--color-green);
+  outline-offset: 1px;
+}
+
+.image-options-button-cancel:hover,
+.image-options-button-apply:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.image-options-button-cancel:active,
+.image-options-button-apply:active {
+  transform: translateY(0);
+}
+
+/* Animation d'entrée pour la popup */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.image-options-popup {
+  animation: slideIn 0.2s ease-out;
+}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, forwardRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Editor, EditorState, RichUtils, CompositeDecorator, convertFromRaw, AtomicBlockUtils, convertToRaw, getVisibleSelectionRect, Modifier } from 'draft-js';
 import 'draft-js/dist/Draft.css';
 import ButtonTooltip from './ButtonTooltip';
@@ -6,6 +6,7 @@ import LinkTooltip from './LinkTooltip';
 import AddonTooltip from './AddonTooltip';
 import Image from './ImageBlock';
 import {compressImage} from '../../../../../../utils/imageUtils'; 
+import { SecondaryButton } from '../../../../../../Theme/element';
 
 // Composant Link pour les liens
 const Link = (props) => {
@@ -67,6 +68,58 @@ const blockDecorator = new CompositeDecorator([
   },
 ]);
 
+const IMAGE_OPTIONS_POPUP_WIDTH = 260;
+const IMAGE_OPTIONS_POPUP_OFFSET = 12;
+const IMAGE_OPTIONS_POPUP_HEIGHT_ESTIMATE = 200;
+const WIDTH_PERCENT_STEPS = [25, 50, 75, 100];
+
+const parsePercentWidth = (value) => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+  const match = value.trim().match(/^(\d{1,3})\s*%$/);
+  if (!match) {
+    return null;
+  }
+  const percent = parseInt(match[1], 10);
+  if (Number.isNaN(percent)) {
+    return null;
+  }
+  return Math.max(0, Math.min(100, percent));
+};
+
+const normalizePercentStep = (percent) => {
+  if (typeof percent !== 'number' || Number.isNaN(percent)) {
+    return WIDTH_PERCENT_STEPS[WIDTH_PERCENT_STEPS.length - 1];
+  }
+  return WIDTH_PERCENT_STEPS.reduce((closest, step) => {
+    if (Math.abs(step - percent) < Math.abs(closest - percent)) {
+      return step;
+    }
+    return closest;
+  }, WIDTH_PERCENT_STEPS[WIDTH_PERCENT_STEPS.length - 1]);
+};
+
+const getNormalizedPercentString = (value) => {
+  const percent = parsePercentWidth(value);
+  const normalized = normalizePercentStep(percent ?? WIDTH_PERCENT_STEPS[WIDTH_PERCENT_STEPS.length - 1]);
+  return `${normalized}%`;
+};
+
+const getPercentNumberFromValue = (value) => {
+  const percent = parsePercentWidth(value);
+  return normalizePercentStep(percent ?? WIDTH_PERCENT_STEPS[WIDTH_PERCENT_STEPS.length - 1]);
+};
+
+const createImageOptionsInitialState = () => ({
+  isOpen: false,
+  position: null,
+  entityKey: null,
+  blockKey: null,
+  tempWidth: '100%',
+  tempAlt: '',
+});
+
 const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fieldValue, dataValue, id_collection_ref, theme, imagefunction }) => {
   const [editorState, setEditorState] = useState(EditorState.createEmpty(blockDecorator));
   const [createBoolRichText, setCreateBoolRichText] = useState('');
@@ -82,6 +135,7 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
   const [activeStyles, setActiveStyles] = useState([]);
   const [activeBlockType, setActiveBlockType] = useState(null);
   const [hasInteracted, setHasInteracted] = useState(false);
+  const [imageOptions, setImageOptions] = useState(() => createImageOptionsInitialState());
 
   const linkSelectionRef = useRef(null);
   const linkHoverMode = useRef(false);
@@ -91,6 +145,9 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
   const buttonTooltipRef = useRef(null);
   const linkTooltipRef = useRef(null);
   const addonTooltipRef = useRef(null);
+  const imageOptionsRef = useRef(null);
+  const imageOptionsAnchorRef = useRef(null);
+  const imageOptionsContainerRef = useRef(null);
 
   useEffect(() => {
     const selection = editorState.getSelection();
@@ -139,6 +196,217 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
       editorRoot.removeEventListener('mousedown', handleClick, true);
     };
   }, []);
+  const calculateImageOptionsPosition = useCallback((anchorElement, containerElement) => {
+    if (!anchorElement || !containerElement) {
+      return null;
+    }
+    const anchorRect = anchorElement.getBoundingClientRect();
+    const containerRect = containerElement.getBoundingClientRect();
+
+    let top = anchorRect.top - containerRect.top;
+    let left = anchorRect.right - containerRect.left + IMAGE_OPTIONS_POPUP_OFFSET;
+
+    if (left + IMAGE_OPTIONS_POPUP_WIDTH > containerRect.width) {
+      left = anchorRect.left - containerRect.left - IMAGE_OPTIONS_POPUP_WIDTH - IMAGE_OPTIONS_POPUP_OFFSET;
+    }
+    if (left < 0) {
+      left = 0;
+    }
+
+    if (top + IMAGE_OPTIONS_POPUP_HEIGHT_ESTIMATE > containerRect.height) {
+      top = containerRect.height - IMAGE_OPTIONS_POPUP_HEIGHT_ESTIMATE - IMAGE_OPTIONS_POPUP_OFFSET;
+    }
+    if (top < 0) {
+      top = 0;
+    }
+
+    return { top, left };
+  }, []);
+
+  const handleCloseImageOptions = useCallback(() => {
+    imageOptionsAnchorRef.current = null;
+    imageOptionsContainerRef.current = null;
+    setImageOptions(createImageOptionsInitialState());
+  }, []);
+
+  const handleOpenImageOptions = useCallback(({ entityKey, blockKey, data, imageElement, containerElement, anchorElement }) => {
+    if (!entityKey || !imageElement) {
+      return;
+    }
+
+    const resolvedContainer = containerElement || imageElement.parentElement || document.body;
+    const resolvedAnchor = anchorElement || imageElement;
+    imageOptionsAnchorRef.current = resolvedAnchor;
+    imageOptionsContainerRef.current = resolvedContainer;
+
+    const normalizedWidth = getNormalizedPercentString(data?.width);
+    const position = calculateImageOptionsPosition(resolvedAnchor, resolvedContainer) || { top: 0, left: 0 };
+
+    setImageOptions({
+      isOpen: true,
+      position,
+      entityKey,
+      blockKey,
+      tempWidth: normalizedWidth,
+      tempAlt: data?.alt || '',
+    });
+  }, [calculateImageOptionsPosition]);
+
+  const handleImageOptionsFieldChange = (field, value) => {
+    setImageOptions((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const persistImageOptions = useCallback(
+    (dataUpdates, { close = false } = {}) => {
+      if (!imageOptions.isOpen || !imageOptions.entityKey) {
+        if (close) {
+          handleCloseImageOptions();
+        }
+        return;
+      }
+
+      try {
+        const contentState = editorState.getCurrentContent();
+        contentState.getEntity(imageOptions.entityKey);
+  const contentStateWithUpdate = contentState.mergeEntityData(imageOptions.entityKey, dataUpdates);
+  const newEditorState = EditorState.push(editorState, contentStateWithUpdate, 'apply-entity');
+  const withSelection = EditorState.forceSelection(newEditorState, newEditorState.getSelection());
+  setEditorState(withSelection);
+        const data = {
+          id_config: id_config,
+          type: 'richText',
+          value: newEditorState.getCurrentContent(),
+          create: createBoolRichText,
+        };
+        onChange({ data });
+      } catch (error) {
+        console.error('Erreur lors de la mise à jour des options image :', error);
+      } finally {
+        if (close) {
+          handleCloseImageOptions();
+        }
+      }
+    },
+    [imageOptions.isOpen, imageOptions.entityKey, editorState, handleCloseImageOptions, onChange, id_config, createBoolRichText]
+  );
+
+  const handleWidthSliderChange = (event) => {
+    const percentValue = Number(event.target.value);
+    const normalized = normalizePercentStep(percentValue);
+    const normalizedString = `${normalized}%`;
+    setImageOptions((prev) => ({
+      ...prev,
+      tempWidth: normalizedString,
+    }));
+  };
+
+  const handleImageOptionsApply = () => {
+    const normalizedWidth = getNormalizedPercentString(imageOptions.tempWidth);
+    persistImageOptions({
+      width: normalizedWidth,
+      alt: imageOptions.tempAlt || '',
+    }, { close: true });
+  };
+
+  const handleImageOptionsSubmit = (event) => {
+    event.preventDefault();
+    handleImageOptionsApply();
+  };
+
+  useEffect(() => {
+    if (!imageOptions.isOpen) {
+      return;
+    }
+
+    const updatePosition = () => {
+      const anchorElement = imageOptionsAnchorRef.current;
+      const containerElement = imageOptionsContainerRef.current;
+      if (!anchorElement || !containerElement) {
+        return;
+      }
+      const nextPosition = calculateImageOptionsPosition(anchorElement, containerElement);
+      if (!nextPosition) {
+        return;
+      }
+      setImageOptions((prev) => {
+        if (!prev.isOpen) {
+          return prev;
+        }
+        if (
+          prev.position &&
+          Math.round(prev.position.top) === Math.round(nextPosition.top) &&
+          Math.round(prev.position.left) === Math.round(nextPosition.left)
+        ) {
+          return prev;
+        }
+        return {
+          ...prev,
+          position: nextPosition,
+        };
+      });
+    };
+
+    updatePosition();
+    window.addEventListener('resize', updatePosition);
+    document.addEventListener('scroll', updatePosition, true);
+    return () => {
+      window.removeEventListener('resize', updatePosition);
+      document.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [imageOptions.isOpen, calculateImageOptionsPosition]);
+
+  useEffect(() => {
+    if (!imageOptions.isOpen || !imageOptions.entityKey) {
+      return;
+    }
+
+    try {
+      const entity = editorState.getCurrentContent().getEntity(imageOptions.entityKey);
+      const data = entity.getData();
+      const nextWidth = getNormalizedPercentString(data?.width);
+      const nextAlt = data?.alt || '';
+      setImageOptions((prev) => {
+        if (!prev.isOpen) {
+          return prev;
+        }
+        if (prev.tempWidth === nextWidth && prev.tempAlt === nextAlt) {
+          return prev;
+        }
+        return {
+          ...prev,
+          tempWidth: nextWidth,
+          tempAlt: nextAlt,
+        };
+      });
+    } catch (error) {
+      handleCloseImageOptions();
+    }
+  }, [editorState, imageOptions.isOpen, imageOptions.entityKey, handleCloseImageOptions]);
+
+  useEffect(() => {
+    if (!imageOptions.isOpen) {
+      return;
+    }
+
+    const handleClickOutside = (event) => {
+      if (imageOptionsRef.current?.contains(event.target)) {
+        return;
+      }
+      if (event.target.closest('.richtext-image-options-btn')) {
+        return;
+      }
+      handleCloseImageOptions();
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [imageOptions.isOpen, handleCloseImageOptions]);
+
 
   useEffect(() => {
     const selection = editorState.getSelection();
@@ -199,7 +467,9 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
         buttonTooltipRef.current?.contains(e.target) ||
         linkTooltipRef.current?.contains(e.target) ||
         addonTooltipRef.current?.contains(e.target);
-      if (!isInsideEditor && !isInsideAnyTooltip) {
+      const isInsideImageOptions = imageOptionsRef.current?.contains(e.target);
+      const isImageOptionsButton = e.target.closest('.richtext-image-options-btn');
+      if (!isInsideEditor && !isInsideAnyTooltip && !isInsideImageOptions && !isImageOptionsButton) {
         setShowLinkTooltip(false);
         setShowAddonTooltip(false);
         setButtonTooltipPosition(null);
@@ -301,6 +571,8 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
     };
     onChange({ data });
   };
+
+  const widthPercentValue = getPercentNumberFromValue(imageOptions.tempWidth);
 
   const handleBoldClick = () => setEditorState(RichUtils.toggleInlineStyle(editorState, 'BOLD'));
   const handleItalicClick = () => setEditorState(RichUtils.toggleInlineStyle(editorState, 'ITALIC'));
@@ -525,6 +797,7 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
             editable: false,
             props: {
               onRemoveImage: handleRemoveImage,
+              onOpenOptions: handleOpenImageOptions,
             },
           };
         }
@@ -638,6 +911,68 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
           theme={theme}
           onImage={handleImageClick}
         />
+      )}
+      {imageOptions.isOpen && imageOptions.position && (
+        <div
+          className="richtext-image-options-popup"
+          ref={imageOptionsRef}
+          style={{
+            top: `${imageOptions.position.top}px`,
+            left: `${imageOptions.position.left}px`,
+          }}
+        >
+          <form className="richtext-image-options-form" onSubmit={handleImageOptionsSubmit}>
+            <div className="richtext-image-options-header">
+              <span className="richtext-image-options-title">Options de l'image</span>
+              <button type="button" className="richtext-image-options-close" onClick={handleCloseImageOptions}>
+                x
+              </button>
+            </div>
+            <div className="richtext-image-options-body">
+              <label className="richtext-image-options-label">
+                Largeur
+                <div className="richtext-image-options-range-group">
+                  <div className="richtext-image-options-range-wrapper">
+                    <input
+                      type="range"
+                      min="25"
+                      max="100"
+                      step="25"
+                      value={widthPercentValue}
+                      className="richtext-image-options-range"
+                      onChange={handleWidthSliderChange}
+                    />
+                  </div>
+                  <div className="richtext-image-options-range-scale">
+                    {WIDTH_PERCENT_STEPS.map((step) => (
+                      <span
+                        key={step}
+                        className={`richtext-image-options-range-scale-item${step === widthPercentValue ? ' active' : ''}`}
+                      >
+                        {step}%
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </label>
+              <label className="richtext-image-options-label">
+                Texte alternatif
+                <input
+                  type="text"
+                  className="richtext-image-options-input"
+                  value={imageOptions.tempAlt}
+                  onChange={(event) => handleImageOptionsFieldChange('tempAlt', event.target.value)}
+                  placeholder="Décrivez l'image"
+                />
+              </label>
+            </div>
+            <div className="richtext-image-options-footer">
+              <SecondaryButton type="submit">
+                Appliquer
+              </SecondaryButton>
+            </div>
+          </form>
+        </div>
       )}
     </div>
   );
