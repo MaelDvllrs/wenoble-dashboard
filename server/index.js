@@ -166,7 +166,12 @@ const whitelist =
 
   'https://next-immo.webflow.io',
 
+
   'https://alix-ampeau.webflow.io',
+
+  'https://goout.agency',
+  'https://www.goout.agency',
+
 
 ];
 
