@@ -1,0 +1,58 @@
+/* Billing Page Styles */
+
+.billing-wrapper {
+  overflow-y: auto;
+  padding: 1px;
+  height: calc(100% - 2rem);
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-primary-third) transparent;
+  scrollbar-gutter: stable overlay;
+  box-sizing: border-box;
+}
+
+.invoices-table {
+  width: 100%;
+}
+
+.invoice-row:last-child {
+  border-bottom: none !important;
+}
+
+.payment-method:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* Responsive design */
+@media (max-width: 1024px) {
+  .invoice-header,
+  .invoice-row {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.5rem;
+  }
+  
+  .invoice-header span:nth-child(2),
+  .invoice-row span:nth-child(2),
+  .invoice-header span:nth-child(4),
+  .invoice-row span:nth-child(4) {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .invoice-header,
+  .invoice-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+  
+  .invoice-header span:nth-child(3),
+  .invoice-row span:nth-child(3) {
+    display: none;
+  }
+  
+  .payment-method {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 1rem !important;
+  }
+}

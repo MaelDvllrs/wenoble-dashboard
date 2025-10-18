@@ -1,17 +1,21 @@
 import React, { useState, useEffect } from 'react';
+import Cookies from 'js-cookie';
 import { NavLink, useParams, useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import { useWebsite } from '../../../../Context/WebsiteContext';
 import Axios from 'axios';
+import config from '../../../../config';
 import './subscription.css';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import CardMembershipIcon from '@mui/icons-material/CardMembership';
-import { SecondaryButton } from '../../../../Theme/element';
+import { SecondaryButton, DefaultButton, RedButton } from '../../../../Theme/element';
 
 const SubscriptionPlans = () => {
     const theme = useTheme();
     const navigate = useNavigate();
+    const token = Cookies.get('token');
+    
     const { websiteId } = useParams();
     const { selectedWebsite, loading: websiteLoading } = useWebsite();
     
@@ -32,8 +36,7 @@ const SubscriptionPlans = () => {
                 { name: 'Portfolio', included: true },
                 { name: 'Formulaire de contact', included: true },
                 { name: 'Newsletter', included: true },
-                { name: 'Analytics de base', included: true },
-                { name: 'Preview Webflow uniquement', included: true, note: true },
+                { name: 'Preview Webflow uniquement', included: true },
                 { name: 'Domaine personnalisé', included: false },
                 { name: 'Support prioritaire', included: false },
             ],
@@ -52,7 +55,6 @@ const SubscriptionPlans = () => {
                 { name: 'SSL inclus', included: true },
                 { name: 'Support prioritaire', included: true },
                 { name: 'Analytics avancées', included: true },
-                { name: 'Suppression du badge Wenoble', included: true },
             ],
             color: theme.palette.colors.verPrimary,
             recommended: true
@@ -66,11 +68,13 @@ const SubscriptionPlans = () => {
             
             try {
                 setLoading(true);
-                const response = await Axios.get(`/subscription-status/${websiteId}`, {
+                const response = await Axios.get(`${config.apiUrl}/subscription-status/${websiteId}`, {
                     headers: {
-                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                        Authorization: `Bearer ${token}`
                     }
                 });
+
+                console.log(response)
                 
                 if (response.data.success) {
                     // Déterminer si c'est 'free' ou 'premium' basé sur le nom du plan
@@ -96,11 +100,13 @@ const SubscriptionPlans = () => {
 
         try {
             // Récupérer l'ID du plan depuis la base de données
-            const plansResponse = await Axios.get('/plans', {
+            const plansResponse = await Axios.get(`${config.apiUrl}/plans`, {
                 headers: {
-                    Authorization: `Bearer ${localStorage.getItem('token')}`
+                    Authorization: `Bearer ${token}`
                 }
             });
+
+            console.log(plansResponse)
 
             const selectedPlan = plansResponse.data.plans.find(p => p.name.toLowerCase() === planId);
             
@@ -110,12 +116,12 @@ const SubscriptionPlans = () => {
             }
 
             // Créer une session Stripe Checkout
-            const response = await Axios.post('/create-checkout-session', {
+            const response = await Axios.post(`${config.apiUrl}/create-checkout-session`, {
                 websiteId,
                 planId: selectedPlan.id
             }, {
                 headers: {
-                    Authorization: `Bearer ${localStorage.getItem('token')}`
+                    Authorization: `Bearer ${token}`
                 }
             });
 
@@ -133,11 +139,11 @@ const SubscriptionPlans = () => {
     const handleManageSubscription = async () => {
         try {
             // Créer une session portail Stripe
-            const response = await Axios.post('/create-portal-session', {
+            const response = await Axios.post(`${config.apiUrl}/create-portal-session`, {
                 websiteId
             }, {
                 headers: {
-                    Authorization: `Bearer ${localStorage.getItem('token')}`
+                    Authorization: `Bearer ${token}`
                 }
             });
 
@@ -162,96 +168,77 @@ const SubscriptionPlans = () => {
         );
     }
 
+    console.log(currentPlan)
+
     return (
-        <div className="outlet-box">
-            {/* Breadcrumbs */}
-            <div className="title_section">
-                <div className="breadCrumbs">
-                    <NavLink 
-                        className={'breadCrumbsLink'}
-                        to="/dashboard/home"
-                        style={{ textDecoration: 'none', color: 'inherit' }}
-                    >
-                        Dashboard
-                    </NavLink>
-                    <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
-                    <NavLink 
-                        className={'breadCrumbsLink'}
-                        to="/dashboard/website"
-                        style={{ textDecoration: 'none', color: 'inherit' }}
-                    >
-                        {selectedWebsite?.website_name}
-                    </NavLink>
-                    <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
-                    <span className="breadcrumb-item-active" style={{ color: theme.palette.text.primary }}>
-                        Abonnement
-                    </span>
-                </div>
-            </div>
-
-            {/* En-tête */}
-            <div className="subscription-header">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <div style={{
-                        backgroundColor: theme.palette.primary.secondary,
-                        borderRadius: '12px',
-                        padding: '1rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                    }}>
-                        <CardMembershipIcon style={{ fontSize: '2rem', color: theme.palette.text.primary }} />
-                    </div>
-                    <div>
-                        <h1 className='subscription-title' style={{ color: theme.palette.text.primary }}>
-                            Choisissez votre plan
-                        </h1>
-                        <p className='subscription-subtitle' style={{ color: theme.palette.text.secondary }}>
-                            Sélectionnez le plan qui correspond le mieux à vos besoins
-                        </p>
+        <div className="outlet">
+            <div className="outlet-box">
+                {/* Breadcrumbs */}
+                <div className="title_section">
+                    <div className="breadCrumbs">
+                        <NavLink 
+                            className={'breadCrumbsLink'}
+                            to="/dashboard/home"
+                            style={{ textDecoration: 'none', color: 'inherit' }}
+                        >
+                            Dashboard
+                        </NavLink>
+                        <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
+                        <NavLink 
+                            className={'breadCrumbsLink'}
+                            to="/dashboard/website"
+                            style={{ textDecoration: 'none', color: 'inherit' }}
+                        >
+                            {selectedWebsite?.website_name}
+                        </NavLink>
+                        <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
+                        <span className="breadcrumb-item-active" style={{ color: theme.palette.text.primary }}>
+                            Abonnement
+                        </span>
                     </div>
                 </div>
-            </div>
 
-            {/* Badge du plan actuel */}
-            {currentPlan && (
-                <div style={{ 
-                    marginBottom: '2rem',
-                    padding: '1rem',
-                    backgroundColor: theme.palette.primary.secondary,
-                    borderRadius: '12px',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                }}>
-                    <div>
-                        <p style={{ margin: 0, color: theme.palette.text.secondary, fontSize: '0.875rem' }}>
-                            Plan actuel
-                        </p>
-                        <p style={{ margin: 0, color: theme.palette.text.primary, fontSize: '1.25rem', fontWeight: 600 }}>
-                            {plans.find(p => p.id === currentPlan)?.name}
-                        </p>
+                
+                <div className='subscription-wrapper'>
+                {/* Section Bienvenue */}
+                <div className="home-welcome-section">
+                    <div className="home-welcome-card">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+                            <div className="home-stat-icon" style={{ 
+                                backgroundColor: theme.palette.primary.main,
+                                borderRadius: '12px',
+                                padding: '1rem',
+                                height: 'auto'
+                            }}>
+                                <CardMembershipIcon style={{ fontSize: '2rem', color: theme.palette.text.primary }} />
+                            </div>
+                            <div>
+                                <h2 className="home-welcome-title" style={{ color: theme.palette.text.primary }}>
+                                    Choisissez votre plan
+                                </h2>
+                                <p className="home-welcome-subtitle" style={{ color: theme.palette.text.secondary }}>
+                                    Sélectionnez le plan qui correspond le mieux à vos besoins
+                                </p>
+                            </div>
+                        </div>
                     </div>
-                    {currentPlan === 'premium' && (
-                        <SecondaryButton onClick={handleManageSubscription}>
-                            Gérer mon abonnement
-                        </SecondaryButton>
-                    )}
                 </div>
-            )}
 
-            {/* Cartes des plans */}
-            <div className="subscription-plans-container">
-                {plans.map((plan) => (
-                    <div 
-                        key={plan.id}
-                        className={`subscription-plan-card ${plan.id === currentPlan ? 'current-plan' : ''} ${plan.recommended ? 'recommended' : ''}`}
-                        style={{
-                            backgroundColor: theme.palette.primary.secondary,
-                            boxShadow: theme.palette.shadow.main,
-                            border: plan.id === currentPlan ? `2px solid ${plan.color}` : '2px solid transparent'
-                        }}
-                    >
+                {/* Section Plans */}
+                <div className="home-section">
+                    <h3 className="home-section-title" style={{ color: theme.palette.text.primary }}>
+                        Plans disponibles
+                    </h3>
+                    <div className="subscription-plans-container">
+                        {plans.map((plan) => (
+                            <div 
+                                key={plan.id}
+                                className={`modification_box subscription-plan-card ${plan.id === currentPlan ? 'current-plan' : ''} ${plan.recommended ? 'recommended' : ''}`}
+                                style={{
+                                    backgroundColor: theme.palette.primary.secondary,
+                                    boxShadow: theme.palette.shadow.main,
+                                }}
+                            >
                         {plan.recommended && (
                             <div className="recommended-badge" style={{ backgroundColor: plan.color }}>
                                 Recommandé
@@ -302,81 +289,47 @@ const SubscriptionPlans = () => {
                             ))}
                         </ul>
 
-                        <div className="plan-action">
-                            {plan.id === currentPlan ? (
-                                <button 
-                                    className="plan-button current"
-                                    style={{
-                                        backgroundColor: theme.palette.primary.main,
-                                        color: theme.palette.text.secondary,
-                                        cursor: 'default'
-                                    }}
-                                    disabled
-                                >
-                                    Plan actuel
-                                </button>
-                            ) : plan.id === 'free' ? (
-                                <button 
-                                    className="plan-button"
-                                    style={{
-                                        backgroundColor: theme.palette.primary.main,
-                                        color: theme.palette.text.primary,
-                                        border: `1px solid ${theme.palette.primary.third}`
-                                    }}
-                                    onClick={() => handleSubscribe(plan.id)}
-                                >
-                                    Gratuit
-                                </button>
-                            ) : (
-                                <button 
-                                    className="plan-button premium"
-                                    style={{
-                                        backgroundColor: plan.color,
-                                        color: 'white'
-                                    }}
-                                    onClick={() => handleSubscribe(plan.id)}
-                                >
-                                    S'abonner maintenant
-                                </button>
-                            )}
-                        </div>
+                            <div className="plan-action">
+                                {plan.id === currentPlan ? (
+                                    <SecondaryButton 
+                                        disabled
+                                        style={{
+                                            width: '100%',
+                                            opacity: 0.7,
+                                            padding: "0.5rem",
+                                            fontSize: "1rem"
+                                        }}
+                                    >
+                                        Plan actuel
+                                    </SecondaryButton>
+                                ) : plan.id === 'free' ? (
+                                    <SecondaryButton 
+                                        onClick={() => handleSubscribe(plan.id)}
+                                        style={{ 
+                                            width: '100%',
+                                            padding: "0.5rem",
+                                            fontSize: "1rem"
+                                         }}
+                                    >
+                                        Gratuit
+                                    </SecondaryButton>
+                                ) : (
+                                    <DefaultButton 
+                                        onClick={() => handleSubscribe(plan.id)}
+                                        style={{ 
+                                            width: '100%',
+                                            padding: "0.5rem",
+                                            fontSize: "1rem"
+                                        }}
+                                    >
+                                        S'abonner maintenant
+                                    </DefaultButton>
+                                )}
+                            </div>
                     </div>
-                ))}
-            </div>
-
-            {/* FAQ / Info supplémentaire */}
-            <div style={{ 
-                marginTop: '3rem',
-                padding: '1.5rem',
-                backgroundColor: theme.palette.primary.secondary,
-                borderRadius: '12px'
-            }}>
-                <h3 style={{ color: theme.palette.text.primary, marginTop: 0 }}>
-                    Questions fréquentes
-                </h3>
-                <div className="faq-item">
-                    <p style={{ color: theme.palette.text.primary, fontWeight: 600 }}>
-                        Puis-je changer de plan à tout moment ?
-                    </p>
-                    <p style={{ color: theme.palette.text.secondary }}>
-                        Oui, vous pouvez passer au plan Premium à tout moment. La facturation sera proratisée.
-                    </p>
+                        ))}
+                    </div>
                 </div>
-                <div className="faq-item">
-                    <p style={{ color: theme.palette.text.primary, fontWeight: 600 }}>
-                        Comment fonctionne le domaine personnalisé ?
-                    </p>
-                    <p style={{ color: theme.palette.text.secondary }}>
-                        Avec le plan Premium, vous pouvez connecter votre propre nom de domaine. Le SSL est inclus automatiquement.
-                    </p>
-                </div>
-                <div className="faq-item">
-                    <p style={{ color: theme.palette.text.primary, fontWeight: 600 }}>
-                        Que se passe-t-il si j'annule mon abonnement Premium ?
-                    </p>
-                    <p style={{ color: theme.palette.text.secondary }}>
-                        Votre site reviendra automatiquement au plan Gratuit. Votre domaine personnalisé sera désactivé mais vos données seront conservées.
-                    </p>
                 </div>
             </div>
         </div>

@@ -14,6 +14,7 @@ const securityRouter = require('./users/security');
 const profileRouter = require('./users/profile');
 const userStatsRouter = require('./users/userStats');
 const subscriptionRouter = require('./subscription/subscription');
+const billingRouter = require('./billing/billing');
 const portfolioRouter = require('./modification/portfolio');
 const pageRouter = require('./modification/page');
 const collectionRouter = require('./modification/collection');
@@ -233,6 +234,7 @@ app.use(profileRouter); // Routes de gestion du profil utilisateur (regroupé av
 app.use(securityRouter);
 app.use(userStatsRouter);
 app.use(subscriptionRouter);
+app.use(billingRouter);
 app.use(portfolioRouter);
 app.use(pageRouter);
 app.use(collectionRouter);
