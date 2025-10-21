@@ -4,6 +4,26 @@ const { authenticateToken } = require("../middleware/authToken");
 const { supabaseServerAdmin } = require("../supabase");
 const stripe = require("../stripe/stripe");
 
+// Fonction utilitaire pour vérifier si Stripe est configuré
+function isStripeConfigured() {
+    return process.env.STRIPE_SECRET_KEY && 
+           process.env.STRIPE_SECRET_KEY !== 'sk_test_placeholder_key' && 
+           !process.env.STRIPE_SECRET_KEY.includes('placeholder');
+}
+
+// Fonction utilitaire pour convertir un timestamp Stripe en date ISO
+function convertStripeTimestamp(timestamp) {
+    if (!timestamp || timestamp === null || timestamp === undefined) {
+        return new Date().toISOString();
+    }
+    try {
+        return new Date(timestamp * 1000).toISOString();
+    } catch (error) {
+        console.error('Erreur de conversion timestamp:', timestamp, error);
+        return new Date().toISOString();
+    }
+}
+
 // Récupérer le statut d'abonnement d'un site
 router.get("/subscription-status/:websiteId", authenticateToken, async (req, res) => {
     console.log("Récupération du statut d'abonnement demandé");
@@ -180,6 +200,15 @@ router.post("/create-checkout-session", authenticateToken, async (req, res) => {
             });
         }
 
+        // Vérifier si Stripe est configuré
+        if (!isStripeConfigured()) {
+            return res.status(503).json({
+                success: false,
+                message: "Service de paiement temporairement indisponible. Stripe n'est pas configuré.",
+                error_code: "STRIPE_NOT_CONFIGURED"
+            });
+        }
+
         // Récupérer les informations utilisateur pour Stripe
         const { data: userProfile } = await supabaseServerAdmin()
             .from("users")
@@ -230,8 +259,8 @@ router.post("/create-checkout-session", authenticateToken, async (req, res) => {
                 },
             ],
             mode: 'subscription',
-            success_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/dashboard/website/${websiteId}/subscription?success=true`,
-            cancel_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/dashboard/website/${websiteId}/subscription?canceled=true`,
+            success_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/dashboard/website/subscription/${websiteId}?success=true&session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/dashboard/website/subscription/${websiteId}?canceled=true`,
             metadata: {
                 userId: userId,
                 websiteId: websiteId,
@@ -254,11 +283,113 @@ router.post("/create-checkout-session", authenticateToken, async (req, res) => {
     }
 });
 
+// Vérifier et finaliser un abonnement après paiement réussi
+router.post("/verify-subscription", authenticateToken, async (req, res) => {
+    try {
+        const { sessionId, websiteId } = req.body;
+        const userId = req.user.idUser;
+
+        // Vérifier si Stripe est configuré
+        if (!isStripeConfigured()) {
+            return res.status(503).json({
+                success: false,
+                message: "Service de paiement temporairement indisponible.",
+                error_code: "STRIPE_NOT_CONFIGURED"
+            });
+        }
+
+        // Récupérer la session Stripe
+        const session = await stripe.checkout.sessions.retrieve(sessionId);
+        
+        console.log('Session récupérée:', {
+            id: session.id,
+            payment_status: session.payment_status,
+            mode: session.mode,
+            subscription: session.subscription
+        });
+        
+        if (session.payment_status === 'paid' && session.mode === 'subscription') {
+            // Récupérer l'abonnement Stripe
+            const subscription = await stripe.subscriptions.retrieve(session.subscription);
+            
+            console.log('Abonnement récupéré:', {
+                id: subscription.id,
+                status: subscription.status,
+                current_period_start: subscription.current_period_start,
+                current_period_end: subscription.current_period_end
+            });
+            
+            // Vérifier si l'abonnement existe déjà dans la base de données
+            const { data: existingSubscription } = await supabaseServerAdmin()
+                .from("website_subscriptions")
+                .select("*")
+                .eq("stripe_subscription_id", subscription.id)
+                .maybeSingle();
+
+            if (!existingSubscription) {
+                // Créer l'abonnement dans la base de données
+                const { data: newSubscription, error: insertError } = await supabaseServerAdmin()
+                    .from("website_subscriptions")
+                    .insert({
+                        website_id: websiteId,
+                        user_id: userId,
+                        plan_id: session.metadata.planId,
+                        stripe_subscription_id: subscription.id,
+                        stripe_customer_id: session.customer,
+                        status: 'active',
+                        current_period_start: convertStripeTimestamp(subscription.current_period_start),
+                        current_period_end: convertStripeTimestamp(subscription.current_period_end),
+                        created_at: new Date().toISOString()
+                    })
+                    .select()
+                    .single();
+
+                if (insertError) {
+                    throw insertError;
+                }
+
+                console.log("Abonnement créé avec succès:", newSubscription);
+            }
+
+            res.json({
+                success: true,
+                message: "Abonnement vérifié et activé avec succès",
+                subscription: {
+                    id: subscription.id,
+                    status: subscription.status,
+                    current_period_end: convertStripeTimestamp(subscription.current_period_end)
+                }
+            });
+        } else {
+            res.status(400).json({
+                success: false,
+                message: "Paiement non confirmé ou session invalide"
+            });
+        }
+
+    } catch (error) {
+        console.error("Erreur lors de la vérification de l'abonnement:", error);
+        res.status(500).json({ 
+            success: false, 
+            message: "Erreur serveur" 
+        });
+    }
+});
+
 // Créer un portail client Stripe (pour gérer l'abonnement)
 router.post("/create-portal-session", authenticateToken, async (req, res) => {
     try {
         const { websiteId } = req.body;
         const userId = req.user.idUser;
+
+        // Vérifier si Stripe est configuré
+        if (!isStripeConfigured()) {
+            return res.status(503).json({
+                success: false,
+                message: "Service de gestion des abonnements temporairement indisponible. Stripe n'est pas configuré.",
+                error_code: "STRIPE_NOT_CONFIGURED"
+            });
+        }
 
         // Vérifier que l'utilisateur possède ce site
         const { data: websiteOwnership, error: ownershipError } = await supabaseServerAdmin()
@@ -458,8 +589,8 @@ async function handleCheckoutCompleted(session) {
                 stripe_subscription_id: subscription.id,
                 stripe_customer_id: session.customer,
                 status: 'active',
-                current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-                current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+                current_period_start: convertStripeTimestamp(subscription.current_period_start),
+                current_period_end: convertStripeTimestamp(subscription.current_period_end),
                 created_at: new Date().toISOString()
             });
     }
@@ -473,8 +604,8 @@ async function handleSubscriptionUpdate(subscription) {
         .from("website_subscriptions")
         .update({
             status: subscription.status,
-            current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-            current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+            current_period_start: convertStripeTimestamp(subscription.current_period_start),
+            current_period_end: convertStripeTimestamp(subscription.current_period_end),
             updated_at: new Date().toISOString()
         })
         .eq("stripe_subscription_id", subscription.id);

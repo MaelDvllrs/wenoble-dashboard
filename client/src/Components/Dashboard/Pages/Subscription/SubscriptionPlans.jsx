@@ -62,6 +62,16 @@ const SubscriptionPlans = () => {
     ];
 
     useEffect(() => {
+        // Vérifier si on revient d'un paiement réussi
+        const urlParams = new URLSearchParams(window.location.search);
+        const success = urlParams.get('success');
+        const sessionId = urlParams.get('session_id');
+
+        if (success === 'true' && sessionId) {
+            // Vérifier et finaliser l'abonnement
+            verifySubscription(sessionId);
+        }
+
         // Récupérer le plan actuel du site
         const fetchCurrentPlan = async () => {
             if (!websiteId) return;
@@ -91,6 +101,29 @@ const SubscriptionPlans = () => {
 
         fetchCurrentPlan();
     }, [websiteId]);
+
+    const verifySubscription = async (sessionId) => {
+        try {
+            const response = await Axios.post(`${config.apiUrl}/verify-subscription`, {
+                sessionId: sessionId,
+                websiteId: websiteId
+            }, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
+            if (response.data.success) {
+                console.log('Abonnement vérifié avec succès!');
+                setCurrentPlan('premium');
+                
+                // Nettoyer l'URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        } catch (error) {
+            console.error('Erreur lors de la vérification de l\'abonnement:', error);
+        }
+    };
 
     const handleSubscribe = async (planId) => {
         if (planId === 'free') {
@@ -133,6 +166,13 @@ const SubscriptionPlans = () => {
             }
         } catch (error) {
             console.error('Erreur lors de la création de la session Checkout:', error);
+            
+            // Afficher un message plus clair à l'utilisateur
+            if (error.response?.data?.error_code === 'STRIPE_NOT_CONFIGURED') {
+                alert('Service de paiement temporairement indisponible. Veuillez réessayer plus tard.');
+            } else {
+                alert('Erreur lors de la création du paiement. Veuillez réessayer.');
+            }
         }
     };
 
