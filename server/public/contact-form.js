@@ -4,7 +4,7 @@
     [wn-error-form]{
       display: none !important;
     }
-    /* Honeypot - champ caché pour piéger les bots */
+    /* Honeypot - checkbox caché pour piéger les bots */
     .wn-honeypot {
       position: absolute !important;
       left: -9999px !important;
@@ -26,16 +26,22 @@ function initContactForm(apiEndpoint, apiKey, formElement, submitButtonSelector 
     let formLoadTime = Date.now();
     const MIN_SUBMIT_TIME = 3000; // Minimum 3 secondes avant soumission
     
-    // Ajouter un champ honeypot si pas déjà présent
+    // Ajouter un checkbox honeypot si pas déjà présent
     if (!formElement.querySelector('.wn-honeypot')) {
         const honeypot = document.createElement('input');
-        honeypot.type = 'text';
-        honeypot.name = 'website';
+        honeypot.type = 'checkbox';
+        honeypot.name = 'bot_check';
         honeypot.className = 'wn-honeypot';
         honeypot.tabIndex = -1;
-        honeypot.autocomplete = 'off';
         honeypot.setAttribute('aria-hidden', 'true');
-        formElement.appendChild(honeypot);
+        honeypot.style.display = 'none';
+        // Ajouter un label invisible pour tromper les bots
+        const honeypotLabel = document.createElement('label');
+        honeypotLabel.textContent = 'Please check this box if you are human';
+        honeypotLabel.className = 'wn-honeypot';
+        honeypotLabel.style.display = 'none';
+        honeypotLabel.appendChild(honeypot);
+        formElement.appendChild(honeypotLabel);
     }
     
     async function sendEmail(emailSender, subject, html, formData) {
@@ -139,10 +145,10 @@ function initContactForm(apiEndpoint, apiKey, formElement, submitButtonSelector 
             
             // === PROTECTIONS ANTI-BOT ===
             
-            // 1. Vérifier le honeypot (si rempli = bot)
-            const honeypot = formElement.querySelector('.wn-honeypot');
-            if (honeypot && honeypot.value !== '') {
-                console.warn('Bot détecté: honeypot rempli');
+            // 1. Vérifier le honeypot checkbox (si coché = bot)
+            const honeypot = formElement.querySelector('.wn-honeypot input[type="checkbox"]');
+            if (honeypot && honeypot.checked) {
+                console.warn('Bot détecté: honeypot checkbox coché');
                 // Ne rien afficher, juste ignorer silencieusement
                 return;
             }
