@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Cookies from 'js-cookie';
 import { NavLink, useParams, useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
+import { Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import { useWebsite } from '../../../../Context/WebsiteContext';
 import Axios from 'axios';
 import config from '../../../../config';
@@ -9,6 +10,7 @@ import './subscription.css';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import CardMembershipIcon from '@mui/icons-material/CardMembership';
+import WarningIcon from '@mui/icons-material/Warning';
 import { SecondaryButton, DefaultButton, RedButton } from '../../../../Theme/element';
 
 const SubscriptionPlans = () => {
@@ -19,8 +21,10 @@ const SubscriptionPlans = () => {
     const { websiteId } = useParams();
     const { selectedWebsite, loading: websiteLoading } = useWebsite();
     
-    const [currentPlan, setCurrentPlan] = useState('free'); // 'free' ou 'premium'
+    const [currentPlan, setCurrentPlan] = useState('free'); // 'free', 'starter', ou 'cms'
     const [loading, setLoading] = useState(true);
+    const [cancelModalOpen, setCancelModalOpen] = useState(false);
+    const [subscriptionInfo, setSubscriptionInfo] = useState(null);
 
     // Plans disponibles
     const plans = [
@@ -31,32 +35,53 @@ const SubscriptionPlans = () => {
             period: 'mois',
             description: 'Parfait pour commencer et tester la plateforme',
             features: [
-                { name: 'Collections CMS illimitées', included: true },
-                { name: 'Pages personnalisées', included: true },
-                { name: 'Portfolio', included: true },
                 { name: 'Formulaire de contact', included: true },
                 { name: 'Newsletter', included: true },
                 { name: 'Preview Webflow uniquement', included: true },
+                { name: 'CMS (Collections)', included: true },
+                { name: 'Pages personnalisées', included: true },
+                { name: 'Portfolio', included: true },
                 { name: 'Domaine personnalisé', included: false },
+                { name: 'SSL inclus', included: false },
+                { name: 'Analytics', included: false },
                 { name: 'Support prioritaire', included: false },
+                
             ],
-            color: '#6c757d',
+            color: theme.palette.text.green,
             recommended: false
         },
         {
-            id: 'premium',
-            name: 'Premium',
-            price: 9.99,
+            id: 'starter',
+            name: 'Starter',
+            price: 9.90,
             period: 'mois',
-            description: 'Toutes les fonctionnalités pour un site professionnel',
+            description: 'Idéal pour un site professionnel avec domaine personnalisé',
             features: [
-                { name: 'Toutes les fonctionnalités Gratuit', included: true },
                 { name: 'Domaine personnalisé', included: true, highlight: true },
-                { name: 'SSL inclus', included: true },
-                { name: 'Support prioritaire', included: true },
-                { name: 'Analytics avancées', included: true },
+                { name: 'SSL inclus', included: true, highlight: true },
+                { name: 'Analytics', included: true, highlight: true },
+                { name: 'CMS (Collections)', included: false },
+                { name: 'Pages personnalisées', included: false },
+                { name: 'Portfolio', included: false },
+                { name: 'Support prioritaire', included: false },
             ],
-            color: theme.palette.colors.verPrimary,
+            color: theme.palette.colors.green,
+            recommended: false
+        },
+        {
+            id: 'cms',
+            name: 'CMS',
+            price: 29.90,
+            period: 'mois',
+            description: 'Solution complète avec CMS, pages personnalisées et portfolio',
+            features: [
+                { name: 'Toutes les fonctionnalités Starter', included: true },
+                { name: 'CMS (Collections illimitées)', included: true, highlight: true },
+                { name: 'Pages personnalisées', included: true, highlight: true },
+                { name: 'Portfolio', included: true, highlight: true },
+                { name: 'Support prioritaire', included: true },
+            ],
+            color: theme.palette.colors.green,
             recommended: true
         }
     ];
@@ -87,9 +112,18 @@ const SubscriptionPlans = () => {
                 console.log(response)
                 
                 if (response.data.success) {
-                    // Déterminer si c'est 'free' ou 'premium' basé sur le nom du plan
+                    // Stocker les informations d'abonnement
+                    setSubscriptionInfo(response.data.subscription);
+                    
+                    // Déterminer le plan basé sur le nom du plan
                     const planName = response.data.subscription.plan_name.toLowerCase();
-                    setCurrentPlan(planName === 'premium' ? 'premium' : 'free');
+                    if (planName === 'starter') {
+                        setCurrentPlan('starter');
+                    } else if (planName === 'cms') {
+                        setCurrentPlan('cms');
+                    } else {
+                        setCurrentPlan('free');
+                    }
                 }
             } catch (error) {
                 console.error('Erreur lors de la récupération du plan:', error);
@@ -115,7 +149,15 @@ const SubscriptionPlans = () => {
 
             if (response.data.success) {
                 console.log('Abonnement vérifié avec succès!');
-                setCurrentPlan('premium');
+                // Récupérer le plan depuis la réponse
+                const planName = response.data.subscription?.plan_name?.toLowerCase();
+                if (planName === 'starter') {
+                    setCurrentPlan('starter');
+                } else if (planName === 'cms') {
+                    setCurrentPlan('cms');
+                } else {
+                    setCurrentPlan('free');
+                }
                 
                 // Nettoyer l'URL
                 window.history.replaceState({}, document.title, window.location.pathname);
@@ -198,6 +240,37 @@ const SubscriptionPlans = () => {
         }
     };
 
+    const handleCancelSubscription = async () => {
+        try {
+            setLoading(true);
+            setCancelModalOpen(false);
+            
+            const response = await Axios.post(`${config.apiUrl}/cancel-subscription`, {
+                websiteId
+            }, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
+            if (response.data.success) {
+                // Mettre à jour les informations d'abonnement
+                if (subscriptionInfo) {
+                    setSubscriptionInfo({
+                        ...subscriptionInfo,
+                        cancel_at_period_end: true
+                    });
+                }
+                // Note: Le plan reste actif jusqu'à la fin de la période
+                // Ne pas changer currentPlan immédiatement
+            }
+        } catch (error) {
+            console.error('Erreur lors de l\'annulation:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     if (websiteLoading || loading) {
         return (
             <div className="outlet-box">
@@ -240,32 +313,50 @@ const SubscriptionPlans = () => {
 
                 
                 <div className='subscription-wrapper'>
-                {/* Section Bienvenue */}
-                <div className="home-welcome-section">
-                    <div className="home-welcome-card">
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-                            <div className="home-stat-icon" style={{ 
-                                backgroundColor: theme.palette.primary.main,
-                                borderRadius: '12px',
-                                padding: '1rem',
-                                height: 'auto'
-                            }}>
-                                <CardMembershipIcon style={{ fontSize: '2rem', color: theme.palette.text.primary }} />
-                            </div>
-                            <div>
-                                <h2 className="home-welcome-title" style={{ color: theme.palette.text.primary }}>
-                                    Choisissez votre plan
-                                </h2>
-                                <p className="home-welcome-subtitle" style={{ color: theme.palette.text.secondary }}>
-                                    Sélectionnez le plan qui correspond le mieux à vos besoins
-                                </p>
+
+                {/* Bandeau d'information si annulation programmée */}
+                {subscriptionInfo?.cancel_at_period_end && currentPlan !== 'free' && (
+                    <div className="home-section" style={{ marginBottom: '2rem' }}>
+                        <div className="home-welcome-card" style={{
+                            backgroundColor: theme.palette.colors.yellow + '20',
+                            border: `1px solid ${theme.palette.colors.yellow}40`,
+                            borderRadius: '12px',
+                            padding: '1.5rem'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                <div style={{
+                                    backgroundColor: theme.palette.colors.yellow,
+                                    borderRadius: '50%',
+                                    padding: '0.75rem',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}>
+                                    <WarningIcon style={{ fontSize: '1.5rem', color: theme.palette.primary.main }} />
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <h3 style={{ color: theme.palette.text.primary, margin: 0 }}>
+                                        Annulation programmée
+                                    </h3>
+                                    <p style={{ color: theme.palette.text.secondary, margin: '0.5rem 0 0 0' }}>
+                                        Votre abonnement <strong>{plans.find(p => p.id === currentPlan)?.name}</strong> sera annulé le{' '}
+                                        <strong>
+                                            {subscriptionInfo.current_period_end && new Date(subscriptionInfo.current_period_end).toLocaleDateString('fr-FR', {
+                                                year: 'numeric',
+                                                month: 'long',
+                                                day: 'numeric'
+                                            })}
+                                        </strong>
+                                        . Vous conservez l'accès aux fonctionnalités premium jusqu'à cette date.
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                )}
 
                 {/* Section Plans */}
-                <div className="home-section">
+                <div>
                     <h3 className="home-section-title" style={{ color: theme.palette.text.primary }}>
                         Plans disponibles
                     </h3>
@@ -275,7 +366,6 @@ const SubscriptionPlans = () => {
                                 key={plan.id}
                                 className={`modification_box subscription-plan-card ${plan.id === currentPlan ? 'current-plan' : ''} ${plan.recommended ? 'recommended' : ''}`}
                                 style={{
-                                    backgroundColor: theme.palette.primary.secondary,
                                     boxShadow: theme.palette.shadow.main,
                                 }}
                             >
@@ -296,7 +386,7 @@ const SubscriptionPlans = () => {
 
                         <div className="plan-price">
                             <span className="price-amount" style={{ color: theme.palette.text.primary }}>
-                                {plan.price}€
+                                {plan.price.toFixed(2)}€
                             </span>
                             <span className="price-period" style={{ color: theme.palette.text.secondary }}>
                                 /{plan.period}
@@ -342,16 +432,28 @@ const SubscriptionPlans = () => {
                                     >
                                         Plan actuel
                                     </SecondaryButton>
-                                ) : plan.id === 'free' ? (
-                                    <SecondaryButton 
-                                        onClick={() => handleSubscribe(plan.id)}
+                                ) : plan.id === 'free' && currentPlan !== 'free' ? (
+                                    <RedButton 
+                                        onClick={() => setCancelModalOpen(true)}
                                         style={{ 
                                             width: '100%',
                                             padding: "0.5rem",
                                             fontSize: "1rem"
+                                        }}
+                                    >
+                                        Passer au gratuit
+                                    </RedButton>
+                                ) : plan.id === 'free' ? (
+                                    <SecondaryButton 
+                                        disabled
+                                        style={{ 
+                                            width: '100%',
+                                            padding: "0.5rem",
+                                            fontSize: "1rem",
+                                            opacity: 0.7
                                          }}
                                     >
-                                        Gratuit
+                                        Plan actuel
                                     </SecondaryButton>
                                 ) : (
                                     <DefaultButton 
@@ -371,6 +473,80 @@ const SubscriptionPlans = () => {
                     </div>
                 </div>
                 </div>
+
+                {/* Modal de confirmation d'annulation */}
+                <Dialog 
+                    open={cancelModalOpen} 
+                    onClose={() => setCancelModalOpen(false)} 
+                    maxWidth="sm" 
+                    fullWidth
+                    sx={{
+                        '& .MuiPaper-root': {
+                            backgroundColor: theme.palette.primary.main,
+                            color: theme.palette.text.primary,
+                            border: `1px solid ${theme.palette.primary.third}`,
+                        }
+                    }}
+                >
+                    <DialogTitle style={{ color: theme.palette.text.primary }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <WarningIcon style={{ color: theme.palette.colors.yellow, fontSize: '1.75rem' }} />
+                            <span>Annuler votre abonnement</span>
+                        </div>
+                    </DialogTitle>
+                    <DialogContent>
+                        <p style={{ color: theme.palette.text.primary, marginBottom: '1rem' }}>
+                            Êtes-vous sûr de vouloir annuler votre abonnement <strong>{plans.find(p => p.id === currentPlan)?.name}</strong> ?
+                        </p>
+                        <div style={{ 
+                            backgroundColor: theme.palette.primary.secondary, 
+                            padding: '1rem', 
+                            borderRadius: '8px',
+                            border: `1px solid ${theme.palette.primary.third}`
+                        }}>
+                            <p style={{ color: theme.palette.text.secondary, fontSize: '0.9rem', margin: '0 0 0.5rem 0' }}>
+                                <strong>📅 Ce qui va se passer :</strong>
+                            </p>
+                            <ul style={{ color: theme.palette.text.secondary, fontSize: '0.875rem', marginLeft: '1.25rem' }}>
+                                <li>Vous conservez l'accès à toutes les fonctionnalités premium <strong>jusqu'à la fin de votre période de facturation</strong></li>
+                                <li>Aucune nouvelle facturation ne sera effectuée</li>
+                                <li>À la fin de la période, votre site passera automatiquement au plan gratuit</li>
+                                <li>Vous perdrez alors l'accès aux fonctionnalités premium (domaine personnalisé, SSL, Analytics, CMS, etc.)</li>
+                            </ul>
+                        </div>
+                        {subscriptionInfo?.current_period_end && (
+                            <p style={{ 
+                                color: theme.palette.colors.blue, 
+                                fontSize: '0.875rem', 
+                                marginTop: '1rem',
+                                padding: '0.75rem',
+                                backgroundColor: theme.palette.primary.secondary,
+                                borderRadius: '6px',
+                                border: `1px solid ${theme.palette.colors.blue}40`
+                            }}>
+                                📆 Fin de la période : <strong>{new Date(subscriptionInfo.current_period_end).toLocaleDateString('fr-FR', { 
+                                    year: 'numeric', 
+                                    month: 'long', 
+                                    day: 'numeric' 
+                                })}</strong>
+                            </p>
+                        )}
+                        <p style={{ color: theme.palette.colors.green, fontSize: '0.875rem', marginTop: '1rem', marginBottom: 0 }}>
+                            💡 Vous pourrez vous réabonner à tout moment
+                        </p>
+                    </DialogContent>
+                    <DialogActions style={{ padding: '1rem 1.5rem' }}>
+                        <SecondaryButton onClick={() => setCancelModalOpen(false)}>
+                            Conserver mon abonnement
+                        </SecondaryButton>
+                        <RedButton 
+                            onClick={handleCancelSubscription}
+                            disabled={loading}
+                        >
+                            {loading ? 'Annulation...' : 'Confirmer l\'annulation'}
+                        </RedButton>
+                    </DialogActions>
+                </Dialog>
             </div>
         </div>
     );

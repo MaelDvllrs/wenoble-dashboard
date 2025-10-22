@@ -13,17 +13,20 @@ ADD COLUMN IF NOT EXISTS stripe_price_id VARCHAR(255);
 
 -- Ajouter des colonnes manquantes à la table website_subscriptions si nécessaire
 ALTER TABLE website_subscriptions 
+ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id),
 ADD COLUMN IF NOT EXISTS stripe_subscription_id VARCHAR(255) UNIQUE,
 ADD COLUMN IF NOT EXISTS stripe_customer_id VARCHAR(255),
 ADD COLUMN IF NOT EXISTS current_period_start TIMESTAMP,
 ADD COLUMN IF NOT EXISTS current_period_end TIMESTAMP,
-ADD COLUMN IF NOT EXISTS canceled_at TIMESTAMP,
+ADD COLUMN IF NOT EXISTS cancel_at_period_end BOOLEAN DEFAULT false,
 ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW();
 
 -- Ajouter des indices pour améliorer les performances
 CREATE INDEX IF NOT EXISTS idx_stripe_customers_user_id ON stripe_customers(user_id);
 CREATE INDEX IF NOT EXISTS idx_stripe_customers_stripe_customer_id ON stripe_customers(stripe_customer_id);
 CREATE INDEX IF NOT EXISTS idx_website_subscriptions_stripe_subscription_id ON website_subscriptions(stripe_subscription_id);
+CREATE INDEX IF NOT EXISTS idx_website_subscriptions_user_id ON website_subscriptions(user_id);
+CREATE INDEX IF NOT EXISTS idx_website_subscriptions_user_website ON website_subscriptions(user_id, website_id);
 
 -- Ajouter des politiques RLS (Row Level Security) pour stripe_customers
 ALTER TABLE stripe_customers ENABLE ROW LEVEL SECURITY;

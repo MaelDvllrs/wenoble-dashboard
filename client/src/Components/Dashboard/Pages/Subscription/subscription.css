@@ -16,6 +16,7 @@
     margin-bottom: 2rem;
 }
 
+
 .subscription-title {
     font-size: 2rem;
     font-weight: 700;
@@ -31,7 +32,14 @@
     display: flex;
     justify-content: center;
     gap: 1rem;
-    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 1200px) {
+    .subscription-plans-container {
+        flex-direction: column;
+        align-items: center;
+    }
 }
 
 @media (max-width: 768px) {
@@ -42,16 +50,16 @@
 
 .subscription-plan-card {
     flex: 1;
-    max-width: 350px;
+    min-width: 280px;
     border-radius: 12px;
     padding: 2rem;
     position: relative;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    min-height: 400px;
+    min-height: 450px;
     overflow: visible;
-
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 

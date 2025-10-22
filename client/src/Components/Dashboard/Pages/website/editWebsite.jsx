@@ -11,7 +11,7 @@ import Axios from '../../../../service/AxiosConfig';
 import { useSnackbar } from '../../../../Theme/snackbar';
 import { WebsiteContext } from '../../../../Context/WebsiteContext';
 import { WorkspaceContext } from '../../../../Context/WorkspaceContext';
-import { DefaultButton, SecondaryButton, RedButton, SelectField, DefaultSwitch } from '../../../../Theme/element';
+import { DefaultButton, SecondaryButton, RedButton, SelectField } from '../../../../Theme/element';
 // Reuse static site generation util from collection pages
 import { generateStaticSite } from '../modification_site/Collection/apiCollection';
 // API Tokens Manager component
@@ -57,15 +57,6 @@ const EditWebsite = () => {
     visibility: 'workspace'
   });
   
-  // États pour les features
-  const [features, setFeatures] = useState({
-    auth_portfolio: false,
-    auth_page: false,
-    auth_blog: false,
-    auth_ecom: false,
-    auth_newsletter: false
-  });
-  
   // États pour les utilisateurs
   const [users, setUsers] = useState([]);
   const [workspaceMembers, setWorkspaceMembers] = useState([]);
@@ -98,7 +89,6 @@ const EditWebsite = () => {
           analytics_id: currentWebsite.analytics_id || '',
           visibility: currentWebsite.visibility || 'workspace'
         });
-        loadWebsiteFeatures();
         loadWebsiteUsers();
         loadWorkspaceMembers();
         setInitialLoading(false);
@@ -112,22 +102,6 @@ const EditWebsite = () => {
       loadWorkspaceMembers();
     }
   }, [users, website]);
-
-  // Charger les features du site web
-  const loadWebsiteFeatures = async () => {
-    try {
-      const response = await Axios.get(`${apiUrl}/getFeaturesWebsite?websiteId=${websiteId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      
-      if (response.data) {
-        setFeatures(response.data.features || {});
-      }
-    } catch (error) {
-      console.error('Erreur lors du chargement des features:', error);
-      showSnackbar('Erreur lors du chargement des fonctionnalités', 'error');
-    }
-  };
 
   // Charger les utilisateurs du site web
   const loadWebsiteUsers = async () => {
@@ -190,23 +164,6 @@ const EditWebsite = () => {
     } catch (error) {
       const errorMessage = error.response?.data?.error || 'Erreur lors de la mise à jour';
       showSnackbar(errorMessage, 'error');
-    }
-    setLoading(false);
-  };
-
-  // Sauvegarder les features
-  const handleSaveFeatures = async () => {
-    setLoading(true);
-    try {
-      await Axios.put(`${apiUrl}/website-features/${websiteId}`, 
-        { features },
-        { headers: { 'Authorization': `Bearer ${token}` } }
-      );
-      
-      showSnackbar('Fonctionnalités mises à jour avec succès', 'success');
-    } catch (error) {
-      const errorMessage = error.response?.data?.error || 'Erreur lors de la mise à jour des fonctionnalités';
-      showSnackbar('error', errorMessage);
     }
     setLoading(false);
   };
@@ -616,73 +573,6 @@ const EditWebsite = () => {
                   </div>
                 </div>
               )}
-
-              <div className="line_horizontal is_big_margin" style={{backgroundColor: theme.palette.primary.third}}></div>
-
-              {/* Fonctionnalités du site */}
-              <div className="input-container">
-                <h4 className='titlePage'>Fonctionnalités</h4>
-                <p className="blogField_description">Activez ou désactivez les fonctionnalités de votre site</p>
-              </div>
-
-              <div className="input-container">
-                <div className="features_grid">
-                  <div className="feature_item">
-                    <label className="switch_container">
-                      <DefaultSwitch
-                        checked={features.auth_portfolio || false}
-                        onChange={(e) => setFeatures({ ...features, auth_portfolio: e.target.checked })}
-                      />
-                      <span className="switch_label">Portfolio</span>
-                    </label>
-                  </div>
-                  <div className="feature_item">
-                    <label className="switch_container">
-                      <DefaultSwitch
-                        checked={features.auth_page || false}
-                        onChange={(e) => setFeatures({ ...features, auth_page: e.target.checked })}
-                      />
-                      <span className="switch_label">Pages</span>
-                    </label>
-                  </div>
-                  <div className="feature_item">
-                    <label className="switch_container">
-                      <DefaultSwitch
-                        checked={features.auth_blog || false}
-                        onChange={(e) => setFeatures({ ...features, auth_blog: e.target.checked })}
-                      />
-                      <span className="switch_label">Blog</span>
-                    </label>
-                  </div>
-                  <div className="feature_item">
-                    <label className="switch_container">
-                      <DefaultSwitch
-                        checked={features.auth_ecom || false}
-                        onChange={(e) => setFeatures({ ...features, auth_ecom: e.target.checked })}
-                      />
-                      <span className="switch_label">E-commerce</span>
-                    </label>
-                  </div>
-                  <div className="feature_item">
-                    <label className="switch_container">
-                      <DefaultSwitch
-                        checked={features.auth_newsletter || false}
-                        onChange={(e) => setFeatures({ ...features, auth_newsletter: e.target.checked })}
-                      />
-                      <span className="switch_label">Newsletter</span>
-                    </label>
-                  </div>
-                </div>
-                <div style={{ marginTop: '2rem' }}>
-                  <DefaultButton 
-                    onClick={handleSaveFeatures}
-                    disabled={loading}
-                    startIcon={loading ? <CircularProgress size={12} sx={{ color: 'white' }} /> : undefined}
-                  >
-                    Enregistrer
-                  </DefaultButton>
-                </div>
-              </div>
 
               <div className="line_horizontal is_big_margin" style={{backgroundColor: theme.palette.primary.third}}></div>
 

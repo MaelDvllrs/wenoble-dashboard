@@ -51,7 +51,7 @@ router.get("/subscription-status/:websiteId", authenticateToken, async (req, res
             });
         }
 
-        // Récupérer l'abonnement actif du site
+        // Récupérer l'abonnement actif du site (l'abonnement est lié au site, pas à l'utilisateur)
         const { data: subscription, error: subscriptionError } = await supabaseServerAdmin()
             .from("website_subscriptions")
             .select(`
@@ -81,14 +81,12 @@ router.get("/subscription-status/:websiteId", authenticateToken, async (req, res
             const { data: freePlan, error: freePlanError } = await supabaseServerAdmin()
                 .from("subscription_plans")
                 .select("*")
-                .eq("name", "starter")
+                .eq("name", "free")
                 .maybeSingle();
 
             if (freePlanError) {
                 throw freePlanError;
             }
-
-            console.log("Plan gratuit retourné:", freePlan);
 
             return res.json({
                 success: true,
@@ -327,12 +325,11 @@ router.post("/verify-subscription", authenticateToken, async (req, res) => {
                 .maybeSingle();
 
             if (!existingSubscription) {
-                // Créer l'abonnement dans la base de données
+                // Créer l'abonnement dans la base de données (abonnement par site)
                 const { data: newSubscription, error: insertError } = await supabaseServerAdmin()
                     .from("website_subscriptions")
                     .insert({
                         website_id: websiteId,
-                        user_id: userId,
                         plan_id: session.metadata.planId,
                         stripe_subscription_id: subscription.id,
                         stripe_customer_id: session.customer,
@@ -507,70 +504,6 @@ router.post("/webhook", express.raw({ type: "application/json" }), async (req, r
     }
 });
 
-// Annuler un abonnement
-router.post("/cancel-subscription", authenticateToken, async (req, res) => {
-    try {
-        const { websiteId } = req.body;
-        const userId = req.user.idUser;
-
-        // Vérifier que l'utilisateur possède ce site
-        const { data: websiteOwnership, error: ownershipError } = await supabaseServerAdmin()
-            .from("user_websites")
-            .select("*")
-            .eq("website_id", websiteId)
-            .eq("user_id", userId)
-            .maybeSingle();
-
-        if (ownershipError || !websiteOwnership) {
-            return res.status(403).json({ 
-                success: false, 
-                message: "Vous n'avez pas accès à ce site" 
-            });
-        }
-
-        // Récupérer l'abonnement actif
-        const { data: subscription, error: subscriptionError } = await supabaseServerAdmin()
-            .from("website_subscriptions")
-            .select("*")
-            .eq("website_id", websiteId)
-            .eq("status", "active")
-            .maybeSingle();
-
-        if (subscriptionError || !subscription) {
-            return res.status(404).json({ 
-                success: false, 
-                message: "Aucun abonnement actif trouvé" 
-            });
-        }
-
-        // TODO: Annuler l'abonnement sur Stripe
-        // Pour l'instant, juste mettre à jour le statut dans la base de données
-        const { error: updateError } = await supabaseServerAdmin()
-            .from("website_subscriptions")
-            .update({ 
-                status: "canceled",
-                canceled_at: new Date().toISOString()
-            })
-            .eq("id", subscription.id);
-
-        if (updateError) {
-            throw updateError;
-        }
-
-        res.json({
-            success: true,
-            message: "Abonnement annulé avec succès"
-        });
-
-    } catch (error) {
-        console.error("Erreur lors de l'annulation de l'abonnement:", error);
-        res.status(500).json({ 
-            success: false, 
-            message: "Erreur serveur" 
-        });
-    }
-});
-
 // Fonctions utilitaires pour gérer les webhooks Stripe
 async function handleCheckoutCompleted(session) {
     console.log('Checkout session completed:', session.id);
@@ -579,12 +512,11 @@ async function handleCheckoutCompleted(session) {
         // Récupérer l'abonnement Stripe
         const subscription = await stripe.subscriptions.retrieve(session.subscription);
         
-        // Créer l'abonnement dans la base de données
+        // Créer l'abonnement dans la base de données (abonnement par site)
         await supabaseServerAdmin()
             .from("website_subscriptions")
             .insert({
                 website_id: session.metadata.websiteId,
-                user_id: session.metadata.userId,
                 plan_id: session.metadata.planId,
                 stripe_subscription_id: subscription.id,
                 stripe_customer_id: session.customer,
@@ -619,7 +551,6 @@ async function handleSubscriptionDeleted(subscription) {
         .from("website_subscriptions")
         .update({
             status: 'canceled',
-            canceled_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
         })
         .eq("stripe_subscription_id", subscription.id);
@@ -655,5 +586,97 @@ async function handlePaymentFailed(invoice) {
             .eq("stripe_subscription_id", invoice.subscription);
     }
 }
+
+// Route pour annuler un abonnement et revenir au plan gratuit
+router.post("/cancel-subscription", authenticateToken, async (req, res) => {
+    try {
+        const { websiteId } = req.body;
+        const userId = req.user.idUser;
+
+        console.log("Demande d'annulation d'abonnement pour le site:", websiteId);
+
+        // Vérifier que l'utilisateur a accès à ce site
+        const { data: websiteAccess, error: accessError } = await supabaseServerAdmin()
+            .from("user_websites")
+            .select("*")
+            .eq("website_id", websiteId)
+            .eq("user_id", userId)
+            .maybeSingle();
+
+        if (accessError || !websiteAccess) {
+            return res.status(403).json({ 
+                success: false, 
+                message: "Vous n'avez pas accès à ce site" 
+            });
+        }
+
+        // Récupérer l'abonnement actif du site
+        const { data: subscription, error: subscriptionError } = await supabaseServerAdmin()
+            .from("website_subscriptions")
+            .select("*")
+            .eq("website_id", websiteId)
+            .eq("status", "active")
+            .maybeSingle();
+
+        if (subscriptionError) {
+            throw subscriptionError;
+        }
+
+        if (!subscription) {
+            return res.status(404).json({
+                success: false,
+                message: "Aucun abonnement actif trouvé pour ce site"
+            });
+        }
+
+        // Si c'est un abonnement Stripe, l'annuler à la fin de la période
+        if (subscription.stripe_subscription_id) {
+            try {
+                // Annuler l'abonnement Stripe à la fin de la période (pas immédiatement)
+                await stripe.subscriptions.update(subscription.stripe_subscription_id, {
+                    cancel_at_period_end: true
+                });
+                console.log("Abonnement Stripe programmé pour annulation à la fin de la période:", subscription.stripe_subscription_id);
+            } catch (stripeError) {
+                console.error("Erreur lors de l'annulation Stripe:", stripeError);
+                // Continuer même si Stripe échoue (peut-être déjà annulé)
+            }
+        }
+
+        // Mettre à jour le statut en base de données
+        const { error: updateError } = await supabaseServerAdmin()
+            .from("website_subscriptions")
+            .update({
+                cancel_at_period_end: true,
+                updated_at: new Date().toISOString()
+            })
+            .eq("id", subscription.id);
+
+        if (updateError) {
+            throw updateError;
+        }
+
+        console.log("Abonnement programmé pour annulation à la fin de la période pour le site:", websiteId);
+
+        // Récupérer la date de fin de période pour informer l'utilisateur
+        const endDate = subscription.current_period_end 
+            ? new Date(subscription.current_period_end).toLocaleDateString('fr-FR')
+            : 'la fin de la période';
+
+        res.json({
+            success: true,
+            message: `Abonnement annulé avec succès. Vous conservez l'accès aux fonctionnalités premium jusqu'au ${endDate}.`,
+            cancel_at_period_end: true,
+            period_end: subscription.current_period_end
+        });
+
+    } catch (error) {
+        console.error("Erreur lors de l'annulation de l'abonnement:", error);
+        res.status(500).json({ 
+            success: false, 
+            message: "Erreur lors de l'annulation de l'abonnement" 
+        });
+    }
+});
 
 module.exports = router;

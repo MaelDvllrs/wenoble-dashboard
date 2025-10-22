@@ -1,7 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
-const { supabaseServer } = require('../supabase');
+const { supabaseServer, supabaseServerAdmin } = require('../supabase');
 const { authenticateToken } = require('../middleware/authToken');
 const { checkUserWorkspaceAccess } = require('../workspace/workspace');
 
@@ -447,16 +447,8 @@ router.post('/createWebsite', authenticateToken, async (req, res) => {
 
     if (userWebsiteError) throw userWebsiteError;
 
-    // Créer les features par défaut pour le site web
-    const { error: websiteFeatureError } = await supabase
-      .from('website_feature')
-      .insert({
-        website_id: websiteData.id,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      });
-
-    if (websiteFeatureError) throw websiteFeatureError;
+    // Les features sont maintenant déterminées par le plan d'abonnement du site
+    // Pas besoin de créer d'entrée dans website_feature
     
     res.send({ 
       message: 'Site web créé avec succès', 
@@ -811,7 +803,7 @@ router.delete('/deleteUserWebsite', authenticateToken, async (req, res) => {
   }
 });
 
-// Endpoint pour récupérer les features d'un site web
+// Endpoint pour récupérer les features d'un site web basées sur son plan d'abonnement
 router.get('/getFeaturesWebsite', authenticateToken, async (req, res) => {
   try {
     const websiteId = req.query.websiteId;
@@ -829,90 +821,54 @@ router.get('/getFeaturesWebsite', authenticateToken, async (req, res) => {
       return res.status(403).send({ error: 'Accès non autorisé à ce site web' });
     }
 
-    // Récupérer les features du site web
-    const { data: features, error } = await supabase
-      .from('website_feature')
-      .select('*')
+    // Récupérer l'abonnement actif du site web avec les features du plan
+    // Utiliser supabaseServerAdmin pour bypass RLS (Row Level Security)
+    const supabaseAdmin = supabaseServerAdmin();
+    const { data: subscription, error: subscriptionError } = await supabaseAdmin
+      .from('website_subscriptions')
+      .select(`
+        status,
+        cancel_at_period_end,
+        subscription_plans (
+          name,
+          features
+        )
+      `)
       .eq('website_id', websiteId)
-      .single();
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-    if (error && error.code !== 'PGRST116') {
-      throw error;
+    if (subscriptionError && subscriptionError.code !== 'PGRST116') {
+      throw subscriptionError;
     }
 
-    // Si aucune feature n'existe, retourner les valeurs par défaut
-    const defaultFeatures = {
-      auth_portfolio: false,
-      auth_page: false,
-      auth_blog: false,
-      auth_ecom: false,
-      auth_newsletter: false
+    // Déterminer le plan et les features
+    let planName = 'free';
+    let features = {
+      pages: false,
+      contact: true,
+      portfolio: false,
+      newsletter: true,
+      collections: false,
+      custom_domain: false,
+      webflow_preview_only: true
     };
 
-    res.send({ features: features || defaultFeatures });
+    if (subscription && subscription.subscription_plans) {
+      planName = subscription.subscription_plans.name;
+      // Récupérer les features depuis la BDD
+      features = subscription.subscription_plans.features || features;
+    }
+
+    res.send({ 
+      features,
+      plan: planName,
+      cancel_at_period_end: subscription?.cancel_at_period_end || false
+    });
   } catch (error) {
     console.error('Erreur lors de la récupération des features:', error);
-    res.status(500).send({ error: error.message });
-  }
-});
-
-// Endpoint pour mettre à jour les features d'un site web
-router.put('/website-features/:websiteId', authenticateToken, async (req, res) => {
-  try {
-    const { websiteId } = req.params;
-    const { features } = req.body;
-    const userId = req.user.idUser;
-    const authToken = req.headers['authorization']?.split(' ')[1];
-    const supabase = supabaseServer(authToken);
-    
-    // Vérifier l'accès au site web avec rôle admin
-    const { hasAccess, role } = await checkUserWebsiteAccess(supabase, userId, websiteId);
-    if (!hasAccess || role !== 'admin') {
-      return res.status(403).send({ error: 'Seuls les administrateurs peuvent modifier les fonctionnalités' });
-    }
-
-    // Vérifier si une entrée existe déjà
-    const { data: existing, error: existingError } = await supabase
-      .from('website_feature')
-      .select('id')
-      .eq('website_id', websiteId)
-      .single();
-
-    if (existingError && existingError.code !== 'PGRST116') {
-      throw existingError;
-    }
-
-    const featureData = {
-      website_id: websiteId,
-      auth_portfolio: features.auth_portfolio || false,
-      auth_page: features.auth_page || false,
-      auth_blog: features.auth_blog || false,
-      auth_ecom: features.auth_ecom || false,
-      auth_newsletter: features.auth_newsletter || false,
-      updated_at: new Date().toISOString()
-    };
-
-    if (existing) {
-      // Mettre à jour l'entrée existante
-      const { error } = await supabase
-        .from('website_feature')
-        .update(featureData)
-        .eq('website_id', websiteId);
-
-      if (error) throw error;
-    } else {
-      // Créer une nouvelle entrée
-      featureData.created_at = new Date().toISOString();
-      const { error } = await supabase
-        .from('website_feature')
-        .insert(featureData);
-
-      if (error) throw error;
-    }
-
-    res.send({ message: 'Fonctionnalités mises à jour avec succès' });
-  } catch (error) {
-    console.error('Erreur lors de la mise à jour des features:', error);
     res.status(500).send({ error: error.message });
   }
 });
