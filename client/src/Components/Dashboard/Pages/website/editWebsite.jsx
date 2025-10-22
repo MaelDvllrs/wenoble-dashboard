@@ -213,22 +213,24 @@ const EditWebsite = () => {
 
   // Ajouter un utilisateur
   const handleAddUser = async () => {
+
     if (!selectedUserId) {
-      showSnackbar('Veuillez sélectionner un utilisateur', 'error');
+      showSnackbar('error','Veuillez sélectionner un utilisateur');
       return;
     }
     
     // Trouver l'utilisateur sélectionné pour récupérer son email
     const selectedUser = workspaceMembers.find(member => member.id === selectedUserId);
     if (!selectedUser) {
-      showSnackbar('Utilisateur sélectionné non trouvé', 'error');
+      showSnackbar('error', 'Utilisateur sélectionné non trouvé');
       return;
     }
     
     setLoading(true);
+    console.log("websiteID" + websiteId)
     try {
       await Axios.post(`${apiUrl}/addUserToWebsite`, {
-        website_id: id,
+        website_id: websiteId,
         user_email: selectedUser.email,
         role: newUserRole
       }, {
@@ -239,10 +241,11 @@ const EditWebsite = () => {
       setNewUserRole('viewer');
       loadWebsiteUsers();
       loadWorkspaceMembers(); // Recharger pour mettre à jour la liste des membres disponibles
-      showSnackbar('Utilisateur ajouté avec succès', 'success');
+      showSnackbar('success', 'Utilisateur ajouté avec succès');
     } catch (error) {
       const errorMessage = error.response?.data?.error || 'Erreur lors de l\'ajout de l\'utilisateur';
-      showSnackbar(errorMessage, 'error');
+      console.log(error)
+      showSnackbar('error', errorMessage);
     }
     setLoading(false);
   };

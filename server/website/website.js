@@ -619,11 +619,14 @@ router.delete('/deleteWebsite', authenticateToken, async (req, res) => {
 
 // Ajouter un utilisateur à un site web
 router.post('/addUserToWebsite', authenticateToken, async (req, res) => {
+  
   try {
     const { website_id, user_email, role = 'editor' } = req.body;
     const userId = req.user.idUser;
     const token = req.headers['authorization']?.split(' ')[1];
     const supabase = supabaseServer(token);
+    console.log('Ajout de l\'utilisateur au site web:', { website_id, user_email, role });
+    
 
     if (!website_id || !user_email) {
       return res.status(400).send({ error: 'website_id et user_email sont requis' });
