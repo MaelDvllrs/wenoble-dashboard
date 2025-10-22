@@ -20,6 +20,7 @@ import MailIcon from '@mui/icons-material/Mail';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LockIcon from '@mui/icons-material/Lock';
 import CardMembershipIcon from '@mui/icons-material/CardMembership';
+import ReceiptIcon from '@mui/icons-material/Receipt';
 
 import '../Users/AccountSettings.css';
 
@@ -28,8 +29,8 @@ const WebsiteManager = () => {
   const { isDark } = useContext(ThemeContext);
   const navigate = useNavigate();
 
-  const [ecommAuth, setEcommAuth] = useState(false);
   const [newsAuth, setNewsAuth] = useState(false);
+  const [analyticsAuth, setAnalyticsAuth] = useState(false);
   
   // Website selector from context
   const { websites, selectedWebsite, loading: loadingWebsites, selectWebsite } = useWebsite();
@@ -81,18 +82,18 @@ const WebsiteManager = () => {
     setOpenWebsiteMenu(false);
   };
 
-  // Effects
+    // Effects
     useEffect(() => {
         const fetchAuth = async () => {
             if (selectedWebsite?.id) {
-                const isAuthorizedEcom = await checkAuthorization('auth_ecom', selectedWebsite.id);
-                setEcommAuth(isAuthorizedEcom);
                 const isAuthorisedNews = await checkAuthorization('auth_newsletter', selectedWebsite.id);
+                const isAuthorisedAnalytics = await checkAuthorization('auth_analytics', selectedWebsite.id);
                 setNewsAuth(isAuthorisedNews);
+                setAnalyticsAuth(isAuthorisedAnalytics);
             } else {
                 // Réinitialiser les autorisations si aucun site n'est sélectionné
-                setEcommAuth(false);
                 setNewsAuth(false);
+                setAnalyticsAuth(false);
             }
         };
         if (!loadingWebsites) {
@@ -255,20 +256,12 @@ const WebsiteManager = () => {
               </NavLink>
               
               <NavLink 
-                to={ecommAuth ? '/dashboard/website/ecommerce' : '#'}
-                className={({ isActive }) => `account-sidebar-link${isActive && ecommAuth ? ' account-sidebar-link-active' : ''}${!ecommAuth ? ' disabled' : ''}`}
-              >
-                <ShoppingCartOutlinedIcon fontSize='small'/>
-                E-commerce
-                {!ecommAuth && <span style={{ marginLeft: 'auto', fontSize: '0.75rem' }}><LockIcon fontSize='tiny'/></span>}
-              </NavLink>
-              
-              <NavLink 
-                to="/dashboard/website/stats"
-                className={({ isActive }) => `account-sidebar-link${isActive ? ' account-sidebar-link-active' : ''}`}
+                to={analyticsAuth ? "/dashboard/website/stats" : '#'}
+                className={({ isActive }) => `account-sidebar-link${isActive && analyticsAuth ? ' account-sidebar-link-active' : ''}${!analyticsAuth ? ' disabled' : ''}`}
               >
                 <EqualizerOutlinedIcon fontSize='small'/>
                 Statistiques
+                {!analyticsAuth && <span style={{ marginLeft: 'auto', fontSize: '0.75rem' }}><LockIcon fontSize='tiny'/></span>}
               </NavLink>
               
               <NavLink 
@@ -294,6 +287,14 @@ const WebsiteManager = () => {
               >
                 <CardMembershipIcon fontSize='small'/>
                 Abonnement
+              </NavLink>
+              
+              <NavLink 
+                to={`/dashboard/website/billing/${selectedWebsite.id}`}
+                className={({ isActive }) => `account-sidebar-link${isActive ? ' account-sidebar-link-active' : ''}`}
+              >
+                <ReceiptIcon fontSize='small'/>
+                Facturation
               </NavLink>
               
               {selectedWebsite.user_role === 'admin' && (

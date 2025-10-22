@@ -98,12 +98,12 @@ export const AuthorisedRouteBlog = ({ children }) => (
     <AuthorisedRoute authType="auth_blog">{children}</AuthorisedRoute>
 );
 
-export const AuthorisedRouteEcomm = ({ children }) => (
-    <AuthorisedRoute authType="auth_ecom">{children}</AuthorisedRoute>
-);
-
 export const AuthorisedRouteNewsletter = ({ children }) => (
     <AuthorisedRoute authType="auth_newsletter">{children}</AuthorisedRoute>
+);
+
+export const AuthorisedRouteAnalytics = ({ children }) => (
+    <AuthorisedRoute authType="auth_analytics">{children}</AuthorisedRoute>
 );
 
 // Utility function for checking authorization

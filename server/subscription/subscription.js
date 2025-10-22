@@ -26,12 +26,10 @@ function convertStripeTimestamp(timestamp) {
 
 // Récupérer le statut d'abonnement d'un site
 router.get("/subscription-status/:websiteId", authenticateToken, async (req, res) => {
-    console.log("Récupération du statut d'abonnement demandé");
     try {
         const { websiteId } = req.params;
         const userId = req.user.idUser;
         
-        console.log("Récupération du statut d'abonnement pour le site:", websiteId, "et l'utilisateur:", userId);
         // Vérifier que l'utilisateur possède ce site
         const { data: websiteOwnership, error: ownershipError } = await supabaseServerAdmin()
             .from("user_websites")
@@ -42,7 +40,6 @@ router.get("/subscription-status/:websiteId", authenticateToken, async (req, res
 
 
 
-            console.log("Propriétés du site récupérées:", websiteOwnership);
 
             if (ownershipError || !websiteOwnership) {
             return res.status(403).json({ 
@@ -74,7 +71,6 @@ router.get("/subscription-status/:websiteId", authenticateToken, async (req, res
             throw subscriptionError;
         }
 
-        console.log("Abonnement récupéré:", subscription);
 
         // Si pas d'abonnement actif, retourner le plan gratuit par défaut
         if (!subscription) {
@@ -299,23 +295,11 @@ router.post("/verify-subscription", authenticateToken, async (req, res) => {
         // Récupérer la session Stripe
         const session = await stripe.checkout.sessions.retrieve(sessionId);
         
-        console.log('Session récupérée:', {
-            id: session.id,
-            payment_status: session.payment_status,
-            mode: session.mode,
-            subscription: session.subscription
-        });
         
         if (session.payment_status === 'paid' && session.mode === 'subscription') {
             // Récupérer l'abonnement Stripe
             const subscription = await stripe.subscriptions.retrieve(session.subscription);
             
-            console.log('Abonnement récupéré:', {
-                id: subscription.id,
-                status: subscription.status,
-                current_period_start: subscription.current_period_start,
-                current_period_end: subscription.current_period_end
-            });
             
             // Vérifier si l'abonnement existe déjà dans la base de données
             const { data: existingSubscription } = await supabaseServerAdmin()
@@ -345,7 +329,6 @@ router.post("/verify-subscription", authenticateToken, async (req, res) => {
                     throw insertError;
                 }
 
-                console.log("Abonnement créé avec succès:", newSubscription);
             }
 
             res.json({
@@ -506,7 +489,6 @@ router.post("/webhook", express.raw({ type: "application/json" }), async (req, r
 
 // Fonctions utilitaires pour gérer les webhooks Stripe
 async function handleCheckoutCompleted(session) {
-    console.log('Checkout session completed:', session.id);
     
     if (session.mode === 'subscription') {
         // Récupérer l'abonnement Stripe
@@ -529,7 +511,6 @@ async function handleCheckoutCompleted(session) {
 }
 
 async function handleSubscriptionUpdate(subscription) {
-    console.log('Subscription updated:', subscription.id);
     
     // Mettre à jour l'abonnement dans la base de données
     await supabaseServerAdmin()
@@ -544,7 +525,6 @@ async function handleSubscriptionUpdate(subscription) {
 }
 
 async function handleSubscriptionDeleted(subscription) {
-    console.log('Subscription deleted:', subscription.id);
     
     // Marquer l'abonnement comme annulé
     await supabaseServerAdmin()
@@ -557,7 +537,6 @@ async function handleSubscriptionDeleted(subscription) {
 }
 
 async function handlePaymentSucceeded(invoice) {
-    console.log('Payment succeeded:', invoice.id);
     
     // Optionnel : Enregistrer le paiement dans une table séparée
     // Mettre à jour le statut de l'abonnement s'il était en attente
@@ -593,7 +572,6 @@ router.post("/cancel-subscription", authenticateToken, async (req, res) => {
         const { websiteId } = req.body;
         const userId = req.user.idUser;
 
-        console.log("Demande d'annulation d'abonnement pour le site:", websiteId);
 
         // Vérifier que l'utilisateur a accès à ce site
         const { data: websiteAccess, error: accessError } = await supabaseServerAdmin()
@@ -656,7 +634,6 @@ router.post("/cancel-subscription", authenticateToken, async (req, res) => {
             throw updateError;
         }
 
-        console.log("Abonnement programmé pour annulation à la fin de la période pour le site:", websiteId);
 
         // Récupérer la date de fin de période pour informer l'utilisateur
         const endDate = subscription.current_period_end 

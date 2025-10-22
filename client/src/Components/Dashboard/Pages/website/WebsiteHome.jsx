@@ -25,8 +25,8 @@ const WebsiteHome = () => {
   const { selectedWebsite, loading } = useWebsite();
   const token = Cookies.get('token');
 
-  const [ecommAuth, setEcommAuth] = useState(false);
   const [newsAuth, setNewsAuth] = useState(false);
+  const [analyticsAuth, setAnalyticsAuth] = useState(false);
   const [userStats, setUserStats] = useState(null);
   const [statsLoading, setStatsLoading] = useState(false);
   const [eventStats, setEventStats] = useState(null);
@@ -42,14 +42,14 @@ const WebsiteHome = () => {
   useEffect(() => {
     const fetchAuth = async () => {
       if (selectedWebsite?.id) {
-        const isAuthorizedEcom = await checkAuthorization('auth_ecom', selectedWebsite.id);
-        setEcommAuth(isAuthorizedEcom);
         const isAuthorisedNews = await checkAuthorization('auth_newsletter', selectedWebsite.id);
+        const isAuthorisedAnalytics = await checkAuthorization('auth_analytics', selectedWebsite.id);
         setNewsAuth(isAuthorisedNews);
+        setAnalyticsAuth(isAuthorisedAnalytics);
       } else {
         // Réinitialiser les autorisations si aucun site n'est sélectionné
-        setEcommAuth(false);
         setNewsAuth(false);
+        setAnalyticsAuth(false);
       }
     };
     if (!loading) {
@@ -268,18 +268,11 @@ const WebsiteHome = () => {
       enabled: true
     },
     {
-      title: 'E-commerce',
-      description: 'Gérer vos produits et commandes',
-      icon: MdOutlineShoppingCart,
-      path: '/dashboard/website/ecommerce',
-      enabled: ecommAuth
-    },
-    {
       title: 'Statistiques',
       description: 'Analyser les performances',
       icon: MdOutlineBarChart,
       path: '/dashboard/website/stats',
-      enabled: true
+      enabled: analyticsAuth
     },
     {
       title: 'Contacts',

@@ -9,7 +9,7 @@ const path = require('path');
 const apiRouter = require('./api/api');
 
 const authRoutes = require('./users/auth');
-const authorisationRouter = require('./users/authorisation');
+const authorisationRouter = require('./website/authorisation');
 const securityRouter = require('./users/security');
 const profileRouter = require('./users/profile');
 const userStatsRouter = require('./users/userStats');
@@ -28,8 +28,6 @@ const generationStaticRouter = require('./modification/generationStatic');
 const articleRouter = require('./actualite/article');
 const analyticsRouter = require('./analytics/googleAnalytics');
 const searchConsoleRouter = require('./searchConsole/googleSearchConsole');
-//
-//const orderRouter = require('./ecommerce/order');
 //
 const sendEmailRouter = require('./contact/sendEmail');
 const contactRouter = require('./contact/contact');
