@@ -299,22 +299,6 @@ const WebsiteHome = () => {
 
   return (
     <div className='outlet-box'>
-      {/* En-tête avec breadcrumbs */}
-      <div className="title_section">
-        <div className="breadCrumbs">
-          <NavLink 
-            className={'breadCrumbsLink'}
-            to="/dashboard/home"
-            style={{ textDecoration: 'none', color: 'inherit' }}
-          >
-            Dashboard
-          </NavLink>
-          <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
-          <span className="breadcrumb-item-active" style={{ color: theme.palette.text.primary }}>
-            {selectedWebsite.website_name}
-          </span>
-        </div>
-      </div>
 
       <div>
 

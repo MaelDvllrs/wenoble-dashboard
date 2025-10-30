@@ -118,7 +118,7 @@ router.get('/getUserWebsites', authenticateToken, async (req, res) => {
     // Récupérer tous les sites web du workspace
     const { data: websites, error: websitesError } = await supabase
       .from('websites')
-      .select('id, website_name, website_slug, workspace_id, visibility, created_at, updated_at')
+      .select('id, website_name, website_slug, website_preview, workspace_id, visibility, created_at, updated_at')
       .eq('workspace_id', workspaceId);
 
     if (websitesError) {
@@ -447,6 +447,41 @@ router.post('/createWebsite', authenticateToken, async (req, res) => {
 
     if (userWebsiteError) throw userWebsiteError;
 
+    // Créer un abonnement gratuit par défaut pour le nouveau site (server-side)
+    try {
+      const { data: freePlan, error: freePlanError } = await supabase
+        .from('subscription_plans')
+        .select('id, name')
+        .eq('name', 'free')
+        .maybeSingle();
+
+      if (freePlan && !freePlanError) {
+        // Use admin client to avoid RLS issues when writing server-side
+        const supabaseAdmin = supabaseServerAdmin();
+        const upsertPayload = {
+          website_id: websiteData.id,
+          subscription_plan_id: freePlan.id,
+          status: 'active',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+
+        const { data: upserted, error: upsertError } = await supabaseAdmin
+          .from('website_subscriptions')
+          .upsert(upsertPayload, { onConflict: 'website_id' })
+          .maybeSingle();
+
+        if (upsertError) {
+          console.error('Erreur lors de la création/upsert de l\'abonnement gratuit:', upsertError);
+        } else {
+          // free subscription upserted for the site
+        }
+      } else if (freePlanError) {
+        console.error('Erreur lors de la récupération du plan free:', freePlanError);
+      }
+    } catch (e) {
+      console.error('Exception lors de la création de l\'abonnement gratuit:', e);
+    }
     // Les features sont maintenant déterminées par le plan d'abonnement du site
     // Pas besoin de créer d'entrée dans website_feature
     
@@ -467,6 +502,7 @@ router.get('/getWebsiteById', authenticateToken, async (req, res) => {
     const userId = req.user.idUser;
     const token = req.headers['authorization']?.split(' ')[1];
     const supabase = supabaseServer(token);
+    
 
     if (!websiteId) {
       return res.status(400).send({ error: 'websiteId est requis' });
@@ -481,7 +517,7 @@ router.get('/getWebsiteById', authenticateToken, async (req, res) => {
     // Récupérer les informations du site web
     const { data, error } = await supabase
       .from('websites')
-      .select('id, api_key, website_name, website_slug, workspace_id, visibility, created_at, updated_at')
+      .select('id, api_key, website_name, website_slug, website_preview, workspace_id, visibility, created_at, updated_at')
       .eq('id', websiteId)
       .single();
       

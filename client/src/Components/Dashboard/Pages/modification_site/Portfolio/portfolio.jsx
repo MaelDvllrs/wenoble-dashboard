@@ -57,7 +57,7 @@ const Portfolio = () => {
             const decoded = jwtDecode(Infoportfolio);
             setDecodedPortfolio(decoded);
             if(decoded && decoded.portfolio.length > 0 && !initialNavigationDone) {
-                navigate('/dashboard/modification/portfolio/' + decoded.portfolio[0].id_portfolio);
+                navigate('/dashboard/website/modification/portfolio/' + decoded.portfolio[0].id_portfolio);
                 setInitialNavigationDone(true);
             }
         }
@@ -68,13 +68,12 @@ const Portfolio = () => {
         <div className="outlet-box portfolio_outlet">
 
             <div className="title_section">
-                <div className="breadCrumbs"><NavLink style={{color: theme.palette.text.primary}} className={"breadCrumbsLink"} to={'/dashboard/home'}>Dashboard</NavLink> &gt; <NavLink style={{color: theme.palette.text.primary}} className={"breadCrumbsLink"} to={'/dashboard/modification'}>Modification</NavLink> &gt; Portfolio</div>
             </div>
 
             <div className="dashboard_case_empty" style={{backgroundColor : theme.palette.primary.secondary, borderColor : theme.palette.primary.third}}>
                 <div className="portfolio_onglet_box">
                 {decodedPortfolio && decodedPortfolio.portfolio.map((pageItem) => (
-                        <NavLink to={'/dashboard/modification/portfolio/' + pageItem.id_portfolio} className={({ isActive }) => (isActive ? 'page_ongletActive' : 'portfolio_onglet')} key={pageItem.id_portfolio}>
+                        <NavLink to={'/dashboard/website/modification/portfolio/' + pageItem.id_portfolio} className={({ isActive }) => (isActive ? 'page_ongletActive' : 'portfolio_onglet')} key={pageItem.id_portfolio}>
                             <p style={{color: theme.palette.text.primary}}>{pageItem.portfolio_name}</p>
                         </NavLink>
                     ))}

@@ -21,37 +21,7 @@ const StatistiqueAnalytics = () => {
 
     return(
         <div className="outlet-box">
-            <div className="title_section">
-                <div className="breadCrumbs">
-                    <NavLink 
-                        className={'breadCrumbsLink'}
-                        to="/dashboard/home"
-                        style={{ textDecoration: 'none', color: 'inherit' }}
-                    >
-                        Dashboard
-                    </NavLink>
-                    <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
-                    <NavLink 
-                        className={'breadCrumbsLink'}
-                        to="/dashboard/website"
-                        style={{ textDecoration: 'none', color: 'inherit' }}
-                    >
-                        {selectedWebsite?.website_name || 'Site'}
-                    </NavLink>
-                    <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
-                    <NavLink 
-                        className={'breadCrumbsLink'}
-                        to="/dashboard/website/stats"
-                        style={{ textDecoration: 'none', color: 'inherit' }}
-                    >
-                        Statistiques
-                    </NavLink>
-                    <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
-                    <span className="breadcrumb-item-active" style={{ color: theme.palette.text.primary }}>
-                        Analytics
-                    </span>
-                </div>
-            </div>
+            
             
             <div className="statistique-section">
                 <div  className="grid-line-statistique">

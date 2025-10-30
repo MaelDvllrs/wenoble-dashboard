@@ -1,3 +1,4 @@
+
 const express = require('express');
 const cors = require('cors')
 
@@ -29,7 +30,9 @@ const mapFeatureName = (oldFeatureName) => {
 
 router.post('/getAuthorisation', authenticateToken, async (req, res) => {
     const token = req.headers['authorization']?.split(' ')[1];
-    const supabase = supabaseServer(token);   
+    const supabase = supabaseServer(token);
+    // admin client bypasses RLS and is safe for server-side lookups/creates here
+    const supabaseAdmin = supabaseServerAdmin();
 
     const { type, websiteId } = req.body;
     const userId = req.user.idUser;
@@ -48,7 +51,6 @@ router.post('/getAuthorisation', authenticateToken, async (req, res) => {
         const { hasAccess, role } = await checkUserWebsiteAccess(supabase, userId, websiteId);
         
         if (!hasAccess) {
-            console.log(`Utilisateur ${userId} n'a pas accès au site ${websiteId}`);
             return res.status(403).json({ 
                 success: false, 
                 message: 'Accès refusé au site web',
@@ -57,21 +59,17 @@ router.post('/getAuthorisation', authenticateToken, async (req, res) => {
         }
 
 
-        // Les admins ont automatiquement toutes les autorisations
-        if (role === 'admin') {
-            return res.json({
-                success: true,
-                authorisation: true,
-                role: 'admin'
-            });
-        }
+        // Do not auto-grant authorisations to admins here.
+        // Admin users will be evaluated against the site's subscription features
+        // so that their access follows the same plan-based restrictions as other roles.
 
         // Mapper l'ancien nom vers le nouveau
         const featureName = mapFeatureName(type);
         
+    // authorization check invoked
 
-        // Pour les non-admins, récupérer le plan d'abonnement du site avec les features
-        let { data: subscription, error: subError } = await supabase
+        // récupérer le plan d'abonnement du site avec les features (use admin client to avoid RLS)
+        let { data: subscription, error: subError } = await supabaseAdmin
             .from('website_subscriptions')
             .select(`
                 *,
@@ -85,24 +83,30 @@ router.post('/getAuthorisation', authenticateToken, async (req, res) => {
             .eq('status', 'active')
             .maybeSingle();
 
+            // subscription fetch completed
+
+            if (subError && subError.code !== 'PGRST116') {
+                console.error('Erreur lors de la récupération de l\'abonnement:', subError);
+            }
+
+
         // Si aucun abonnement actif n'existe, créer un abonnement gratuit par défaut
         if (!subscription && !subError) {
-            console.log(`Création d'un abonnement gratuit pour le site ${websiteId}`);
             
             // Récupérer le plan gratuit
-            const { data: freePlan } = await supabase
+            const { data: freePlan } = await supabaseAdmin
                 .from("subscription_plans")
                 .select("*")
                 .eq("name", "free")
-                .single();
+                .maybeSingle();
 
             if (freePlan) {
                 // Créer l'abonnement gratuit
-                const { data: newSubscription, error: createError } = await supabase
+                const { data: newSubscription, error: createError } = await supabaseAdmin
                     .from("website_subscriptions")
                     .insert({
                         website_id: websiteId,
-                        subscription_plan_id: freePlan.id,
+                        plan_id: freePlan.id,
                         status: "active",
                         created_at: new Date().toISOString(),
                         updated_at: new Date().toISOString()
@@ -115,11 +119,10 @@ router.post('/getAuthorisation', authenticateToken, async (req, res) => {
                             features
                         )
                     `)
-                    .single();
+                    .maybeSingle();
 
                 if (!createError) {
                     subscription = newSubscription;
-                    console.log(`Abonnement gratuit créé avec succès pour le site ${websiteId}`);
                 } else {
                     console.error("Erreur lors de la création de l'abonnement gratuit:", createError);
                 }
@@ -145,17 +148,74 @@ router.post('/getAuthorisation', authenticateToken, async (req, res) => {
             analytics: false
         };
 
-        if (subscription && subscription.subscription_plans) {
-            planName = subscription.subscription_plans.name;
-            features = subscription.subscription_plans.features || features;
-        } else {
-            console.log('Aucun abonnement actif trouvé, utilisation du plan gratuit par défaut');
+        // Normalize the subscription -> plan payload. Some responses embed the related
+        // subscription_plans as an object, some as an array, and sometimes not at all.
+        // If it's missing but subscription.subscription_plan_id exists, try to fetch the plan.
+        try {
+            if (!subscription) {
+                // no subscription found in initial query
+            } else {
+                let planObj = subscription.subscription_plans;
+
+                if (Array.isArray(planObj)) {
+                    // If the relation was returned as an array, take the first element (expected single)
+                    planObj = planObj.length ? planObj[0] : null;
+                }
+
+                // If relation not present but a foreign key exists on subscription, fetch the plan
+                if (!planObj && subscription.subscription_plan_id) {
+                    const { data: fetchedPlan, error: fetchedError } = await supabaseAdmin
+                        .from('subscription_plans')
+                        .select('id, name, features')
+                        .eq('id', subscription.subscription_plan_id)
+                        .maybeSingle();
+
+                    if (fetchedError) {
+                        console.error('Erreur lors de la récupération du plan par id:', fetchedError);
+                    } else if (fetchedPlan) {
+                        planObj = fetchedPlan;
+                    }
+                }
+
+                if (planObj) {
+                    planName = planObj.name || planName;
+                    features = planObj.features || features;
+                }
+            }
+        } catch (normalizeErr) {
+            console.error('Erreur lors de la normalisation de l\'abonnement/plan:', normalizeErr);
         }
 
         
-        // Vérifier si la feature demandée est disponible dans le plan
-        const hasFeature = features[featureName] === true;
-        
+        // Fonction utilitaire pour vérifier une feature quel que soit son format
+        const checkFeatureAvailability = (featuresObj, key) => {
+            if (!featuresObj) return false;
+
+            // Si features est un array (forme normalisée côté API), chercher par key
+            if (Array.isArray(featuresObj)) {
+                const entry = featuresObj.find(f => f.key === key || (f.name && f.name.toLowerCase().includes(key)));
+                if (!entry) return false;
+                // Pour collections, accepter value (nombre) ou value === 'illimités' ou included true
+                if (key === 'collections') {
+                    if (entry.value && (typeof entry.value === 'string' || typeof entry.value === 'number')) return true;
+                    return !!entry.included;
+                }
+                return !!entry.included;
+            }
+
+            // Si features est un objet map (format DB classique)
+            const raw = featuresObj[key];
+            if (key === 'collections') {
+                if (typeof raw === 'number' && raw > 0) return true;
+                if (raw === true) return true; // true => unlimited per new semantics
+                if (typeof raw === 'string' && raw.toLowerCase() === 'unlimited') return true;
+                return false;
+            }
+
+            return raw === true;
+        };
+
+        const hasFeature = checkFeatureAvailability(features, featureName);
 
         res.json({
             success: true,
@@ -172,6 +232,59 @@ router.post('/getAuthorisation', authenticateToken, async (req, res) => {
             message: 'Erreur serveur lors de la vérification de l\'autorisation',
             authorisation: false
         });
+    }
+});
+
+
+// Route dédiée pour vérifier la feature custom_domain à partir du websiteId
+router.get('/custom-domain-authorisation/:websiteId', authenticateToken, async (req, res) => {
+    const { websiteId } = req.params;
+    const supabaseAdmin = supabaseServerAdmin();
+
+    if (!websiteId) {
+        return res.status(400).json({ success: false, message: 'websiteId requis' });
+    }
+
+    try {
+        // Récupérer la souscription active du site et le plan associé
+        const { data: subscription, error: subError } = await supabaseAdmin
+            .from('website_subscriptions')
+            .select('*, subscription_plans (id, name, features)')
+            .eq('website_id', websiteId)
+            .eq('status', 'active')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (subError) {
+            console.error('Erreur récupération souscription:', subError);
+            return res.status(500).json({ success: false, message: 'Erreur récupération souscription' });
+        }
+        if (!subscription) {
+            return res.status(404).json({ success: false, message: 'Souscription non trouvée' });
+        }
+
+        // Récupérer les features du plan
+        let features = {};
+        let planObj = subscription.subscription_plans;
+        if (Array.isArray(planObj)) planObj = planObj[0];
+        if (planObj && planObj.features) {
+            features = planObj.features;
+        }
+
+        // Vérifier la feature custom_domain
+        let hasCustomDomain = false;
+        if (Array.isArray(features)) {
+            const entry = features.find(f => f.key === 'custom_domain' || (f.name && f.name.toLowerCase().includes('custom_domain')));
+            hasCustomDomain = !!(entry && (entry.included === true || entry.value === true));
+        } else if (typeof features === 'object' && features !== null) {
+            hasCustomDomain = features.custom_domain === true;
+        }
+
+        return res.json({ success: true, authorisation: hasCustomDomain });
+    } catch (error) {
+        console.error('Erreur authorisation custom_domain:', error);
+        return res.status(500).json({ success: false, message: 'Erreur serveur' });
     }
 });
 

@@ -182,6 +182,11 @@
     margin-bottom: 1rem;
 }
 
+.line-sidebar.small{
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
 .menu_title{
     position: relative;
     font-size: 0.8rem;
@@ -550,6 +555,12 @@
   transform: rotate(45deg);
 }
 
+
+.custom-checkbox input[type="checkbox"]:disabled + .checkmark {
+  cursor: not-allowed;
+  border-color: var(--color-primary-third);
+  /* Ajoute d'autres styles si besoin */
+}
 
 /* Website Selector Styles */
 .button-selector{

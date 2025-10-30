@@ -1,3 +1,29 @@
+// Composant général pour l'affichage du breadcrumb et des actions globales
+// Props :
+// - items: tableau d'objets { label, to, active }
+// - actions: ReactNode (actions à afficher à droite)
+// - style: style additionnel (optionnel)
+const DashboardHeaderSection = ({ items = [], actions = null, style = {} }) => {
+    return (
+        <div className="dashboard-header-section" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1.5rem', ...style }}>
+            <div className="breadCrumbs">
+                {items.map((item, idx) => (
+                    <span key={idx} style={{ display: 'inline-flex', alignItems: 'center' }}>
+                        {item.to ? (
+                            <a href={item.to} className={item.active ? 'breadcrumb-item-active' : 'breadCrumbsLink'} style={{ textDecoration: 'none', color: item.active ? 'var(--primary-text)' : 'inherit' }}>{item.label}</a>
+                        ) : (
+                            <span className={item.active ? 'breadcrumb-item-active' : ''} style={{ color: item.active ? 'var(--primary-text)' : 'inherit' }}>{item.label}</span>
+                        )}
+                        {idx < items.length - 1 && (
+                            <span className="breadcrumb-separator" style={{ margin: '0 0.5rem', color: 'var(--secondary-text)' }}>/</span>
+                        )}
+                    </span>
+                ))}
+            </div>
+            {actions && <div className="dashboard-header-actions">{actions}</div>}
+        </div>
+    );
+};
 // External libraries
 import React, { useState, useEffect, useContext, useRef, useMemo } from 'react';
 import Axios from '../../service/AxiosConfig';
@@ -768,6 +794,7 @@ const Dashboard = () => {
                     }}
                 >
                     <div className='dashboard_section principal'>
+                        
                         <Outlet />
                     </div>
                 </motion.div>

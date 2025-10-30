@@ -31,6 +31,7 @@ const DARK_THEME = createTheme({
             yellow: 'rgb(255, 253, 146)',
             red: 'rgb(255, 0, 0)',
             purple: 'rgba(227, 27, 227, 1)',
+            orange: 'rgba(252, 159, 0, 1)'
         },
 
         shadow: {
@@ -77,6 +78,7 @@ const LIGHT_THEME = createTheme({
             yellow: 'rgb(187, 184, 0)',
             red: 'rgb(255, 0, 0)',
             purple: 'rgba(149, 0, 149, 1)',
+            orange: 'rgba(207, 131, 0, 1)'
         },
 
         shadow: {

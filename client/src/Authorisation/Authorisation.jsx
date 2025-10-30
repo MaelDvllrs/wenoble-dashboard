@@ -39,10 +39,11 @@ const fetchAuthorization = async (type, websiteId, setVerify, setAuthorized) => 
             websiteId 
         });
 
-        if (response.data.success) {
-            setVerify(true);
-        }
-        setAuthorized(response.data.authorisation);
+        // Toujours marquer la vérification comme terminée après réponse
+        setVerify(true);
+
+        console.log(response.data.authorisation)
+        setAuthorized(!!response.data.authorisation);
     } catch (error) {
         console.error('Authorization error:', error);
         setVerify(true);
@@ -51,7 +52,7 @@ const fetchAuthorization = async (type, websiteId, setVerify, setAuthorized) => 
 };
 
 // Hook for checking authorization
-const useAuthorization = (type) => {
+export const useAuthorization = (type) => {
     const [verifyAuthorization, setVerifyAuthorization] = useState(false);
     const [isAuthorized, setIsAuthorized] = useState(false);
     const { selectedWebsite } = useWebsite();
@@ -71,18 +72,18 @@ const useAuthorization = (type) => {
 // Component for protected routes
 export const AuthorisedRoute = ({ children, authType }) => {
     const { isAuthorized, verifyAuthorization } = useAuthorization(authType);
-
-    // Afficher le contenu immédiatement, la vérification se fait en arrière-plan
+    // Bloquer l'affichage tant que la vérification n'est pas terminée
     if (!verifyAuthorization) {
-        // Pendant la vérification, on affiche le contenu (pas de clignotement)
-        return children;
+        // Vous pouvez remplacer par un spinner/global loader si souhaité
+        return null;
     }
 
+    // Après vérification, afficher le contenu uniquement si autorisé
     if (isAuthorized) {
         return children;
-    } else {
-        return <Navigate to='/login' />;
     }
+
+    return <Navigate to='/login' />;
 };
 
 // Specific authorized routes

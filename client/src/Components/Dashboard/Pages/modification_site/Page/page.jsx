@@ -54,7 +54,7 @@ const Page = () => {
             setDecodedPage(decoded);
             if(decoded && decoded.page.length > 0 && !initialNavigationDone) {
                 
-                navigate('/dashboard/modification/page/' + decoded.page[0].id);
+                navigate('/dashboard/website/modification/page/' + decoded.page[0].id);
                 setInitialNavigationDone(true);
             }
         }
@@ -63,7 +63,6 @@ const Page = () => {
     return(
         <div className="outlet-box">
             <div className="title_section">
-            <div className="breadCrumbs"><NavLink style={{color: theme.palette.text.primary}} className={"breadCrumbsLink"} to={'/dashboard/home'}>Dashboard</NavLink> &gt; <NavLink style={{color: theme.palette.text.primary}} className={"breadCrumbsLink"} to={'/dashboard/modification'}>Modification</NavLink> &gt; Page</div>
             </div>
 
             {websiteLoading ? (
@@ -89,7 +88,7 @@ const Page = () => {
                 <div className="dashboard_case_empty" style={{backgroundColor : theme.palette.primary.secondary, borderColor : theme.palette.primary.third}}>
                     <div className="portfolio_onglet_box">
                         {decodedPage && decodedPage.page.map((pageItem) => (
-                            <NavLink to={'/dashboard/modification/page/' + pageItem.id} className={({ isActive }) => (isActive ? 'page_ongletActive' : 'portfolio_onglet')} key={pageItem.id}>
+                            <NavLink to={'/dashboard/website/modification/page/' + pageItem.id} className={({ isActive }) => (isActive ? 'page_ongletActive' : 'portfolio_onglet')} key={pageItem.id}>
                                 <p style={{color: theme.palette.text.primary}}>{pageItem.page_name}</p>
                             </NavLink>
                         ))}

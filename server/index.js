@@ -13,7 +13,8 @@ const authorisationRouter = require('./website/authorisation');
 const securityRouter = require('./users/security');
 const profileRouter = require('./users/profile');
 const userStatsRouter = require('./users/userStats');
-const subscriptionRouter = require('./subscription/subscription');
+const subscriptionModule = require('./subscription/subscription');
+// subscriptionModule exports { router, stripeWebhookHandler }
 const billingRouter = require('./billing/billing');
 const portfolioRouter = require('./modification/portfolio');
 const pageRouter = require('./modification/page');
@@ -47,145 +48,109 @@ const { notificationRouter, notificationServer } = require('./users/notification
 //const clientRouter = require('./admin/client');
 
 
-const whitelist = 
-[ 
+
+// Pour la whitelist dynamique depuis la BDD
+const { createClient } = require('@supabase/supabase-js');
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY,
+  { auth: { autoRefreshToken: false, persistSession: false } }
+);
+
+let whitelist = [
   'http://77.37.51.201',
   'http://testwenoble.fr',
-  'http://localhost:5173', 
-  'https://dashboard.wenoble.fr', 
+  'http://localhost:5173',
+  'https://dashboard.wenoble.fr',
   'http://127.0.0.1:5500',
   'http://127.0.0.1:5501',
   'http://localhost:3000',
   'http://localhost:4173',
-
-  
-  'https://kristina-photogrphy.webflow.io',
-  'https://kristinaphotography.fr',
-  'https://www.kristinaphotography.fr',
-  
-
-  'https://savoirfairetatouagepreview.webflow.io',
-  'https://savoirfairetatouage.com',
-  'https://www.savoirfairetatouage.com',
-
-  'https://elodie-loots.webflow.io',
-  'https://elodieloots.com',
-  'https://www.elodieloots.com',
-
-  'https://kayart-photograhy.webflow.io',
-  'https://kayartphotography.fr',
-  'https://www.kayartphotography.fr',
-
-  'https://gil-tirlet-photography.webflow.io',
-  'https://giltirletphotography.fr',
-  'https://www.giltirletphotography.fr',
-
-  'https://shine-photographie.webflow.io',
-  'http://www.nathaliemathern.ch',
-  'https://nathaliemathern.ch',
-
-
-  'https://la-plume-au-carre.webflow.io',
-  'https://laplumeaucarre.fr',
-  'https://www.laplumeaucarre.fr',
-
-  'https://deko-project.webflow.io',
-  'https://dekoproject.fr',
-  'https://www.dekoproject.fr',
-
-  'https://emotion-sonore.webflow.io',
-
-  'https://neo-interieur.webflow.io',
-  'https://neo-interieur.fr',
-  'https://www.neo-interieur.fr',
-
-  'https://top-pizza-bd8e7e.webflow.io',
-  'https://toppizzaburger.com',
-  'https://www.toppizzaburger.com',  
-
-  'https://psc-environnement-preview.webflow.io',
-  'https://psc-environnement.fr',
-  'https://www.psc-environnement.fr',
-
-  'https://wechoose-site.webflow.io',
-
-  'https://thibault-laupretre-wenoble.webflow.io',
-  'https://thibault-laupretre.com',  
-
-  'https://salon-marco-d950f4.webflow.io',
-  'https://salonmarco.com',
-  'https://www.salonmarco.com',
-
-  'https://kimberley-architecture.webflow.io',
-  'https://kimberleygouno.fr',
-  'https://www.kimberleygouno.fr',
-
-  'https://billel-aissa-photography.webflow.io',
-  'https://www.billelaissa.com',
-  'https://billelaissa.com',
-  
-  'https://artesia-66566b.webflow.io',
-  'https://laboratoireartesia.fr',
-  'https://www.laboratoireartesia.fr',
-
-  'https://oceane-colasseau.webflow.io',
-  'https://occhezvous.fr',
-  'https://www.occhezvous.fr',
-
-
-  'https://maison-astucieuse-emma-lamarqu-388c45.webflow.io',
-  'https://maisonastucieuse.fr',
-  'https://www.maisonastucieuse.fr',
-
-  'https://manuella-83b40f.webflow.io',
-  'https://archime-design.fr',
-  'https://www.archime-design.fr',
-
-  'https://attique-b881c8.webflow.io',
-  'https://attiquearchitecte.com',
-  'https://www.attiquearchitecte.com',
-
-  'https://goout-0d445f.webflow.io',
-
-
-  'https://mildesign.webflow.io',
-  'https://marieluttringer.fr',
-  'https://www.marieluttringer.fr',
-
-  'https://bule.webflow.io',
-  'https://bulearchitecture.fr',
-  'https://www.bulearchitecture.fr',
-
-  'https://jo-interieurs.webflow.io',
-
-  'https://elena-ivanoff.webflow.io',
-  'https://elena-ivanoff.com',
-  'https://www.elena-ivanoff.com',
-
-  
-
-  'https://next-immo.webflow.io',
-
-  'https://alix-ampeau.webflow.io',
-
 ];
+
+// Fonction pour générer la whitelist à partir de la BDD
+async function updateWhitelistFromDB() {
+  try {
+    const { data, error } = await supabase
+      .from('websites')
+      .select('website_slug, website_preview');
+    if (error) throw error;
+    const domains = new Set();
+    data.forEach(site => {
+      if (site.website_slug) {
+        domains.add(`https://${site.website_slug}`);
+        domains.add(`https://www.${site.website_slug}`);
+      }
+      if (site.website_preview) {
+        domains.add(`https://${site.website_preview}`);
+        domains.add(`https://www.${site.website_preview}`);
+      }
+    });
+    whitelist = [
+      'http://77.37.51.201',
+      'http://testwenoble.fr',
+      'http://localhost:5173',
+      'https://dashboard.wenoble.fr',
+      'http://127.0.0.1:5500',
+      'http://127.0.0.1:5501',
+      'http://localhost:3000',
+      'http://localhost:4173',
+      ...domains
+    ];
+  } catch (err) {
+    console.error('Erreur lors de la génération de la whitelist depuis la BDD:', err);
+  }
+}
+
+// Mettre à jour la whitelist au démarrage
+updateWhitelistFromDB();
 
 
 
 
 // Configuration de CORS
+
 const corsOptions = {
-  origin: function (origin, callback) {
-    if (whitelist.indexOf(origin) !== -1 || !origin || origin === 'null') { 
-      callback(null, true);
-    } else {
-      console.log(`CORS error: ${origin} not allowed by CORS`);
-      callback(new Error('Not allowed by CORS'));
+  origin: async function (origin, callback) {
+    if (!origin || origin === 'null' || whitelist.includes(origin)) {
+      return callback(null, true);
     }
+    // Vérification dynamique dans la BDD
+    try {
+      const { data, error } = await supabase
+        .from('websites')
+        .select('website_slug, website_preview');
+      if (error) throw error;
+      const domains = new Set();
+      data.forEach(site => {
+        if (site.website_slug) {
+          domains.add(`https://${site.website_slug}`);
+          domains.add(`https://www.${site.website_slug}`);
+        }
+        if (site.website_preview) {
+          domains.add(`https://${site.website_preview}`);
+          domains.add(`https://www.${site.website_preview}`);
+        }
+      });
+      if (domains.has(origin)) {
+        return callback(null, true);
+      }
+    } catch (err) {
+      console.error('Erreur CORS dynamique:', err);
+    }
+    console.log(`CORS error: ${origin} not allowed by CORS`);
+    callback(new Error('Not allowed by CORS'));
   },
 };
 
 app.use(cors(corsOptions));
+
+// Mount raw webhook route BEFORE any body parsers so Stripe signature verification can access the raw body
+const expressRaw = require('express').raw;
+app.post('/webhook', expressRaw({ type: 'application/json' }), async (req, res) => {
+  // Delegate to the subscription module's handler
+  return subscriptionModule.stripeWebhookHandler(req, res);
+});
 
 app.use(express.json({ limit: '500mb' })); 
 
@@ -231,7 +196,7 @@ app.use(videoRouter);
 app.use(profileRouter); // Routes de gestion du profil utilisateur (regroupé avec anciennes routes infoUser)
 app.use(securityRouter);
 app.use(userStatsRouter);
-app.use(subscriptionRouter);
+app.use(subscriptionModule.router);
 app.use(billingRouter);
 app.use(portfolioRouter);
 app.use(pageRouter);

@@ -4,25 +4,9 @@ import { useTheme } from '@mui/material/styles';
 import { 
   Box, 
   Typography, 
-  Card, 
-  CardContent, 
-  Grid, 
-  Chip,
   Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
   Alert,
   CircularProgress,
-  Divider,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
   IconButton
 } from '@mui/material';
 import {
@@ -33,6 +17,8 @@ import {
   CheckCircle as CheckCircleIcon,
   Warning as WarningIcon
 } from '@mui/icons-material';
+import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
+import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import CardMembershipIcon from '@mui/icons-material/CardMembership';
 
@@ -42,6 +28,7 @@ import { useWebsite } from '../../../../Context/WebsiteContext';
 import config from '../../../../config';
 import PaymentMethodDialog from './PaymentMethodDialog';
 import './BillingDashboard.css';
+import { SecondaryButton, InfoAlert, GreenCircularProgress } from '../../../../Theme/element';
 
 const BillingDashboard = () => {
   const { websiteId } = useParams();
@@ -55,6 +42,8 @@ const BillingDashboard = () => {
   const [subscriptionInfo, setSubscriptionInfo] = useState(null);
   const [error, setError] = useState(null);
   const [addPaymentDialogOpen, setAddPaymentDialogOpen] = useState(false);
+  const [invoicePage, setInvoicePage] = useState(0);
+  const invoicesPerPage = 5;
 
   useEffect(() => {
     if (websiteId || selectedWebsite?.id) {
@@ -108,20 +97,20 @@ const BillingDashboard = () => {
 
   const downloadInvoice = async (invoiceId) => {
     try {
-      const response = await Axios.get(`${config.apiUrl}/invoice-pdf/${invoiceId}`, {
-        responseType: 'blob',
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      // Chercher la facture dans les données locales pour utiliser hosted_invoice_url si disponible
+      const invoice = invoices.find(inv => inv.id === invoiceId);
       
-      // Créer un lien de téléchargement
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `facture-${invoiceId}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
+      if (invoice && invoice.hosted_invoice_url) {
+        // Utiliser l'URL hébergée par Stripe directement (pas de CORS)
+        window.open(invoice.hosted_invoice_url, '_blank', 'noopener,noreferrer');
+        return;
+      }
+      
+      // Fallback: utiliser notre endpoint avec authentification par paramètre
+      const siteId = websiteId || selectedWebsite?.id;
+      const urlWithAuth = `${config.apiUrl}/invoice-pdf/${siteId}/${invoiceId}?token=${encodeURIComponent(token)}`;
+      
+      window.open(urlWithAuth, '_blank', 'noopener,noreferrer');
     } catch (error) {
       console.error('Erreur lors du téléchargement de la facture:', error);
     }
@@ -142,16 +131,6 @@ const BillingDashboard = () => {
     }).format(amount / 100); // Stripe amounts are in cents
   };
 
-  const getInvoiceStatusColor = (status) => {
-    switch (status) {
-      case 'paid': return 'success';
-      case 'open': return 'warning';
-      case 'draft': return 'info';
-      case 'void': return 'error';
-      default: return 'default';
-    }
-  };
-
   const getInvoiceStatusLabel = (status) => {
     switch (status) {
       case 'paid': return 'Payée';
@@ -162,11 +141,70 @@ const BillingDashboard = () => {
     }
   };
 
+  const getCardIcon = (brand) => {
+    const brandLower = brand?.toLowerCase();
+    switch (brandLower) {
+      case 'visa':
+        return <div className="card-icon visa" title="Visa" />;
+      case 'mastercard':
+        return <div className="card-icon mastercard" title="Mastercard" />;
+      case 'amex':
+      case 'american_express':
+        return <div className="card-icon amex" title="American Express" />;
+      case 'discover':
+        return <div className="card-icon discover" title="Discover" />;
+      case 'diners':
+      case 'diners_club':
+        return <div className="card-icon diners" title="Diners Club" />;
+      case 'jcb':
+        return <div className="card-icon jcb" title="JCB" />;
+      case 'unionpay':
+        return <div className="card-icon unionpay" title="UnionPay" />;
+      default:
+        return <div className="card-icon generic" title={brand || 'Carte'} />;
+    }
+  };
+
+  // Fonctions de pagination pour les factures
+  const handleInvoicePrev = () => setInvoicePage((p) => Math.max(0, p - 1));
+  const handleInvoiceNext = () => setInvoicePage((p) => (p + 1) * invoicesPerPage < invoices.length ? p + 1 : p);
+
+  // Obtenir les factures de la page actuelle
+  const getCurrentPageInvoices = () => {
+    const startIndex = invoicePage * invoicesPerPage;
+    const endIndex = startIndex + invoicesPerPage;
+    return invoices.slice(startIndex, endIndex);
+  };
+
+  // Supprimer une méthode de paiement
+  const deletePaymentMethod = async (paymentMethodId) => {
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer cette méthode de paiement ?')) {
+      return;
+    }
+
+    try {
+      const response = await Axios.delete(`${config.apiUrl}/payment-methods/${websiteId}/${paymentMethodId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.data.success) {
+        // Rafraîchir les données
+        fetchBillingData();
+      } else {
+        console.error('Erreur lors de la suppression:', response.data.message);
+      }
+    } catch (error) {
+      console.error('Erreur lors de la suppression de la méthode de paiement:', error);
+    }
+  };
+
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-        <CircularProgress />
-      </Box>
+      <div className='outlet-box'>
+        <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height:'100%'}}>
+          <GreenCircularProgress />
+        </div>
+      </div>
     );
   }
 
@@ -180,30 +218,7 @@ const BillingDashboard = () => {
 
   return (
     <div className='outlet-box'>
-      {/* En-tête avec breadcrumbs */}
-      <div className="title_section">
-        <div className="breadCrumbs">
-          <NavLink 
-            className={'breadCrumbsLink'}
-            to="/dashboard/home"
-            style={{ textDecoration: 'none', color: 'inherit' }}
-          >
-            Dashboard
-          </NavLink>
-          <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
-          <NavLink 
-            className={'breadCrumbsLink'}
-            to={`/dashboard/website/${websiteId || selectedWebsite?.id}`}
-            style={{ textDecoration: 'none', color: 'inherit' }}
-          >
-            {selectedWebsite?.website_name || 'Site'}
-          </NavLink>
-          <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
-          <span className="breadcrumb-item-active" style={{ color: theme.palette.text.primary }}>
-            Facturation
-          </span>
-        </div>
-      </div>
+      
 
       <div>
         
@@ -213,7 +228,7 @@ const BillingDashboard = () => {
         {subscriptionInfo?.cancel_at_period_end && (
           <Alert severity="warning" sx={{ mb: 3 }}>
             <Typography variant="body2">
-              Votre abonnement sera annulé le {formatDate(subscriptionInfo.current_period_end)}
+              Votre abonnement sera annulé le {formatDate(subscriptionInfo.next_invoice_date || subscriptionInfo.current_period_end)}
             </Typography>
           </Alert>
         )}
@@ -234,53 +249,59 @@ const BillingDashboard = () => {
                 </div>
               
               {subscriptionInfo ? (
-                <List style={{padding:"0"}}>
-                  <ListItem>
-                    <ListItemText 
-                      primary="Plan" 
-                      secondary={subscriptionInfo.plan_name || 'Free'}
-                    />
-                    <Chip 
-                      label={subscriptionInfo.status || 'active'} 
-                      color={subscriptionInfo.status === 'active' ? 'success' : 'default'}
-                      size="small"
-                    />
-                  </ListItem>
+                <div className="billing-info-list">
+                  <div className="billing-info-item">
+                    <div className="billing-info-content">
+                      <div className="billing-info-primary">Plan</div>
+                      <div className="billing-info-secondary">{subscriptionInfo.plan_name || 'Free'}</div>
+                    </div>
+                    <div className={`billing-status ${subscriptionInfo.status === 'active' ? 'active' : 'inactive'}`}>
+                      {subscriptionInfo.status === 'active' ? 'Actif' : 'Inactif'}
+                    </div>
+                  </div>
                   
                   {subscriptionInfo.price && (
-                    <ListItem>
-                      <ListItemText 
-                        primary="Prix" 
-                        secondary={`${subscriptionInfo.price}€/${subscriptionInfo.billing_period === 'monthly' ? 'mois' : 'an'}`}
-                      />
-                    </ListItem>
+                    <div className="billing-info-item">
+                      <div className="billing-info-content">
+                        <div className="billing-info-primary">Prix</div>
+                        <div className="billing-info-secondary">{`${subscriptionInfo.price}€/${subscriptionInfo.billing_period === 'monthly' ? 'mois' : 'an'}`}</div>
+                      </div>
+                    </div>
                   )}
                   
-                  {subscriptionInfo.current_period_end && (
-                    <ListItem>
-                      <ListItemText 
-                        primary="Prochaine facturation" 
-                        secondary={formatDate(subscriptionInfo.current_period_end)}
-                      />
-                    </ListItem>
+                  {(subscriptionInfo.next_invoice_date || subscriptionInfo.current_period_end) && (
+                    <div className="billing-info-item">
+                      <div className="billing-info-content">
+                        <div className="billing-info-primary">Prochaine facturation</div>
+                        <div className="billing-info-secondary">
+                          {formatDate(subscriptionInfo.next_invoice_date || subscriptionInfo.current_period_end)}
+                          {subscriptionInfo.next_invoice_amount ? (` — ${formatAmount(subscriptionInfo.next_invoice_amount)}`) : null}
+                        </div>
+                        {subscriptionInfo.price_may_vary && (
+                          <InfoAlert>
+                            Le montant affiché est le prix récurrent du plan ; il peut varier (prorata) par rapport à la dernière facture.
+                          </InfoAlert>
+                        )}
+                      </div>
+                    </div>
                   )}
                   
                   {subscriptionInfo.trial_end && new Date(subscriptionInfo.trial_end) > new Date() && (
-                    <ListItem>
-                      <ListItemIcon>
+                    <div className="billing-info-item">
+                      <div className="billing-info-icon">
                         <InfoIcon color="info" />
-                      </ListItemIcon>
-                      <ListItemText 
-                        primary="Période d'essai" 
-                        secondary={`Se termine le ${formatDate(subscriptionInfo.trial_end)}`}
-                      />
-                    </ListItem>
+                      </div>
+                      <div className="billing-info-content">
+                        <div className="billing-info-primary">Période d'essai</div>
+                        <div className="billing-info-secondary">{`Se termine le ${formatDate(subscriptionInfo.trial_end)}`}</div>
+                      </div>
+                    </div>
                   )}
-                </List>
+                </div>
               ) : (
-                <Typography variant="body2" color="text.secondary">
+                <div className="billing-info-empty">
                   Plan gratuit actuel
-                </Typography>
+                </div>
               )}
               </div>
             </div>
@@ -304,39 +325,62 @@ const BillingDashboard = () => {
                     <AddIcon className='icon_modifiaction_title' fontSize='normal'/>
                     <b>Méthodes de paiement</b>
                   </div>
-                  <Button
+                  <SecondaryButton
                     startIcon={<AddIcon />}
                     variant="outlined"
                     size="small"
                     onClick={() => setAddPaymentDialogOpen(true)}
                   >
                     Ajouter
-                  </Button>
+                  </SecondaryButton>
                 </div>
               
               {paymentMethods.length > 0 ? (
-                <List>
+                <div className="payment-methods-list">
                   {paymentMethods.map((method) => (
-                    <ListItem key={method.id}>
-                      <ListItemIcon>
-                      </ListItemIcon>
-                      <ListItemText 
-                        primary={`**** **** **** ${method.card?.last4}`}
-                        secondary={`${method.card?.brand?.toUpperCase()} • Expire ${method.card?.exp_month}/${method.card?.exp_year}`}
-                      />
-                      {method.is_default && (
-                        <Chip label="Par défaut" size="small" color="primary" />
-                      )}
-                      <IconButton edge="end" size="small">
-                        <DeleteIcon />
-                      </IconButton>
-                    </ListItem>
+                    <div key={method.id} className="payment-method-item">
+                      <div className="payment-method-content">
+                        <div className="payment-method-icon">
+                          {getCardIcon(method.card?.brand)}
+                        </div>
+                        <div className="payment-method-details">
+                          
+                          <div className="payment-method-primary">
+                            
+                            **** **** **** {method.card?.last4}
+                          </div>
+                          <div className="payment-method-secondary">
+                            Expire: {method.card?.exp_month}/{method.card?.exp_year}
+                          </div>
+                          {method.card?.name && (
+                            <span style={{ marginRight: '0.5rem', color: theme.palette.text.secondary }}>
+                              {method.card.name}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="payment-method-actions">
+                        {method.is_default && (
+                          <div className="billing-status active">Par défaut</div>
+                        )}
+                        
+                        {!method.is_default && (
+                          <button 
+                            className='download-button'
+                            onClick={() => deletePaymentMethod(method.id)}
+                            title="Supprimer cette méthode de paiement"
+                          >
+                            <DeleteIcon fontSize='small'/>
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   ))}
-                </List>
+                </div>
               ) : (
-                <Typography variant="body2" color="text.secondary">
+                <div className="billing-info-empty">
                   Aucune méthode de paiement enregistrée
-                </Typography>
+                </div>
               )}
             </div>
           </div>
@@ -357,58 +401,78 @@ const BillingDashboard = () => {
                 </div>
               
               {invoices.length > 0 ? (
-                <TableContainer component={Paper} variant="outlined">
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>N° Facture</TableCell>
-                        <TableCell>Date</TableCell>
-                        <TableCell>Description</TableCell>
-                        <TableCell>Montant</TableCell>
-                        <TableCell>Statut</TableCell>
-                        <TableCell align="center">Actions</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {invoices.map((invoice) => (
-                        <TableRow key={invoice.id}>
-                          <TableCell>{invoice.number}</TableCell>
-                          <TableCell>{formatDate(invoice.created)}</TableCell>
-                          <TableCell>
+                <div className='logs-table-wrapper'>
+                  <table className='security-logs-table invoices-table'>
+                    <thead>
+                      <tr>
+                        <th className='col-invoice-number'>N° Facture</th>
+                        <th className='col-invoice-date'>Date</th>
+                        <th className='col-invoice-description'>Description</th>
+                        <th className='col-invoice-amount'><div className='billing-table-box'>Montant</div></th>
+                        <th className='col-invoice-status'><div className='billing-table-box'>Statut</div></th>
+                        <th className='col-invoice-actions'><div className='billing-table-box'>Actions</div></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {getCurrentPageInvoices().map((invoice) => (
+                        <tr key={invoice.id} className="invoice-row">
+                          <td className='col-invoice-number mono'>{invoice.number}</td>
+                          <td className='col-invoice-date'>{formatDate(invoice.created)}</td>
+                          <td className='col-invoice-description'>
                             {invoice.lines?.data?.[0]?.description || 'Abonnement'}
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2" fontWeight="bold">
-                              {formatAmount(invoice.amount_paid, invoice.currency)}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Chip 
-                              label={getInvoiceStatusLabel(invoice.status)}
-                              color={getInvoiceStatusColor(invoice.status)}
-                              size="small"
-                            />
-                          </TableCell>
-                          <TableCell align="center">
-                            {invoice.status === 'paid' && invoice.invoice_pdf && (
-                              <IconButton 
-                                size="small" 
-                                onClick={() => downloadInvoice(invoice.id)}
-                                title="Télécharger la facture"
-                              >
-                                <DownloadIcon />
-                              </IconButton>
-                            )}
-                          </TableCell>
-                        </TableRow>
+                          </td>
+                          <td className='col-invoice-amount'>
+                            <div className='billing-table-box'>
+                              <span style={{ fontWeight: 'bold' }}>
+                                {formatAmount(invoice.amount_paid, invoice.currency)}
+                              </span>
+                            </div>
+                          </td>
+                          <td className='col-invoice-status'>
+                            <div className='billing-table-box'>
+                              <div className={`billing-status ${invoice.status === 'paid' ? 'active' : invoice.status === 'open' ? 'pending' : 'cancelled'}`}>
+                                {getInvoiceStatusLabel(invoice.status)}
+                              </div>
+                            </div>
+                          </td>
+                          <td className='col-invoice-actions'>
+                            <div className='billing-table-box'>
+                              {invoice.status === 'paid' && invoice.invoice_pdf && (
+                                <button 
+                                  className="download-button"
+                                  onClick={() => downloadInvoice(invoice.id)}
+                                  title="Télécharger la facture"
+                                >
+                                  <DownloadIcon fontSize="small" />
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
                       ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+                    </tbody>
+                  </table>
+                  {invoices.length > invoicesPerPage && (
+                    <div className='table-footer table-footer-security'>
+                      <span></span>
+                      <div className='table-footer-info'>
+                        <span>{invoices.length === 0 ? '0' : `${invoicePage * invoicesPerPage + 1} - ${Math.min((invoicePage + 1) * invoicesPerPage, invoices.length)} sur ${invoices.length}`}</span>
+                        <div className='table-footer-buttons'>
+                          <button className='table-arrow-button' onClick={handleInvoicePrev} disabled={invoicePage === 0}>
+                            <ArrowBackIosRoundedIcon fontSize='16'/>
+                          </button>   
+                          <button className='table-arrow-button' onClick={handleInvoiceNext} disabled={(invoicePage + 1) * invoicesPerPage >= invoices.length}>
+                            <ArrowForwardIosRoundedIcon fontSize='16'/>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               ) : (
-                <Typography variant="body2" color="text.secondary">
+                <div className="billing-info-empty">
                   Aucune facture disponible
-                </Typography>
+                </div>
               )}
               </div>
             </div>

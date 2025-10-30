@@ -90,7 +90,7 @@ export const createBlogPage = async (id, mainText, date, status, idWebsite, toke
                 'Content-Type': 'application/json'
             }
         });
-        if (status === 1) {
+        if ( status === 'publish' || status === 'published') {
             await Axios.post(`${apiUrl}/addRouteBlogSitemap`, {
                 params: {
                     idWebsite: idWebsite,
@@ -173,7 +173,11 @@ export const createMultiReferenceBlog = async (id, multiReference, token) => {
 export const updateBlogPage = async (idBlogPage, mainText, date, status, setpublishDate, oldStatus, idWebsite, idBlog, token) => {
     
     try {
-        if (status === 1 && oldStatus === 0) {
+        // treat string 'publish' as published too
+        const isPublished = (s) => (s === 1 || s === 'publish' || s === 'published');
+        const isDraft = (s) => (s === 0 || s === 'draft');
+
+        if (isPublished(status) && isDraft(oldStatus)) {
             await Axios.post(`${apiUrl}/addRouteBlogSitemap`, {
                 params: {
                     idWebsite: idWebsite,
@@ -187,8 +191,8 @@ export const updateBlogPage = async (idBlogPage, mainText, date, status, setpubl
                     'Content-Type': 'application/json'
                 }
             });
-        } else if (status === 0 && oldStatus === 1) {
-            await Axios.post(`${apiUrl}/deleteRouteCollectionSitemap`, {
+        } else if (isDraft(status) && isPublished(oldStatus)) {
+            await Axios.post(`${apiUrl}/deleteRouteBlogSitemap`, {
                 params: {
                     idWebsite: idWebsite,
                     idBlog: idBlog,
@@ -200,8 +204,8 @@ export const updateBlogPage = async (idBlogPage, mainText, date, status, setpubl
                     'Content-Type': 'application/json'
                 }
             });
-        } else if (status === 1 && oldStatus === 1) {
-            await Axios.post(`${apiUrl}/updateRouteCollectionSitemap`, {
+        } else if (isPublished(status) && isPublished(oldStatus)) {
+            await Axios.post(`${apiUrl}/updateRouteBlogSitemap`, {
                 params: {
                     idWebsite: idWebsite,
                     idBlog: idBlog,
@@ -482,9 +486,10 @@ export const updateGalleryBlog = async (id, gallery, token) => {
 };
 
 
-export const generateStaticSite = async (token, websiteId) => {
+export const generateStaticSite = async (token, websiteId, status = 'publish', publishCustomDomain) => {
+    console.log(publishCustomDomain)
     try {
-        const response = await Axios.post(`${apiUrl}/generateSite`, { websiteId }, {
+        const response = await Axios.post(`${apiUrl}/generateSite`, { websiteId, status, publishCustomDomain }, {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'

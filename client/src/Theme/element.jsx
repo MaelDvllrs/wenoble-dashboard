@@ -384,6 +384,10 @@ const WhiteCircularProgress = styled(CircularProgress)({
     color: 'white',
 });
 
+export const GreenCircularProgress = styled(CircularProgress)({
+    color: '#2ec96d',
+});
+
 export const LoadingButtonBase = styled(LoadingButton)(({ theme }) => ({
     '&.MuiButton-root': {
         backgroundColor: "var(--primary-color)",
@@ -395,6 +399,15 @@ export const LoadingButtonBase = styled(LoadingButton)(({ theme }) => ({
         backgroundColor: "var(--primary-color)",
     },
 }));
+
+// Small reusable info alert used across the app
+export const InfoAlert = ({ children, sx = {}, ...props }) => {
+  return (
+    <Alert severity="info" sx={{ ...sx }} {...props}>
+      {children}
+    </Alert>
+  );
+};
 
 export const LoginDefaultButton = ({ loading, ...props }) => (
     <LoadingButtonBase

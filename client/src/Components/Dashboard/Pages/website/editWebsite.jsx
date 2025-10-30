@@ -2,6 +2,8 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate, NavLink } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import { CircularProgress, MenuItem } from '@mui/material';
+import { Menu } from '@mui/material';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import Cookies from 'js-cookie';
 import './website.css';
 
@@ -64,6 +66,8 @@ const EditWebsite = () => {
   const [newUserRole, setNewUserRole] = useState('viewer');
   
   // États pour les modales
+  // État pour le menu de publication
+  const [anchorEl, setAnchorEl] = useState(null);
   const [deleteUserModal, setDeleteUserModal] = useState({ open: false, userId: null });
   const [deleteWebsiteModal, setDeleteWebsiteModal] = useState(false);
   const [editUserModal, setEditUserModal] = useState({ open: false, userId: null, role: '' });
@@ -328,29 +332,6 @@ const EditWebsite = () => {
   return (
     <div className="outlet-box">
       {/* Section titre avec breadcrumb */}
-      <div className="title_section">
-        <div className="breadCrumbs">
-          <NavLink 
-            className={'breadCrumbsLink'}
-            to="/dashboard/home"
-            style={{ textDecoration: 'none', color: 'inherit' }}
-          >
-            Dashboard
-          </NavLink>
-          <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
-          <NavLink 
-            className={'breadCrumbsLink'}
-            to="/dashboard/website"
-            style={{ textDecoration: 'none', color: 'inherit' }}
-          >
-            {website.website_name}
-          </NavLink>
-          <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
-          <span className="breadcrumb-item-active" style={{ color: theme.palette.text.primary }}>
-            Paramètres
-          </span>
-        </div>
-      </div>
 
       {/* Section principale */}
       <div className="dashboard_case_empty edit-case_empty">
@@ -366,38 +347,95 @@ const EditWebsite = () => {
                 >
                   Retour
                 </SecondaryButton>
-                <DefaultButton
-                  onClick={async () => {
-                    if (isPublishing) return;
-                    setIsPublishing(true);
-                    setDataRetrievalStatus(true);
-                    try {
-                      // Simulate step progression similar to collection element publishing
-                      setTimeout(() => setPageGenerationStatus(true), 800);
-                      const res = await generateStaticSite(token, website.id);
-                      setTimeout(() => setSitePublishingStatus(true), 1600);
-                      // Give user time to view all green statuses
-                      await new Promise(r => setTimeout(r, 2600));
-                      if (res?.success === false) {
-                        showSnackbar('warning', "La génération du site a rencontré un problème partiel");
-                      } else {
-                        showSnackbar('success', 'Site généré avec succès');
+                {/* Nouveau bouton principal avec menu popup pour publier/publier tout */}
+                <div>
+                  <DefaultButton
+                    aria-controls={Boolean(anchorEl) ? 'publish-menu' : undefined}
+                    aria-haspopup="true"
+                    onClick={(e) => setAnchorEl(e.currentTarget)}
+                    disabled={loading || isPublishing}
+                    size="large"
+                  >
+                    <div className="button-popup-box">Publier <div className="button-popup-line"></div><KeyboardArrowDownIcon fontSize="small"/></div>
+                  </DefaultButton>
+                  <Menu
+                    id="publish-menu"
+                    anchorEl={anchorEl}
+                    open={Boolean(anchorEl)}
+                    onClose={() => setAnchorEl(null)}
+                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                    transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                    PaperProps={{
+                      sx: {
+                        backgroundColor: theme.palette.primary.main,
+                        color: theme.palette.primary.contrastText,
+                        borderRadius: 1,
+                        marginTop: "0.5rem",
+                        boxShadow: theme.palette.shadow.main
                       }
-                    } catch (e) {
-                      console.error('Erreur publication site:', e);
-                      showSnackbar('error', 'Erreur lors de la génération du site');
-                    } finally {
-                      setDataRetrievalStatus(false);
-                      setPageGenerationStatus(false);
-                      setSitePublishingStatus(false);
-                      setIsPublishing(false);
-                    }
-                  }}
-                  disabled={loading || isPublishing}
-                  startIcon={isPublishing ? <CircularProgress size={12} sx={{ color: 'white' }} /> : undefined}
-                >
-                  {isPublishing ? 'Publication...' : 'Publier'}
-                </DefaultButton>
+                    }}
+                    MenuListProps={{ sx: { paddingY: 0 } }}
+                  >
+                    <MenuItem sx={{ fontSize: "0.95rem", '&:hover': { backgroundColor: theme.palette.primary.third } }}
+                      onClick={async () => {
+                        setAnchorEl(null);
+                        if (isPublishing) return;
+                        setIsPublishing(true);
+                        setDataRetrievalStatus(true);
+                        try {
+                          setTimeout(() => setPageGenerationStatus(true), 800);
+                          const res = await generateStaticSite(token, website.id);
+                          setTimeout(() => setSitePublishingStatus(true), 1600);
+                          await new Promise(r => setTimeout(r, 2600));
+                          if (res?.success === false) {
+                            showSnackbar('warning', "La génération du site a rencontré un problème partiel");
+                          } else {
+                            showSnackbar('success', 'Site généré avec succès');
+                          }
+                        } catch (e) {
+                          console.error('Erreur publication site:', e);
+                          showSnackbar('error', 'Erreur lors de la génération du site');
+                        } finally {
+                          setDataRetrievalStatus(false);
+                          setPageGenerationStatus(false);
+                          setSitePublishingStatus(false);
+                          setIsPublishing(false);
+                        }
+                      }}
+                    >
+                      Publier
+                    </MenuItem>
+                    <MenuItem sx={{ fontSize: "0.95rem", '&:hover': { backgroundColor: theme.palette.primary.third } }}
+                      onClick={async () => {
+                        setAnchorEl(null);
+                        if (isPublishing) return;
+                        setIsPublishing(true);
+                        setDataRetrievalStatus(true);
+                        try {
+                          setTimeout(() => setPageGenerationStatus(true), 800);
+                          const res = await generateStaticSite(token, website.id, 'all');
+                          setTimeout(() => setSitePublishingStatus(true), 1600);
+                          await new Promise(r => setTimeout(r, 2600));
+                          if (res?.success === false) {
+                            showSnackbar('warning', "La génération du site a rencontré un problème partiel");
+                          } else {
+                            showSnackbar('success', 'Site généré (toutes pages) avec succès');
+                          }
+                        } catch (e) {
+                          console.error('Erreur publication site (all):', e);
+                          showSnackbar('error', 'Erreur lors de la génération du site');
+                        } finally {
+                          setDataRetrievalStatus(false);
+                          setPageGenerationStatus(false);
+                          setSitePublishingStatus(false);
+                          setIsPublishing(false);
+                        }
+                      }}
+                    >
+                      Publier tout
+                    </MenuItem>
+                  </Menu>
+                </div>
               </div>
             </div>
 
@@ -447,6 +485,17 @@ const EditWebsite = () => {
                   value={websiteData.analytics_id}
                   onChange={(e) => setWebsiteData({ ...websiteData, analytics_id: e.target.value })}
                   placeholder="G-XXXXXXXXXX"
+                />
+              </div>
+
+              <div className="input-container">
+                <p className="blogField_name collection_edit_name">Lien preview du site</p>
+                <input
+                  type="url"
+                  className="input_text_blog"
+                  value={websiteData.preview_url || ''}
+                  onChange={e => setWebsiteData({ ...websiteData, website_preview: e.target.value })}
+                  placeholder="https://votre-site-preview.com"
                 />
               </div>
 

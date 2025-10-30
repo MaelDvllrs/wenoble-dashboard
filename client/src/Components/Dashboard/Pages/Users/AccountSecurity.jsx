@@ -149,30 +149,7 @@ const AccountSecurity = () => {
 
   return (
     <div className='outlet-box'>
-      {/* Breadcrumbs */}
-      <div className="title_section">
-        <div className="breadCrumbs">
-          <NavLink 
-            className={'breadCrumbsLink'}
-            to="/dashboard/home"
-            style={{ textDecoration: 'none', color: 'inherit' }}
-          >
-            Dashboard
-          </NavLink>
-          <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
-          <NavLink 
-            className={'breadCrumbsLink'}
-            to="/dashboard/account/general"
-            style={{ textDecoration: 'none', color: 'inherit' }}
-          >
-            Mon Compte
-          </NavLink>
-          <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
-          <span className="breadcrumb-item-active" style={{ color: theme.palette.text.primary }}>
-            Sécurité
-          </span>
-        </div>
-      </div>
+      
 
     <div className='security-form'>
       <div className='profile-form-row' style={{ backgroundColor: theme.palette.primary.main, boxShadow: theme.palette.shadow.main }}>

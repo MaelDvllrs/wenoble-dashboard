@@ -222,10 +222,17 @@ const BillingPage = () => {
                     <p style={{ color: theme.palette.text.secondary, margin: '0 0 0.5rem 0' }}>
                       {subscription.price}€ / {subscription.billing_period}
                     </p>
-                    {subscription.current_period_end && (
-                      <p style={{ color: theme.palette.text.secondary, margin: 0, fontSize: '0.875rem' }}>
-                        Renouvellement le {formatDate(subscription.current_period_end)}
-                      </p>
+                    {(subscription.next_invoice_date || subscription.current_period_end) && (
+                      <div>
+                        <p style={{ color: theme.palette.text.secondary, margin: 0, fontSize: '0.875rem' }}>
+                          Renouvellement le {formatDate(subscription.next_invoice_date || subscription.current_period_end)}{subscription.next_invoice_amount ? ` — ${formatAmount(subscription.next_invoice_amount)}` : null}
+                        </p>
+                        {subscription.price_may_vary && (
+                          <p style={{ color: theme.palette.text.secondary, marginTop: '0.5rem', fontSize: '0.8rem' }}>
+                            ⚠️ Le montant affiché est le prix récurrent du plan ; il peut varier (prorata) par rapport à la dernière facture.
+                          </p>
+                        )}
+                      </div>
                     )}
                   </div>
                   <SecondaryButton onClick={() => window.location.href = `/dashboard/website/${websiteId}/subscription`}>
