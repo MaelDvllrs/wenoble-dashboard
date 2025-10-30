@@ -175,6 +175,9 @@ const whitelist =
   'https://www.goout.agency',
 
 
+  'https://amai-deco.webflow.io',
+
+
 ];
 
 
