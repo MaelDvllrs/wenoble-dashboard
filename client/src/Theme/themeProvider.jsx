@@ -26,6 +26,7 @@ function ThemeVariables({ children }) {
         root.style.setProperty('--color-green', theme.palette.colors.green);
         root.style.setProperty('--color-blue', theme.palette.colors.blue);
         root.style.setProperty('--color-yellow', theme.palette.colors.yellow);
+        root.style.setProperty('--color-orange', theme.palette.colors.orange);
         root.style.setProperty('--color-red', theme.palette.colors.red);
         root.style.setProperty('--color-purple', theme.palette.colors.purple);
     }, [theme]);

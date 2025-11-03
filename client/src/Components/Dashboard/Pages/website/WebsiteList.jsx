@@ -65,22 +65,6 @@ const WebsiteList = () => {
 
   return (
     <div className="outlet-box">
-      {/* Section titre avec breadcrumb */}
-      <div className="title_section">
-        <div className="breadCrumbs">
-          <NavLink 
-            className={'breadCrumbsLink'}
-            to="/dashboard/home"
-            style={{ textDecoration: 'none', color: 'inherit' }}
-          >
-            Dashboard
-          </NavLink>
-          <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
-          <span className="breadcrumb-item-active" style={{ color: theme.palette.text.primary }}>
-            Sites Web
-          </span>
-        </div>
-      </div>
 
       <div className="dashboard_case_empty edit-case_empty">
         <div className='list-website-wrapper'>

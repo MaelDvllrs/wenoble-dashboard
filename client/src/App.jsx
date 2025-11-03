@@ -23,7 +23,7 @@ import EmailConfirmation from './Auth/EmailConfirmation';
 import { IsAuthenticated, IsAuthenticatedAdmin } from './Auth/ProtectedRoutes';
 
 // Authorization
-import { AuthorisedRoutePortfolio, AuthorisedRoutePage, AuthorisedRouteBlog, AuthorisedRouteEcomm, AuthorisedRouteNewsletter } from './Authorisation/Authorisation';
+import { AuthorisedRoutePortfolio, AuthorisedRoutePage, AuthorisedRouteBlog, AuthorisedRouteNewsletter, AuthorisedRouteAnalytics } from './Authorisation/Authorisation';
 
 // Context
 import { WebsiteProvider } from './Context/WebsiteContext';
@@ -54,6 +54,8 @@ import EditElementCollection from './Components/Dashboard/Pages/modification_sit
 import StatistiqueHome from './Components/Dashboard/Pages/Statistique/statistiqueHome';
 import StatistiqueAnalytics from './Components/Dashboard/Pages/Statistique/StatistiqueAnalytics';
 import StatistiqueSearchConsole from './Components/Dashboard/Pages/Statistique/StatistiqueSearchConsole';
+import SubscriptionPlans from './Components/Dashboard/Pages/Subscription/SubscriptionPlans';
+import BillingDashboard from './Components/Dashboard/Pages/Billing/BillingDashboard';
 import Actualite from './Components/Dashboard/Pages/Actualite/Actualite';
 import Article from './Components/Dashboard/Pages/Actualite/Article';
 import Update from './Components/Dashboard/Pages/Actualite/Update';
@@ -62,14 +64,6 @@ import UpdateTemplate from './Components/Dashboard/Pages/Actualite/UpdateTemplat
 import ContactList from './Components/Dashboard/Pages/Contact/ContactListe';
 import ContactMessage from './Components/Dashboard/Pages/Contact/ContactMessage';
 import ContactSettings from './Components/Dashboard/Pages/Contact/ContactSettings';
-import Ecommerce from './Components/Dashboard/Pages/Ecommerce/EcommerceHome';
-import EcommerceStatistique from './Components/Dashboard/Pages/Ecommerce/EcommerceStatistique';
-import EcommerceProduct from './Components/Dashboard/Pages/Ecommerce/EcommerceProduct';
-import EcommerceOrder from './Components/Dashboard/Pages/Ecommerce/EcommerceOrder/EcommerceOrder';
-import EcommerceOrderPending from './Components/Dashboard/Pages/Ecommerce/EcommerceOrder/EcommerceOrderPending';
-import EcommerceOrderShipping from './Components/Dashboard/Pages/Ecommerce/EcommerceOrder/EcommerceOrderShipping';
-import EcommerceOrderDelivered from './Components/Dashboard/Pages/Ecommerce/EcommerceOrder/EcommerceOrderDelivered';
-import EcommerceOrderAll from './Components/Dashboard/Pages/Ecommerce/EcommerceOrder/EcommerceOrderAll';
 import NewsLetters from './Components/Dashboard/Pages/NewsLetters/Newsletter';
 import Academy from './Components/Dashboard/Pages/Academy/Academy';
 import AcademyTemplate from './Components/Dashboard/Pages/Academy/AcademyTemplate';
@@ -174,23 +168,15 @@ function App() {
                                             <Route path=":idCollection/editPage/:idCollectionElement" element={<EditElementCollection />} />
                                         </Route>
                                         <Route path="stats" element={<StatistiqueHome />}/>
-                                        <Route path="stats/analytics" element={<StatistiqueAnalytics />} />
+                                        <Route path="stats/analytics" element={<AuthorisedRouteAnalytics><StatistiqueAnalytics /></AuthorisedRouteAnalytics>} />
                                         <Route path="stats/search-console" element={<StatistiqueSearchConsole />} />
                                         <Route path="contact" element={<ContactList />} />
                                         <Route path="contact/settings" element={<ContactSettings />} />
                                         <Route path="contact/message/:id" element={<ContactMessage />} />
-                                        <Route path="ecommerce" element={<AuthorisedRouteEcomm><Ecommerce /></AuthorisedRouteEcomm>}>
-                                            <Route path="stats" element={<EcommerceStatistique />} />
-                                            <Route path="product" element={<EcommerceProduct />} />
-                                            <Route path="order" element={<EcommerceOrder />}>
-                                                <Route path="pending" element={<EcommerceOrderPending />} />
-                                                <Route path="shipping" element={<EcommerceOrderShipping />} />
-                                                <Route path="delivered" element={<EcommerceOrderDelivered />} />
-                                                <Route path="orderAll" element={<EcommerceOrderAll />} />
-                                            </Route>
-                                        </Route>
                                         <Route path="newsletter" element={<AuthorisedRouteNewsletter><NewsLetters /></AuthorisedRouteNewsletter>} />
-                                        <Route path="settings/:websiteId" element={<EditWebsite />} />
+                                        <Route path="subscription" element={<SubscriptionPlans />} />
+                                        <Route path="billing" element={<BillingDashboard />} />
+                                        <Route path="settings" element={<EditWebsite />} />
                                     </Route>
                                     
                                     {/* Standalone pages */}

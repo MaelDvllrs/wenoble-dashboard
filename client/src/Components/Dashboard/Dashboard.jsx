@@ -1,3 +1,29 @@
+// Composant général pour l'affichage du breadcrumb et des actions globales
+// Props :
+// - items: tableau d'objets { label, to, active }
+// - actions: ReactNode (actions à afficher à droite)
+// - style: style additionnel (optionnel)
+const DashboardHeaderSection = ({ items = [], actions = null, style = {} }) => {
+    return (
+        <div className="dashboard-header-section" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1.5rem', ...style }}>
+            <div className="breadCrumbs">
+                {items.map((item, idx) => (
+                    <span key={idx} style={{ display: 'inline-flex', alignItems: 'center' }}>
+                        {item.to ? (
+                            <a href={item.to} className={item.active ? 'breadcrumb-item-active' : 'breadCrumbsLink'} style={{ textDecoration: 'none', color: item.active ? 'var(--primary-text)' : 'inherit' }}>{item.label}</a>
+                        ) : (
+                            <span className={item.active ? 'breadcrumb-item-active' : ''} style={{ color: item.active ? 'var(--primary-text)' : 'inherit' }}>{item.label}</span>
+                        )}
+                        {idx < items.length - 1 && (
+                            <span className="breadcrumb-separator" style={{ margin: '0 0.5rem', color: 'var(--secondary-text)' }}>/</span>
+                        )}
+                    </span>
+                ))}
+            </div>
+            {actions && <div className="dashboard-header-actions">{actions}</div>}
+        </div>
+    );
+};
 // External libraries
 import React, { useState, useEffect, useContext, useRef, useMemo } from 'react';
 import Axios from '../../service/AxiosConfig';
@@ -36,6 +62,8 @@ import './Dashboard.css';
 import Logo from '../../assets/icon/logo.svg?react';
 import config from '../../config';
 import { SkeletonProfile, SkeletonMenuList, SkeletonFullSelector } from '../skeleton/skeleton';
+import { Typography } from '@mui/material';
+import { AlertBanner } from '../../Theme/element';
 import ThemeContext from '../../Theme/themeContext';
 import { notificationTitle, notificationLink, SimpleSearchField } from '../../Theme/element';
 import { checkAuthorization } from '../../Authorisation/Authorisation';
@@ -46,6 +74,8 @@ import { useWorkspace } from '../../Context/WorkspaceContext';
 
 // Component definition
 const Dashboard = () => {
+    
+
     const theme = useTheme();
     
     const navigateTo = useNavigate();
@@ -100,6 +130,39 @@ const Dashboard = () => {
     const workspaceMenuSidebarRef = useRef(null);
     const userMenuRef = useRef(null);
     const sidebarModeRef = useRef(null);
+
+    // Abonnement du site sélectionné
+    const [subscriptionInfo, setSubscriptionInfo] = useState(null);
+
+    // Récupérer l'abonnement du site sélectionné
+    useEffect(() => {
+        const fetchSubscription = async () => {
+            if (selectedWebsite?.id) {
+                try {
+                    const { data } = await Axios.get(`${apiUrl}/subscription-info/${selectedWebsite.id}`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    setSubscriptionInfo(data.subscription);
+                } catch (e) {
+                    setSubscriptionInfo(null);
+                }
+            } else {
+                setSubscriptionInfo(null);
+            }
+        };
+        fetchSubscription();
+    }, [selectedWebsite, apiUrl, token]);
+    // Helper pour formater la date
+    const formatDate = (dateString) => {
+        if (!dateString) return '';
+        return new Date(dateString).toLocaleDateString('fr-FR', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    };
+
+
 
     // Effects
     useEffect(() => {
@@ -375,9 +438,11 @@ const Dashboard = () => {
         });
     };
 
+
     // JSX
     return (
     <div className='dashboard'>
+        
         <div className='dashboard_header' style={{backgroundColor: theme.palette.primary.main, boxShadow : theme.palette.shadow.main}}>
             <div className='header_box left'>
                 <Logo className="logo" alt="logo" style={{color: theme.palette.text.primary}}/>
@@ -490,6 +555,14 @@ const Dashboard = () => {
                     </ClickAwayListener>
                 </div>
             </div>
+            {/* Affichage de l'annonce d'annulation d'abonnement si besoin */}
+            {subscriptionInfo?.cancel_at_period_end && (
+                <AlertBanner severity="warning" >
+                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        Votre abonnement sera annulé le {formatDate(subscriptionInfo.next_invoice_date || subscriptionInfo.current_period_end)}
+                    </Typography>
+                </AlertBanner>
+            )}
             <div className='header_box right'>
                 <IconButton key='menu' style={{ color: theme.palette.text.primary }}  onClick={handleOpenNotif} ref={anchorRef}>
                     <Badge color="error" variant="dot" invisible={!notifRead}>
@@ -768,6 +841,7 @@ const Dashboard = () => {
                     }}
                 >
                     <div className='dashboard_section principal'>
+                        
                         <Outlet />
                     </div>
                 </motion.div>

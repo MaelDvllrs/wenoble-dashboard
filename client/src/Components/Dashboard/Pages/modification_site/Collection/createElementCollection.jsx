@@ -1,16 +1,20 @@
 import React, { useState, useEffect, useContext } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, NavLink } from "react-router-dom";
 import Axios from "axios";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 
+
 // MUI
-import { Box, Paper, Snackbar, Tooltip } from "@mui/material";
+import { Box, Paper, Snackbar, Tooltip, Menu, MenuItem, IconButton } from "@mui/material";
 import CircularProgress from "@mui/material/CircularProgress";
 import SaveIcon from "@mui/icons-material/Save";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import PendingIcon from "@mui/icons-material/Pending";
 import { useTheme } from "@mui/material/styles";
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import { ClickAwayListener, Popper, Grow } from '@mui/material';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 // App
 import { useSnackbar } from '../../../../../Theme/snackbar';
@@ -60,6 +64,8 @@ const CreateElementCollection = () => {
     const [dataSaved, setDataSaved] = useState(false);
     const [isPublishing, setIsPublishing] = useState(false);
     const [isSavingDraft, setIsSavingDraft] = useState(false);
+    const [isQueueing, setIsQueueing] = useState(false);
+    const [anchorEl, setAnchorEl] = useState(null);
     const [dataRetrievalStatus, setDataRetrievalStatus] = useState(false);
     const [pageGenerationStatus, setPageGenerationStatus] = useState(false);
     const [sitePublishingStatus, setSitePublishingStatus] = useState(false);
@@ -68,6 +74,12 @@ const CreateElementCollection = () => {
 
     // ---- useContext ---
     const { showSnackbar } = useSnackbar();
+
+    // Domaine/abonnement pour la popup publication
+    const [showDomainPopup, setShowDomainPopup] = useState(false);
+    const [publishCustomDomain, setPublishCustomDomain] = useState(false);
+    const [subscriptionInfo, setSubscriptionInfo] = useState(null);
+    const publishBtnRef = React.useRef(null);
 
     // --- useEffect ---
     useEffect(() => {    
@@ -85,6 +97,26 @@ const CreateElementCollection = () => {
             console.error('Erreur lors de la récupération de la du Blog :', error);
         });
     }, []);
+
+
+    // Récupérer la feature custom_domain (identique WebsiteManager)
+    useEffect(() => {
+        const fetchSubscriptionAndFeature = async () => {
+            if (!selectedWebsite?.id) return;
+            try {
+                let customDomain = false;
+                const authRes = await Axios.get(`${apiUrl}/custom-domain-authorisation/${selectedWebsite.id}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                customDomain = !!authRes.data.authorisation;
+                setSubscriptionInfo({ custom_domain: customDomain });
+            } catch (e) {
+                setSubscriptionInfo(null);
+            }
+        };
+        fetchSubscriptionAndFeature();
+    }, [selectedWebsite, token]);
+
 
     // --- Fonctions utilitaires ---
     const handleBlogDataChange = (data, isDelete = false) => {
@@ -115,15 +147,22 @@ const CreateElementCollection = () => {
         });
     };
 
-    const handleSave = async (status) => {
+    const handleSave = async (status, customDomain = false) => {
+        // status can be 'publish'|'draft'|'wait' or numeric 1/0
+        const isPublish = (s) => (s === 1 || s === 'publish' || s === 'published');
+        const isDraft = (s) => (s === 0 || s === 'draft');
+        const isWait = (s) => (s === 'wait' || s === 2 || s === 'queued');
+
         // Affichage immédiat du feedback visuel
-        if (status === 1) {
+        if (isPublish(status)) {
             setSavingPage(true); // snackbar publication
         } else {
-            setDataLoading(true); // snackbar brouillon
+            setDataLoading(true); // snackbar brouillon/queue
         }
-        if (status === 1) {
+        if (isPublish(status)) {
             setIsPublishing(true);
+        } else if (isWait(status)) {
+            setIsQueueing(true);
         } else {
             setIsSavingDraft(true);
         }
@@ -261,11 +300,12 @@ const CreateElementCollection = () => {
                 return;
             }
             // Générer le site
-            if (status === 1) {
+            const isPublish = (s) => (s === 1 || s === 'publish' || s === 'published');
+            if (isPublish(status)) {
                 setDataRetrievalStatus(true);
                 try {
                     setTimeout(() => { setPageGenerationStatus(true); }, 1000);
-                    await generateStaticSite(token, selectedWebsite?.id);
+                    await generateStaticSite(token, selectedWebsite?.id, '', customDomain);
                     setTimeout(() => { setSitePublishingStatus(true); }, 1000);
                     await new Promise(resolve => setTimeout(resolve, 2000));
                     setDataRetrievalStatus(false);
@@ -290,6 +330,7 @@ const CreateElementCollection = () => {
                         setDataLoading(false);
                         setDataSaved(false);
                         setIsSavingDraft(false);
+                        setIsQueueing(false);
                     }, 1000);
                 }, 1500);
             }
@@ -310,20 +351,196 @@ const CreateElementCollection = () => {
             <div className="header_modification header_page_modification">
                 <h3 className="titlePage">Création de la page</h3>
                 <div className="button_save_contain">
-                    <Tooltip title="Enregistrer comme brouillon" arrow placement="top">
-                        <span>
-                        <SecondaryButton className="SaveButton" variant="contained" theme={theme} onClick={ async () => {await handleSave(0)}} disabled={isSavingDraft || isPublishing}>
-                            {isSavingDraft ? <CircularProgress className="circularProgressButton"  sx={{color: theme.palette.text.primary, margin: '0.2rem'}}/> : <SaveIcon/>}
-                        </SecondaryButton>
-                        </span>
-                    </Tooltip>
-                    <SecondaryButton  variant="contained" theme={theme} onClick={() => navigate(`/dashboard/website/modification/collection/${idCollection}`)} disabled={isSavingDraft || isPublishing}>Annuler</SecondaryButton>
-                    <DefaultButton type="submit" variant="contained" onClick={ async () => {await handleSave(1)}} disabled={isPublishing || isSavingDraft}>
-                      {isPublishing && (
-                        <CircularProgress className="circularProgressButton" sx={{color: theme.palette.text.primary, marginRight: 1}}/>
-                      )}
-                      Publier
-                    </DefaultButton>
+                        <Tooltip title="Enregistrer comme brouillon" arrow placement="top">
+                                <span>
+                                <SecondaryButton className="SaveButton" variant="contained" theme={theme} onClick={ async () => {await handleSave('draft')}} disabled={isSavingDraft || isPublishing || isQueueing}>
+                                        {isSavingDraft ? <CircularProgress className="circularProgressButton"  sx={{color: theme.palette.text.primary, margin: '0.2rem'}}/> : <SaveIcon/>}
+                                </SecondaryButton>
+                                </span>
+                        </Tooltip>
+                        <SecondaryButton  variant="contained" theme={theme} onClick={() => navigate(`/dashboard/website/modification/collection/${idCollection}`)} disabled={isSavingDraft || isPublishing || isQueueing}>Annuler</SecondaryButton>
+                        {/* Créér button with menu */}
+                        <div>
+                            <DefaultButton
+                                ref={publishBtnRef}
+                                aria-controls={Boolean(isPublishing || isSavingDraft || isQueueing) ? 'create-menu' : 'create-menu'}
+                                aria-haspopup="true"
+                                onClick={(e) => setAnchorEl(e.currentTarget)}
+                                disabled={isPublishing || isSavingDraft || isQueueing}
+                                size="large"
+                            >
+                                {isPublishing ? <CircularProgress size={20} sx={{color: theme.palette.text.primary}}/> : <div className="button-popup-box">Créer <div className="button-popup-line"></div> <KeyboardArrowDownIcon fontSize="small"/></div>}
+                            </DefaultButton>
+                            <Menu
+                                    id="create-menu"
+                                    anchorEl={anchorEl}
+                                    open={Boolean(anchorEl)}
+                                    onClose={() => setAnchorEl(null)}
+                                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                                    transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                                    PaperProps={{
+                                        sx: {
+                                            backgroundColor: theme.palette.primary.main,
+                                            color: theme.palette.primary.contrastText,
+                                            borderRadius: 1,
+                                            marginTop: "0.5rem",
+                                            boxShadow: theme.palette.shadow.main
+                                        }
+                                    }}
+                                    MenuListProps={{
+                                        sx: {
+                                            paddingY: 0
+                                        }
+                                    }}
+                            >
+                                    <MenuItem
+                                        sx={{ fontSize:"0.85rem", '&:hover': { backgroundColor: theme.palette.primary.third } }}
+                                        onClick={() => { setAnchorEl(null); setShowDomainPopup(true); }}
+                                    >
+                                            Publier maintenant
+                                    </MenuItem>
+                                    <MenuItem
+                                        sx={{ fontSize:"0.85rem",'&:hover': { backgroundColor: theme.palette.primary.third } }}
+                                        onClick={async () => { setAnchorEl(null); await handleSave('wait'); }}
+                                    >
+                                            Ajouter à la queue
+                                    </MenuItem>
+                                    <MenuItem
+                                        sx={{ fontSize:"0.85rem", '&:hover': { backgroundColor: theme.palette.primary.third } }}
+                                        onClick={async () => { setAnchorEl(null); await handleSave('draft'); }}
+                                    >
+                                            Brouillon
+                                    </MenuItem>
+                            </Menu>
+                            <Popper
+                                open={showDomainPopup}
+                                anchorEl={publishBtnRef.current}
+                                transition
+                                placement="bottom-end"
+                                style={{ zIndex: 1300 }}
+                            >
+                                {({ TransitionProps }) => (
+                                    <ClickAwayListener onClickAway={() => setShowDomainPopup(false)}>
+                                        <Grow {...TransitionProps} timeout={350}>
+                                            <div style={{marginTop:'0.5rem', background: theme.palette.primary.main, boxShadow: theme.palette.shadow.main, padding:'1rem', maxWidth: '350px', width: '60vw', borderRadius: '0.5rem'}}>
+                                                <Box sx={{ mb: 1 }}>
+                                                    <h4 style={{ margin: 0, color: theme.palette.text.primary }}>Publication du site</h4>
+                                                </Box>
+                                                <div className='line-sidebar'></div>
+                                                <Box sx={{ mb: 1 }}>
+                                                    {/* Domaine principal (toujours activé) */}
+                                                    <div style={{display: 'flex', justifyContent: 'space-between', gap: '0.8rem'}}>
+                                                        <label className="custom-checkbox" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                            <input type="checkbox" checked disabled style={{ accentColor: theme.palette.primary.main }} />
+                                                            <span className="checkmark"></span>
+                                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.5rem' }}>
+                                                                <span style={{ color: theme.palette.text.secondary, fontSize: '0.85rem', lineHeight: 1 }}>
+                                                                    Domaine preview
+                                                                </span>
+                                                                <span style={{ fontSize: '0.85rem', lineHeight: 1.2 }}>
+                                                                    <b>{selectedWebsite?.website_preview}</b>
+                                                                </span>
+                                                            </div>
+                                                        </label>
+                                                        <button 
+                                                            className='download-button'
+                                                            title="Voir le site public"
+                                                            onClick={() => {
+                                                                if (selectedWebsite?.website_preview) {
+                                                                    window.open(`https://${selectedWebsite.website_preview}`, '_blank');
+                                                                }
+                                                            }}
+                                                        >
+                                                            <OpenInNewIcon fontSize='tiny'/>
+                                                        </button>
+                                                    </div>
+                                                    <div className='line-sidebar'></div>
+                                                    {/* Domaine personnalisé (si abonnement) */}
+                                                    <div style={{display: 'flex', justifyContent: 'space-between', gap: '0.8rem'}}>
+                                                        <label className="custom-checkbox" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={!!(subscriptionInfo?.custom_domain && publishCustomDomain)}
+                                                                onChange={e => setPublishCustomDomain(e.target.checked)}
+                                                                disabled={!subscriptionInfo?.custom_domain}
+                                                                style={{ accentColor: theme.palette.primary.main }}
+                                                            />
+                                                            <span className="checkmark"></span>
+                                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.5rem' }}>
+                                                                <span style={{ color: theme.palette.text.secondary, fontSize: '0.85rem', lineHeight: 1 }}>
+                                                                    Domaine personnalisé
+                                                                </span>
+                                                                <span style={{ fontSize: '0.85rem', lineHeight: 1.2 }}>
+                                                                    {subscriptionInfo?.custom_domain ? (
+                                                                        <b>{selectedWebsite?.website_slug || 'Non configuré'}</b>
+                                                                    ) : (
+                                                                        <NavLink to={`/dashboard/website/subscription`} style={{ color: theme.palette.text.primary, marginLeft: 0, fontSize: 12 }}>
+                                                                            Ajouter un domaine personnalisé
+                                                                        </NavLink>
+                                                                    )}
+                                                                </span>
+                                                            </div>
+                                                        </label>
+                                                        <button 
+                                                            className='download-button'
+                                                            title="Voir le site public"
+                                                            onClick={() => {
+                                                                if (selectedWebsite?.custom_domain) {
+                                                                    window.open(`https://${selectedWebsite.custom_domain}`, '_blank');
+                                                                }
+                                                            }}
+                                                        >
+                                                            <OpenInNewIcon fontSize='tiny'/>
+                                                        </button>
+                                                    </div>
+                                                </Box>
+                                                <div className='line-sidebar'></div>
+                                                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                                                    <SecondaryButton
+                                                        variant="outlined"
+                                                        size="small"
+                                                        onClick={() => setShowDomainPopup(false)}
+                                                    >
+                                                        Annuler
+                                                    </SecondaryButton>
+                                                    <DefaultButton
+                                                        size="small"
+                                                        disabled={isPublishing}
+                                                        onClick={async () => {
+                                                            setShowDomainPopup(false);
+                                                            setIsPublishing(true);
+                                                            setSavingPage(true);
+                                                            setDataRetrievalStatus(true);
+                                                            setPageGenerationStatus(false);
+                                                            setSitePublishingStatus(false);
+                                                            try {
+                                                                setTimeout(() => setPageGenerationStatus(true), 900);
+                                                                // Appel API publication : customDomain = true si la checkbox est cochée ET autorisée
+                                                                await handleSave('publish', !!(subscriptionInfo?.custom_domain && publishCustomDomain));
+                                                                setTimeout(() => setSitePublishingStatus(true), 1800);
+                                                                await new Promise(r => setTimeout(r, 2600));
+                                                            } catch (e) {
+                                                                showSnackbar('error', 'Erreur lors de la génération du site');
+                                                            } finally {
+                                                                setIsPublishing(false);
+                                                                setTimeout(() => {
+                                                                    setSavingPage(false);
+                                                                    setDataRetrievalStatus(false);
+                                                                    setPageGenerationStatus(false);
+                                                                    setSitePublishingStatus(false);
+                                                                }, 1200);
+                                                            }
+                                                        }}
+                                                    >
+                                                        Publier le site
+                                                    </DefaultButton>
+                                                </Box>
+                                            </div>
+                                        </Grow>
+                                    </ClickAwayListener>
+                                )}
+                            </Popper>                           
+                        </div>
                 </div>
             </div>
             <div className="Blog_creation_field_contain">

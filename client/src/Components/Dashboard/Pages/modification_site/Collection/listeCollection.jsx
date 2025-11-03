@@ -96,6 +96,24 @@ const ListeCollection = () => {
             
     }, [idCollection, selectedWebsite?.id]);
 
+    console.log(InfoListeblog)
+
+    // Helper to determine status text from server response
+    const getElementStatus = (page) => {
+      // Prefer the textual column when available
+      if (page.collection_element_status_text) {
+        return String(page.collection_element_status_text).toLowerCase();
+      }
+      // Fallback to numeric/boolean column
+      const s = page.collection_element_status;
+      if (s === true || s === 1) return 'publish';
+      if (s === 0 || s === false) return 'draft';
+      if (s === 2) return 'wait';
+      return 'draft';
+    };
+
+   
+
     // Fonction pour cocher/décocher toutes les cases
     const handleCheckAll = (e) => {
       const checked = e.target.checked;
@@ -184,7 +202,7 @@ const ListeCollection = () => {
                       let atLeastOnePublished = false;
                       setTimeout(() => setDeleteDataStatus(true), 500); // Simule le passage à l'étape 2
                       for (const page of selectedPages) {
-                        const isPublished = page.collection_element_status === true;
+                        const isPublished = getElementStatus(page) === 'publish';
                         if (isPublished) atLeastOnePublished = true;
                         try {
                           await deleteBlogPage({
@@ -391,6 +409,7 @@ const ListeCollection = () => {
                         const formattedCreateDate = formatDate(blogpage.collection_element_create_date);
                         const formattedUpdateDate = formatDate(blogpage.collection_element_update_date);
                         const formattedPublishDate = formatDate(blogpage.collection_element_publish_date);
+                        const status = getElementStatus(blogpage);
                         return (
                           <NavLink
                             to={'editPage/' + blogpage.id}
@@ -410,8 +429,10 @@ const ListeCollection = () => {
                               <span>{blogpage.collection_element_name}</span>
                             </p>
                             <div className="Item_portfolio_element blog_status">
-                              {blogpage.collection_element_status === true ? (
+                              {status === 'publish' ? (
                                 <p className="blog_status publish_status">Publié</p>
+                              ) : status === 'wait' ? (
+                                <p className="blog_status waiting_status">En attente</p>
                               ) : (
                                 <p className="blog_status draft_status">Brouillon</p>
                               )}

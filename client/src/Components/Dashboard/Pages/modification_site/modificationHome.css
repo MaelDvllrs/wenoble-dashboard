@@ -67,6 +67,10 @@
     border: solid 1px var(--primary-color) !important;
 }
 
+.modification_box.no-hover:hover{
+    border: solid 1px transparent !important;
+}
+
 
 
   .modification_box > * {

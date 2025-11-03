@@ -171,3 +171,33 @@
 /* Row state shading (optional subtle) */
 .log-row.log-success { /* succès : pas de style additionnel volontairement */ }
 .log-row.log-fail { background: rgba(244, 67, 54, 0.04); }
+
+/* Website selector badges */
+.website-selector-role, .website-selector-plan {
+  display: inline-block;
+  padding: 0.18rem 0.5rem;
+  border-radius: 0.45rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  margin-left: 0.5rem;
+}
+
+/* Default role badge style (neutral) */
+.website-selector-role {
+  background: rgba(255,255,255,0.03);
+  color: var(--color-text-secondary);
+  border: 1px solid rgba(255,255,255,0.04);
+}
+
+/* Plan badge style (accent color) */
+.website-selector-plan {
+  background: rgba(46, 201, 109, 0.08); /* light green */
+  color: #2ec96d;
+  border: 1px solid rgba(46, 201, 109, 0.16);
+}
+
+/* Allow plan-specific variants (e.g., 'starter', 'cms', 'free') */
+.website-selector-plan.starter { background: rgba(56, 142, 60, 0.08); color: #38963c; border-color: rgba(56,142,60,0.12); }
+.website-selector-plan.cms { background: rgba(2, 136, 209, 0.08); color: #0288d1; border-color: rgba(2,136,209,0.12); }
+.website-selector-plan.free { background: rgba(255,255,255,0.03); color: var(--color-text-secondary); border-color: rgba(255,255,255,0.04); }

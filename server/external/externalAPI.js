@@ -152,11 +152,27 @@ router.post('/collection/:collectionId/elements', authenticateAPIKey, async (req
     console.log('Création de l\'élément dans la collection', collectionId);
 
     // Créer l'élément de collection
+    // Normalize status: support strings during migration
+    const normalizeStatusNumber = (s) => {
+      if (typeof s === 'number') return s;
+      if (!s) return null;
+      const lowered = String(s).toLowerCase();
+      if (lowered === 'publish' || lowered === 'published') return 1;
+      if (lowered === 'draft') return 0;
+      if (lowered === 'wait' || lowered === 'queued') return 2;
+      const parsed = parseInt(s);
+      return Number.isNaN(parsed) ? null : parsed;
+    };
+
+    const statusNum = normalizeStatusNumber(status);
+    const statusText = (typeof status === 'string') ? status : (statusNum === 1 ? 'publish' : (statusNum === 0 ? 'draft' : null));
+
     const elementData = {
       collection_id: collectionId, // UUID, ne pas convertir en integer
       collection_element_name: name,
       collection_element_slug: slug,
-      collection_element_status: status,
+      collection_element_status: statusNum,
+      collection_element_status_text: statusText,
       collection_element_create_date: currentDate,
       collection_element_update_date: currentDate
     };
@@ -166,7 +182,7 @@ router.post('/collection/:collectionId/elements', authenticateAPIKey, async (req
       elementData.created_by = req.tokenData.userId;
     }
 
-    if (status === 1) {
+    if (status === 1 || status === 'publish' || status === 'published' || statusNum === 1) {
       elementData.collection_element_publish_date = currentDate;
       if (req.tokenData.userId && req.tokenData.userId.length === 36) {
         elementData.published_by = req.tokenData.userId;

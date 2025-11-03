@@ -123,6 +123,13 @@
     border: 0.5px solid var(--color-yellow);
 }
 
+.waiting_status {
+    margin: 1px;
+    color: var(--color-orange);
+    background-color: rgba(255, 166, 0, 0.099);
+    border: 0.5px solid var(--color-orange);
+}
+
 
 
 .custom-modal-overlay {

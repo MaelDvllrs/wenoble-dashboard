@@ -185,7 +185,7 @@ router.get('/getListeCollection', authenticateToken, async (req, res) => {
     // Récupérer la liste des pages
     const { data, error } = await supabase
       .from('collection_element')
-      .select('id, collection_element_name, collection_element_status, collection_element_create_date, collection_element_update_date, collection_element_publish_date')
+      .select('id, collection_element_name, collection_element_status_text, collection_element_create_date, collection_element_update_date, collection_element_publish_date')
       .eq('collection_id', sentIdBlog)
       .order('collection_element_create_date', { ascending: false });
       
@@ -328,35 +328,59 @@ router.post('/createCollectionElement', authenticateToken, async (req, res) => {
     const slug = req.body.params.mainText[1].value;
     const date = new Date(req.body.params.date).toISOString();
     const status = req.body.params.status;
-    
+
+
+    // Support string statuses during migration. We will NOT write a numeric status
+    // from here because the numeric column is being deprecated and cannot accept
+    // a '2' value for queued states. Only compute statusText for storage.
+    const normalizeStatusText = (s) => {
+      if (!s && s !== 0) return null;
+      if (typeof s === 'string') return s.toLowerCase();
+      if (typeof s === 'number') {
+        if (s === 1) return 'publish';
+        if (s === 0) return 'draft';
+        // do not map 2 (queue) to numeric column; prefer text 'wait'
+        return null;
+      }
+      const lowered = String(s).toLowerCase();
+      if (lowered === 'publish' || lowered === 'published') return 'publish';
+      if (lowered === 'draft') return 'draft';
+      if (lowered === 'wait' || lowered === 'queued') return 'wait';
+      return null;
+    };
+
+    const statusText = normalizeStatusText(status);
+
     let publishDate = null;
     let publishedBy = null;
-    if (status === 1) {
+    if (status === 1 || status === 'publish' || status === 'published') {
       publishDate = date;
       publishedBy = userId;
     }
-    
-    // Insérer la nouvelle page
+
+    // Insérer la nouvelle page — write only the text status (numeric column is deprecated)
+    const insertData = {
+      collection_id: id,
+      collection_element_name: title,
+      collection_element_slug: slug,
+      collection_element_status_text: statusText,
+      collection_element_create_date: date,
+      collection_element_update_date: date,
+      collection_element_publish_date: publishDate,
+      created_by: userId,
+      updated_by: userId,
+      published_by: publishedBy
+    };
+
     const { data, error } = await supabase
       .from('collection_element')
-      .insert({
-        collection_id: id, 
-        collection_element_name: title,
-        collection_element_slug: slug,
-        collection_element_status: status,
-        collection_element_create_date: date,
-        collection_element_update_date: date,
-        collection_element_publish_date: publishDate,
-        created_by: userId,
-        updated_by: userId,
-        published_by: publishedBy
-      })
+      .insert(insertData)
       .select('id');
       
     if (error) throw error;
     
     // Créer des notifications si la page est publiée
-    if (status === 1) {
+    if (status === 1 || status === 'publish' || status === 'published') {
       createNotification(id, title, publishDate, slug);
     }
     
@@ -836,7 +860,7 @@ router.get('/getCollectionElement', authenticateToken, async (req, res) => {
       .select(`
         collection_element_name, 
         collection_element_slug, 
-        collection_element_status,
+        collection_element_status_text,
         collection_element_create_date, 
         collection_element_update_date, 
         collection_element_publish_date,
@@ -861,7 +885,7 @@ router.get('/getCollectionElement', authenticateToken, async (req, res) => {
     const blogPage = [{
       page_blog_name: data.collection_element_name,
       page_blog_slug: data.collection_element_slug,
-      status: data.collection_element_status,
+      status: data.collection_element_status_text,
       page_blog_create_date: data.collection_element_create_date,
       page_blog_update_date: data.collection_element_update_date,
       page_blog_publish_date: data.collection_element_publish_date,
@@ -1090,34 +1114,81 @@ router.post('/updateCollectionElement', authenticateToken, async (req, res) => {
     const supabase = supabaseServer(token);
     const userId = req.user.idUser;
 
-    let updateFields = {
+    // Read current row to determine previous status
+    const { data: existingRows, error: selectError } = await supabase
+      .from('collection_element')
+      .select('id, collection_element_status_text, collection_element_status, collection_element_publish_date')
+      .eq('id', id)
+      .limit(1);
+
+    if (selectError) throw selectError;
+    const existing = existingRows && existingRows.length > 0 ? existingRows[0] : null;
+
+    // Normalize incoming status to text (we will prefer text column and avoid writing numeric '2')
+    const normalizeToText = (s) => {
+      if (s === undefined || s === null) return null;
+      if (typeof s === 'string') return s.toLowerCase();
+      if (typeof s === 'number') {
+        if (s === 1) return 'publish';
+        if (s === 0) return 'draft';
+        if (s === 2) return 'wait';
+        return null;
+      }
+      const lowered = String(s).toLowerCase();
+      if (lowered === 'publish' || lowered === 'published') return 'publish';
+      if (lowered === 'draft') return 'draft';
+      if (lowered === 'wait' || lowered === 'queued') return 'wait';
+      return null;
+    };
+
+    const targetText = normalizeToText(status);
+    const prevText = existing ? (existing.collection_element_status_text ? String(existing.collection_element_status_text).toLowerCase() : (existing.collection_element_status === 1 ? 'publish' : (existing.collection_element_status === 0 ? 'draft' : null))) : null;
+
+    // Build update fields: write textual status only (avoid numeric 2 and avoid writing numeric column when possible)
+    const updateFields = {
       collection_element_name: title,
       collection_element_slug: slug,
-      collection_element_status: status,
+      collection_element_status_text: targetText,
       collection_element_update_date: date,
       updated_by: userId
     };
-    
+
+    // Handle publish date and published_by if requested
     if (setPublishDate === 1) {
-      updateFields.collection_element_publish_date = (status === 1) ? date : null;
-      if (status === 1) {
+      if (targetText === 'publish') {
+        updateFields.collection_element_publish_date = date;
         updateFields.published_by = userId;
+      } else {
+        // clearing publish date when switching away from publish
+        updateFields.collection_element_publish_date = null;
+        updateFields.published_by = null;
       }
     }
 
-    const { error } = await supabase
+    const { error: updateError } = await supabase
       .from('collection_element')
       .update(updateFields)
       .eq('id', id);
 
-    if (error) throw error;
+    if (updateError) throw updateError;
 
-    // Optionnel: notification (à adapter si besoin)
-    // if (setPublishDate === 1 && status === 1) {
-    //   await createNotification(id, title, date, slug);
-    // }
+    // Decide whether client should regenerate the static site
+    // Regenerate when:
+    // - target is 'publish' (new publish)
+    // - or previous was 'publish' and target is not 'publish' (depublish)
+    // - or previous was 'wait' and target is 'publish' (wait -> publish)
+    const needRegenerate = (targetText === 'publish') || (prevText === 'publish' && targetText !== 'publish') || (prevText === 'wait' && targetText === 'publish');
 
-    res.status(200).send({ message: 'Page modifiée avec succès' });
+    // Optionally: create notification when publishing
+    if (targetText === 'publish') {
+      try {
+        createNotification(id, title, date, slug);
+      } catch (e) {
+        console.warn('Notification creation failed (non-fatal):', e);
+      }
+    }
+
+    res.status(200).send({ message: 'Page modifiée avec succès', needRegenerate });
   } catch (error) {
     console.error('Erreur lors de la modification de la page:', error);
     res.status(500).send({ error: error.message });

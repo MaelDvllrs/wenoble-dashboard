@@ -145,25 +145,28 @@ button{
     justify-content: center;
     height: 100%;
     width: 100%;
+    overflow: hidden;
 }
 
 .outlet-sidebar-wrapper{
     display: flex;
     justify-content: center;
-    width: 100%;
+    width: calc(100% - 18rem);
 }
 
 .outlet-box{
-    height: calc(100vh - 3.3rem);
-    display: grid;
-    grid-template-columns: auto;
-    grid-template-rows: 2.5rem  100%;
+    height: calc(100% - 3rem);
     padding: 1rem;
     width: 100%;
     max-width: 1250px;
     left: auto;
     right: auto;
     position: relative;
+}
+
+.outlet .website-outlet{
+    flex-direction: column;
+    align-items: center;
 }
 
 
@@ -182,6 +185,23 @@ button{
     background-color: var(--color-primary-main);
 
 
+}
+
+.dashboard-header-section{
+    width: calc(100% - 2rem);
+    padding-top: 0.7rem;
+    padding-bottom: 0.6rem;
+    margin-left: 1rem;
+    margin-right: 1rem;
+    border-bottom: 0.5px solid var(--color-primary-third);
+    
+    
+}
+
+.dashboard-header-actions-box{
+    display: flex;
+    gap: 1rem;
+    align-items: center;
 }
 
 .title_section{
@@ -224,11 +244,13 @@ button{
 }
 
 .breadCrumbs{
+
     font-size: 0.9rem;
     font-weight: 500;
 }
 
 .breadCrumbsLink{
+    font-size: 0.85rem;
     text-decoration: none;
     transition: color 0.2s ease;
 }
@@ -298,6 +320,24 @@ figure{
 
 figure > div{
     width: 100%;
+}
+
+.button-popup-box{
+    display: flex;
+    align-items: center;
+    margin-right: -0.5rem;
+}
+
+.button-popup-line{
+    height: 1rem;
+    width: 1px;
+    background-color: rgba(255, 255, 255, 0.5);
+    margin-left: 0.3rem;
+}
+
+
+.button-popup-menu{
+    background-color: var(--color-primary-main);
 }
 
 

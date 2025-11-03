@@ -118,9 +118,7 @@ const Home = () => {
     return(
         <div className="outlet">
             <div className="outlet-box">
-                <div className="title_section">
-                    <div className="breadCrumbs">Dashboard</div>
-                </div>
+                
                 
                 
                 <div className="home-wrapper">

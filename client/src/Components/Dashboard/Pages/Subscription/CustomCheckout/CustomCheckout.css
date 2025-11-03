@@ -1,0 +1,51 @@
+/* Custom Checkout Styles */
+
+.custom-checkout-container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.checkout-loading,
+.checkout-error {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+.checkout-form {
+  width: 100%;
+}
+
+.card-element-container {
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+}
+
+.form-actions {
+  margin-top: 2rem;
+}
+
+.plan-summary {
+  border: 1px solid var(--color-primary-third);
+}
+
+.payment-form {
+  border: 1px solid var(--color-primary-third);
+}
+
+.error-message {
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .custom-checkout-container {
+    padding: 1rem;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+}

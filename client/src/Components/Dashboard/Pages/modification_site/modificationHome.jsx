@@ -23,7 +23,7 @@ import { BsCursor } from "react-icons/bs";
 import Cookies from 'js-cookie';
 import config from "../../../../config";
 
-import { checkAuthorization } from "../../../../Authorisation/Authorisation";
+import { checkAuthorization, useAuthorization } from "../../../../Authorisation/Authorisation";
 
 
 
@@ -38,43 +38,10 @@ const [threshold, setThreshold] = useState(1);
 const [sizeLoading, setSizeLoading] = useState(false); 
 
 
-const [authPortfolio, setauthPortfolio] = useState(0);
-useEffect(() => {
-  const fetchPortAuth = async () => {
-    if (!selectedWebsite?.id || websiteLoading) {
-      return;
-    }
-    const isAuthorized = await checkAuthorization('auth_portfolio', selectedWebsite.id);
-    setauthPortfolio(isAuthorized);
-  };
-  fetchPortAuth();
-}, [selectedWebsite, websiteLoading]);
-
-
-const [authPage, setauthPage] = useState(0);
-useEffect(() => {
-  const fetchPageAuth = async () => {
-    if (!selectedWebsite?.id || websiteLoading) {
-      return;
-    }
-    const isAuthorized = await checkAuthorization('auth_page', selectedWebsite.id);
-    setauthPage(isAuthorized);
-  };
-  fetchPageAuth();
-}, [selectedWebsite, websiteLoading]);
-
-
-const [authBlog, setauthBlog] = useState(0);
-useEffect(() => {
-  const fetchBlogAuth = async () => {
-    if (!selectedWebsite?.id || websiteLoading) {
-      return;
-    }
-    const isAuthorized = await checkAuthorization('auth_blog', selectedWebsite.id);
-    setauthBlog(isAuthorized);
-  };
-  fetchBlogAuth();
-}, [selectedWebsite, websiteLoading]);
+// Use authorization hooks to get verified authorization state for each feature
+const { isAuthorized: authPortfolio, verifyAuthorization: verifyPortfolio } = useAuthorization('auth_portfolio');
+const { isAuthorized: authPage, verifyAuthorization: verifyPage } = useAuthorization('auth_page');
+const { isAuthorized: authBlog, verifyAuthorization: verifyBlog } = useAuthorization('auth_blog');
 
 
 
@@ -321,33 +288,10 @@ const bgStyle = surfaceGradient
 
 return(
     <div className="outlet-box">
-        {/* Section titre avec breadcrumb */}
-        <div className="title_section">
-            <div className="breadCrumbs">
-                <NavLink 
-                    className={'breadCrumbsLink'}
-                    to="/dashboard/home"
-                    style={{ textDecoration: 'none', color: 'inherit' }}
-                >
-                    Dashboard
-                </NavLink>
-                <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
-                <NavLink 
-                    className={'breadCrumbsLink'}
-                    to="/dashboard/website"
-                    style={{ textDecoration: 'none', color: 'inherit' }}
-                >
-                    {selectedWebsite?.website_name || 'Site'}
-                </NavLink>
-                <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
-                <span className="breadcrumb-item-active" style={{ color: theme.palette.text.primary }}>
-                    Modifications
-                </span>
-            </div>
-        </div>
+
         <div className="modification_contain">
           {
-            (authPortfolio === true || authPage === true || authBlog === true) && selectedWebsite && (
+            ((verifyPortfolio && verifyPage && verifyBlog) && (authPortfolio === true || authPage === true || authBlog === true)) && selectedWebsite && (
               <div className="dashboard_case_empty limit_size_contain" style={{ ...bgStyle, boxShadow: theme.palette.shadow.main }}>
                 <h3 className="title_contain">Espace utilisé - {selectedWebsite.website_name}</h3>
                 <div className="limit_size_info_contain">

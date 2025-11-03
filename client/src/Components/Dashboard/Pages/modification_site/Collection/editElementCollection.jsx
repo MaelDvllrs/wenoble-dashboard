@@ -14,6 +14,11 @@ import PendingIcon from '@mui/icons-material/Pending';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import SaveIcon from '@mui/icons-material/Save';
 import UnpublishedIcon from '@mui/icons-material/Unpublished';
+import { Menu, MenuItem } from '@mui/material';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import { ClickAwayListener, Popper, Grow } from '@mui/material';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import { NavLink } from 'react-router-dom';
 
 // --- App/Utils ---
 import Axios from '../../../../../service/AxiosConfig';
@@ -84,6 +89,12 @@ const EditElementCollection = () => {
     const [regenerateSiteStatus, setRegenerateSiteStatus] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
 
+    // Domaine/abonnement pour la popup publication
+    const [showDomainPopup, setShowDomainPopup] = useState(false);
+    const [publishCustomDomain, setPublishCustomDomain] = useState(false);
+    const [subscriptionInfo, setSubscriptionInfo] = useState(null);
+    const publishBtnRef = React.useRef(null);
+
 
 
     const [isPopupOpen, setIsPopupOpen] = useState(false);
@@ -133,26 +144,53 @@ const EditElementCollection = () => {
     // Loading states pour chaque action
     const [isPublishing, setIsPublishing] = useState(false);
     const [isSavingDraft, setIsSavingDraft] = useState(false);
+    const [isQueueing, setIsQueueing] = useState(false);
     const [isUnpublishing, setIsUnpublishing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [anchorEl, setAnchorEl] = useState(null);
+
+        // Helper to determine status text from server response (prefer textual column)
+        // Note: status is expected to already be one of 'publish'|'draft'|'wait'.
+        const getElementStatus = (page) => {
+            if (!page) return 'draft';
+            if (page.collection_element_status_text) {
+                return String(page.collection_element_status_text).toLowerCase();
+            }
+            if (page.status) {
+                return String(page.status).toLowerCase();
+            }
+            return 'draft';
+        };
 
     const handleSave = async (status, setpublishDate) => {
-        // Gestion des loaders par action
-        if (status === 1 && DecodeBlog.blogPage[0].status !== true) {
+        // If status was passed as a string (new textual statuses), normalize and set loaders accordingly
+        const _normalize = (s) => {
+            if (s === 1 || s === true || String(s).toLowerCase() === 'publish' || String(s).toLowerCase() === 'published') return 'publish';
+            if (s === 0 || s === false || String(s).toLowerCase() === 'draft') return 'draft';
+            if (s === 2 || String(s).toLowerCase() === 'wait' || String(s).toLowerCase() === 'queued') return 'wait';
+            return 'draft';
+        };
+        const targetStatus = _normalize(status);
+        const currentStatus = getElementStatus(DecodeBlog.blogPage[0]);
+        // override/set loaders for textual statuses
+        if (targetStatus === 'publish' && currentStatus !== 'publish') {
             setIsPublishing(true);
-        } else if (status === 1 && DecodeBlog.blogPage[0].status === true) {
+        } else if (targetStatus === 'publish' && currentStatus === 'publish') {
             setIsSaving(true);
-        } else if (status === 0 && DecodeBlog.blogPage[0].status === true) {
+        } else if (targetStatus === 'draft' && currentStatus === 'publish') {
             setIsUnpublishing(true);
-        } else if (status === 0 && DecodeBlog.blogPage[0].status !== true) {
+        } else if (targetStatus === 'draft' && currentStatus !== 'publish') {
             setIsSavingDraft(true);
+        } else if (targetStatus === 'wait') {
+            setIsQueueing(true);
         }
 
-        // MODIFIER LA PAGE
+        // Decide whether we need to regenerate the static site now (used both for popup choice
+        // and later to actually run generation). 'wait' should never trigger regeneration.
+        const needRegenerate = (targetStatus === 'publish') || (currentStatus === 'publish' && targetStatus !== 'publish' && targetStatus !== 'wait');
 
-        
-
-        if (status === 1 || status !== DecodeBlog.blogPage[0].status) {
+        // Show the appropriate snackbar: regeneration flow when needed, simple save otherwise
+        if (needRegenerate) {
             setSavingPage(true);
         } else {
             setDataLoading(true);
@@ -185,7 +223,7 @@ const EditElementCollection = () => {
         try {        
 
 
-            const response = await updateBlogPage(idCollectionElement, mainText, localISOTime, status, setpublishDate, DecodeBlog.blogPage[0].status, selectedWebsite?.id, idCollection, token);
+            const response = await updateBlogPage(idCollectionElement, mainText, localISOTime, status, setpublishDate, currentStatus, selectedWebsite?.id, idCollection, token);
         
             // ENREGISTRER LES TEXTES
 
@@ -351,7 +389,11 @@ const EditElementCollection = () => {
                 }
             }
 
-            // Mettre à jour l'état local pour refléter immédiatement les changements (status, titre, slug, dates)
+            // targetStatus and currentStatus were computed earlier in this function
+            // (we normalize the incoming `status` and read current status before saving)
+            // Reuse those values here to avoid redeclaring/shadowing them.
+
+            // Update local preview state
             setDecodeBlog((prev) => {
                 if (!prev || !prev.blogPage || !prev.blogPage[0]) return prev;
                 const updated = { ...prev };
@@ -360,26 +402,24 @@ const EditElementCollection = () => {
                 const slugItem = mainText.find(t => t.id_config === 'slug');
                 if (titleItem) bp.page_blog_name = titleItem.value;
                 if (slugItem) bp.page_blog_slug = slugItem.value;
-                bp.status = status === 1;
+                bp.status = targetStatus === 'publish';
+                bp.collection_element_status_text = targetStatus;
                 bp.page_blog_update_date = localISOTime;
                 if (setpublishDate === 1) {
-                    bp.page_blog_publish_date = (status === 1) ? localISOTime : null;
+                    bp.page_blog_publish_date = (targetStatus === 'publish') ? localISOTime : null;
                 }
                 updated.blogPage = [bp];
                 return updated;
             });
 
-            // Mettre à jour le site si le statut est 1 ou si le statut a changé
-            if (status === 1 || status !== DecodeBlog.blogPage[0].status) {
+            // needRegenerate was computed earlier (we reuse it here)
+
+            if (needRegenerate) {
                 setDataRetrievalStatus(true);
                 try {
-                    setTimeout(() => {
-                      setPageGenerationStatus(true);
-                    }, 1000);
+                    setTimeout(() => { setPageGenerationStatus(true); }, 1000);
                     await generateStaticSite(token, selectedWebsite?.id);
-                    setTimeout(() => {
-                      setSitePublishingStatus(true);
-                    }, 1000);
+                    setTimeout(() => { setSitePublishingStatus(true); }, 1000);
                     await new Promise(resolve => setTimeout(resolve, 2000));
                     setDataRetrievalStatus(false);
                     setPageGenerationStatus(false);
@@ -389,29 +429,25 @@ const EditElementCollection = () => {
                     setIsSaving(false);
                     setIsUnpublishing(false);
                     setIsSavingDraft(false);
-                  } catch (error) {
+                    setIsQueueing(false);
+                } catch (error) {
                     showSnackbar('error', '[EDIT-COLL-008] Erreur lors de la génération du site');
                     console.error('Erreur lors de la generation static :', error);
                     setIsPublishing(false);
                     setIsSaving(false);
                     setIsUnpublishing(false);
                     setIsSavingDraft(false);
+                    setIsQueueing(false);
                     setDataRetrievalStatus(false);
                     setPageGenerationStatus(false);
                     setSitePublishingStatus(false);
                     setSavingPage(false);
                     return;
-                  }
-            } else{
-
-                // Toutes vos opérations de sauvegarde ici...
-
-                // Après toutes les opérations, montrer la confirmation
-                // avant de fermer la snackbar
+                }
+            } else {
+                // simple save (no regeneration)
                 setTimeout(() => {
-                    setDataSaved(true); // Activez l'icône de validation
-
-                    // Puis fermez la snackbar après un délai supplémentaire
+                    setDataSaved(true);
                     setTimeout(() => {
                         setDataLoading(false);
                         setDataSaved(false);
@@ -419,9 +455,9 @@ const EditElementCollection = () => {
                         setIsSaving(false);
                         setIsUnpublishing(false);
                         setIsSavingDraft(false);
+                        setIsQueueing(false);
                     }, 1000);
                 }, 1500);
-
             }
             
             // Afficher un message de succès
@@ -499,7 +535,7 @@ const EditElementCollection = () => {
     const handleDeletePage = async (slug) => {
         setIsDeleting(true);
         closePopup();
-        const isPublished = DecodeBlog.blogPage[0].status === true;
+    const isPublished = getElementStatus(DecodeBlog.blogPage[0]) === 'publish';
         if (isPublished) setDeletingPublishedPage(true);
         else setDeletingDraftPage(true);
         try {
@@ -542,6 +578,24 @@ const EditElementCollection = () => {
 
 
 
+    // Récupérer la feature custom_domain (identique WebsiteManager)
+    useEffect(() => {
+        const fetchSubscriptionAndFeature = async () => {
+            if (!selectedWebsite?.id) return;
+            try {
+                let customDomain = false;
+                const authRes = await Axios.get(`${apiUrl}/custom-domain-authorisation/${selectedWebsite.id}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                customDomain = !!authRes.data.authorisation;
+                setSubscriptionInfo({ custom_domain: customDomain });
+            } catch (e) {
+                setSubscriptionInfo(null);
+            }
+        };
+        fetchSubscriptionAndFeature();
+    }, [selectedWebsite, token]);
+
 
 
     useEffect(() => {    
@@ -560,6 +614,9 @@ const EditElementCollection = () => {
             console.error('Erreur lors de la récupération de la du Blog :', error);
         });
     }, []);
+
+
+
 
 
 
@@ -777,6 +834,7 @@ const EditElementCollection = () => {
     useEffect(() => {
         if(InfoBlog !== null && typeof InfoBlog === 'string'){
             const decodedBloginfo = jwtDecode(InfoBlog);
+            console.log(decodedBloginfo)
             setDecodeBlog(decodedBloginfo);
         }
     }, [InfoBlog]);
@@ -828,58 +886,58 @@ const EditElementCollection = () => {
                         <p style={{color: theme.palette.text.secondary, whiteSpace:"nowrap"}}>Status :</p>
                         {
                             savingPage ? (
-                                <p className="blog_status pending_status">En attente...</p>
-                            ) : DecodeBlog.blogPage[0].status === true ? (
-                                <p className="blog_status publish_status">Publié</p>    
-                            ) : (
-                                <p className="blog_status draft_status">Brouillon</p>
-                            )
+                                <p className="blog_status pending_status">Chargement...</p>
+                            ) : (() => {
+                                const st = getElementStatus(DecodeBlog.blogPage[0]);
+                                console.log(st)
+                                if (st === 'publish') return <p className="blog_status publish_status">Publié</p>;
+                                if (st === 'wait') return <p className="blog_status waiting_status">En attente</p>;
+                                return <p className="blog_status draft_status">Brouillon</p>;
+                            })()
                         }
-                        {
-                            DecodeBlog.blogPage[0].status === true ? (
-                                <Tooltip title="Dépublier" arrow placement="top">
-                                    <SecondaryButton className="SaveButton" type="submit" variant="contained" theme={theme} onClick={ async () => {await handleSave(0,1)}} disabled={isUnpublishing || isPublishing || isSaving || isSavingDraft}>
-                                        {isUnpublishing ? (
-                                            <CircularProgress size={16} sx={{color: theme.palette.text.primary, margin: '0.2rem'}}/>
-                                        ) : (
-                                            <UnpublishedIcon/>
-                                        )}
-                                    </SecondaryButton>
-                                </Tooltip>   
-                            ) : (
-                                <Tooltip title="Enregistrer comme brouillon" arrow placement="top">
-                                    <SecondaryButton className="SaveButton" variant="contained" theme={theme} onClick={ async () => {await handleSave(0,0)}} disabled={isSavingDraft || isPublishing || isSaving || isUnpublishing}>
-                                        {isSavingDraft ? (
-                                            <CircularProgress size={16} sx={{color: theme.palette.text.primary, margin: '0.2rem'}}/>
-                                        ) : (
-                                            <SaveIcon/>
-                                        )}
-                                    </SecondaryButton>
-                                </Tooltip>
-                            )
-                        }
-                        <SecondaryButton variant="contained" theme={theme} onClick={() => navigate(`/dashboard/website/modification/collection/${idCollection}`)} disabled={isPublishing || isSaving || isUnpublishing || isSavingDraft}>Annuler</SecondaryButton>
-                        {
-                            DecodeBlog.blogPage[0].status === true ? (
-                                <DefaultButton 
-                                    type="submit" 
-                                    variant="contained" 
-                                    onClick={async () => { await handleSave(1,0) }} disabled={isSaving || isPublishing || isUnpublishing || isSavingDraft}
-                                    startIcon={isSaving ? <CircularProgress size={12} sx={{ color: 'white' }} /> : undefined}
-                                >
-                                    Enregistrer
-                                </DefaultButton>  
-                            ) : (
-                                <DefaultButton 
-                                    type="submit"  
-                                    variant="contained" 
-                                    onClick={async () => { await handleSave(1,1) }} disabled={isPublishing || isSaving || isUnpublishing || isSavingDraft}
-                                    startIcon={isPublishing ? <CircularProgress size={12} sx={{ color: 'white' }} /> : undefined}
-                                >
-                                    Publier
-                                </DefaultButton>
-                            )
-                        }
+
+                        <SecondaryButton variant="contained" theme={theme} onClick={() => navigate(`/dashboard/website/modification/collection/${idCollection}`)} disabled={isPublishing || isSaving || isUnpublishing || isSavingDraft || isQueueing}>Annuler</SecondaryButton>
+
+                        {/* Create menu (Publish / Queue / Draft) aligned to right */}
+                        <div>
+                            <DefaultButton
+                                ref={publishBtnRef}
+                                aria-controls={Boolean(anchorEl) ? 'edit-create-menu' : undefined}
+                                aria-haspopup="true"
+                                onClick={(e) => setAnchorEl(e.currentTarget)}
+                                disabled={isPublishing || isSaving || isUnpublishing || isSavingDraft || isQueueing}
+                            >
+                                <div className="button-popup-box">Publier <div className="button-popup-line"></div><KeyboardArrowDownIcon fontSize="small"/></div>
+                            </DefaultButton>
+                            <Menu
+                                id="edit-create-menu"
+                                anchorEl={anchorEl}
+                                open={Boolean(anchorEl)}
+                                onClose={() => setAnchorEl(null)}
+                                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                                transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                                PaperProps={{
+                                    sx: {
+                                        backgroundColor: theme.palette.primary.main,
+                                        color: theme.palette.primary.contrastText,
+                                        borderRadius: 1,
+                                        marginTop: "0.5rem",
+                                        boxShadow: theme.palette.shadow.main
+                                    }
+                                }}
+                                MenuListProps={{ sx: { paddingY: 0 } }}
+                            >
+                                <MenuItem sx={{ fontSize:"0.85rem", '&:hover': { backgroundColor: theme.palette.primary.third } }} onClick={() => { setAnchorEl(null); setShowDomainPopup(true); }}>
+                                    Publier maintenant
+                                </MenuItem>
+                                <MenuItem sx={{ fontSize:"0.85rem", '&:hover': { backgroundColor: theme.palette.primary.third } }} onClick={async () => { setAnchorEl(null); await handleSave('wait',0); }}>
+                                    Ajouter à la queue
+                                </MenuItem>
+                                <MenuItem sx={{ fontSize:"0.85rem", '&:hover': { backgroundColor: theme.palette.primary.third } }} onClick={async () => { setAnchorEl(null); await handleSave('draft',0); }}>
+                                    Brouillon
+                                </MenuItem>
+                            </Menu>
+                        </div>
                         
                       </div>
                   </div>
@@ -1171,6 +1229,134 @@ const EditElementCollection = () => {
                 </Paper>
             </Snackbar>
             
+            <Popper
+    open={showDomainPopup}
+    anchorEl={publishBtnRef.current}
+    transition
+    placement="bottom-end"
+    style={{ zIndex: 1300 }}
+>
+    {({ TransitionProps }) => (
+        <ClickAwayListener onClickAway={() => setShowDomainPopup(false)}>
+            <Grow {...TransitionProps} timeout={350}>
+                <div style={{marginTop:'0.5rem', background: theme.palette.primary.main, boxShadow: theme.palette.shadow.main, padding:'1rem', maxWidth: '400px', borderRadius: '0.5rem'}}>
+                    <Box sx={{ mb: 1 }}>
+                        <h4 style={{ margin: 0, color: theme.palette.text.primary }}>Publication du site</h4>
+                    </Box>
+                    <div className='line-sidebar'></div>
+                    <Box sx={{ mb: 1 }}>
+                        {/* Domaine principal (toujours activé) */}
+                        <div style={{display: 'flex', justifyContent: 'space-between', gap: '0.8rem'}}>
+                            <label className="custom-checkbox" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <input type="checkbox" checked disabled style={{ accentColor: theme.palette.primary.main }} />
+                                <span className="checkmark"></span>
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.5rem' }}>
+                                    <span style={{ color: theme.palette.text.secondary, fontSize: '0.85rem', lineHeight: 1 }}>
+                                        Domaine preview
+                                    </span>
+                                    <span style={{ fontSize: '0.85rem', lineHeight: 1.2 }}>
+                                        <b>{selectedWebsite?.website_preview}</b>
+                                    </span>
+                                </div>
+                            </label>
+                            <button 
+                                className='download-button'
+                                title="Voir le site public"
+                                onClick={() => {
+                                    if (selectedWebsite?.website_preview) {
+                                        window.open(`https://${selectedWebsite.website_preview}`, '_blank');
+                                    }
+                                }}
+                            >
+                                <OpenInNewIcon fontSize='tiny'/>
+                            </button>
+                        </div>
+                        <div className='line-sidebar'></div>
+                        {/* Domaine personnalisé (si abonnement) */}
+                        <div style={{display: 'flex', justifyContent: 'space-between', gap: '0.8rem'}}>
+                            <label className="custom-checkbox" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <input
+                                    type="checkbox"
+                                    checked={!!(subscriptionInfo?.custom_domain && publishCustomDomain)}
+                                    onChange={e => setPublishCustomDomain(e.target.checked)}
+                                    disabled={!subscriptionInfo?.custom_domain}
+                                    style={{ accentColor: theme.palette.primary.main }}
+                                />
+                                <span className="checkmark"></span>
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.5rem' }}>
+                                    <span style={{ color: theme.palette.text.secondary, fontSize: '0.85rem', lineHeight: 1 }}>
+                                        Domaine personnalisé
+                                    </span>
+                                    <span style={{ fontSize: '0.85rem', lineHeight: 1.2 }}>
+                                        {subscriptionInfo?.custom_domain ? (
+                                            <b>{selectedWebsite?.website_slug || 'Non configuré'}</b>
+                                        ) : (
+                                            <NavLink to={`/dashboard/website/subscription`} style={{ color: theme.palette.text.primary, marginLeft: 0, fontSize: 12 }}>
+                                                    Ajouter un domaine personnalisé
+                                            </NavLink>
+                                        )}
+                                    </span>
+                                </div>
+                            </label>
+                            <button 
+                                className='download-button'
+                                title="Voir le site public"
+                                onClick={() => {
+                                    if (selectedWebsite?.custom_domain) {
+                                        window.open(`https://${selectedWebsite.custom_domain}`, '_blank');
+                                    }
+                                }}
+                            >
+                                <OpenInNewIcon fontSize='tiny'/>
+                            </button>
+                        </div>
+                    </Box>
+                    <div className='line-sidebar'></div>
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                        <SecondaryButton
+                            variant="outlined"
+                            size="small"
+                            onClick={() => setShowDomainPopup(false)}
+                        >
+                            Annuler
+                        </SecondaryButton>
+                        <DefaultButton
+                            size="small"
+                            disabled={isPublishing}
+                            onClick={async () => {
+                                setShowDomainPopup(false);
+                                setIsPublishing(true);
+                                setSavingPage(true);
+                                setDataRetrievalStatus(true);
+                                setPageGenerationStatus(false);
+                                setSitePublishingStatus(false);
+                                try {
+                                    setTimeout(() => setPageGenerationStatus(true), 900);
+                                    // Appel API publication : customDomain = true si la checkbox est cochée ET autorisée
+                                    await handleSave('publish', !!(subscriptionInfo?.custom_domain && publishCustomDomain));
+                                    setTimeout(() => setSitePublishingStatus(true), 1800);
+                                    await new Promise(r => setTimeout(r, 2600));
+                                } catch (e) {
+                                    showSnackbar('error', 'Erreur lors de la génération du site');
+                                } finally {
+                                    setIsPublishing(false);
+                                    setTimeout(() => {
+                                        setSavingPage(false);
+                                        setDataRetrievalStatus(false);
+                                        setPageGenerationStatus(false);
+                                        setSitePublishingStatus(false);
+                                    }, 1200);
+                                }
+                            }}
+                        >
+                            Publier le site
+                        </DefaultButton>
+                    </Box>
+                </div>
+            </Grow>
+        </ClickAwayListener>
+    )}
+</Popper>
         </div>
 
     )

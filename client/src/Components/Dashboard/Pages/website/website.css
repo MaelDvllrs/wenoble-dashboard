@@ -327,7 +327,7 @@
     background-color: var(--color-primary-secondary);
     border: 1px solid var(--color-primary-third);
     border-radius: 0.5rem;
-    padding: 2rem;
+    padding: 1.5rem;
     max-width: 500px;
     width: 90%;
     max-height: 80vh;

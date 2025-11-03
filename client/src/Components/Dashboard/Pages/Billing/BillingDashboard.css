@@ -1,0 +1,593 @@
+.billing-dashboard {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Styles pour les blocs modification_box */
+.billing-dashboard .modification_box {
+  height: fit-content;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+}
+
+
+.billing-grid{
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, auto);
+    gap: 1rem;
+}
+
+/* Styles pour les éléments de graphique website */
+.website-graph-wrapper {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.website-graph-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+}
+
+.billing-dashboard .MuiTableContainer-root {
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.billing-dashboard .MuiTableHead-root {
+  background-color: #f5f5f5;
+}
+
+.billing-dashboard .MuiTableHead-root .MuiTableCell-root {
+  font-weight: 600;
+  color: #333;
+}
+
+/* Styles pour les informations de facturation */
+.billing-info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0;
+  margin: 0;
+  margin-top: 1rem;
+}
+
+.billing-info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--color-primary-third);
+}
+
+.billing-info-item:last-child {
+  border-bottom: none;
+}
+
+.billing-info-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.billing-info-primary {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+}
+
+.billing-info-secondary {
+  font-size: 0.875rem;
+  color: var(--color-text-primary);
+  font-weight: 400;
+}
+
+.billing-info-icon {
+  display: flex;
+  align-items: center;
+  margin-right: 0.75rem;
+}
+
+.billing-info-empty {
+  padding: 1rem 0;
+  color: var(--text-secondary, #666);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+/* Styles pour les méthodes de paiement */
+.payment-methods-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  overflow: auto;
+  height: 12.2rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-primary-third) transparent;
+}
+
+.payment-method-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--color-primary-third);
+}
+
+.payment-method-item:last-child {
+  border-bottom: none;
+}
+
+.payment-method-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+
+.payment-method-icon {
+  display: flex;
+  align-items: center;
+  min-width: 40px;
+}
+
+.payment-method-details {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+
+.payment-method-primary {
+  font-weight: 500;
+  font-size: 1.2rem;
+  color: var(--color-text-primary);
+}
+
+.payment-method-secondary {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.payment-method-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Styles pour les status badges (similaires à listeCollection.css) */
+.billing-status {
+  min-width: 4rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  padding-top: 0.2rem;
+  padding-bottom: 0.2rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin: 1px;
+}
+
+.billing-status.active {
+  color: var(--color-green);
+  background-color: #22ff991e;
+  border: 0.5px solid var(--color-green);
+}
+
+.billing-status.inactive {
+  color: var(--color-blue);
+  background-color: #1751ff2d;
+  border: 0.5px solid var(--color-blue);
+}
+
+.billing-status.cancelled {
+  color: var(--color-red, #ff4444);
+  background-color: #ff44441e;
+  border: 0.5px solid var(--color-red, #ff4444);
+}
+
+.billing-status.pending {
+  color: #ff9800;
+  background-color: rgba(255, 152, 0, 0.15);
+  border: 0.5px solid #ff9800;
+}
+
+.billing-dashboard .MuiListItem-root {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.billing-dashboard .MuiChip-root {
+  font-weight: 500;
+}
+
+.billing-dashboard .invoice-row:hover {
+  background-color: #f9f9f9;
+}
+
+.billing-dashboard .payment-method-card {
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  transition: border-color 0.2s;
+}
+
+.billing-dashboard .payment-method-card:hover {
+  border-color: #1976d2;
+}
+
+.billing-dashboard .payment-method-card.default {
+  border-color: #4caf50;
+  background-color: #f1f8e9;
+}
+
+.billing-dashboard .subscription-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.billing-dashboard .subscription-status.active {
+  color: #4caf50;
+}
+
+.billing-dashboard .subscription-status.cancelled {
+  color: #f44336;
+}
+
+.billing-dashboard .subscription-status.past_due {
+  color: #ff9800;
+}
+
+.billing-dashboard .billing-summary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.billing-dashboard .billing-summary h3 {
+  margin: 0 0 16px 0;
+  font-weight: 600;
+}
+
+.billing-dashboard .billing-summary .summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.billing-dashboard .billing-summary .summary-value {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.billing-dashboard .invoice-status-paid {
+  color: #4caf50;
+  background-color: #e8f5e8;
+}
+
+.billing-dashboard .invoice-status-open {
+  color: #ff9800;
+  background-color: #fff3e0;
+}
+
+.billing-dashboard .invoice-status-void {
+  color: #f44336;
+  background-color: #ffebee;
+}
+
+.billing-dashboard .invoice-status-draft {
+  color: #2196f3;
+  background-color: #e3f2fd;
+}
+
+.billing-dashboard .empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+}
+
+.billing-dashboard .empty-state .MuiSvgIcon-root {
+  font-size: 4rem;
+  color: #ccc;
+  margin-bottom: 16px;
+}
+
+.billing-dashboard .action-button {
+  min-width: 120px;
+}
+
+.card-icon {
+  width: 40px;
+  height: 24px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: white;
+}
+
+.card-icon.visa {
+  background: 
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 141.732 141.732'%3E%3Cg fill='%23fff'%3E%3Cpath d='M62.935 89.571h-9.733l6.083-37.384h9.734zM45.014 52.187L35.735 77.9l-1.098-5.537.001.002-3.275-16.812s-.396-3.366-4.617-3.366h-15.34l-.18.633s4.691.976 10.181 4.273l8.456 32.479h10.141l15.485-37.385H45.014zM121.569 89.571h8.937l-7.792-37.385h-7.824c-3.613 0-4.493 2.786-4.493 2.786L95.881 89.571h10.146l2.029-5.553h12.373l1.14 5.553zm-10.71-13.224l5.114-13.99 2.877 13.99h-7.991zM96.642 61.177l1.389-8.028s-4.286-1.63-8.754-1.63c-4.83 0-16.3 2.111-16.3 12.376 0 9.658 13.462 9.778 13.462 14.851s-12.075 4.164-16.06.965l-1.447 8.394s4.346 2.111 10.986 2.111c6.642 0 16.662-3.439 16.662-12.799 0-9.72-13.583-10.625-13.583-14.851.001-4.227 9.48-3.684 13.645-1.389z'/%3E%3C/g%3E%3C/svg%3E") no-repeat center,
+    linear-gradient(135deg, #1a1f71, #00579f);
+  background-size: 28px, 100%;
+}
+
+.card-icon.mastercard {
+  background: 
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='9' cy='12' r='6' fill='%23eb001b'/%3E%3Ccircle cx='15' cy='12' r='6' fill='%23ff5f00'/%3E%3C/svg%3E") no-repeat center,
+    linear-gradient(135deg, #eb001b, #ff5f00);
+  background-size: 24px, 100%;
+}
+
+.card-icon.amex {
+  background: linear-gradient(135deg, #006fcf, #1f72cd);
+  color: white;
+}
+
+.card-icon.amex::after {
+  content: "AMEX";
+  font-size: 0.6rem;
+  font-weight: 700;
+}
+
+.card-icon.discover {
+  background: linear-gradient(135deg, #ff6000, #ff8500);
+  color: white;
+}
+
+.card-icon.discover::after {
+  content: "DISC";
+  font-size: 0.6rem;
+  font-weight: 700;
+}
+
+.card-icon.diners {
+  background: linear-gradient(135deg, #0079be, #00a9e0);
+  color: white;
+}
+
+.card-icon.diners::after {
+  content: "DC";
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.card-icon.jcb {
+  background: linear-gradient(135deg, #0e4c96, #1e88e5);
+  color: white;
+}
+
+.card-icon.jcb::after {
+  content: "JCB";
+  font-size: 0.6rem;
+  font-weight: 700;
+}
+
+.card-icon.unionpay {
+  background: linear-gradient(135deg, #e21836, #c41e3a);
+  color: white;
+}
+
+.card-icon.unionpay::after {
+  content: "UP";
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.card-icon.generic {
+  background: linear-gradient(135deg, #6c757d, #495057);
+  color: white;
+}
+
+.card-icon.generic::after {
+  content: "CARD";
+  font-size: 0.5rem;
+  font-weight: 700;
+}
+
+.billing-dashboard .billing-alert {
+  margin-bottom: 24px;
+}
+
+.billing-dashboard .trial-badge {
+  background: linear-gradient(45deg, #4caf50, #81c784);
+  color: white;
+  font-weight: 600;
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  border-radius: 12px;
+  display: inline-block;
+  margin-left: 8px;
+}
+
+.billing-dashboard .next-billing-highlight {
+  background-color: #e3f2fd;
+  border-radius: 8px;
+  padding: 12px;
+  margin: 8px 0;
+  border-left: 4px solid #2196f3;
+}
+
+.billing-dashboard .loading-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+.billing-dashboard .error-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #f44336;
+}
+
+/* Styles pour le tableau des factures */
+.logs-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--color-primary-third);
+  border-radius: 6px;
+  margin-top: 0.5rem;
+}
+
+.security-logs-table.invoices-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+  min-width: 800px;
+}
+
+.security-logs-table.invoices-table thead th {
+  text-align: left;
+  font-weight: 600;
+  padding: 0.5rem 0.6rem;
+  color: var(--color-text-secondary);
+  border-bottom: 1px solid var(--color-primary-third);
+  white-space: nowrap;
+}
+
+.security-logs-table.invoices-table tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+.security-logs-table.invoices-table td {
+  padding: 0.45rem 0.6rem;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  color: var(--color-text-primary);
+  vertical-align: middle;
+}
+
+.security-logs-table.invoices-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Colonnes spécifiques pour les factures */
+.security-logs-table .col-invoice-number { width: 120px; }
+.security-logs-table .col-invoice-date { width: 100px; }
+.security-logs-table .col-invoice-description { 
+  min-width: 200px;
+  color: var(--color-text-secondary);
+}
+.security-logs-table .col-invoice-amount { width: 100px; }
+.security-logs-table .col-invoice-status { width: 100px;}
+.security-logs-table .col-invoice-actions { width: 80px; text-align: center; }
+
+.billing-table-box{
+  display: flex;
+  justify-content: center;
+}
+
+
+/* Styles spécifiques pour les badges de statut des factures sont maintenant intégrés dans billing-status */
+
+/* Bouton de téléchargement */
+.download-button {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 2rem;
+  height: 2rem;
+  color: var(--color-text-secondary);
+  border-radius: 4px;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.download-button:hover {
+  background-color: var(--color-primary-third);
+  color: var(--color-text-primary);
+}
+
+/* Footer de pagination */
+.table-footer {
+  padding: 1rem;
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 1rem;
+}
+
+.table-footer-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.table-footer-buttons {
+  display: flex;
+  gap: 0.2rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.table-arrow-button {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 2rem;
+  height: 2rem;
+  color: var(--color-text-secondary);
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.table-arrow-button:hover:not(:disabled) {
+  background-color: var(--color-primary-third);
+}
+
+.table-arrow-button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.table-footer-security {
+  padding: 0;
+  border-top: 1px var(--color-primary-third) solid;
+}
+
+@media (max-width: 768px) {
+  .billing-dashboard {
+    padding: 16px;
+  }
+  
+  .billing-dashboard .MuiCardContent-root {
+    padding: 16px !important;
+  }
+  
+  .billing-dashboard .MuiTableContainer-root {
+    overflow-x: auto;
+  }
+  
+  .billing-dashboard .billing-summary {
+    padding: 16px;
+  }
+}

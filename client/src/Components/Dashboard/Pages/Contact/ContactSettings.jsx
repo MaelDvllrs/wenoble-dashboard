@@ -188,38 +188,6 @@ const ContactSettings = () => {
 
   return (
     <div className="outlet-box">
-      {/* Section titre avec breadcrumb */}
-      <div className="title_section">
-        <div className="breadCrumbs">
-          <NavLink 
-            className={'breadCrumbsLink'}
-            to="/dashboard/home"
-            style={{ textDecoration: 'none', color: 'inherit' }}
-          >
-            Dashboard
-          </NavLink>
-          <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
-          <NavLink 
-            className={'breadCrumbsLink'}
-            to="/dashboard/website"
-            style={{ textDecoration: 'none', color: 'inherit' }}
-          >
-            {selectedWebsite?.website_name || 'Site'}
-          </NavLink>
-          <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
-          <NavLink 
-            className={'breadCrumbsLink'}
-            to="/dashboard/website/contact"
-            style={{ textDecoration: 'none', color: 'inherit' }}
-          >
-            Contacts
-          </NavLink>
-          <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
-          <span className="breadcrumb-item-active" style={{ color: theme.palette.text.primary }}>
-            Paramètres
-          </span>
-        </div>
-      </div>
 
       <div className="dashboard_case_empty edit-case_empty">
         <div className='contact-settings-wrapper'>
@@ -231,7 +199,7 @@ const ContactSettings = () => {
               </p>
             </div>
             <div className="content_page_header_right">
-              <SecondaryButton onClick={() => navigate('/dashboard/contact')}>
+              <SecondaryButton onClick={() => navigate('/dashboard/website/contact')}>
                 Retour
               </SecondaryButton>
             </div>
