@@ -487,7 +487,6 @@ export const updateGalleryBlog = async (id, gallery, token) => {
 
 
 export const generateStaticSite = async (token, websiteId, status = 'publish', publishCustomDomain) => {
-    console.log(publishCustomDomain)
     try {
         const response = await Axios.post(`${apiUrl}/generateSite`, { websiteId, status, publishCustomDomain }, {
             headers: {

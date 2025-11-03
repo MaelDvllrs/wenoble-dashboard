@@ -56,15 +56,8 @@ const BillingDashboard = () => {
       setError(null);
       
   const siteId = selectedWebsite?.id;
-  console.log('Fetching billing data for siteId:', siteId);
       
-      // Récupérer les informations de facturation
-      console.log('Making API calls...');
-      console.log('URLs:', {
-        subscription: `${config.apiUrl}/subscription-info/${siteId}`,
-        invoices: `${config.apiUrl}/invoices/${siteId}`,
-        paymentMethods: `${config.apiUrl}/payment-methods/${siteId}`
-      });
+
       
       const [billingResponse, invoicesResponse, paymentMethodsResponse] = await Promise.all([
         Axios.get(`${config.apiUrl}/subscription-info/${siteId}`, {
@@ -78,8 +71,7 @@ const BillingDashboard = () => {
         })
       ]);
       
-      console.log('Invoices response:', invoicesResponse.data);
-      console.log('Payment methods response:', paymentMethodsResponse.data);
+
       
       setBillingData(billingResponse.data);
       setSubscriptionInfo(billingResponse.data.subscription);

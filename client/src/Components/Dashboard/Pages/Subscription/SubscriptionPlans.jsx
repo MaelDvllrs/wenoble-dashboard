@@ -236,14 +236,12 @@ const SubscriptionPlans = () => {
     useEffect(() => {
         const handleFocus = () => {
             if (document.hidden === false && websiteId) {
-                console.log('Page regained focus, refreshing subscription data...');
                 fetchCurrentPlan(true);
             }
         };
 
         const handleVisibilityChange = () => {
             if (!document.hidden && websiteId) {
-                console.log('Page became visible, refreshing subscription data...');
                 fetchCurrentPlan(true);
             }
         };

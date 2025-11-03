@@ -96,7 +96,6 @@ const ListeCollection = () => {
             
     }, [idCollection, selectedWebsite?.id]);
 
-    console.log(InfoListeblog)
 
     // Helper to determine status text from server response
     const getElementStatus = (page) => {

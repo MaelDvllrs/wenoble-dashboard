@@ -188,7 +188,6 @@ const EditWebsite = () => {
     }
     
     setLoading(true);
-    console.log("websiteID" + websiteId)
     try {
       await Axios.post(`${apiUrl}/addUserToWebsite`, {
         website_id: websiteId,

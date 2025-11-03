@@ -834,7 +834,6 @@ const EditElementCollection = () => {
     useEffect(() => {
         if(InfoBlog !== null && typeof InfoBlog === 'string'){
             const decodedBloginfo = jwtDecode(InfoBlog);
-            console.log(decodedBloginfo)
             setDecodeBlog(decodedBloginfo);
         }
     }, [InfoBlog]);
@@ -889,7 +888,6 @@ const EditElementCollection = () => {
                                 <p className="blog_status pending_status">Chargement...</p>
                             ) : (() => {
                                 const st = getElementStatus(DecodeBlog.blogPage[0]);
-                                console.log(st)
                                 if (st === 'publish') return <p className="blog_status publish_status">Publié</p>;
                                 if (st === 'wait') return <p className="blog_status waiting_status">En attente</p>;
                                 return <p className="blog_status draft_status">Brouillon</p>;
