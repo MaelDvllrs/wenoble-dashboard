@@ -68,7 +68,7 @@
             const encodedData = el.getAttribute("wn-collection-wrapper");
             const decodedData = decodeBase64(encodedData);
 
-            const { blogId, limit, order, colone, joinTable, config, pagination, itemsPerPage, sorts, filters, templateCollectionId } = decodedData;
+            const { blogId, limit, offset, order, colone, joinTable, config, pagination, itemsPerPage, sorts, filters, templateCollectionId } = decodedData;
             
             // Si en mode template, récupérer l'ID de l'élément template actuel
             let templateElementId = null;
@@ -140,6 +140,10 @@
             
             if (!pagination && typeof limit !== 'undefined' && limit !== null) {
                 paramsObj.limit = limit;
+                // Ajouter l'offset si défini
+                if (typeof offset !== 'undefined' && offset !== null && offset > 0) {
+                    paramsObj.offset = offset;
+                }
             }
             const params = new URLSearchParams(paramsObj);
 
@@ -343,7 +347,7 @@
                             options = { year: 'numeric', month: 'long', day: 'numeric' }; // Format par défaut
                         }
         
-                        el.textContent = date.toLocaleDateString(undefined, options);
+                        el.textContent = date.toLocaleDateString('fr-FR', options);
                     }
                     
                     

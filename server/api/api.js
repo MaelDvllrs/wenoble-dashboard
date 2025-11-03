@@ -119,6 +119,7 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
     const ids = req.ids;
     const order = (req.query.order || 'desc').toString().toLowerCase();
     const limit = req.query.limit ? parseInt(req.query.limit, 10) : null;
+    const offset = req.query.offset ? parseInt(req.query.offset, 10) : 0;
     const colone = req.query.colone || 'collection_element_publish_date';
     // Nouveau: filtres dynamiques envoyés par collection-filter-plus.js
     let filters = {};
@@ -166,13 +167,13 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
         // Si pas de filtres ni de tri personnalisé, utiliser la logique de base simple
         if (!hasFilters && !hasSorts) {
             return await handleNoFiltersCase({
-                supabase, targetCollectionIds, baseColumns, colone, ascending, limit, res, templateCollectionId
+                supabase, targetCollectionIds, baseColumns, colone, ascending, limit, offset, res, templateCollectionId
             });
         }
 
         // Avec filtres ou tri personnalisé: utiliser la nouvelle logique DB-first
         const dataset = await applyFiltersAtDbLevel({
-            supabase, targetCollectionIds, filters, baseColumns, colone, ascending, limit, sorts, templateCollectionId, templateElementId
+            supabase, targetCollectionIds, filters, baseColumns, colone, ascending, limit, offset, sorts, templateCollectionId, templateElementId
         });
 
         if (dataset.length === 0) return res.status(200).json({ message: 'Aucun blog trouvé' });
@@ -184,7 +185,7 @@ router.get('/sendBlog', apiKeyMiddleware, async (req, res) => {
 });
 
 // Helper: gère le cas sans filtres (ancienne logique optimisée)
-async function handleNoFiltersCase({ supabase, targetCollectionIds, baseColumns, colone, ascending, limit, res, templateCollectionId }) {
+async function handleNoFiltersCase({ supabase, targetCollectionIds, baseColumns, colone, ascending, limit, offset, res, templateCollectionId }) {
     let query = supabase
         .from('collection_element')
         .select('*')
@@ -199,7 +200,8 @@ async function handleNoFiltersCase({ supabase, targetCollectionIds, baseColumns,
         }
     }
     
-    if (limit) query = query.limit(limit);
+    if (offset && offset > 0) query = query.range(offset, offset + (limit || 1000) - 1);
+    else if (limit) query = query.limit(limit);
     
     const { data, error } = await query;
     if (error) throw error;
@@ -915,7 +917,7 @@ async function applySortsToElements({ supabase, targetCollectionIds, elements, s
 }
 
 // Helper: applique les filtres au niveau base de données quand possible
-async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, baseColumns, colone, ascending, limit, sorts = {}, templateCollectionId = null, templateElementId = null }) {
+async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, baseColumns, colone, ascending, limit, offset = 0, sorts = {}, templateCollectionId = null, templateElementId = null }) {
     // Vérifier si filters est un array (nouveau format) ou un objet (ancien format)
     let filterArray = [];
     if (Array.isArray(filters)) {
@@ -1107,7 +1109,11 @@ async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, b
     
     if (!hasDynamicSorts && colone && baseColumns.has(colone)) {
         query = query.order(colone, { ascending });
-        if (limit) query = query.limit(limit);
+        if (offset && offset > 0) {
+            query = query.range(offset, offset + (limit || 1000) - 1);
+        } else if (limit) {
+            query = query.limit(limit);
+        }
     }
     
     const { data: results, error } = await query;
@@ -1124,8 +1130,10 @@ async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, b
             sorts
         });
         
-        // Appliquer la limite après le tri dynamique
-        if (limit && finalResults.length > limit) {
+        // Appliquer l'offset et la limite après le tri dynamique
+        if (offset && offset > 0) {
+            finalResults = finalResults.slice(offset, offset + (limit || finalResults.length));
+        } else if (limit && finalResults.length > limit) {
             finalResults = finalResults.slice(0, limit);
         }
     }

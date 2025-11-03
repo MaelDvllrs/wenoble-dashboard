@@ -75,6 +75,7 @@ const EditCollection = () => {
     // Options for wrapper key generation
     const [wrapLimit, setWrapLimit] = useState(10);
     const [wrapLimitEnabled, setWrapLimitEnabled] = useState(false);
+    const [wrapOffset, setWrapOffset] = useState(0);
     const [wrapPaginationEnabled, setWrapPaginationEnabled] = useState(false);
     const [wrapItemsPerPage, setWrapItemsPerPage] = useState(10);
     
@@ -129,6 +130,7 @@ const EditCollection = () => {
             // Inclure la limite uniquement si activée
             if (wrapLimitEnabled) {
                 payload.limit = Math.max(0, Number(wrapLimit) || 0);
+                payload.offset = Math.max(0, Number(wrapOffset) || 0);
             }
             // Inclure la pagination uniquement si activée
             if (wrapPaginationEnabled) {
@@ -160,7 +162,7 @@ const EditCollection = () => {
         } catch {
             return '';
         }
-    }, [collectionId, wrapLimit, wrapLimitEnabled, wrapPaginationEnabled, wrapItemsPerPage, wrapFilters, wrapSorts, isTemplateMode, selectedTemplateCollection]);
+    }, [collectionId, wrapLimit, wrapLimitEnabled, wrapOffset, wrapPaginationEnabled, wrapItemsPerPage, wrapFilters, wrapSorts, isTemplateMode, selectedTemplateCollection]);
     const [availableCollections, setAvailableCollections] = useState([]);
     const [showFieldTypeGrid, setShowFieldTypeGrid] = useState(false);
     const [selectedFieldType, setSelectedFieldType] = useState('');
@@ -745,35 +747,67 @@ const EditCollection = () => {
 
 
                         {wrapLimitEnabled && (
-                            <div className="number-input-vertical">
-                                <input
-                                    className="input_text_blog input-count"
-                                    type="number"
-                                    min={0}
-                                    step={1}
-                                    value={wrapLimit}
-                                    onChange={(e) => setWrapLimit(e.target.value)}
-                                    onWheel={(e) => e.currentTarget.blur()}
-                                />
-                                <div className="spin-buttons">
-                                    <button
-                                        type="button"
-                                        className="spin-btn spin-up"
-                                        aria-label="Augmenter"
-                                        onClick={() => setWrapLimit(v => Math.max(0, (Number(v) || 0) + 1))}
-                                    >
-                                        ▲
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className="spin-btn spin-down"
-                                        aria-label="Diminuer"
-                                        onClick={() => setWrapLimit(v => Math.max(0, (Number(v) || 0) - 1))}
-                                    >
-                                        ▼
-                                    </button>
+                            <>
+                                <div className="number-input-vertical">
+                                    <input
+                                        className="input_text_blog input-count"
+                                        type="number"
+                                        min={0}
+                                        step={1}
+                                        value={wrapLimit}
+                                        onChange={(e) => setWrapLimit(e.target.value)}
+                                        onWheel={(e) => e.currentTarget.blur()}
+                                    />
+                                    <div className="spin-buttons">
+                                        <button
+                                            type="button"
+                                            className="spin-btn spin-up"
+                                            aria-label="Augmenter"
+                                            onClick={() => setWrapLimit(v => Math.max(0, (Number(v) || 0) + 1))}
+                                        >
+                                            ▲
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="spin-btn spin-down"
+                                            aria-label="Diminuer"
+                                            onClick={() => setWrapLimit(v => Math.max(0, (Number(v) || 0) - 1))}
+                                        >
+                                            ▼
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
+                                <p className="blogField_name collection_edit_name" style={{ marginTop: '1rem' }}>Item de départ</p>
+                                <div className="number-input-vertical">
+                                    <input
+                                        className="input_text_blog input-count"
+                                        type="number"
+                                        min={0}
+                                        step={1}
+                                        value={wrapOffset}
+                                        onChange={(e) => setWrapOffset(e.target.value)}
+                                        onWheel={(e) => e.currentTarget.blur()}
+                                    />
+                                    <div className="spin-buttons">
+                                        <button
+                                            type="button"
+                                            className="spin-btn spin-up"
+                                            aria-label="Augmenter"
+                                            onClick={() => setWrapOffset(v => Math.max(0, (Number(v) || 0) + 1))}
+                                        >
+                                            ▲
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="spin-btn spin-down"
+                                            aria-label="Diminuer"
+                                            onClick={() => setWrapOffset(v => Math.max(0, (Number(v) || 0) - 1))}
+                                        >
+                                            ▼
+                                        </button>
+                                    </div>
+                                </div>
+                            </>
                         )}
                     </div>
                     <div className='input-container'>
