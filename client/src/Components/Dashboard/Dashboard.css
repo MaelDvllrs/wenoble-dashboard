@@ -320,6 +320,7 @@
 .dashboard_header{
     height: 3.5rem;
     display: flex;
+    align-items: center;
     justify-content: space-between;
     position: relative;
     z-index: 99;

@@ -16,7 +16,7 @@ const DARK_THEME = createTheme({
         type: "dark",
         primary: {
             main: 'rgba(14, 15, 17, 1)',
-            secondary: 'rgb(17, 17, 22)',
+            secondary: 'rgba(14, 14, 14, 1)',
             third: 'rgba(51, 51, 51, 1)'
         },
         secondary: {
@@ -82,7 +82,7 @@ const LIGHT_THEME = createTheme({
         },
 
         shadow: {
-            main: '0 0 0 1px rgba(0, 0, 0, 0.12)',
+            main: '0 0 0 1px rgba(255, 255, 255, 0.145)',
             secondary: '0 0 0 1px rgba(0, 0, 0, 0.25)'
         },
         globe: {

@@ -337,6 +337,8 @@ router.get("/subscription-info/:websiteId", authenticateToken, async (req, res) 
             });
         }
 
+        console.log('Retrieving subscription info for websiteId:', websiteId);
+
         // Récupérer les informations d'abonnement
         let { data: subscriptions, error: subError } = await supabaseServerAdmin()
             .from("website_subscriptions")
@@ -354,9 +356,13 @@ router.get("/subscription-info/:websiteId", authenticateToken, async (req, res) 
             .eq("status", "active")
             .order('created_at', { ascending: false }); // Le plus récent en premier
 
-        // Prendre le premier abonnement (le plus récent)
+        console.log('Existing subscriptions before cleanup:', subscriptions);
+        console.log('Subscription retrieval error:', subError);
+        
+            // Prendre le premier abonnement (le plus récent)
         let subscription = subscriptions && subscriptions.length > 0 ? subscriptions[0] : null;
 
+        console.log('Existing subscription before cleanup:', subscription);
         
         // Si on a plusieurs abonnements, désactiver les anciens
         if (subscriptions && subscriptions.length > 1) {
@@ -371,6 +377,8 @@ router.get("/subscription-info/:websiteId", authenticateToken, async (req, res) 
                     
             }
         }
+
+        console.log('Existing subscription after cleanup:', subscription);
         
         // Si aucun abonnement actif n'existe, créer un abonnement gratuit par défaut
         if (!subscription && !subError) {

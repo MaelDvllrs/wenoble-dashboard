@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Cookies from 'js-cookie';
-import { NavLink, useParams, useNavigate, useLocation } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import { CircularProgress } from '@mui/material';
 import { InfoAlert, CssTextField } from '../../../../Theme/element';
@@ -20,8 +20,9 @@ const SubscriptionPlans = () => {
     const location = useLocation();
     const token = Cookies.get('token');
     
-    const { websiteId } = useParams();
     const { selectedWebsite, loading: websiteLoading } = useWebsite();
+    // Use website id strictly from context (no URL fallback)
+    const websiteId = selectedWebsite?.id;
     
     const [currentPlan, setCurrentPlan] = useState('free'); // 'free', 'starter', ou 'cms'
     const [loading, setLoading] = useState(true);
@@ -33,6 +34,8 @@ const SubscriptionPlans = () => {
     const [subscribingPlanId, setSubscribingPlanId] = useState(null);
     const [confirmLoading, setConfirmLoading] = useState(false);
     const [cancelLoading, setCancelLoading] = useState(false);
+    // Modal d'information après annulation programmée
+    const [cancelInfoModalOpen, setCancelInfoModalOpen] = useState(false);
 
     // Plans disponibles (par défaut local, seront remplacés par les données en base)
     const DEFAULT_PLANS = [
@@ -80,7 +83,6 @@ const SubscriptionPlans = () => {
                 });
                 if (mounted && res.data && Array.isArray(res.data.plans) && res.data.plans.length > 0) {
                     // Normaliser les plans retournés
-                    console.log(res.data.plans)
                     const normalized = res.data.plans.map(p => {
                         // Normalize features: accept either array or object map
                         let features = [];
@@ -186,7 +188,6 @@ const SubscriptionPlans = () => {
                     Authorization: `Bearer ${token}`
                 }
             });
-            console.log(response)
             if (response.data.success) {
                 // Stocker les informations d'abonnement
                 setSubscriptionInfo(response.data.subscription);
@@ -264,7 +265,6 @@ const SubscriptionPlans = () => {
         const subscriptionUpdated = urlParams.get('subscription_updated');
         
         if (paymentSuccess === 'true' || subscriptionUpdated === 'true') {
-            console.log('Payment/subscription success detected, refreshing subscription data...');
             // Attendre un peu que les webhooks Stripe se traitent
             setTimeout(() => {
                 fetchCurrentPlan(true);
@@ -287,7 +287,6 @@ const SubscriptionPlans = () => {
             
             if (elapsed < 120000) { // 2 minutes
                 if (document.visibilityState === 'visible' && websiteId) {
-                    console.log('Periodic refresh for recent webhook updates...');
                     fetchCurrentPlan(true);
                 }
             } else {
@@ -314,7 +313,6 @@ const SubscriptionPlans = () => {
             });
 
             if (response.data.success) {
-                console.log('Abonnement vérifié avec succès!');
                 // Récupérer le plan depuis la réponse
                 const planName = response.data.subscription?.plan_name?.toLowerCase();
                 if (planName === 'starter') {
@@ -354,8 +352,10 @@ const SubscriptionPlans = () => {
                             ...subscriptionInfo,
                             cancel_at_period_end: true
                         });
-                        // Afficher un message ou une notification si besoin
-                        alert('Votre abonnement sera annulé à la fin de la période. Vous conservez les avantages premium jusqu\'à cette date.');
+                        setCancelModalOpen(false);
+                        setTimeout(() => {
+                            setCancelInfoModalOpen(true);
+                        }, 200); // Laisse le temps à l'ancien modal de se fermer
                     }
                 } catch (error) {
                     console.error('Erreur lors de l\'annulation:', error);
@@ -397,7 +397,6 @@ const SubscriptionPlans = () => {
                 setSubscribingPlanId(null);
             } else {
                 // Premier abonnement payant - utiliser Checkout
-                console.log('Premier abonnement payant - redirection vers Checkout');
                 const response = await Axios.post(`${config.apiUrl}/create-checkout-session`, {
                     websiteId,
                     planId: selectedPlan.id
@@ -520,7 +519,6 @@ const SubscriptionPlans = () => {
         );
     }
 
-    console.log(currentPlan)
 
     return (
         <div className="outlet">
@@ -680,7 +678,7 @@ const SubscriptionPlans = () => {
                                     </SecondaryButton>
                                 ) : (
                                     <DefaultButton 
-                                        onClick={() => handleSubscribe(plan.name)}
+                                        onClick={() => handleSubscribe(plan.id)}
                                         style={{ 
                                             width: '100%',
                                             padding: "0.5rem",
@@ -830,6 +828,51 @@ const SubscriptionPlans = () => {
                                 <RedButton onClick={handleCancelSubscription} disabled={cancelLoading} startIcon={cancelLoading ? <CircularProgress size={12} sx={{ color: 'white' }} /> : undefined}>
                                     {cancelLoading ? 'Annulation...' : `Confirmer l'annulation`}
                                 </RedButton>
+                            </div>
+                        </div>
+                    </div>
+                )}
+                {/* Modal d'information après annulation programmée */}
+                {cancelInfoModalOpen && (
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        className="custom-modal-overlay"
+                        onClick={(e) => {
+                            if (e.target.classList && e.target.classList.contains('custom-modal-overlay')) {
+                                setCancelInfoModalOpen(false);
+                            }
+                        }}
+                        style={{
+                            position: 'fixed',
+                            inset: 0,
+                            backgroundColor: 'rgba(0,0,0,0.5)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            zIndex: 1400
+                        }}
+                    >
+                        <div className="modal_content" style={{
+                            backgroundColor: theme.palette.primary.main,
+                            color: theme.palette.text.primary,
+                            border: `1px solid ${theme.palette.primary.third}`
+                        }}>
+                            <h3>Annulation programmée</h3>
+                            <InfoAlert>
+                                <div style={{ fontSize: '0.95rem', margin: '0 0 0.5rem 0' }}>
+                                    <strong>Votre abonnement sera annulé à la fin de la période de facturation en cours.</strong>
+                                </div>
+                                <ul style={{ fontSize: '0.875rem', marginLeft: '1.25rem' }}>
+                                    <li>Vous conservez l'accès à toutes les fonctionnalités premium jusqu'à cette date.</li>
+                                    <li>Aucune nouvelle facturation ne sera effectuée.</li>
+                                    <li>À la fin de la période, votre site passera automatiquement au plan gratuit.</li>
+                                </ul>
+                            </InfoAlert>
+                            <div className="modal_actions" style={{ marginTop: '1.25rem', gap: '0.75rem' }}>
+                                <DefaultButton onClick={() => setCancelInfoModalOpen(false)}>
+                                    OK
+                                </DefaultButton>
                             </div>
                         </div>
                     </div>

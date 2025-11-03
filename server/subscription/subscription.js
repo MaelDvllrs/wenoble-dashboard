@@ -347,7 +347,7 @@ router.post("/create-checkout-session", authenticateToken, async (req, res) => {
             .order('created_at', { ascending: false });
 
         if (!subError && activeSubscriptions && activeSubscriptions.length > 0) {
-            // Il y a un abonnement actif - mais il peut s'agir du plan gratuit (pas de stripe_subscription_id)
+            // Il y a un abonnement actif - il peut s'agir du plan gratuit (pas de stripe_subscription_id)
             existingSubscription = activeSubscriptions[0];
             if (existingSubscription.stripe_subscription_id) {
                 try {
@@ -356,6 +356,9 @@ router.post("/create-checkout-session", authenticateToken, async (req, res) => {
                 } catch (error) {
                     console.error("Erreur récupération abonnement Stripe existant:", error);
                 }
+            } else {
+                // Si c'est un plan gratuit, il n'y a pas de stripe_subscription_id, donc stripeCustomerId reste null ici
+                // On passera à la recherche dans stripe_customers plus bas
             }
         }
 
@@ -473,7 +476,9 @@ router.post("/verify-subscription", authenticateToken, async (req, res) => {
                 .eq("status", "active")
                 .maybeSingle();
 
-            if (!existingSubscription) {
+            console.log('Existing subscription:', existingSubscription);
+            
+                if (!existingSubscription) {
                 // Créer l'abonnement dans la base de données (abonnement par site)
                 const { data: newSubscription, error: insertError } = await supabaseServerAdmin()
                     .from("website_subscriptions")
@@ -582,10 +587,11 @@ router.post("/change-subscription-plan", authenticateToken, async (req, res) => 
             });
         }
 
+
         // Récupérer l'abonnement actif existant
         const { data: activeSubscriptions, error: subError } = await supabaseServerAdmin()
             .from("website_subscriptions")
-            .select("stripe_subscription_id, id, subscription_plans(name)")
+            .select("id, stripe_subscription_id, status")
             .eq("website_id", websiteId)
             .eq("status", "active")
             .order('created_at', { ascending: false });
@@ -598,45 +604,116 @@ router.post("/change-subscription-plan", authenticateToken, async (req, res) => 
         }
 
         const currentSubscription = activeSubscriptions[0];
-        
-        // Vérifier que l'abonnement actuel n'est pas gratuit
-        if (!currentSubscription.stripe_subscription_id) {
-            return res.status(400).json({ 
-                success: false, 
-                message: "Impossible de changer depuis un plan gratuit. Utilisez le checkout normal." 
-            });
+
+        // Annuler l'ancien abonnement Stripe si existant
+        let newStripeSub = null;
+        if (currentSubscription.stripe_subscription_id) {
+            // Annuler l'ancien abonnement Stripe immédiatement
+            try {
+                await stripe.subscriptions.cancel(currentSubscription.stripe_subscription_id);
+            } catch (err) {
+                console.error("Erreur lors de l'annulation de l'ancien abonnement Stripe:", err);
+            }
         }
 
-        // Récupérer l'abonnement Stripe
-        const stripeSubscription = await stripe.subscriptions.retrieve(currentSubscription.stripe_subscription_id);
-
-        // Modifier l'abonnement dans Stripe
-        const updatedSubscription = await stripe.subscriptions.update(currentSubscription.stripe_subscription_id, {
-            items: [{
-                id: stripeSubscription.items.data[0].id,
-                price: newPlan.stripe_price_id || process.env.STRIPE_PREMIUM_PRICE_ID,
-            }],
-            proration_behavior: 'create_prorations', // Calculer la proratisation
-        });
-
-        // Mettre à jour l'abonnement dans la base de données
+        // Marquer l'ancien abonnement comme canceled dans la BDD
         await supabaseServerAdmin()
             .from("website_subscriptions")
-            .update({
-                plan_id: planId,
-                updated_at: new Date().toISOString()
-            })
+            .update({ status: 'canceled', updated_at: new Date().toISOString() })
             .eq("id", currentSubscription.id);
 
+        // Créer le nouvel abonnement dans la BDD
+        let newDbSub = null;
+        if (newPlan.name === 'free' || newPlan.price === 0) {
+            // Plan gratuit : pas de Stripe
+            const { data: inserted, error: insertError } = await supabaseServerAdmin()
+                .from("website_subscriptions")
+                .insert({
+                    website_id: websiteId,
+                    plan_id: planId,
+                    status: 'active',
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                    stripe_subscription_id: null,
+                    stripe_customer_id: null,
+                    current_period_start: null,
+                    current_period_end: null,
+                    cancel_at_period_end: false
+                })
+                .select()
+                .single();
+            if (insertError) {
+                return res.status(500).json({ success: false, message: "Erreur lors de la création de l'abonnement gratuit" });
+            }
+            newDbSub = inserted;
+        } else {
+            // Créer un nouvel abonnement Stripe
+            // (Ici, il faudrait idéalement passer par le checkout Stripe, mais pour rester compatible avec l'ancien flux, on crée directement)
+            // À adapter selon la logique métier !
+            // Pour l'exemple, on crée un nouvel abonnement Stripe et on l'enregistre
+            const { data: userProfile } = await supabaseServerAdmin()
+                .from("users")
+                .select("email, first_name, last_name")
+                .eq("id", userId)
+                .maybeSingle();
+
+            // Récupérer ou créer le client Stripe
+            let stripeCustomerId = null;
+            const { data: existingCustomer } = await supabaseServerAdmin()
+                .from("stripe_customers")
+                .select("stripe_customer_id")
+                .eq("user_id", userId)
+                .maybeSingle();
+            if (existingCustomer) {
+                stripeCustomerId = existingCustomer.stripe_customer_id;
+            } else {
+                const customer = await stripe.customers.create({
+                    email: userProfile?.email,
+                    name: `${userProfile?.first_name || ''} ${userProfile?.last_name || ''}`.trim(),
+                    metadata: { userId, websiteId }
+                });
+                stripeCustomerId = customer.id;
+                await supabaseServerAdmin()
+                    .from("stripe_customers")
+                    .insert({ user_id: userId, stripe_customer_id: stripeCustomerId });
+            }
+
+            // Créer l'abonnement Stripe
+            const stripeSub = await stripe.subscriptions.create({
+                customer: stripeCustomerId,
+                items: [{ price: newPlan.stripe_price_id || process.env.STRIPE_PREMIUM_PRICE_ID }],
+                proration_behavior: 'create_prorations',
+                metadata: { userId, websiteId, planId }
+            });
+            newStripeSub = stripeSub;
+
+            // Enregistrer dans la BDD
+            const { data: inserted, error: insertError } = await supabaseServerAdmin()
+                .from("website_subscriptions")
+                .insert({
+                    website_id: websiteId,
+                    plan_id: planId,
+                    status: 'active',
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                    stripe_subscription_id: stripeSub.id,
+                    stripe_customer_id: stripeCustomerId,
+                    current_period_start: convertStripeTimestamp(stripeSub.current_period_start),
+                    current_period_end: convertStripeTimestamp(stripeSub.current_period_end),
+                    cancel_at_period_end: false
+                })
+                .select()
+                .single();
+            if (insertError) {
+                return res.status(500).json({ success: false, message: "Erreur lors de la création de l'abonnement Stripe" });
+            }
+            newDbSub = inserted;
+        }
 
         res.json({
             success: true,
             message: `Plan changé avec succès vers ${newPlan.name}`,
-            subscription: {
-                id: updatedSubscription.id,
-                status: updatedSubscription.status,
-                current_period_end: convertStripeTimestamp(updatedSubscription.current_period_end)
-            }
+            subscription: newDbSub
         });
 
     } catch (error) {
@@ -732,9 +809,12 @@ async function stripeWebhookHandler(req, res) {
     const sig = req.headers['stripe-signature'];
     let event;
 
+    console.log('--- Stripe Webhook reçu ---');
+    console.log('Headers:', req.headers);
     try {
         // Vérifier le webhook Stripe à partir du body brut
         event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+        console.log('Webhook Stripe vérifié avec succès. Type:', event.type);
     } catch (err) {
         console.error('Erreur de vérification webhook:', err.message);
         return res.status(400).send(`Webhook Error: ${err.message}`);
@@ -744,23 +824,31 @@ async function stripeWebhookHandler(req, res) {
     try {
         switch (event.type) {
             case 'checkout.session.completed':
+                console.log('Traitement checkout.session.completed', event.data.object.id);
                 await handleCheckoutCompleted(event.data.object);
                 break;
 
             case 'customer.subscription.created':
+                console.log('Traitement customer.subscription.created', event.data.object.id);
+                await handleSubscriptionUpdate(event.data.object);
+                break;
             case 'customer.subscription.updated':
+                console.log('Traitement customer.subscription.updated', event.data.object.id);
                 await handleSubscriptionUpdate(event.data.object);
                 break;
 
             case 'customer.subscription.deleted':
+                console.log('Traitement customer.subscription.deleted', event.data.object.id);
                 await handleSubscriptionDeleted(event.data.object);
                 break;
 
             case 'invoice.payment_succeeded':
+                console.log('Traitement invoice.payment_succeeded', event.data.object.id);
                 await handlePaymentSucceeded(event.data.object);
                 break;
 
             case 'invoice.payment_failed':
+                console.log('Traitement invoice.payment_failed', event.data.object.id);
                 await handlePaymentFailed(event.data.object);
                 break;
 
@@ -768,6 +856,7 @@ async function stripeWebhookHandler(req, res) {
                 console.log(`Événement non géré: ${event.type}`);
         }
 
+        console.log('--- Stripe Webhook traité avec succès ---');
         res.json({ received: true });
 
     } catch (error) {

@@ -174,9 +174,9 @@ function App() {
                                         <Route path="contact/settings" element={<ContactSettings />} />
                                         <Route path="contact/message/:id" element={<ContactMessage />} />
                                         <Route path="newsletter" element={<AuthorisedRouteNewsletter><NewsLetters /></AuthorisedRouteNewsletter>} />
-                                        <Route path="subscription/:websiteId" element={<SubscriptionPlans />} />
-                                        <Route path="billing/:websiteId" element={<BillingDashboard />} />
-                                        <Route path="settings/:websiteId" element={<EditWebsite />} />
+                                        <Route path="subscription" element={<SubscriptionPlans />} />
+                                        <Route path="billing" element={<BillingDashboard />} />
+                                        <Route path="settings" element={<EditWebsite />} />
                                     </Route>
                                     
                                     {/* Standalone pages */}

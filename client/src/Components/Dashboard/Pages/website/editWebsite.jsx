@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { useParams, useNavigate, NavLink } from 'react-router-dom';
+import { useNavigate, NavLink } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import { CircularProgress, MenuItem } from '@mui/material';
 import { Menu } from '@mui/material';
@@ -42,12 +42,11 @@ const StatusBadge = ({ label, active }) => {
 
 const EditWebsite = () => {
   const theme = useTheme();
-  const { websiteId } = useParams();
   const navigate = useNavigate();
   const token = Cookies.get('token');
   const apiUrl = config.apiUrl;
   const { showSnackbar } = useSnackbar();
-  const { websites, updateWebsite, deleteWebsite } = useContext(WebsiteContext);
+  const { websites, selectedWebsite, updateWebsite, deleteWebsite } = useContext(WebsiteContext);
   const { workspaces } = useContext(WorkspaceContext);
   
   // États pour les données du site
@@ -83,8 +82,9 @@ const EditWebsite = () => {
 
   // Charger les données du site web
   useEffect(() => {
-    if (websites && websiteId) {
-      const currentWebsite = websites.find(w => w.id === websiteId);
+    if (websites && selectedWebsite?.id) {
+      // Use the selectedWebsite from context as the canonical source of truth
+      const currentWebsite = websites.find(w => w.id === selectedWebsite.id) || selectedWebsite;
       if (currentWebsite) {
         setWebsite(currentWebsite);
         setWebsiteData({
@@ -98,7 +98,7 @@ const EditWebsite = () => {
         setInitialLoading(false);
       }
     }
-  }, [websites, websiteId]);
+  }, [websites, selectedWebsite]);
 
   // Recharger les membres disponibles quand les utilisateurs changent
   useEffect(() => {
@@ -110,7 +110,7 @@ const EditWebsite = () => {
   // Charger les utilisateurs du site web
   const loadWebsiteUsers = async () => {
     try {
-      const response = await Axios.get(`${apiUrl}/getUsersWebsite?websiteId=${websiteId}`, {
+      const response = await Axios.get(`${apiUrl}/getUsersWebsite?websiteId=${website?.id}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -155,7 +155,7 @@ const EditWebsite = () => {
     setLoading(true);
     try {
       const response = await Axios.post(`${apiUrl}/updateWebsite`, {
-        website_id: id,
+        website_id: website?.id,
         ...websiteData
       }, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -189,7 +189,7 @@ const EditWebsite = () => {
     setLoading(true);
     try {
       await Axios.post(`${apiUrl}/addUserToWebsite`, {
-        website_id: id,
+        website_id: website?.id,
         user_email: selectedUser.email,
         role: newUserRole
       }, {
@@ -214,7 +214,7 @@ const EditWebsite = () => {
     try {
       await Axios.put(`${apiUrl}/updateUserRoleWebsite`, {
         userWebsiteId: editUserModal.userId,
-        website_id: id,
+        website_id: website?.id,
         role: editUserModal.role
       }, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -237,7 +237,7 @@ const EditWebsite = () => {
       await Axios.delete(`${apiUrl}/deleteUserWebsite`, {
         data: { 
           userWebsiteId: deleteUserModal.userId,
-          website_id: id 
+          website_id: website?.id 
         },
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -256,11 +256,11 @@ const EditWebsite = () => {
   const handleDeleteWebsite = async () => {
     setLoading(true);
     try {
-      await Axios.delete(`${apiUrl}/deleteWebsite?websiteId=${id}`, {
+      await Axios.delete(`${apiUrl}/deleteWebsite?websiteId=${website?.id}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
-      deleteWebsite(id);
+      deleteWebsite(website?.id);
       navigate('/dashboard/websites');
       showSnackbar('Site web supprimé avec succès', 'success');
     } catch (error) {
@@ -628,7 +628,7 @@ const EditWebsite = () => {
               {/* Gestion des tokens API */}
 
               <div className="input-container" style={{ padding: 0 }}>
-                <APITokensManager websiteId={websiteId} />
+                <APITokensManager websiteId={website?.id} />
               </div>
 
               <div className="line_horizontal is_big_margin" style={{backgroundColor: theme.palette.primary.third}}></div>

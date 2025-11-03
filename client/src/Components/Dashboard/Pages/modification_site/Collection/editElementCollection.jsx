@@ -1291,8 +1291,8 @@ const EditElementCollection = () => {
                                         {subscriptionInfo?.custom_domain ? (
                                             <b>{selectedWebsite?.website_slug || 'Non configuré'}</b>
                                         ) : (
-                                            <NavLink to={`/dashboard/website/subscription/${selectedWebsite.id}`} style={{ color: theme.palette.text.primary, marginLeft: 0, fontSize: 12 }}>
-                                                Ajouter un domaine personnalisé
+                                            <NavLink to={`/dashboard/website/subscription`} style={{ color: theme.palette.text.primary, marginLeft: 0, fontSize: 12 }}>
+                                                    Ajouter un domaine personnalisé
                                             </NavLink>
                                         )}
                                     </span>

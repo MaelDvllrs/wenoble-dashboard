@@ -35,6 +35,8 @@ const WebsiteHome = () => {
   const [collectionsLoading, setCollectionsLoading] = useState(false);
   const [storageSize, setStorageSize] = useState(0);
   const [storageLoading, setStorageLoading] = useState(false);
+  // Subscription info for displaying plan badge
+  const [subscriptionInfo, setSubscriptionInfo] = useState(null);
 
   const apiUrl = config.apiUrl;
 
@@ -84,6 +86,29 @@ const WebsiteHome = () => {
       setUserStats(null);
     }
   }, [selectedWebsite?.id, loading, token]);
+
+  // Fetch subscription info (plan_name) for the selected website to show plan badge
+  useEffect(() => {
+    const fetchSubscription = async () => {
+      if (!selectedWebsite?.id || !token) {
+        setSubscriptionInfo(null);
+        return;
+      }
+      try {
+        const res = await Axios.get(`${config.apiUrl}/subscription-status/${selectedWebsite.id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.data?.success && res.data.subscription) {
+          setSubscriptionInfo(res.data.subscription);
+        } else {
+          setSubscriptionInfo(null);
+        }
+      } catch (e) {
+        setSubscriptionInfo(null);
+      }
+    };
+    fetchSubscription();
+  }, [selectedWebsite?.id, token]);
 
   // Fetch event statistics for last 14 days
   useEffect(() => {
@@ -292,7 +317,7 @@ const WebsiteHome = () => {
       title: 'Paramètres',
       description: 'Configurer votre site',
       icon: MdOutlineSettings,
-      path: `/dashboard/website/settings/${selectedWebsite.id}`,
+      path: `/dashboard/website/settings`,
       enabled: true
     }] : [])
   ];
@@ -318,15 +343,22 @@ const WebsiteHome = () => {
               <h1 className='website-home-title'>
                 {selectedWebsite.website_name}
               </h1>
-              <a
-                href={`https://${selectedWebsite.website_slug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className='website-home-link'
-              >
-                {selectedWebsite.website_slug}
-                <MdOutlineOpenInNew style={{ fontSize: '1rem' }} />
-              </a>
+              <div style={{display:'flex', alignItems:'center'}}>
+                  <a
+                    href={`https://${selectedWebsite.website_slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className='website-home-link'
+                  >
+                    {selectedWebsite.website_slug}
+                    <MdOutlineOpenInNew style={{ fontSize: '1rem' }} />
+                    {/* Plan badge next to slug */}
+
+                  </a>
+                  <span className={`website-selector-plan ${subscriptionInfo?.plan_name ? subscriptionInfo.plan_name.toString().toLowerCase() : 'free'}`} style={{ marginLeft: 8 }}>
+                      {subscriptionInfo?.plan_name || 'Free'}
+                  </span>
+              </div>  
             </div>
           </div>
           

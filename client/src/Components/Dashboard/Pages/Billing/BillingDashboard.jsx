@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, NavLink } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import { 
   Box, 
@@ -31,7 +31,6 @@ import './BillingDashboard.css';
 import { SecondaryButton, InfoAlert, GreenCircularProgress } from '../../../../Theme/element';
 
 const BillingDashboard = () => {
-  const { websiteId } = useParams();
   const { selectedWebsite } = useWebsite();
   const theme = useTheme();
   const token = Cookies.get('token');
@@ -46,18 +45,18 @@ const BillingDashboard = () => {
   const invoicesPerPage = 5;
 
   useEffect(() => {
-    if (websiteId || selectedWebsite?.id) {
+    if (selectedWebsite?.id) {
       fetchBillingData();
     }
-  }, [websiteId, selectedWebsite]);
+  }, [selectedWebsite]);
 
   const fetchBillingData = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      const siteId = websiteId || selectedWebsite?.id;
-      console.log('Fetching billing data for siteId:', siteId);
+  const siteId = selectedWebsite?.id;
+  console.log('Fetching billing data for siteId:', siteId);
       
       // Récupérer les informations de facturation
       console.log('Making API calls...');
@@ -107,8 +106,8 @@ const BillingDashboard = () => {
       }
       
       // Fallback: utiliser notre endpoint avec authentification par paramètre
-      const siteId = websiteId || selectedWebsite?.id;
-      const urlWithAuth = `${config.apiUrl}/invoice-pdf/${siteId}/${invoiceId}?token=${encodeURIComponent(token)}`;
+  const siteId = selectedWebsite?.id;
+  const urlWithAuth = `${config.apiUrl}/invoice-pdf/${siteId}/${invoiceId}?token=${encodeURIComponent(token)}`;
       
       window.open(urlWithAuth, '_blank', 'noopener,noreferrer');
     } catch (error) {
@@ -183,7 +182,8 @@ const BillingDashboard = () => {
     }
 
     try {
-      const response = await Axios.delete(`${config.apiUrl}/payment-methods/${websiteId}/${paymentMethodId}`, {
+      const siteId = selectedWebsite?.id;
+      const response = await Axios.delete(`${config.apiUrl}/payment-methods/${siteId}/${paymentMethodId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -225,13 +225,6 @@ const BillingDashboard = () => {
         <h3 className="home-section-title" style={{ color: theme.palette.text.primary }}>
             Facturation
         </h3>
-        {subscriptionInfo?.cancel_at_period_end && (
-          <Alert severity="warning" sx={{ mb: 3 }}>
-            <Typography variant="body2">
-              Votre abonnement sera annulé le {formatDate(subscriptionInfo.next_invoice_date || subscriptionInfo.current_period_end)}
-            </Typography>
-          </Alert>
-        )}
 
         <div className='billing-grid'>
         {/* Informations d'abonnement */}
@@ -484,7 +477,7 @@ const BillingDashboard = () => {
           open={addPaymentDialogOpen}
           onClose={() => setAddPaymentDialogOpen(false)}
           onSuccess={fetchBillingData}
-          websiteId={websiteId || selectedWebsite?.id}
+          websiteId={selectedWebsite?.id}
         />
       </div>
       </div>

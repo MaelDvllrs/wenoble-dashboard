@@ -1,3 +1,4 @@
+
 // External libraries
 import React, { useRef, useLayoutEffect, useState } from 'react';
 import ReactSelect from 'react-select';
@@ -922,6 +923,45 @@ export function GlobalSnackbar({ open, message, type = 'info', onClose, autoHide
     </Snackbar>
   );
 }
+
+
+// Alerte épurée réutilisable
+export const AlertBanner = ({ severity = 'info', children, sx = {}, icon = null, ...props }) => {
+  const theme = useTheme();
+  // Couleurs par type
+  const colorMap = {
+    info: theme.palette.primary.main,
+    warning: theme.palette.warning.main,
+    error: theme.palette.error.main,
+    success: theme.palette.success.main
+  };
+  const bgMap = {
+    info: theme.palette.primary.secondary,
+    warning: theme.palette.warning.light,
+    error: theme.palette.error.light,
+    success: theme.palette.success.light
+  };
+  return (
+    <div
+      style={{
+        backgroundColor:"rgb(237 108 2 / 21%)",
+        color: colorMap[severity] || theme.palette.text.primary,
+        fontSize: '0.8rem',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.7rem',
+        borderRadius: '0.3rem',
+        margin: '0.5rem 0',
+        padding:'0.2rem 1rem',
+        ...sx
+      }}
+      {...props}
+    >
+      {icon}
+      <span style={{ flex: 1 }}>{children}</span>
+    </div>
+  );
+};
 
 // Composant d'icône de copie réutilisable
 export function CopyButton({ textToCopy, successMessage = 'Copié dans le presse-papiers', errorMessage = 'Erreur lors de la copie', onSuccess, onError, size = 'small', iconSize = '0.8rem', sx = {}, ...props }) {

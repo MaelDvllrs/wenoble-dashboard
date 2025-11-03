@@ -84,7 +84,20 @@ const WebsiteManager = () => {
           });
           customDomain = !!authRes.data.authorisation;
         }
-        setSubscriptionInfo({ custom_domain: customDomain });
+        // Récupérer aussi le plan d'abonnement (si disponible)
+        let planName = null;
+        try {
+          const subRes = await Axios.get(`${config.apiUrl}/subscription-status/${selectedWebsite.id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (subRes.data?.success && subRes.data.subscription) {
+            planName = subRes.data.subscription.plan_name || null;
+          }
+        } catch (e) {
+          // ignore, on affichera une valeur par défaut
+        }
+
+        setSubscriptionInfo({ custom_domain: customDomain, plan_name: planName });
       } catch (e) {
         setSubscriptionInfo(null);
       }
@@ -224,7 +237,6 @@ const WebsiteManager = () => {
     }
   });
 
-  console.log(selectedWebsite)
 
   return (
     <div className='outlet'>
@@ -256,8 +268,8 @@ const WebsiteManager = () => {
                       <b>{selectedWebsite ? selectedWebsite.website_name : 'Aucun site sélectionné'}</b>
                     </span>
                     {selectedWebsite && (
-                      <span className={`website-selector-role ${selectedWebsite.user_role}`}>
-                        {selectedWebsite.user_role}
+                      <span className={`website-selector-plan ${subscriptionInfo?.plan_name ? subscriptionInfo.plan_name.toString().toLowerCase() : 'free'}`}>
+                        {subscriptionInfo?.plan_name || 'Free'}
                       </span>
                     )}
                     <UnfoldMoreIcon fontSize='small' className='icon' style={{color: theme.palette.text.secondary}} />
@@ -409,7 +421,7 @@ const WebsiteManager = () => {
               <div className='line-sidebar small'></div>
               
               <NavLink 
-                to={`/dashboard/website/subscription/${selectedWebsite.id}`}
+                to={`/dashboard/website/subscription`}
                 className={({ isActive }) => `account-sidebar-link${isActive ? ' account-sidebar-link-active' : ''}`}
               >
                 <CardMembershipIcon fontSize='small'/>
@@ -417,7 +429,7 @@ const WebsiteManager = () => {
               </NavLink>
               
               <NavLink 
-                to={`/dashboard/website/billing/${selectedWebsite.id}`}
+                to={`/dashboard/website/billing`}
                 className={({ isActive }) => `account-sidebar-link${isActive ? ' account-sidebar-link-active' : ''}`}
               >
                 <ReceiptIcon fontSize='small'/>
@@ -426,7 +438,7 @@ const WebsiteManager = () => {
               
               {selectedWebsite.user_role === 'admin' && (
                 <NavLink 
-                  to={`/dashboard/website/settings/${selectedWebsite.id}`}
+                  to={`/dashboard/website/settings`}
                   className={({ isActive }) => `account-sidebar-link${isActive ? ' account-sidebar-link-active' : ''}`}
                 >
                   <SettingsIcon fontSize='small'/>
@@ -553,7 +565,7 @@ const WebsiteManager = () => {
                                         {subscriptionInfo?.custom_domain ? (
                                           <b>{selectedWebsite?.website_slug || 'Non configuré'}</b>
                                         ) : (
-                                          <NavLink to={`/dashboard/website/subscription/${selectedWebsite.id}`} style={{ color: theme.palette.text.primary, marginLeft: 0, fontSize: 12 }}>
+                                          <NavLink to={`/dashboard/website/subscription`} style={{ color: theme.palette.text.primary, marginLeft: 0, fontSize: 12 }}>
                                             Ajouter un domaine personnalisé
                                           </NavLink>
                                         )}
