@@ -256,12 +256,27 @@ router.get('/custom-domain-authorisation/:websiteId', authenticateToken, async (
             .limit(1)
             .maybeSingle();
 
-        if (subError) {
+        if (subError && subError.code !== 'PGRST116') {
             console.error('Erreur récupération souscription:', subError);
             return res.status(500).json({ success: false, message: 'Erreur récupération souscription' });
         }
+
+        // Si aucune souscription active, utiliser le plan gratuit par défaut
         if (!subscription) {
-            return res.status(404).json({ success: false, message: 'Souscription non trouvée' });
+            // Récupérer le plan gratuit
+            const { data: freePlan } = await supabaseAdmin
+                .from("subscription_plans")
+                .select("*")
+                .eq("name", "free")
+                .maybeSingle();
+
+            if (freePlan) {
+                // Retourner les features du plan gratuit (sans custom_domain)
+                return res.json({ success: true, authorisation: false });
+            } else {
+                // Si le plan gratuit n'existe pas en BDD, retourner false par défaut
+                return res.json({ success: true, authorisation: false });
+            }
         }
 
         // Récupérer les features du plan
