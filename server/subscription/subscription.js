@@ -476,7 +476,6 @@ router.post("/verify-subscription", authenticateToken, async (req, res) => {
                 .eq("status", "active")
                 .maybeSingle();
 
-            console.log('Existing subscription:', existingSubscription);
             
                 if (!existingSubscription) {
                 // Créer l'abonnement dans la base de données (abonnement par site)
@@ -809,12 +808,10 @@ async function stripeWebhookHandler(req, res) {
     const sig = req.headers['stripe-signature'];
     let event;
 
-    console.log('--- Stripe Webhook reçu ---');
-    console.log('Headers:', req.headers);
+
     try {
         // Vérifier le webhook Stripe à partir du body brut
         event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
-        console.log('Webhook Stripe vérifié avec succès. Type:', event.type);
     } catch (err) {
         console.error('Erreur de vérification webhook:', err.message);
         return res.status(400).send(`Webhook Error: ${err.message}`);
@@ -824,31 +821,25 @@ async function stripeWebhookHandler(req, res) {
     try {
         switch (event.type) {
             case 'checkout.session.completed':
-                console.log('Traitement checkout.session.completed', event.data.object.id);
                 await handleCheckoutCompleted(event.data.object);
                 break;
 
             case 'customer.subscription.created':
-                console.log('Traitement customer.subscription.created', event.data.object.id);
                 await handleSubscriptionUpdate(event.data.object);
                 break;
             case 'customer.subscription.updated':
-                console.log('Traitement customer.subscription.updated', event.data.object.id);
                 await handleSubscriptionUpdate(event.data.object);
                 break;
 
             case 'customer.subscription.deleted':
-                console.log('Traitement customer.subscription.deleted', event.data.object.id);
                 await handleSubscriptionDeleted(event.data.object);
                 break;
 
             case 'invoice.payment_succeeded':
-                console.log('Traitement invoice.payment_succeeded', event.data.object.id);
                 await handlePaymentSucceeded(event.data.object);
                 break;
 
             case 'invoice.payment_failed':
-                console.log('Traitement invoice.payment_failed', event.data.object.id);
                 await handlePaymentFailed(event.data.object);
                 break;
 
@@ -856,7 +847,6 @@ async function stripeWebhookHandler(req, res) {
                 console.log(`Événement non géré: ${event.type}`);
         }
 
-        console.log('--- Stripe Webhook traité avec succès ---');
         res.json({ received: true });
 
     } catch (error) {

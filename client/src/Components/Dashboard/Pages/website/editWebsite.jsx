@@ -107,6 +107,7 @@ const EditWebsite = () => {
     }
   }, [users, website]);
 
+
   // Charger les utilisateurs du site web
   const loadWebsiteUsers = async () => {
     try {
@@ -190,7 +191,7 @@ const EditWebsite = () => {
     setLoading(true);
     try {
       await Axios.post(`${apiUrl}/addUserToWebsite`, {
-        website_id: websiteId,
+        website_id: website?.id,
         user_email: selectedUser.email,
         role: newUserRole
       }, {
