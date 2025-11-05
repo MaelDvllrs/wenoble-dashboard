@@ -110,6 +110,8 @@ const EditWebsite = () => {
 
   // Charger les utilisateurs du site web
   const loadWebsiteUsers = async () => {
+    if (!website?.id) return;
+    
     try {
       const response = await Axios.get(`${apiUrl}/getUsersWebsite?websiteId=${website?.id}`, {
         headers: { 'Authorization': `Bearer ${token}` }

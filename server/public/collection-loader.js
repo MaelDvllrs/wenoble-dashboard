@@ -146,6 +146,7 @@
                 }
             }
             const params = new URLSearchParams(paramsObj);
+            console.log('Collection Loader Params:', params.toString());
 
             const blogPageResponse = await fetch(`${apiUrl}/api/sendBlog?${params.toString()}`, {
                 method: "GET",
@@ -154,6 +155,8 @@
                     'ids': blogId,
                 }
             });
+
+            console.log('Blog Page Response:', blogPageResponse);
 
             let dataBlog = null;
             try {

@@ -188,8 +188,44 @@ router.get("/subscription-status/:websiteId", authenticateToken, async (req, res
         }
 
 
-        // Si pas d'abonnement actif, retourner le plan gratuit par défaut
+        // Si pas d'abonnement actif, créer ou récupérer un abonnement au plan gratuit
         if (!subscription) {
+            // Vérifier s'il existe déjà un abonnement gratuit (même inactif)
+            const { data: existingFreeSubscription } = await supabaseServerAdmin()
+                .from("website_subscriptions")
+                .select(`
+                    *,
+                    subscription_plans (
+                        id,
+                        name,
+                        price,
+                        billing_period,
+                        features
+                    )
+                `)
+                .eq("website_id", websiteId)
+                .order("created_at", { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+            // Si un abonnement existe déjà (même inactif), le retourner
+            if (existingFreeSubscription) {
+                return res.json({
+                    success: true,
+                    subscription: {
+                        id: existingFreeSubscription.id,
+                        plan_id: existingFreeSubscription.subscription_plans.id,
+                        plan_name: existingFreeSubscription.subscription_plans.name,
+                        price: existingFreeSubscription.subscription_plans.price,
+                        billing_period: existingFreeSubscription.subscription_plans.billing_period,
+                        features: normalizeFeatures(existingFreeSubscription.subscription_plans.features),
+                        status: existingFreeSubscription.status,
+                        is_free: true
+                    }
+                });
+            }
+
+            // Sinon, créer un nouvel abonnement gratuit (premier abonnement du site)
             const { data: freePlan, error: freePlanError } = await supabaseServerAdmin()
                 .from("subscription_plans")
                 .select("*")
@@ -200,9 +236,32 @@ router.get("/subscription-status/:websiteId", authenticateToken, async (req, res
                 throw freePlanError;
             }
 
+            // Créer l'abonnement gratuit dans la base de données
+            const { data: newFreeSubscription, error: insertError } = await supabaseServerAdmin()
+                .from("website_subscriptions")
+                .insert({
+                    website_id: websiteId,
+                    plan_id: freePlan.id,
+                    status: 'active',
+                    stripe_subscription_id: null,
+                    stripe_customer_id: null,
+                    current_period_start: null,
+                    current_period_end: null,
+                    cancel_at_period_end: false,
+                    created_at: new Date().toISOString()
+                })
+                .select()
+                .single();
+
+            if (insertError) {
+                console.error("Erreur création abonnement gratuit:", insertError);
+                throw insertError;
+            }
+
             return res.json({
                 success: true,
                 subscription: {
+                    id: newFreeSubscription.id,
                     plan_id: freePlan.id,
                     plan_name: freePlan.name,
                     price: freePlan.price,
@@ -281,10 +340,17 @@ router.post("/create-checkout-session", authenticateToken, async (req, res) => {
         const { websiteId, planId } = req.body;
         const userId = req.user.idUser;
 
-        // Vérifier que l'utilisateur possède ce site
+        // Vérifier que l'utilisateur possède ce site et récupérer les infos du site
         const { data: websiteOwnership, error: ownershipError } = await supabaseServerAdmin()
             .from("user_websites")
-            .select("*")
+            .select(`
+                *,
+                websites (
+                    id,
+                    website_name,
+                    stripe_customer_id
+                )
+            `)
             .eq("website_id", websiteId)
             .eq("user_id", userId)
             .maybeSingle();
@@ -295,6 +361,8 @@ router.post("/create-checkout-session", authenticateToken, async (req, res) => {
                 message: "Vous n'avez pas accès à ce site" 
             });
         }
+
+        const website = websiteOwnership.websites;
 
         // Récupérer les détails du plan
         const { data: plan, error: planError } = await supabaseServerAdmin()
@@ -334,11 +402,11 @@ router.post("/create-checkout-session", authenticateToken, async (req, res) => {
             .eq("id", userId)
             .maybeSingle();
 
-        // Récupérer ou créer le client Stripe (en priorité depuis l'abonnement actif)
-        let stripeCustomerId = null;
+        // Récupérer ou créer le client Stripe UNIQUE pour ce site
+        let stripeCustomerId = website.stripe_customer_id;
         let existingSubscription = null;
 
-        // D'abord, vérifier s'il y a déjà un abonnement actif pour ce site
+        // Vérifier s'il y a déjà un abonnement actif pour ce site
         const { data: activeSubscriptions, error: subError } = await supabaseServerAdmin()
             .from("website_subscriptions")
             .select("stripe_subscription_id, id")
@@ -347,54 +415,28 @@ router.post("/create-checkout-session", authenticateToken, async (req, res) => {
             .order('created_at', { ascending: false });
 
         if (!subError && activeSubscriptions && activeSubscriptions.length > 0) {
-            // Il y a un abonnement actif - il peut s'agir du plan gratuit (pas de stripe_subscription_id)
             existingSubscription = activeSubscriptions[0];
-            if (existingSubscription.stripe_subscription_id) {
-                try {
-                    const stripeSubscription = await stripe.subscriptions.retrieve(existingSubscription.stripe_subscription_id);
-                    stripeCustomerId = stripeSubscription.customer;
-                } catch (error) {
-                    console.error("Erreur récupération abonnement Stripe existant:", error);
-                }
-            } else {
-                // Si c'est un plan gratuit, il n'y a pas de stripe_subscription_id, donc stripeCustomerId reste null ici
-                // On passera à la recherche dans stripe_customers plus bas
-            }
         }
 
-        // Si pas de client depuis un abonnement existant, chercher dans stripe_customers
-        if (!stripeCustomerId) {
-            const { data: existingCustomer } = await supabaseServerAdmin()
-                .from("stripe_customers")
-                .select("stripe_customer_id")
-                .eq("user_id", userId)
-                .maybeSingle();
-
-            if (existingCustomer) {
-                stripeCustomerId = existingCustomer.stripe_customer_id;
-            }
-        }
-
-        // En dernier recours, créer un nouveau client
+        // Si pas de client Stripe pour ce site, en créer un UNIQUE
         if (!stripeCustomerId) {
             const customer = await stripe.customers.create({
                 email: userProfile?.email,
                 name: `${userProfile?.first_name || ''} ${userProfile?.last_name || ''}`.trim(),
                 metadata: {
                     userId: userId,
-                    websiteId: websiteId
+                    websiteId: websiteId,
+                    websiteName: website.website_name
                 }
             });
 
             stripeCustomerId = customer.id;
 
-            // Sauvegarder l'ID client Stripe
+            // Sauvegarder l'ID client Stripe dans la table websites
             await supabaseServerAdmin()
-                .from("stripe_customers")
-                .insert({
-                    user_id: userId,
-                    stripe_customer_id: stripeCustomerId
-                });
+                .from("websites")
+                .update({ stripe_customer_id: stripeCustomerId })
+                .eq("id", websiteId);
         }
 
         // Préparer les métadonnées pour la session
@@ -421,10 +463,12 @@ router.post("/create-checkout-session", authenticateToken, async (req, res) => {
                 },
             ],
             mode: 'subscription',
-            success_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/dashboard/website/subscription/${websiteId}?success=true&session_id={CHECKOUT_SESSION_ID}&subscription_updated=true`,
-            cancel_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/dashboard/website/subscription/${websiteId}?canceled=true`,
+            success_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/dashboard/website/subscription/?success=true&session_id={CHECKOUT_SESSION_ID}&subscription_updated=true`,
+            cancel_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/dashboard/website/subscription/?canceled=true`,
             metadata: sessionMetadata,
             allow_promotion_codes: true
+            // En mode subscription, Stripe enregistre automatiquement la méthode de paiement
+            // Le webhook handleCheckoutCompleted se charge de la définir comme par défaut
         });
 
         res.json({
@@ -466,15 +510,23 @@ router.post("/verify-subscription", authenticateToken, async (req, res) => {
             // Récupérer l'abonnement Stripe
             const subscription = await stripe.subscriptions.retrieve(session.subscription);
 
-
             // Vérifier si l'abonnement existe déjà dans la base de données
-            // On vérifie à la fois par website_id (pour gérer le cas du plan gratuit)
-            const { data: existingSubscription } = await supabaseServerAdmin()
+            // D'abord vérifier par stripe_subscription_id pour éviter les doublons
+            const { data: existingByStripeId } = await supabaseServerAdmin()
+                .from("website_subscriptions")
+                .select("*")
+                .eq("stripe_subscription_id", subscription.id)
+                .maybeSingle();
+
+            // Ensuite vérifier s'il y a un abonnement actif pour ce site
+            const { data: existingByWebsite } = await supabaseServerAdmin()
                 .from("website_subscriptions")
                 .select("*")
                 .eq("website_id", session.metadata.websiteId)
                 .eq("status", "active")
                 .maybeSingle();
+
+            const existingSubscription = existingByStripeId || existingByWebsite;
 
             
                 if (!existingSubscription) {
@@ -542,7 +594,7 @@ router.post("/verify-subscription", authenticateToken, async (req, res) => {
     }
 });
 
-// Changer le plan d'un abonnement existant (sans checkout)
+// Changer le plan d'un abonnement existant
 router.post("/change-subscription-plan", authenticateToken, async (req, res) => {
     try {
         const { websiteId, planId } = req.body;
@@ -563,15 +615,6 @@ router.post("/change-subscription-plan", authenticateToken, async (req, res) => 
             });
         }
 
-        // Vérifier si Stripe est configuré
-        if (!isStripeConfigured()) {
-            return res.status(503).json({
-                success: false,
-                message: "Service de paiement temporairement indisponible.",
-                error_code: "STRIPE_NOT_CONFIGURED"
-            });
-        }
-
         // Récupérer le nouveau plan
         const { data: newPlan, error: planError } = await supabaseServerAdmin()
             .from("subscription_plans")
@@ -583,6 +626,15 @@ router.post("/change-subscription-plan", authenticateToken, async (req, res) => 
             return res.status(404).json({ 
                 success: false, 
                 message: "Plan introuvable" 
+            });
+        }
+
+        // Si c'est un plan payant, vérifier que Stripe est configuré
+        if (newPlan.price > 0 && !isStripeConfigured()) {
+            return res.status(503).json({
+                success: false,
+                message: "Service de paiement temporairement indisponible.",
+                error_code: "STRIPE_NOT_CONFIGURED"
             });
         }
 
@@ -621,92 +673,227 @@ router.post("/change-subscription-plan", authenticateToken, async (req, res) => 
             .update({ status: 'canceled', updated_at: new Date().toISOString() })
             .eq("id", currentSubscription.id);
 
-        // Créer le nouvel abonnement dans la BDD
+        // Créer ou réactiver le nouvel abonnement dans la BDD
         let newDbSub = null;
         if (newPlan.name === 'free' || newPlan.price === 0) {
-            // Plan gratuit : pas de Stripe
-            const { data: inserted, error: insertError } = await supabaseServerAdmin()
+            // Plan gratuit : vérifier s'il existe déjà un abonnement gratuit (même canceled)
+            const { data: existingFreeSubscriptions } = await supabaseServerAdmin()
                 .from("website_subscriptions")
-                .insert({
-                    website_id: websiteId,
-                    plan_id: planId,
-                    status: 'active',
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString(),
-                    stripe_subscription_id: null,
-                    stripe_customer_id: null,
-                    current_period_start: null,
-                    current_period_end: null,
-                    cancel_at_period_end: false
-                })
-                .select()
-                .single();
-            if (insertError) {
-                return res.status(500).json({ success: false, message: "Erreur lors de la création de l'abonnement gratuit" });
+                .select("id, plan_id, subscription_plans!inner(name, price)")
+                .eq("website_id", websiteId)
+                .order('created_at', { ascending: false });
+
+            // Chercher un abonnement gratuit existant (canceled ou non)
+            const existingFreeSub = existingFreeSubscriptions?.find(sub => 
+                sub.subscription_plans.name === 'free' || sub.subscription_plans.price === 0
+            );
+
+            if (existingFreeSub) {
+                // Réactiver l'abonnement gratuit existant
+                const { data: updated, error: updateError } = await supabaseServerAdmin()
+                    .from("website_subscriptions")
+                    .update({
+                        status: 'active',
+                        updated_at: new Date().toISOString(),
+                        stripe_subscription_id: null,
+                        stripe_customer_id: null,
+                        current_period_start: null,
+                        current_period_end: null,
+                        cancel_at_period_end: false
+                    })
+                    .eq("id", existingFreeSub.id)
+                    .select()
+                    .single();
+                
+                if (updateError) {
+                    return res.status(500).json({ success: false, message: "Erreur lors de la réactivation de l'abonnement gratuit" });
+                }
+                newDbSub = updated;
+            } else {
+                // Créer un nouvel abonnement gratuit seulement s'il n'en existe aucun
+                const { data: inserted, error: insertError } = await supabaseServerAdmin()
+                    .from("website_subscriptions")
+                    .insert({
+                        website_id: websiteId,
+                        plan_id: planId,
+                        status: 'active',
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString(),
+                        stripe_subscription_id: null,
+                        stripe_customer_id: null,
+                        current_period_start: null,
+                        current_period_end: null,
+                        cancel_at_period_end: false
+                    })
+                    .select()
+                    .single();
+                
+                if (insertError) {
+                    return res.status(500).json({ success: false, message: "Erreur lors de la création de l'abonnement gratuit" });
+                }
+                newDbSub = inserted;
             }
-            newDbSub = inserted;
         } else {
-            // Créer un nouvel abonnement Stripe
-            // (Ici, il faudrait idéalement passer par le checkout Stripe, mais pour rester compatible avec l'ancien flux, on crée directement)
-            // À adapter selon la logique métier !
-            // Pour l'exemple, on crée un nouvel abonnement Stripe et on l'enregistre
-            const { data: userProfile } = await supabaseServerAdmin()
-                .from("users")
-                .select("email, first_name, last_name")
-                .eq("id", userId)
+            // Plan payant : mettre à jour l'abonnement existant ou en créer un nouveau
+            // Récupérer le client Stripe du site
+            const { data: website } = await supabaseServerAdmin()
+                .from("websites")
+                .select("stripe_customer_id, website_name")
+                .eq("id", websiteId)
                 .maybeSingle();
 
-            // Récupérer ou créer le client Stripe
-            let stripeCustomerId = null;
-            const { data: existingCustomer } = await supabaseServerAdmin()
-                .from("stripe_customers")
-                .select("stripe_customer_id")
-                .eq("user_id", userId)
-                .maybeSingle();
-            if (existingCustomer) {
-                stripeCustomerId = existingCustomer.stripe_customer_id;
-            } else {
+            let stripeCustomerId = website?.stripe_customer_id;
+
+            // Si pas de client Stripe pour ce site, en créer un
+            if (!stripeCustomerId) {
+                const { data: userProfile } = await supabaseServerAdmin()
+                    .from("users")
+                    .select("email, first_name, last_name")
+                    .eq("id", userId)
+                    .maybeSingle();
+
                 const customer = await stripe.customers.create({
                     email: userProfile?.email,
                     name: `${userProfile?.first_name || ''} ${userProfile?.last_name || ''}`.trim(),
-                    metadata: { userId, websiteId }
+                    metadata: { 
+                        userId, 
+                        websiteId,
+                        websiteName: website?.website_name 
+                    }
                 });
                 stripeCustomerId = customer.id;
+
+                // Sauvegarder dans la table websites
                 await supabaseServerAdmin()
-                    .from("stripe_customers")
-                    .insert({ user_id: userId, stripe_customer_id: stripeCustomerId });
+                    .from("websites")
+                    .update({ stripe_customer_id: stripeCustomerId })
+                    .eq("id", websiteId);
             }
 
-            // Créer l'abonnement Stripe
-            const stripeSub = await stripe.subscriptions.create({
-                customer: stripeCustomerId,
-                items: [{ price: newPlan.stripe_price_id || process.env.STRIPE_PREMIUM_PRICE_ID }],
-                proration_behavior: 'create_prorations',
-                metadata: { userId, websiteId, planId }
-            });
-            newStripeSub = stripeSub;
-
-            // Enregistrer dans la BDD
-            const { data: inserted, error: insertError } = await supabaseServerAdmin()
-                .from("website_subscriptions")
-                .insert({
-                    website_id: websiteId,
-                    plan_id: planId,
+            // Récupérer le client Stripe pour obtenir la méthode de paiement par défaut
+            const stripeCustomer = await stripe.customers.retrieve(stripeCustomerId);
+            
+            // Vérifier s'il existe déjà un abonnement Stripe actif (non-gratuit) pour ce client
+            let existingStripeSubscriptions = null;
+            try {
+                const subscriptionsList = await stripe.subscriptions.list({
+                    customer: stripeCustomerId,
                     status: 'active',
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString(),
-                    stripe_subscription_id: stripeSub.id,
-                    stripe_customer_id: stripeCustomerId,
-                    current_period_start: convertStripeTimestamp(stripeSub.current_period_start),
-                    current_period_end: convertStripeTimestamp(stripeSub.current_period_end),
-                    cancel_at_period_end: false
-                })
-                .select()
-                .single();
-            if (insertError) {
-                return res.status(500).json({ success: false, message: "Erreur lors de la création de l'abonnement Stripe" });
+                    limit: 10
+                });
+                existingStripeSubscriptions = subscriptionsList.data;
+            } catch (error) {
+                console.error("Erreur lors de la récupération des abonnements Stripe:", error);
             }
-            newDbSub = inserted;
+
+            let stripeSub = null;
+
+            // Si un abonnement Stripe actif existe, le mettre à jour
+            if (existingStripeSubscriptions && existingStripeSubscriptions.length > 0) {
+                const existingStripeSub = existingStripeSubscriptions[0];
+                
+                // Mettre à jour l'abonnement existant avec le nouveau prix
+                stripeSub = await stripe.subscriptions.update(existingStripeSub.id, {
+                    items: [{
+                        id: existingStripeSub.items.data[0].id,
+                        price: newPlan.stripe_price_id || process.env.STRIPE_PREMIUM_PRICE_ID
+                    }],
+                    proration_behavior: 'create_prorations',
+                    metadata: { userId, websiteId, planId }
+                });
+
+                // Mettre à jour l'enregistrement existant dans la BDD
+                const { data: existingDbSub } = await supabaseServerAdmin()
+                    .from("website_subscriptions")
+                    .select("id")
+                    .eq("stripe_subscription_id", existingStripeSub.id)
+                    .maybeSingle();
+
+                if (existingDbSub) {
+                    const { data: updated, error: updateError } = await supabaseServerAdmin()
+                        .from("website_subscriptions")
+                        .update({
+                            plan_id: planId,
+                            status: 'active',
+                            updated_at: new Date().toISOString(),
+                            current_period_start: convertStripeTimestamp(stripeSub.current_period_start),
+                            current_period_end: convertStripeTimestamp(stripeSub.current_period_end),
+                            cancel_at_period_end: false
+                        })
+                        .eq("id", existingDbSub.id)
+                        .select()
+                        .single();
+                    
+                    if (updateError) {
+                        return res.status(500).json({ success: false, message: "Erreur lors de la mise à jour de l'abonnement" });
+                    }
+                    newDbSub = updated;
+                } else {
+                    // Cas rare : l'abonnement existe dans Stripe mais pas en BDD
+                    const { data: inserted, error: insertError } = await supabaseServerAdmin()
+                        .from("website_subscriptions")
+                        .insert({
+                            website_id: websiteId,
+                            plan_id: planId,
+                            status: 'active',
+                            created_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString(),
+                            stripe_subscription_id: stripeSub.id,
+                            stripe_customer_id: stripeCustomerId,
+                            current_period_start: convertStripeTimestamp(stripeSub.current_period_start),
+                            current_period_end: convertStripeTimestamp(stripeSub.current_period_end),
+                            cancel_at_period_end: false
+                        })
+                        .select()
+                        .single();
+                    
+                    if (insertError) {
+                        return res.status(500).json({ success: false, message: "Erreur lors de la création de l'abonnement" });
+                    }
+                    newDbSub = inserted;
+                }
+            } else {
+                // Aucun abonnement Stripe actif, en créer un nouveau
+                // Vérifier si le client a une méthode de paiement par défaut
+                const subscriptionParams = {
+                    customer: stripeCustomerId,
+                    items: [{ price: newPlan.stripe_price_id || process.env.STRIPE_PREMIUM_PRICE_ID }],
+                    proration_behavior: 'create_prorations',
+                    metadata: { userId, websiteId, planId }
+                };
+
+                // Si le client a une méthode de paiement par défaut, l'utiliser
+                if (stripeCustomer.invoice_settings?.default_payment_method) {
+                    subscriptionParams.default_payment_method = stripeCustomer.invoice_settings.default_payment_method;
+                } else if (stripeCustomer.default_source) {
+                    subscriptionParams.default_source = stripeCustomer.default_source;
+                }
+
+                stripeSub = await stripe.subscriptions.create(subscriptionParams);
+
+                // Enregistrer dans la BDD
+                const { data: inserted, error: insertError } = await supabaseServerAdmin()
+                    .from("website_subscriptions")
+                    .insert({
+                        website_id: websiteId,
+                        plan_id: planId,
+                        status: 'active',
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString(),
+                        stripe_subscription_id: stripeSub.id,
+                        stripe_customer_id: stripeCustomerId,
+                        current_period_start: convertStripeTimestamp(stripeSub.current_period_start),
+                        current_period_end: convertStripeTimestamp(stripeSub.current_period_end),
+                        cancel_at_period_end: false
+                    })
+                    .select()
+                    .single();
+                
+                if (insertError) {
+                    return res.status(500).json({ success: false, message: "Erreur lors de la création de l'abonnement Stripe" });
+                }
+                newDbSub = inserted;
+            }
         }
 
         res.json({
@@ -824,6 +1011,11 @@ async function stripeWebhookHandler(req, res) {
                 await handleCheckoutCompleted(event.data.object);
                 break;
 
+            case 'customer.created':
+                // Événement informationnel - pas d'action nécessaire
+                console.log('Nouveau client Stripe créé:', event.data.object.id);
+                break;
+
             case 'customer.subscription.created':
                 await handleSubscriptionUpdate(event.data.object);
                 break;
@@ -868,6 +1060,19 @@ async function handleCheckoutCompleted(session) {
         // Récupérer l'abonnement Stripe
         const subscription = await stripe.subscriptions.retrieve(session.subscription);
         
+        // Définir la méthode de paiement par défaut sur le client
+        if (subscription.default_payment_method && session.customer) {
+            try {
+                await stripe.customers.update(session.customer, {
+                    invoice_settings: {
+                        default_payment_method: subscription.default_payment_method
+                    }
+                });
+            } catch (error) {
+                console.error("Erreur lors de la définition de la méthode de paiement par défaut:", error);
+            }
+        }
+        
         // Si il y a un ancien abonnement à remplacer, l'annuler d'abord
         if (session.metadata.replaceSubscriptionId && session.metadata.replaceDbSubscriptionId) {
             try {
@@ -889,20 +1094,39 @@ async function handleCheckoutCompleted(session) {
             }
         }
         
-        // Créer le nouvel abonnement dans la base de données
-        await supabaseServerAdmin()
+        // Vérifier si l'abonnement existe déjà en BDD (éviter les doublons)
+        const { data: existingDbSub } = await supabaseServerAdmin()
             .from("website_subscriptions")
-            .insert({
-                website_id: session.metadata.websiteId,
-                plan_id: session.metadata.planId,
-                stripe_subscription_id: subscription.id,
-                stripe_customer_id: session.customer,
-                status: 'active',
-                current_period_start: convertStripeTimestamp(subscription.current_period_start),
-                current_period_end: convertStripeTimestamp(subscription.current_period_end),
-                created_at: new Date().toISOString()
-            });
-            
+            .select("id")
+            .eq("stripe_subscription_id", subscription.id)
+            .maybeSingle();
+
+        if (existingDbSub) {
+            // L'abonnement existe déjà, le mettre à jour
+            await supabaseServerAdmin()
+                .from("website_subscriptions")
+                .update({
+                    status: 'active',
+                    current_period_start: convertStripeTimestamp(subscription.current_period_start),
+                    current_period_end: convertStripeTimestamp(subscription.current_period_end),
+                    updated_at: new Date().toISOString()
+                })
+                .eq("id", existingDbSub.id);
+        } else {
+            // Créer le nouvel abonnement dans la base de données
+            await supabaseServerAdmin()
+                .from("website_subscriptions")
+                .insert({
+                    website_id: session.metadata.websiteId,
+                    plan_id: session.metadata.planId,
+                    stripe_subscription_id: subscription.id,
+                    stripe_customer_id: session.customer,
+                    status: 'active',
+                    current_period_start: convertStripeTimestamp(subscription.current_period_start),
+                    current_period_end: convertStripeTimestamp(subscription.current_period_end),
+                    created_at: new Date().toISOString()
+                });
+        }
     }
 }
 
@@ -922,6 +1146,20 @@ async function handleSubscriptionUpdate(subscription) {
 
 async function handleSubscriptionDeleted(subscription) {
     
+    // Récupérer l'abonnement qui va être annulé
+    const { data: currentSub } = await supabaseServerAdmin()
+        .from("website_subscriptions")
+        .select("website_id")
+        .eq("stripe_subscription_id", subscription.id)
+        .maybeSingle();
+
+    if (!currentSub) {
+        console.error("Abonnement non trouvé pour stripe_subscription_id:", subscription.id);
+        return;
+    }
+
+    const websiteId = currentSub.website_id;
+
     // Marquer l'abonnement comme annulé
     await supabaseServerAdmin()
         .from("website_subscriptions")
@@ -930,6 +1168,57 @@ async function handleSubscriptionDeleted(subscription) {
             updated_at: new Date().toISOString()
         })
         .eq("stripe_subscription_id", subscription.id);
+
+    // Chercher un abonnement gratuit existant pour ce site
+    const { data: existingFreeSubscriptions } = await supabaseServerAdmin()
+        .from("website_subscriptions")
+        .select("id, plan_id, subscription_plans!inner(name, price)")
+        .eq("website_id", websiteId)
+        .order('created_at', { ascending: false });
+
+    const existingFreeSub = existingFreeSubscriptions?.find(sub => 
+        sub.subscription_plans.name === 'free' || sub.subscription_plans.price === 0
+    );
+
+    if (existingFreeSub) {
+        // Réactiver l'abonnement gratuit existant
+        await supabaseServerAdmin()
+            .from("website_subscriptions")
+            .update({
+                status: 'active',
+                updated_at: new Date().toISOString(),
+                stripe_subscription_id: null,
+                stripe_customer_id: null,
+                current_period_start: null,
+                current_period_end: null,
+                cancel_at_period_end: false
+            })
+            .eq("id", existingFreeSub.id);
+    } else {
+        // Créer un nouvel abonnement gratuit seulement s'il n'en existe aucun
+        const { data: freePlan } = await supabaseServerAdmin()
+            .from("subscription_plans")
+            .select("id")
+            .eq("name", "free")
+            .maybeSingle();
+
+        if (freePlan) {
+            await supabaseServerAdmin()
+                .from("website_subscriptions")
+                .insert({
+                    website_id: websiteId,
+                    plan_id: freePlan.id,
+                    status: 'active',
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                    stripe_subscription_id: null,
+                    stripe_customer_id: null,
+                    current_period_start: null,
+                    current_period_end: null,
+                    cancel_at_period_end: false
+                });
+        }
+    }
 }
 
 async function handlePaymentSucceeded(invoice) {

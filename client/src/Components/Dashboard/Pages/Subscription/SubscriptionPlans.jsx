@@ -450,7 +450,12 @@ const SubscriptionPlans = () => {
             setConfirmLoading(false);
             setConfirmChangeOpen(false);
             setPendingPlan(null);
-            alert('Erreur lors du changement de plan.');
+            console.error('Erreur lors du changement de plan:', error);
+            if (error.response?.data?.message) {
+                alert(error.response.data.message);
+            } else {
+                alert('Erreur lors du changement de plan.');
+            }
         }
     };
 

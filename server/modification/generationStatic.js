@@ -223,7 +223,9 @@ router.post('/generateSite', authenticateToken, async (req, res) => {
       const siteConfig = {
         siteDir,
         templateSlugs,
-        templateTypes
+        templateTypes,
+        projectName: siteDir,
+        deployToCloudflare: true
       };
       console.log('🚀 Démarrage de la génération du site avec configuration:', siteConfig);
       try {
