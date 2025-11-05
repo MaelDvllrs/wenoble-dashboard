@@ -75,15 +75,42 @@ router.post("/create-payment-intent", authenticateToken, async (req, res) => {
 
         // Récupérer ou créer le client Stripe
         let stripeCustomerId;
-        const { data: existingCustomer } = await supabaseServerAdmin()
-            .from("stripe_customers")
-            .select("stripe_customer_id")
-            .eq("user_id", userId)
-            .maybeSingle();
+        
+        // D'abord, essayer de récupérer depuis l'abonnement actif existant
+        const { data: activeSubscriptions, error: activeSubError } = await supabaseServerAdmin()
+            .from("website_subscriptions")
+            .select("stripe_subscription_id")
+            .eq("website_id", websiteId)
+            .eq("status", "active")
+            .order('created_at', { ascending: false });
 
-        if (existingCustomer) {
-            stripeCustomerId = existingCustomer.stripe_customer_id;
-        } else {
+        if (!activeSubError && activeSubscriptions && activeSubscriptions.length > 0) {
+            const activeSub = activeSubscriptions[0];
+            // Vérifier que stripe_subscription_id existe avant d'appeler Stripe
+            if (activeSub.stripe_subscription_id) {
+                try {
+                    const stripeSubscription = await stripe.subscriptions.retrieve(activeSub.stripe_subscription_id);
+                    stripeCustomerId = stripeSubscription.customer;
+                } catch (error) {
+                    console.error("Erreur récupération abonnement Stripe:", error);
+                }
+            }
+        }
+
+        // Fallback: récupérer depuis stripe_customers
+        if (!stripeCustomerId) {
+            const { data: existingCustomer } = await supabaseServerAdmin()
+                .from("stripe_customers")
+                .select("stripe_customer_id")
+                .eq("user_id", userId)
+                .maybeSingle();
+
+            if (existingCustomer) {
+                stripeCustomerId = existingCustomer.stripe_customer_id;
+            }
+        }
+
+        if (!stripeCustomerId) {
             // Récupérer les infos utilisateur
             const { data: userProfile } = await supabaseServerAdmin()
                 .from("users")
@@ -376,28 +403,38 @@ router.get("/subscription-info/:websiteId", authenticateToken, async (req, res) 
         }
 
         
-        // Si aucun abonnement actif n'existe, créer un abonnement gratuit par défaut
+        // Si aucun abonnement actif n'existe, vérifier s'il existe un abonnement gratuit inactif à réactiver
         if (!subscription && !subError) {
-            
-            // Récupérer le plan gratuit
-            const { data: freePlan, error: freePlanError } = await supabaseServerAdmin()
-                .from("subscription_plans")
-                .select("*")
-                .eq("name", "free")
-                .single();
-                
+            // Vérifier s'il existe déjà un abonnement gratuit (même inactif)
+            const { data: existingFreeSubscriptions } = await supabaseServerAdmin()
+                .from("website_subscriptions")
+                .select(`
+                    *,
+                    subscription_plans (
+                        id,
+                        name,
+                        price,
+                        billing_period,
+                        features
+                    )
+                `)
+                .eq("website_id", websiteId)
+                .order("created_at", { ascending: false });
 
-            if (freePlan) {
-                // Créer l'abonnement gratuit
-                const { data: newSubscription, error: createError } = await supabaseServerAdmin()
+            // Chercher un abonnement gratuit existant
+            const existingFreeSub = existingFreeSubscriptions?.find(sub => 
+                sub.subscription_plans?.name === 'free' || sub.subscription_plans?.price === 0
+            );
+
+            if (existingFreeSub) {
+                // Réactiver l'abonnement gratuit existant
+                const { data: reactivatedSub, error: reactivateError } = await supabaseServerAdmin()
                     .from("website_subscriptions")
-                    .insert({
-                        website_id: websiteId,
-                        subscription_plan_id: freePlan.id,
-                        status: "active",
-                        created_at: new Date().toISOString(),
+                    .update({
+                        status: 'active',
                         updated_at: new Date().toISOString()
                     })
+                    .eq("id", existingFreeSub.id)
                     .select(`
                         *,
                         subscription_plans (
@@ -410,14 +447,52 @@ router.get("/subscription-info/:websiteId", authenticateToken, async (req, res) 
                     `)
                     .single();
 
-                
-                if (!createError) {
-                    subscription = newSubscription;
-                } else {
-                    console.error("Erreur lors de la création de l'abonnement gratuit:", createError);
+                if (!reactivateError) {
+                    subscription = reactivatedSub;
                 }
             } else {
-                console.error("Aucun plan gratuit trouvé dans la base de données");
+                // Aucun abonnement gratuit n'existe, en créer un
+                const { data: freePlan, error: freePlanError } = await supabaseServerAdmin()
+                    .from("subscription_plans")
+                    .select("*")
+                    .eq("name", "free")
+                    .maybeSingle();
+
+                if (freePlan) {
+                    const { data: newSubscription, error: createError } = await supabaseServerAdmin()
+                        .from("website_subscriptions")
+                        .insert({
+                            website_id: websiteId,
+                            plan_id: freePlan.id,
+                            status: "active",
+                            stripe_subscription_id: null,
+                            stripe_customer_id: null,
+                            current_period_start: null,
+                            current_period_end: null,
+                            cancel_at_period_end: false,
+                            created_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString()
+                        })
+                        .select(`
+                            *,
+                            subscription_plans (
+                                id,
+                                name,
+                                price,
+                                billing_period,
+                                features
+                            )
+                        `)
+                        .single();
+
+                    if (!createError) {
+                        subscription = newSubscription;
+                    } else {
+                        console.error("Erreur lors de la création de l'abonnement gratuit:", createError);
+                    }
+                } else {
+                    console.error("Aucun plan gratuit trouvé dans la base de données");
+                }
             }
         }
 
@@ -741,11 +816,14 @@ router.get("/payment-methods/:websiteId", authenticateToken, async (req, res) =>
 
             if (!subError && subscriptions && subscriptions.length > 0) {
                 const subscription = subscriptions[0];
-                try {
-                    const stripeSubscription = await stripe.subscriptions.retrieve(subscription.stripe_subscription_id);
-                    stripeCustomerId = stripeSubscription.customer;
-                } catch (error) {
-                    console.error("Erreur récupération abonnement Stripe:", error);
+                // Vérifier que stripe_subscription_id existe avant d'appeler Stripe
+                if (subscription.stripe_subscription_id) {
+                    try {
+                        const stripeSubscription = await stripe.subscriptions.retrieve(subscription.stripe_subscription_id);
+                        stripeCustomerId = stripeSubscription.customer;
+                    } catch (error) {
+                        console.error("Erreur récupération abonnement Stripe:", error);
+                    }
                 }
             }
         }
@@ -868,11 +946,14 @@ router.get("/invoice-pdf/:websiteId/:invoiceId", authenticateTokenFlexible, asyn
 
         if (!subError && subscriptions && subscriptions.length > 0) {
             const subscription = subscriptions[0];
-            try {
-                const stripeSubscription = await stripe.subscriptions.retrieve(subscription.stripe_subscription_id);
-                stripeCustomerId = stripeSubscription.customer;
-            } catch (error) {
-                console.error("Erreur récupération abonnement Stripe:", error);
+            // Vérifier que stripe_subscription_id existe avant d'appeler Stripe
+            if (subscription.stripe_subscription_id) {
+                try {
+                    const stripeSubscription = await stripe.subscriptions.retrieve(subscription.stripe_subscription_id);
+                    stripeCustomerId = stripeSubscription.customer;
+                } catch (error) {
+                    console.error("Erreur récupération abonnement Stripe:", error);
+                }
             }
         }
 
@@ -948,11 +1029,14 @@ router.post("/create-setup-intent", authenticateToken, async (req, res) => {
 
         if (!subError && subscriptions && subscriptions.length > 0) {
             const subscription = subscriptions[0];
-            try {
-                const stripeSubscription = await stripe.subscriptions.retrieve(subscription.stripe_subscription_id);
-                stripeCustomerId = stripeSubscription.customer;
-            } catch (error) {
-                console.error("Erreur récupération abonnement Stripe:", error);
+            // Vérifier que stripe_subscription_id existe avant d'appeler Stripe
+            if (subscription.stripe_subscription_id) {
+                try {
+                    const stripeSubscription = await stripe.subscriptions.retrieve(subscription.stripe_subscription_id);
+                    stripeCustomerId = stripeSubscription.customer;
+                } catch (error) {
+                    console.error("Erreur récupération abonnement Stripe:", error);
+                }
             }
         }
 
@@ -1065,11 +1149,14 @@ router.post("/payment-method-added", authenticateToken, async (req, res) => {
 
         if (!subError && subscriptions && subscriptions.length > 0) {
             const subscription = subscriptions[0];
-            try {
-                const stripeSubscription = await stripe.subscriptions.retrieve(subscription.stripe_subscription_id);
-                stripeCustomerId = stripeSubscription.customer;
-            } catch (error) {
-                console.error("Erreur récupération abonnement Stripe:", error);
+            // Vérifier que stripe_subscription_id existe avant d'appeler Stripe
+            if (subscription.stripe_subscription_id) {
+                try {
+                    const stripeSubscription = await stripe.subscriptions.retrieve(subscription.stripe_subscription_id);
+                    stripeCustomerId = stripeSubscription.customer;
+                } catch (error) {
+                    console.error("Erreur récupération abonnement Stripe:", error);
+                }
             }
         }
 
