@@ -46,17 +46,24 @@ const EditWebsite = () => {
   const token = Cookies.get('token');
   const apiUrl = config.apiUrl;
   const { showSnackbar } = useSnackbar();
-  const { websites, selectedWebsite, updateWebsite, deleteWebsite } = useContext(WebsiteContext);
+  const { websites, selectedWebsite, updateWebsite, deleteWebsite, refreshWebsites } = useContext(WebsiteContext);
   const { workspaces } = useContext(WorkspaceContext);
   
   // États pour les données du site
   const [website, setWebsite] = useState(null);
   const [websiteData, setWebsiteData] = useState({
     website_name: '',
-    website_slug: '',
     analytics_id: '',
     visibility: 'workspace'
   });
+  
+  // États pour le domaine personnalisé
+  const [customDomain, setCustomDomain] = useState('');
+  const [hasCustomDomainAuth, setHasCustomDomainAuth] = useState(false);
+  const [currentDomain, setCurrentDomain] = useState('');
+  const [loadingDomain, setLoadingDomain] = useState(false);
+  const [domainVerification, setDomainVerification] = useState(null);
+  const [verifyingDomain, setVerifyingDomain] = useState(false);
   
   // États pour les utilisateurs
   const [users, setUsers] = useState([]);
@@ -89,16 +96,30 @@ const EditWebsite = () => {
         setWebsite(currentWebsite);
         setWebsiteData({
           website_name: currentWebsite.website_name || '',
-          website_slug: currentWebsite.website_slug || '',
           analytics_id: currentWebsite.analytics_id || '',
           visibility: currentWebsite.visibility || 'workspace'
         });
-        loadWebsiteUsers();
-        loadWorkspaceMembers();
+        setCurrentDomain(currentWebsite.website_slug || '');
         setInitialLoading(false);
       }
     }
   }, [websites, selectedWebsite]);
+
+  // Charger les données après que website soit défini
+  useEffect(() => {
+    if (website?.id) {
+      loadWebsiteUsers();
+      loadWorkspaceMembers();
+      checkCustomDomainAuth();
+      
+      // Vérifier le domaine automatiquement s'il existe
+      if (website.website_slug) {
+        setTimeout(() => {
+          verifyCustomDomain();
+        }, 1000);
+      }
+    }
+  }, [website?.id]);
 
   // Recharger les membres disponibles quand les utilisateurs changent
   useEffect(() => {
@@ -150,8 +171,8 @@ const EditWebsite = () => {
 
   // Sauvegarder les informations générales
   const handleSaveWebsiteInfo = async () => {
-    if (!websiteData.website_name.trim() || !websiteData.website_slug.trim()) {
-      showSnackbar('Le nom et le slug du site sont requis', 'error');
+    if (!websiteData.website_name.trim()) {
+      showSnackbar('Le nom du site est requis', 'error');
       return;
     }
 
@@ -173,6 +194,105 @@ const EditWebsite = () => {
       showSnackbar(errorMessage, 'error');
     }
     setLoading(false);
+  };
+
+  // Vérifier l'autorisation custom_domain
+  const checkCustomDomainAuth = async () => {
+    if (!website?.id) return false;
+    
+    try {
+      const response = await Axios.get(`${apiUrl}/custom-domain-authorisation/${website.id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const hasAuth = response.data.authorisation || false;
+      setHasCustomDomainAuth(hasAuth);
+      return hasAuth;
+    } catch (error) {
+      console.error('Erreur lors de la vérification de l\'autorisation:', error);
+      setHasCustomDomainAuth(false);
+      return false;
+    }
+  };
+
+  // Vérifier le DNS du domaine personnalisé
+  const verifyCustomDomain = async () => {
+    if (!website?.id || !currentDomain) return;
+    
+    setVerifyingDomain(true);
+    try {
+      const response = await Axios.get(`${apiUrl}/verify-custom-domain/${website.id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      setDomainVerification(response.data);
+    } catch (error) {
+      console.error('Erreur lors de la vérification du domaine:', error);
+      setDomainVerification({
+        configured: true,
+        verified: false,
+        status: 'error',
+        message: 'Erreur lors de la vérification du domaine'
+      });
+    } finally {
+      setVerifyingDomain(false);
+    }
+  };
+
+  // Configurer le domaine personnalisé
+  const handleConfigureDomain = async () => {
+    if (!customDomain.trim()) {
+      showSnackbar('Veuillez entrer un nom de domaine', 'error');
+      return;
+    }
+
+    // Validation basique du format du domaine
+    const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?\.[a-zA-Z]{2,}$/;
+    if (!domainRegex.test(customDomain)) {
+      showSnackbar('Format de domaine invalide (ex: monsite.com)', 'error');
+      return;
+    }
+
+    // Vérifier l'autorisation avant de configurer
+    const hasAuth = await checkCustomDomainAuth();
+    if (!hasAuth) {
+      showSnackbar('Vous devez souscrire à un plan Premium pour utiliser un domaine personnalisé', 'error');
+      return;
+    }
+
+    setLoadingDomain(true);
+
+    try {
+      const response = await Axios.post(
+        `${apiUrl}/configure-custom-domain/${website.id}`,
+        { domain: customDomain },
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
+
+      if (response.data.success) {
+        showSnackbar('Domaine configuré avec succès!', 'success');
+        setCurrentDomain(customDomain);
+        setCustomDomain('');
+        
+        // Rafraîchir les sites web pour avoir les dernières données
+        await refreshWebsites();
+        
+        // Vérifier le DNS immédiatement
+        setTimeout(() => {
+          verifyCustomDomain();
+        }, 1000);
+      }
+    } catch (error) {
+      console.error('Erreur lors de la configuration du domaine:', error);
+      const errorMessage = error.response?.data?.error || 'Erreur lors de la configuration du domaine';
+      showSnackbar(errorMessage, 'error');
+      
+      // Si c'est une erreur d'upgrade requis
+      if (error.response?.data?.upgradeRequired) {
+        showSnackbar('Veuillez souscrire à un plan Premium pour utiliser un domaine personnalisé', 'info');
+      }
+    } finally {
+      setLoadingDomain(false);
+    }
   };
 
   // Ajouter un utilisateur
@@ -472,17 +592,6 @@ const EditWebsite = () => {
               </div>
 
               <div className="input-container">
-                <p className="blogField_name collection_edit_name">Slug du site *</p>
-                <input
-                  type="text"
-                  className="input_text_blog"
-                  value={websiteData.website_slug}
-                  onChange={(e) => setWebsiteData({ ...websiteData, website_slug: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div className="input-container">
                 <p className="blogField_name collection_edit_name">ID Analytics</p>
                 <input
                   type="text"
@@ -630,6 +739,193 @@ const EditWebsite = () => {
 
               <div className="line_horizontal is_big_margin" style={{backgroundColor: theme.palette.primary.third}}></div>
 
+              {/* Domaine personnalisé */}
+              <div className="input-container">
+                <h4 className='titlePage'>Domaine personnalisé</h4>
+                <p className="blogField_description">
+                  Configurez votre propre nom de domaine pour ce site
+                </p>
+              </div>
+
+              {!hasCustomDomainAuth ? (
+                <div className="input-container">
+                  <div style={{
+                    padding: '1rem',
+                    backgroundColor: theme.palette.info.light + '20',
+                    borderRadius: '8px',
+                    border: `1px solid ${theme.palette.info.light}`,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.5rem'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <strong>Fonctionnalité Premium</strong>
+                    </div>
+                    <p style={{ margin: 0, color: theme.palette.text.secondary }}>
+                      Le domaine personnalisé est disponible avec un abonnement Premium. 
+                      Souscrivez dès maintenant pour utiliser votre propre nom de domaine.
+                    </p>
+                    <div>
+                      <DefaultButton
+                        onClick={() => navigate('/dashboard/website/subscription')}
+                        size="small"
+                      >
+                        Voir les plans
+                      </DefaultButton>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {/* Domaine actuel */}
+                  {currentDomain && (
+                    <div className="input-container">
+                      <p className="blogField_name collection_edit_name">Domaine actuel</p>
+                      <div style={{
+                        padding: '1rem',
+                        backgroundColor: domainVerification?.verified 
+                          ? theme.palette.success.light + '20' 
+                          : domainVerification?.status === 'not_propagated'
+                          ? theme.palette.warning.light + '20'
+                          : domainVerification?.status === 'misconfigured'
+                          ? theme.palette.error.light + '20'
+                          : theme.palette.info.light + '20',
+                        borderRadius: '8px',
+                        border: `1px solid ${
+                          domainVerification?.verified 
+                            ? theme.palette.success.light
+                            : domainVerification?.status === 'not_propagated'
+                            ? theme.palette.warning.light
+                            : domainVerification?.status === 'misconfigured'
+                            ? theme.palette.error.light
+                            : theme.palette.info.light
+                        }`,
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent:'space-between' }}>
+                              <strong >{currentDomain}</strong>
+                              <DefaultButton
+                                onClick={verifyCustomDomain}
+                                disabled={verifyingDomain}
+                                size="small"
+                              >
+                                {verifyingDomain ? <CircularProgress size={12} sx={{ color: 'white', marginRight:'0.5rem' }} /> : ''} Vérifier
+                              </DefaultButton>
+                            </div>
+                            
+                            {!domainVerification && (
+                              <div style={{ fontSize: '0.875rem', color: theme.palette.text.secondary }}>
+                                Cliquez sur "Vérifier" pour tester la configuration DNS
+                              </div>
+                            )}
+                            
+                            {domainVerification?.verified && (
+                              <div style={{ fontSize: '0.875rem', color: theme.palette.success.main, marginTop: '0.25rem' }}>
+                                Le domaine pointe correctement vers le VPS ({domainVerification.currentIP})
+                                {domainVerification.wwwConfigured && (
+                                  <div style={{ marginTop: '0.25rem' }}>
+                                    Le sous-domaine www est également configuré
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            
+                            {domainVerification?.status === 'not_propagated' && (
+                              <div style={{ 
+                                fontSize: '0.875rem', 
+                                color: theme.palette.warning.main, 
+                                marginTop: '0.5rem',
+                                padding: '0.5rem',
+                                backgroundColor: theme.palette.warning.light + '20',
+                                borderRadius: '4px'
+                              }}>
+                                <strong>DNS non propagé</strong>
+                                <div style={{ marginTop: '0.25rem' }}>
+                                  Le domaine n'est pas encore résolu. La propagation DNS peut prendre de 5 minutes à 48 heures.
+                                </div>
+                                <div style={{ marginTop: '0.25rem' }}>
+                                  IP attendue : <code style={{ 
+                                    backgroundColor: theme.palette.mode === 'dark' ? '#333' : '#f5f5f5',
+                                    padding: '2px 6px',
+                                    borderRadius: '3px'
+                                  }}>{domainVerification.expectedIP}</code>
+                                </div>
+                              </div>
+                            )}
+                            
+                            {domainVerification?.status === 'misconfigured' && (
+                              <div style={{ 
+                                fontSize: '0.875rem', 
+                                color: theme.palette.error.main, 
+                                marginTop: '0.5rem',
+                                padding: '0.5rem',
+                                backgroundColor: theme.palette.error.light + '20',
+                                borderRadius: '4px'
+                              }}>
+                                <strong>Configuration incorrecte</strong>
+                                <div style={{ marginTop: '0.25rem' }}>
+                                  IP actuelle : <code style={{ 
+                                    backgroundColor: theme.palette.mode === 'dark' ? '#333' : '#f5f5f5',
+                                    padding: '2px 6px',
+                                    borderRadius: '3px',
+                                    color: theme.palette.error.main
+                                  }}>{domainVerification.currentIP}</code>
+                                </div>
+                                <div style={{ marginTop: '0.25rem' }}>
+                                  IP attendue : <code style={{ 
+                                    backgroundColor: theme.palette.mode === 'dark' ? '#333' : '#f5f5f5',
+                                    padding: '2px 6px',
+                                    borderRadius: '3px',
+                                    color: theme.palette.success.main
+                                  }}>{domainVerification.expectedIP}</code>
+                                </div>
+                                <div style={{ marginTop: '0.5rem', fontSize: '0.8rem' }}>
+                                  Veuillez corriger votre enregistrement DNS A pour pointer vers {domainVerification.expectedIP}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Configuration d'un nouveau domaine */}
+                  <div className="input-container">
+                    <p className="blogField_name collection_edit_name">
+                      {currentDomain ? 'Changer le domaine' : 'Configurer un domaine'}
+                    </p>
+                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                      <div style={{ flex: 1 }}>
+                        <input
+                          type="text"
+                          className="input_text_blog"
+                          value={customDomain}
+                          onChange={(e) => setCustomDomain(e.target.value.toLowerCase().trim())}
+                          placeholder="monsite.com"
+                          disabled={loadingDomain}
+                        />
+                        <div style={{ fontSize: '0.875rem', color: theme.palette.text.secondary, marginTop: '0.5rem' }}>
+                          Entrez votre nom de domaine sans http:// ou www
+                        </div>
+                      </div>
+                      <DefaultButton
+                        onClick={handleConfigureDomain}
+                        disabled={loadingDomain || !customDomain.trim()}
+                        startIcon={loadingDomain ? <CircularProgress size={12} sx={{ color: 'white' }} /> : undefined}
+                      >
+                        {loadingDomain ? 'Configuration...' : 'Configurer'}
+                      </DefaultButton>
+                    </div>
+                  </div>
+
+
+                </>
+              )}
+
+              <div className="line_horizontal is_big_margin" style={{backgroundColor: theme.palette.primary.third}}></div>
+
               {/* Gestion des tokens API */}
 
               <div className="input-container" style={{ padding: 0 }}>
@@ -708,7 +1004,7 @@ const EditWebsite = () => {
                 Annuler
               </SecondaryButton>
               <RedButton onClick={handleDeleteWebsite} disabled={loading}>
-                {loading ? <CircularProgress size={20} /> : 'Supprimer définitivement'}
+                {loading ? <CircularProgress size={20}/> : 'Supprimer définitivement'}
               </RedButton>
             </div>
           </div>

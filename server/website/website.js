@@ -4,6 +4,7 @@ const cors = require('cors');
 const { supabaseServer, supabaseServerAdmin } = require('../supabase');
 const { authenticateToken } = require('../middleware/authToken');
 const { checkUserWorkspaceAccess } = require('../workspace/workspace');
+const { addCustomDomain, removeCustomDomain, listCustomDomains, getDomainStatus } = require('../cloudflare/cloudflareDomains');
 
 const router = express.Router();
 
@@ -361,14 +362,14 @@ router.get('/debugUserWebsites', authenticateToken, async (req, res) => {
 // Créer un nouveau site web
 router.post('/createWebsite', authenticateToken, async (req, res) => {
   try {
-    const { website_name, website_slug, workspace_id, visibility = 'workspace' } = req.body;
+    const { website_name, workspace_id, visibility = 'workspace' } = req.body;
 
     const userId = req.user.idUser;
     const token = req.headers['authorization']?.split(' ')[1];
     const supabase = supabaseServer(token);
 
-    if (!website_name || !website_slug) {
-      return res.status(400).send({ error: 'Le nom et le slug du site web sont requis' });
+    if (!website_name) {
+      return res.status(400).send({ error: 'Le nom du site web est requis' });
     }
 
     if (!['workspace', 'restricted'].includes(visibility)) {
@@ -402,28 +403,14 @@ router.post('/createWebsite', authenticateToken, async (req, res) => {
       }
     }
 
-    // Vérifier que le slug n'existe pas déjà
-    const { data: existing, error: checkError } = await supabase
-      .from('websites')
-      .select('id')
-      .eq('website_slug', website_slug)
-      .maybeSingle();
-
-    if (checkError) throw checkError;
-
-    if (existing) {
-      return res.status(400).send({ error: 'Un site web avec ce slug existe déjà' });
-    }
-
-  // Générer une API key unique qui contient le nom/slug du site
-  const apiKey = await generateUniqueApiKey(supabase, website_slug || website_name);
+  // Générer une API key unique qui contient le nom du site
+  const apiKey = await generateUniqueApiKey(supabase, website_name);
 
   // Créer le site web
     const { data: websiteData, error: websiteError } = await supabase
       .from('websites')
       .insert({
         website_name,
-        website_slug,
         api_key: apiKey,
         workspace_id: finalWorkspaceId,
         visibility,
@@ -543,7 +530,7 @@ router.get('/getWebsiteById', authenticateToken, async (req, res) => {
 // Mettre à jour un site web
 router.post('/updateWebsite', authenticateToken, async (req, res) => {
   try {
-    const { website_id, website_name, website_slug, visibility } = req.body;
+    const { website_id, website_name, analytics_id, visibility } = req.body;
     const userId = req.user.idUser;
     const token = req.headers['authorization']?.split(' ')[1];
     const supabase = supabaseServer(token);
@@ -558,29 +545,13 @@ router.post('/updateWebsite', authenticateToken, async (req, res) => {
       return res.status(403).send({ error: 'Vous devez être administrateur pour modifier ce site web' });
     }
 
-    // Vérifier que le nouveau slug n'existe pas déjà (s'il a changé)
-    if (website_slug) {
-      const { data: existing, error: checkError } = await supabase
-        .from('websites')
-        .select('id')
-        .eq('website_slug', website_slug)
-        .neq('id', website_id)
-        .maybeSingle();
-
-      if (checkError) throw checkError;
-
-      if (existing) {
-        return res.status(400).send({ error: 'Un site web avec ce slug existe déjà' });
-      }
-    }
-
     // Préparer les données de mise à jour
     const updateData = {
       updated_at: new Date().toISOString()
     };
 
     if (website_name) updateData.website_name = website_name;
-    if (website_slug) updateData.website_slug = website_slug;
+    if (analytics_id !== undefined) updateData.analytics_id = analytics_id || null;
     if (visibility && ['workspace', 'restricted'].includes(visibility)) {
       updateData.visibility = visibility;
     }
@@ -972,6 +943,253 @@ router.post('/updateWebsite', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Erreur lors de la mise à jour du site web:', error);
     res.status(500).send({ error: error.message });
+  }
+});
+
+// ==================== CLOUDFLARE DOMAINS MANAGEMENT ====================
+
+/**
+ * Configure un domaine personnalisé sur Cloudflare Pages
+ * Vérifie l'autorisation custom_domain avant de configurer
+ */
+router.post('/configure-custom-domain/:websiteId', authenticateToken, async (req, res) => {
+  const { websiteId } = req.params;
+  const { domain } = req.body;
+  const userId = req.user.idUser;
+  const token = req.headers['authorization']?.split(' ')[1];
+  const supabase = supabaseServer(token);
+  const supabaseAdmin = supabaseServerAdmin();
+
+  console.log(`[Domain Config] Configuration du domaine ${domain} pour le site ${websiteId}`);
+
+  try {
+    // 1. Vérifier l'accès de l'utilisateur au site web
+    const { hasAccess } = await checkUserWebsiteAccess(supabase, userId, websiteId);
+    if (!hasAccess) {
+      return res.status(403).json({ error: 'Vous n\'avez pas accès à ce site web' });
+    }
+
+    // 2. Récupérer les informations du site web (folder + subscription)
+    const { data: website, error: websiteError } = await supabaseAdmin
+      .from('websites')
+      .select('folder_project, website_slug')
+      .eq('id', websiteId)
+      .single();
+
+      console.log('folder_project:', website?.folder_project);
+
+    if (websiteError || !website) {
+      console.error('[Domain Config] Site web non trouvé:', websiteError);
+      return res.status(404).json({ error: 'Site web non trouvé' });
+    }
+
+    if (!website.folder_project) {
+      return res.status(400).json({ 
+        error: 'Aucun projet Cloudflare associé à ce site. Veuillez d\'abord déployer le site.' 
+      });
+    }
+
+    // 3. Vérifier l'autorisation custom_domain
+    const { data: subscription } = await supabaseAdmin
+      .from('website_subscriptions')
+      .select('plan_id')
+      .eq('website_id', websiteId)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (!subscription || !subscription.plan_id) {
+      return res.status(403).json({ 
+        error: 'Aucun abonnement actif trouvé pour ce site' 
+      });
+    }
+
+    // Récupérer les features du plan
+    const { data: plan } = await supabaseAdmin
+      .from('subscription_plans')
+      .select('features')
+      .eq('id', subscription.plan_id)
+      .single();
+
+    if (!plan) {
+      return res.status(403).json({ error: 'Plan d\'abonnement non trouvé' });
+    }
+
+    // Vérifier la feature custom_domain
+    let hasCustomDomain = false;
+    if (Array.isArray(plan.features)) {
+      const entry = plan.features.find(f => f.key === 'custom_domain');
+      hasCustomDomain = !!(entry && (entry.included === true || entry.value === true));
+    } else if (typeof plan.features === 'object' && plan.features !== null) {
+      hasCustomDomain = plan.features.custom_domain === true;
+    }
+
+    if (!hasCustomDomain) {
+      return res.status(403).json({ 
+        error: 'Votre abonnement ne permet pas l\'utilisation de domaines personnalisés',
+        upgradeRequired: true
+      });
+    }
+
+    // 4. Mettre à jour le site web avec le domaine personnalisé dans website_slug
+    const { error: updateError } = await supabaseAdmin
+      .from('websites')
+      .update({ website_slug: domain })
+      .eq('id', websiteId);
+
+    if (updateError) {
+      console.error('[Domain Config] Erreur mise à jour website_slug:', updateError);
+      return res.status(500).json({ 
+        error: 'Erreur lors de la sauvegarde du domaine'
+      });
+    }
+
+    // 5. Configurer le domaine sur Cloudflare Pages (optionnel, peut échouer sans bloquer)
+    try {
+      await addCustomDomain(website.folder_project, domain);
+      console.log(`[Domain Config] ✅ Domaine ${domain} ajouté à Cloudflare Pages`);
+    } catch (cfError) {
+      console.error('[Domain Config] Erreur Cloudflare (non bloquante):', cfError);
+    }
+
+    console.log(`[Domain Config] ✅ Domaine ${domain} configuré avec succès pour ${website.folder_project}`);
+
+    res.json({
+      success: true,
+      message: `Domaine ${domain} configuré avec succès`,
+      domain: domain
+    });
+
+  } catch (error) {
+    console.error('[Domain Config] Erreur:', error);
+    res.status(500).json({ 
+      error: error.message || 'Erreur lors de la configuration du domaine',
+      details: error.toString()
+    });
+  }
+});
+
+// Route de vérification DNS déplacée dans domainVerification.js
+
+/**
+ * Liste les domaines configurés pour un site web
+ */
+router.get('/list-custom-domains/:websiteId', authenticateToken, async (req, res) => {
+  const { websiteId } = req.params;
+  const userId = req.user.idUser;
+  const token = req.headers['authorization']?.split(' ')[1];
+  const supabase = supabaseServer(token);
+  const supabaseAdmin = supabaseServerAdmin();
+
+  try {
+    const { hasAccess } = await checkUserWebsiteAccess(supabase, userId, websiteId);
+    if (!hasAccess) {
+      return res.status(403).json({ error: 'Vous n\'avez pas accès à ce site web' });
+    }
+
+    const { data: website } = await supabaseAdmin
+      .from('websites')
+      .select('folder')
+      .eq('id', websiteId)
+      .single();
+
+    if (!website || !website.folder) {
+      return res.json({ domains: [] });
+    }
+
+    const result = await listCustomDomains(website.folder);
+    
+    res.json({
+      success: true,
+      domains: result.domains,
+      projectName: website.folder
+    });
+
+  } catch (error) {
+    console.error('[Domain List] Erreur:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Supprime un domaine personnalisé
+ */
+router.delete('/remove-custom-domain/:websiteId', authenticateToken, async (req, res) => {
+  const { websiteId } = req.params;
+  const { domain } = req.body;
+  const userId = req.user.idUser;
+  const token = req.headers['authorization']?.split(' ')[1];
+  const supabase = supabaseServer(token);
+  const supabaseAdmin = supabaseServerAdmin();
+
+  try {
+    const { hasAccess } = await checkUserWebsiteAccess(supabase, userId, websiteId);
+    if (!hasAccess) {
+      return res.status(403).json({ error: 'Vous n\'avez pas accès à ce site web' });
+    }
+
+    const { data: website } = await supabaseAdmin
+      .from('websites')
+      .select('folder')
+      .eq('id', websiteId)
+      .single();
+
+    if (!website || !website.folder) {
+      return res.status(404).json({ error: 'Site web ou projet Cloudflare non trouvé' });
+    }
+
+    const result = await removeCustomDomain(website.folder, domain);
+
+    res.json({
+      success: true,
+      message: `Domaine ${domain} supprimé avec succès`,
+      domain: result.domain
+    });
+
+  } catch (error) {
+    console.error('[Domain Remove] Erreur:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Vérifie le statut d'un domaine personnalisé
+ */
+router.get('/check-domain-status/:websiteId', authenticateToken, async (req, res) => {
+  const { websiteId } = req.params;
+  const { domain } = req.query;
+  const userId = req.user.idUser;
+  const token = req.headers['authorization']?.split(' ')[1];
+  const supabase = supabaseServer(token);
+  const supabaseAdmin = supabaseServerAdmin();
+
+  try {
+    const { hasAccess } = await checkUserWebsiteAccess(supabase, userId, websiteId);
+    if (!hasAccess) {
+      return res.status(403).json({ error: 'Vous n\'avez pas accès à ce site web' });
+    }
+
+    const { data: website } = await supabaseAdmin
+      .from('websites')
+      .select('folder')
+      .eq('id', websiteId)
+      .single();
+
+    if (!website || !website.folder) {
+      return res.status(404).json({ error: 'Site web non trouvé' });
+    }
+
+    const result = await getDomainStatus(website.folder, domain);
+
+    res.json({
+      success: true,
+      status: result.status
+    });
+
+  } catch (error) {
+    console.error('[Domain Status] Erreur:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 
