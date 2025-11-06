@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Axios from 'axios';
 import Cookies from 'js-cookie';
 import { jwtDecode } from 'jwt-decode';
-import { NavLink, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import { useWebsite } from '../../../../Context/WebsiteContext';
 import IconButton from '@mui/material/IconButton';
@@ -15,12 +15,13 @@ import { formatDate } from "../../../../utils/dateUtils";
 import { useSnackbar } from '../../../../Theme/snackbar';
 import '../modification_site/Portfolio/portfolio.css';
 import './newsletter.css';
+import { PiGearSixBold } from "react-icons/pi";
 
 const NewsLetters = () => {
     // --- Hooks & Theme ---
     const theme = useTheme();
     const { selectedWebsite, loading: websiteLoading } = useWebsite();
-    const { id } = useParams();
+    const navigate = useNavigate();
     const token = Cookies.get('token');
     const anchorRefMessageOption = useRef([]);
 
@@ -197,7 +198,21 @@ const NewsLetters = () => {
                 <div className="liste_contact_contain">
                     <div className="header_modification header_page_modification">
                         <h3 className="titlePage">Newsletter</h3>
-                        <SecondaryButton onClick={handleExport} variant="contained" theme={theme}><FileDownloadIcon />Exporter</SecondaryButton>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <SecondaryButton
+                                variant="outlined"
+                                size="small"
+                                sx={{
+                                  height:'2rem'
+                                }}
+                                onClick={() => navigate('/dashboard/website/newsletter/settings')}
+                            >
+                                <PiGearSixBold/>
+                            </SecondaryButton>
+                            <SecondaryButton onClick={handleExport} variant="contained" theme={theme}>
+                                <FileDownloadIcon />Exporter
+                            </SecondaryButton>
+                        </div>
                     </div>
                     <div className="Item_contact_wrapper">
                         <div className="modification_action_wrapper">

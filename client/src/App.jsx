@@ -65,6 +65,7 @@ import ContactList from './Components/Dashboard/Pages/Contact/ContactListe';
 import ContactMessage from './Components/Dashboard/Pages/Contact/ContactMessage';
 import ContactSettings from './Components/Dashboard/Pages/Contact/ContactSettings';
 import NewsLetters from './Components/Dashboard/Pages/NewsLetters/Newsletter';
+import NewsletterSettings from './Components/Dashboard/Pages/NewsLetters/NewsletterSettings';
 import Academy from './Components/Dashboard/Pages/Academy/Academy';
 import AcademyTemplate from './Components/Dashboard/Pages/Academy/AcademyTemplate';
 import CreateWebsite from './Components/Dashboard/Pages/website/createWebsite';
@@ -174,6 +175,7 @@ function App() {
                                         <Route path="contact/settings" element={<ContactSettings />} />
                                         <Route path="contact/message/:id" element={<ContactMessage />} />
                                         <Route path="newsletter" element={<AuthorisedRouteNewsletter><NewsLetters /></AuthorisedRouteNewsletter>} />
+                                        <Route path="newsletter/settings" element={<NewsletterSettings />} />
                                         <Route path="subscription" element={<SubscriptionPlans />} />
                                         <Route path="billing" element={<BillingDashboard />} />
                                         <Route path="settings" element={<EditWebsite />} />
