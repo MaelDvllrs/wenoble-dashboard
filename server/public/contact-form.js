@@ -22,8 +22,10 @@
 function initContactForm(apiEndpoint, apiKey, formElement, submitButtonSelector = '#contact_submit_button', triggerButtonSelector = '#contact_button') {
     // Fonction modifiée pour utiliser les éléments frères avec attributs wn-success-form et wn-error-form
     
-    // Variables anti-bot
-    let formLoadTime = Date.now();
+    // Variables anti-bot - stocker le temps de chargement comme propriété du formulaire
+    if (!formElement.dataset.loadTime) {
+        formElement.dataset.loadTime = Date.now().toString();
+    }
     const MIN_SUBMIT_TIME = 3000; // Minimum 3 secondes avant soumission
     
     // Ajouter un checkbox honeypot si pas déjà présent
@@ -69,6 +71,7 @@ function initContactForm(apiEndpoint, apiKey, formElement, submitButtonSelector 
         });
 
         // Calculer le temps écoulé depuis le chargement du formulaire
+        const formLoadTime = parseInt(formElement.dataset.loadTime || Date.now().toString());
         const submitTime = Date.now() - formLoadTime;
         
         const queryParams = new URLSearchParams({
@@ -154,6 +157,7 @@ function initContactForm(apiEndpoint, apiKey, formElement, submitButtonSelector 
             }
             
             // 2. Vérifier le temps minimum de soumission
+            const formLoadTime = parseInt(formElement.dataset.loadTime || Date.now().toString());
             const submitTime = Date.now() - formLoadTime;
             if (submitTime < MIN_SUBMIT_TIME) {
                 const parentElement = formElement.parentNode;
