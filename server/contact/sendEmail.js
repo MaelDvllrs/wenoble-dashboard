@@ -132,11 +132,7 @@ router.post('/sendEmail', apiKeyMiddleware, async (req, res) => {
         return res.status(400).json({ message: 'Contenu rejeté.' });
     }
     
-    // 3. Vérifier le User-Agent (bot detection basique)
-    if (!userAgent || userAgent.length < 10) {
-        console.warn(`User-Agent suspect: ${userAgent} depuis ${clientIP}`);
-        return res.status(400).json({ message: 'Client non autorisé.' });
-    }
+    
     
     // Ajouter les locks
     emailLocks.add(emailSender);
