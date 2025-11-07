@@ -22,12 +22,6 @@
 function initContactForm(apiEndpoint, apiKey, formElement, submitButtonSelector = '#contact_submit_button', triggerButtonSelector = '#contact_button') {
     // Fonction modifiée pour utiliser les éléments frères avec attributs wn-success-form et wn-error-form
     
-    // Variables anti-bot - stocker le temps de chargement comme propriété du formulaire
-    if (!formElement.dataset.loadTime) {
-        formElement.dataset.loadTime = Date.now().toString();
-    }
-    const MIN_SUBMIT_TIME = 3000; // Minimum 3 secondes avant soumission
-    
     // Ajouter un checkbox honeypot si pas déjà présent
     if (!formElement.querySelector('.wn-honeypot')) {
         const honeypot = document.createElement('input');
@@ -69,10 +63,6 @@ function initContactForm(apiEndpoint, apiKey, formElement, submitButtonSelector 
             btn.setAttribute('data-original-text', btn.innerHTML);
             btn.innerHTML = '<span class="loader"></span> Envoi en cours...';
         });
-
-        // Calculer le temps écoulé depuis le chargement du formulaire
-        const formLoadTime = parseInt(formElement.dataset.loadTime || Date.now().toString());
-        const submitTime = Date.now() - formLoadTime;
         
         const queryParams = new URLSearchParams({
             apiKey: apiKey,
@@ -93,7 +83,6 @@ function initContactForm(apiEndpoint, apiKey, formElement, submitButtonSelector 
                     subject: subject,
                     html: html,
                     formData: formData,
-                    submitTime: submitTime,
                     userAgent: navigator.userAgent,
                     timestamp: Date.now()
                 })
@@ -156,20 +145,6 @@ function initContactForm(apiEndpoint, apiKey, formElement, submitButtonSelector 
                 return;
             }
             
-            // 2. Vérifier le temps minimum de soumission
-            const formLoadTime = parseInt(formElement.dataset.loadTime || Date.now().toString());
-            const submitTime = Date.now() - formLoadTime;
-            if (submitTime < MIN_SUBMIT_TIME) {
-                const parentElement = formElement.parentNode;
-                const errorElement = parentElement.querySelector('[wn-error-form]');
-                if (errorElement) {
-                    errorElement.textContent = 'Veuillez prendre le temps de remplir le formulaire.';
-                    errorElement.style.display = 'block';
-                }
-                console.warn('Bot détecté: soumission trop rapide', submitTime, 'ms');
-                return;
-            }
-            
             // Collecte des champs avec attribut wn-element-form
             const formFields = formElement.querySelectorAll('[wn-element-form]');
             const formData = {};
@@ -212,7 +187,7 @@ function initContactForm(apiEndpoint, apiKey, formElement, submitButtonSelector 
                 }
             });
             
-            // 3. Validation des patterns spam
+            // 2. Validation des patterns spam
             const spamPatterns = [
                 /viagra|cialis|pharmacy|casino|poker|lottery|winner|prize/i,
                 /(http:\/\/|https:\/\/|www\.)[^\s]{50,}/g, // URLs très longues
@@ -242,7 +217,7 @@ function initContactForm(apiEndpoint, apiKey, formElement, submitButtonSelector 
                 return;
             }
             
-            // 4. Vérifier que les champs obligatoires ne sont pas juste des espaces
+            // 3. Vérifier que les champs obligatoires ne sont pas juste des espaces
             let hasEmptyRequired = false;
             formFields.forEach(field => {
                 if (field.required && typeof field.value === 'string') {

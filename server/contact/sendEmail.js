@@ -57,7 +57,6 @@ const suspiciousIPs = new Map(); // Track suspicious behavior
 const EMAIL_LOCK_TIMEOUT = 60 * 1000; // 1 minute entre chaque email
 const IP_LOCK_TIMEOUT = 30 * 1000; // 30 secondes entre submissions par IP
 const MAX_SUBMISSIONS_PER_HOUR = 5; // Maximum 5 soumissions par heure par IP
-const MIN_SUBMIT_TIME = 1000; // Minimum 1 secondes pour remplir le formulaire
 
 // Fonction pour vérifier les patterns de spam
 function isSpamContent(text) {
@@ -115,7 +114,6 @@ router.post('/sendEmail', apiKeyMiddleware, async (req, res) => {
     
     // Nouvelles données anti-bot
     const formData = req.body.formData || {};
-    const submitTime = req.body.submitTime || 0;
     const userAgent = req.body.userAgent || '';
     const clientIP = getClientIP(req);
 
@@ -153,22 +151,7 @@ router.post('/sendEmail', apiKeyMiddleware, async (req, res) => {
         return res.status(429).json({ message: 'Trop de soumissions. Veuillez réessayer dans une heure.' });
     }
     
-    // 4. Vérifier le temps de soumission (protection contre soumission instantanée)
-    if (submitTime < MIN_SUBMIT_TIME) {
-        console.warn(`Soumission trop rapide: ${submitTime}ms depuis IP ${clientIP}`);
-        
-        // Marquer comme suspect
-        const suspiciousData = suspiciousIPs.get(clientIP) || { count: 0, lastSeen: 0 };
-        suspiciousIPs.set(clientIP, {
-            count: suspiciousData.count + 1,
-            lastSeen: Date.now(),
-            blocked: suspiciousData.count >= 2 // Bloquer après 3 tentatives suspectes
-        });
-        
-        return res.status(400).json({ message: 'Soumission invalide.' });
-    }
-    
-    // 5. Vérifier le contenu pour spam
+    // 4. Vérifier les patterns de spam dans les données du formulaire
     const allContent = Object.values(formData).join(' ') + ' ' + subject;
     if (isSpamContent(allContent)) {
         console.warn(`Contenu spam détecté depuis ${clientIP}`);
@@ -184,7 +167,7 @@ router.post('/sendEmail', apiKeyMiddleware, async (req, res) => {
         return res.status(400).json({ message: 'Contenu rejeté.' });
     }
     
-    // 6. Vérifier le User-Agent (bot detection basique)
+    // 5. Vérifier le User-Agent (bot detection basique)
     if (!userAgent || userAgent.length < 10) {
         console.warn(`User-Agent suspect: ${userAgent} depuis ${clientIP}`);
         return res.status(400).json({ message: 'Client non autorisé.' });
