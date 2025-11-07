@@ -119,55 +119,20 @@ router.post('/sendEmail', apiKeyMiddleware, async (req, res) => {
 
     // === VALIDATIONS ANTI-BOT CÔTÉ SERVEUR ===
     
-    // 1. Vérifier si l'IP est déjà bloquée
-    if (suspiciousIPs.has(clientIP)) {
-        const suspiciousData = suspiciousIPs.get(clientIP);
-        if (suspiciousData.blocked && suspiciousData.lastSeen > Date.now() - 3600000) {
-            console.warn(`IP bloquée: ${clientIP}`);
-            return res.status(403).json({ message: 'Trop de tentatives. Veuillez réessayer plus tard.' });
-        }
-    }
-    
-    // 2. Rate limiting par email
+    // 1. Rate limiting par email
     if (emailLocks.has(emailSender)) {
         console.warn(`Rate limit email: ${emailSender}`);
         return res.status(429).json({ message: 'Vous avez déjà envoyé un email. Veuillez patienter.' });
     }
     
-    // 3. Rate limiting par IP
-    const ipSubmissions = ipLocks.get(clientIP) || [];
-    const recentSubmissions = ipSubmissions.filter(time => time > Date.now() - 3600000);
-    
-    if (recentSubmissions.length >= MAX_SUBMISSIONS_PER_HOUR) {
-        console.warn(`Rate limit IP: ${clientIP} - ${recentSubmissions.length} soumissions`);
-        
-        // Marquer cette IP comme suspecte
-        suspiciousIPs.set(clientIP, {
-            count: (suspiciousIPs.get(clientIP)?.count || 0) + 1,
-            lastSeen: Date.now(),
-            blocked: true
-        });
-        
-        return res.status(429).json({ message: 'Trop de soumissions. Veuillez réessayer dans une heure.' });
-    }
-    
-    // 4. Vérifier les patterns de spam dans les données du formulaire
+    // 2. Vérifier les patterns de spam dans les données du formulaire
     const allContent = Object.values(formData).join(' ') + ' ' + subject;
     if (isSpamContent(allContent)) {
         console.warn(`Contenu spam détecté depuis ${clientIP}`);
-        
-        // Marquer comme suspect
-        const suspiciousData = suspiciousIPs.get(clientIP) || { count: 0, lastSeen: 0 };
-        suspiciousIPs.set(clientIP, {
-            count: suspiciousData.count + 2, // Plus sévère pour spam
-            lastSeen: Date.now(),
-            blocked: true
-        });
-        
         return res.status(400).json({ message: 'Contenu rejeté.' });
     }
     
-    // 5. Vérifier le User-Agent (bot detection basique)
+    // 3. Vérifier le User-Agent (bot detection basique)
     if (!userAgent || userAgent.length < 10) {
         console.warn(`User-Agent suspect: ${userAgent} depuis ${clientIP}`);
         return res.status(400).json({ message: 'Client non autorisé.' });
@@ -175,8 +140,6 @@ router.post('/sendEmail', apiKeyMiddleware, async (req, res) => {
     
     // Ajouter les locks
     emailLocks.add(emailSender);
-    recentSubmissions.push(Date.now());
-    ipLocks.set(clientIP, recentSubmissions);
 
     setTimeout(() => {
         emailLocks.delete(emailSender);
