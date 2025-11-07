@@ -65,9 +65,15 @@ router.post('/generateSite', authenticateToken, async (req, res) => {
 
   console.log('Vérification des autorisations pour le custom_domain:', customDomainRequested);
 
+  // Vérifier si l'utilisateur est l'admin autorisé
+  const adminUserId = process.env.ADMIN_USER_ID;
+  const isAdmin = adminUserId && req.user?.idUser === adminUserId;
+
+  console.log('Utilisateur admin:', isAdmin, 'ID:', req.user?.idUser);
+
   // Vérification du droit custom_domain si demandé (on ne bloque pas ici, mais on retient l'autorisation)
   let customDomainNotAllowed = false;
-  if (customDomainRequested) {
+  if (customDomainRequested && !isAdmin) {
     try {
       const protocol = req.protocol || 'http';
       const host = req.get('host');
@@ -202,8 +208,8 @@ router.post('/generateSite', authenticateToken, async (req, res) => {
     console.log(`Domaine personnalisé demandé :`, customDomainRequested);
     console.log('customDomainNotAllowed:', customDomainNotAllowed); 
 
-      // 4. Construire l'objet siteConfig et lancer la génération (seulement si autorisé)
-      if (!customDomainRequested || customDomainNotAllowed) {
+      // 4. Construire l'objet siteConfig et lancer la génération (seulement si autorisé ou admin)
+      if ((!customDomainRequested || customDomainNotAllowed) && !isAdmin) {
         // Ne pas générer le site, mais indiquer que les éléments en attente ont bien été publiés
         return res.status(200).json({
           success: true,
