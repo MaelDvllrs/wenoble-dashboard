@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { useNavigate, NavLink } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
-import { CircularProgress, MenuItem } from '@mui/material';
+import { CircularProgress, MenuItem, Popper, Grow, ClickAwayListener, Box } from '@mui/material';
 import { Menu } from '@mui/material';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import Cookies from 'js-cookie';
 import './website.css';
 
@@ -67,6 +68,10 @@ const EditWebsite = () => {
   // États pour les modales
   // État pour le menu de publication
   const [anchorEl, setAnchorEl] = useState(null);
+  const [showDomainDialog, setShowDomainDialog] = useState(false);
+  const [publishType, setPublishType] = useState('publish'); // 'publish' ou 'all'
+  const [publishCustomDomain, setPublishCustomDomain] = useState(false);
+  const publishBtnRef = useRef(null);
   const [deleteUserModal, setDeleteUserModal] = useState({ open: false, userId: null });
   const [deleteWebsiteModal, setDeleteWebsiteModal] = useState(false);
   const [editUserModal, setEditUserModal] = useState({ open: false, userId: null, role: '' });
@@ -79,6 +84,10 @@ const EditWebsite = () => {
   const [dataRetrievalStatus, setDataRetrievalStatus] = useState(false);
   const [pageGenerationStatus, setPageGenerationStatus] = useState(false);
   const [sitePublishingStatus, setSitePublishingStatus] = useState(false);
+  
+  // États pour l'abonnement et les droits admin
+  const [subscriptionInfo, setSubscriptionInfo] = useState(null);
+  const [isAdminUser, setIsAdminUser] = useState(false);
 
   // Charger les données du site web
   useEffect(() => {
@@ -106,6 +115,57 @@ const EditWebsite = () => {
       loadWorkspaceMembers();
     }
   }, [users, website]);
+
+  // Vérifier si l'utilisateur est admin
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      try {
+        const response = await Axios.get(`${config.apiUrl}/user-admin`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setIsAdminUser(response.data?.isAdmin || false);
+      } catch (error) {
+        console.error('Erreur lors de la vérification du statut admin:', error);
+        setIsAdminUser(false);
+      }
+    };
+    if (token) {
+      checkAdminStatus();
+    }
+  }, [token]);
+
+  // Récupérer l'abonnement et la feature custom_domain
+  useEffect(() => {
+    const fetchSubscriptionAndFeature = async () => {
+      if (!website?.id) return;
+      try {
+        // Vérifier la feature custom_domain
+        let customDomain = false;
+        const authRes = await Axios.get(`${config.apiUrl}/custom-domain-authorisation/${website.id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        customDomain = !!authRes.data.authorisation;
+
+        // Récupérer le plan d'abonnement
+        let planName = null;
+        try {
+          const subRes = await Axios.get(`${config.apiUrl}/subscription-status/${website.id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (subRes.data?.success && subRes.data.subscription) {
+            planName = subRes.data.subscription.plan_name || null;
+          }
+        } catch (e) {
+          // ignore
+        }
+
+        setSubscriptionInfo({ custom_domain: customDomain, plan_name: planName });
+      } catch (e) {
+        setSubscriptionInfo(null);
+      }
+    };
+    fetchSubscriptionAndFeature();
+  }, [website, token]);
 
 
   // Charger les utilisateurs du site web
@@ -273,8 +333,48 @@ const EditWebsite = () => {
       showSnackbar(errorMessage, 'error');
     }
     setLoading(false);
-  setDeleteWebsiteModal(false);
-};  if (initialLoading || !website) {
+    setDeleteWebsiteModal(false);
+  };
+
+  // Fonction pour gérer la publication avec sélection de domaine
+  const handlePublishWithDomain = async () => {
+    setShowDomainDialog(false);
+    setIsPublishing(true);
+    setDataRetrievalStatus(true);
+    setPageGenerationStatus(false);
+    setSitePublishingStatus(false);
+
+    try {
+      setTimeout(() => setPageGenerationStatus(true), 800);
+      
+      // Déterminer si on publie sur le custom domain
+      const customDomain = !!((subscriptionInfo?.custom_domain || isAdminUser) && publishCustomDomain);
+      
+      // Appel API avec le type de publication et le domaine
+      const res = await generateStaticSite(token, website.id, publishType, customDomain);
+      
+      setTimeout(() => setSitePublishingStatus(true), 1600);
+      await new Promise(r => setTimeout(r, 2600));
+      
+      if (res?.success === false) {
+        showSnackbar('warning', "La génération du site a rencontré un problème partiel");
+      } else {
+        const message = publishType === 'all' ? 'Site généré (toutes pages) avec succès' : 'Site généré avec succès';
+        showSnackbar('success', message);
+      }
+    } catch (e) {
+      console.error('Erreur publication site:', e);
+      showSnackbar('error', 'Erreur lors de la génération du site');
+    } finally {
+      setDataRetrievalStatus(false);
+      setPageGenerationStatus(false);
+      setSitePublishingStatus(false);
+      setIsPublishing(false);
+      setPublishCustomDomain(false);
+    }
+  };
+
+  if (initialLoading || !website) {
     return (
       <div className="outlet">
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
@@ -354,15 +454,17 @@ const EditWebsite = () => {
                 </SecondaryButton>
                 {/* Nouveau bouton principal avec menu popup pour publier/publier tout */}
                 <div>
-                  <DefaultButton
-                    aria-controls={Boolean(anchorEl) ? 'publish-menu' : undefined}
-                    aria-haspopup="true"
-                    onClick={(e) => setAnchorEl(e.currentTarget)}
-                    disabled={loading || isPublishing}
-                    size="large"
-                  >
-                    <div className="button-popup-box">Publier <div className="button-popup-line"></div><KeyboardArrowDownIcon fontSize="small"/></div>
-                  </DefaultButton>
+                  <span ref={publishBtnRef} style={{ display: 'inline-block' }}>
+                    <DefaultButton
+                      aria-controls={Boolean(anchorEl) ? 'publish-menu' : undefined}
+                      aria-haspopup="true"
+                      onClick={(e) => setAnchorEl(e.currentTarget)}
+                      disabled={loading || isPublishing}
+                      size="large"
+                    >
+                      <div className="button-popup-box">Publier <div className="button-popup-line"></div><KeyboardArrowDownIcon fontSize="small"/></div>
+                    </DefaultButton>
+                  </span>
                   <Menu
                     id="publish-menu"
                     anchorEl={anchorEl}
@@ -382,59 +484,21 @@ const EditWebsite = () => {
                     MenuListProps={{ sx: { paddingY: 0 } }}
                   >
                     <MenuItem sx={{ fontSize: "0.95rem", '&:hover': { backgroundColor: theme.palette.primary.third } }}
-                      onClick={async () => {
+                      onClick={() => {
                         setAnchorEl(null);
                         if (isPublishing) return;
-                        setIsPublishing(true);
-                        setDataRetrievalStatus(true);
-                        try {
-                          setTimeout(() => setPageGenerationStatus(true), 800);
-                          const res = await generateStaticSite(token, website.id);
-                          setTimeout(() => setSitePublishingStatus(true), 1600);
-                          await new Promise(r => setTimeout(r, 2600));
-                          if (res?.success === false) {
-                            showSnackbar('warning', "La génération du site a rencontré un problème partiel");
-                          } else {
-                            showSnackbar('success', 'Site généré avec succès');
-                          }
-                        } catch (e) {
-                          console.error('Erreur publication site:', e);
-                          showSnackbar('error', 'Erreur lors de la génération du site');
-                        } finally {
-                          setDataRetrievalStatus(false);
-                          setPageGenerationStatus(false);
-                          setSitePublishingStatus(false);
-                          setIsPublishing(false);
-                        }
+                        setPublishType('publish');
+                        setShowDomainDialog(true);
                       }}
                     >
                       Publier
                     </MenuItem>
                     <MenuItem sx={{ fontSize: "0.95rem", '&:hover': { backgroundColor: theme.palette.primary.third } }}
-                      onClick={async () => {
+                      onClick={() => {
                         setAnchorEl(null);
                         if (isPublishing) return;
-                        setIsPublishing(true);
-                        setDataRetrievalStatus(true);
-                        try {
-                          setTimeout(() => setPageGenerationStatus(true), 800);
-                          const res = await generateStaticSite(token, website.id, 'all');
-                          setTimeout(() => setSitePublishingStatus(true), 1600);
-                          await new Promise(r => setTimeout(r, 2600));
-                          if (res?.success === false) {
-                            showSnackbar('warning', "La génération du site a rencontré un problème partiel");
-                          } else {
-                            showSnackbar('success', 'Site généré (toutes pages) avec succès');
-                          }
-                        } catch (e) {
-                          console.error('Erreur publication site (all):', e);
-                          showSnackbar('error', 'Erreur lors de la génération du site');
-                        } finally {
-                          setDataRetrievalStatus(false);
-                          setPageGenerationStatus(false);
-                          setSitePublishingStatus(false);
-                          setIsPublishing(false);
-                        }
+                        setPublishType('all');
+                        setShowDomainDialog(true);
                       }}
                     >
                       Publier tout
@@ -651,6 +715,115 @@ const EditWebsite = () => {
       </div>
 
       {/* Modales */}
+      {/* Popup de sélection de domaine pour la publication */}
+      <Popper
+        open={showDomainDialog}
+        anchorEl={publishBtnRef.current}
+        transition
+        placement="bottom-end"
+        style={{ zIndex: 1300 }}
+      >
+        {({ TransitionProps }) => (
+          <ClickAwayListener onClickAway={() => setShowDomainDialog(false)}>
+            <Grow {...TransitionProps} timeout={350}>
+              <div style={{
+                marginTop: '0.5rem',
+                background: theme.palette.primary.main,
+                boxShadow: theme.palette.shadow.main,
+                padding: '1rem',
+                maxWidth: '350px',
+                width: '60vw',
+                borderRadius: '0.5rem'
+              }}>
+                <Box sx={{ mb: 1 }}>
+                  <h4 style={{ margin: 0, color: theme.palette.text.primary }}>Publication du site</h4>
+                </Box>
+                <div className='line-sidebar'></div>
+                <Box sx={{ mb: 1 }}>
+                  {/* Domaine preview (toujours activé) */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.8rem' }}>
+                    <label className="custom-checkbox" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <input type="checkbox" checked disabled style={{ accentColor: theme.palette.primary.main }} />
+                      <span className="checkmark"></span>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.5rem' }}>
+                        <span style={{ color: theme.palette.text.secondary, fontSize: '0.85rem', lineHeight: 1 }}>
+                          Domaine preview
+                        </span>
+                        <span style={{ fontSize: '0.85rem', lineHeight: 1.2 }}>
+                          <b>{website?.website_preview || 'Non configuré'}</b>
+                        </span>
+                      </div>
+                    </label>
+                    {website?.website_preview && (
+                      <button
+                        className='download-button'
+                        title="Voir le site preview"
+                        onClick={() => window.open(`https://${website.website_preview}`, '_blank')}
+                      >
+                        <OpenInNewIcon fontSize='tiny' />
+                      </button>
+                    )}
+                  </div>
+                  <div className='line-sidebar'></div>
+                  {/* Domaine personnalisé (si abonnement ou admin) */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.8rem' }}>
+                    <label className="custom-checkbox" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <input
+                        type="checkbox"
+                        checked={!!((subscriptionInfo?.custom_domain || isAdminUser) && publishCustomDomain)}
+                        onChange={e => setPublishCustomDomain(e.target.checked)}
+                        disabled={!subscriptionInfo?.custom_domain && !isAdminUser}
+                        style={{ accentColor: theme.palette.primary.main }}
+                      />
+                      <span className="checkmark"></span>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.5rem' }}>
+                        <span style={{ color: theme.palette.text.secondary, fontSize: '0.85rem', lineHeight: 1 }}>
+                          Domaine personnalisé {isAdminUser && <span style={{ color: theme.palette.primary.main }}>(Admin)</span>}
+                        </span>
+                        <span style={{ fontSize: '0.85rem', lineHeight: 1.2 }}>
+                          {subscriptionInfo?.custom_domain || isAdminUser ? (
+                            <b>{website?.website_slug || 'Non configuré'}</b>
+                          ) : (
+                            <NavLink to={`/dashboard/website/subscription`} style={{ color: theme.palette.text.primary, marginLeft: 0, fontSize: 12 }}>
+                              Ajouter un domaine personnalisé
+                            </NavLink>
+                          )}
+                        </span>
+                      </div>
+                    </label>
+                    {website?.custom_domain && (
+                      <button
+                        className='download-button'
+                        title="Voir le site custom"
+                        onClick={() => window.open(`https://${website.custom_domain}`, '_blank')}
+                      >
+                        <OpenInNewIcon fontSize='tiny' />
+                      </button>
+                    )}
+                  </div>
+                </Box>
+                <div className='line-sidebar'></div>
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                  <SecondaryButton
+                    variant="outlined"
+                    size="small"
+                    onClick={() => setShowDomainDialog(false)}
+                  >
+                    Annuler
+                  </SecondaryButton>
+                  <DefaultButton
+                    onClick={handlePublishWithDomain}
+                    disabled={isPublishing}
+                  >
+                    Publier le site
+                  </DefaultButton>
+                </Box>
+              </div>
+            </Grow>
+          </ClickAwayListener>
+        )}
+      </Popper>
+
       {deleteUserModal.open && (
         <div className="modal_overlay" onClick={() => setDeleteUserModal({ open: false, userId: null })}>
           <div className="modal_content" onClick={(e) => e.stopPropagation()}>

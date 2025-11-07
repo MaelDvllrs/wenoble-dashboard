@@ -857,4 +857,51 @@ router.get('/user/profile', async (req, res) => {
   }
 });
 
+// Route pour vérifier si l'utilisateur est admin
+router.get('/user-admin', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ 
+        success: false, 
+        isAdmin: false,
+        message: 'Token manquant' 
+      });
+    }
+
+    // Vérifier le token avec Supabase
+    const supabase = createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_KEY
+    );
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    
+    if (authError || !user) {
+      return res.status(401).json({ 
+        success: false, 
+        isAdmin: false,
+        message: 'Token invalide' 
+      });
+    }
+
+    // Vérifier si l'utilisateur est l'admin
+    const adminUserId = process.env.ADMIN_USER_ID;
+    const isAdmin = adminUserId && user.id === adminUserId;
+
+    res.json({
+      success: true,
+      isAdmin: isAdmin
+    });
+
+  } catch (error) {
+    console.error('Erreur lors de la vérification admin:', error);
+    res.status(500).json({ 
+      success: false, 
+      isAdmin: false,
+      message: 'Erreur serveur' 
+    });
+  }
+});
+
 module.exports = router;

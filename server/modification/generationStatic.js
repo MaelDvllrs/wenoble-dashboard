@@ -89,6 +89,7 @@ router.post('/generateSite', authenticateToken, async (req, res) => {
     }
   }
 
+
   try {
     // 1. Récupérer le chemin du dossier projet depuis la table websites
     const { data: websiteData, error: websiteError } = await supabase

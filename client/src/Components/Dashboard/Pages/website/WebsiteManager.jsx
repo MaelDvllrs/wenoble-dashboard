@@ -55,10 +55,29 @@ const WebsiteManager = () => {
   const [subscriptionInfo, setSubscriptionInfo] = useState(null);
   const [showDomainPopup, setShowDomainPopup] = useState(false);
   const [publishCustomDomain, setPublishCustomDomain] = useState(false);
+  const [isAdminUser, setIsAdminUser] = useState(false);
 
 
   const token = Cookies.get('token');
   const { showSnackbar } = useSnackbar();
+  
+  // Vérifier si l'utilisateur est l'admin autorisé
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      try {
+        const response = await Axios.get(`${config.apiUrl}/user-admin`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setIsAdminUser(response.data?.isAdmin || false);
+      } catch (error) {
+        console.error('Erreur lors de la vérification du statut admin:', error);
+        setIsAdminUser(false);
+      }
+    };
+    if (token) {
+      checkAdminStatus();
+    }
+  }, [token]);
   
   // Website selector from context
   const [openWebsiteMenu, setOpenWebsiteMenu] = useState(false);
@@ -546,23 +565,23 @@ const WebsiteManager = () => {
                                   </button>
                                 </div>
                                 <div className='line-sidebar'></div>
-                                {/* Domaine personnalisé (si abonnement) */}
+                                {/* Domaine personnalisé (si abonnement ou admin) */}
                                 <div style={{display: 'flex', justifyContent: 'space-between', gap: '0.8rem'}}>
                                   <label className="custom-checkbox" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                     <input
                                       type="checkbox"
-                                      checked={!!(subscriptionInfo?.custom_domain && publishCustomDomain)}
+                                      checked={!!((subscriptionInfo?.custom_domain || isAdminUser) && publishCustomDomain)}
                                       onChange={e => setPublishCustomDomain(e.target.checked)}
-                                      disabled={!subscriptionInfo?.custom_domain}
+                                      disabled={!subscriptionInfo?.custom_domain && !isAdminUser}
                                       style={{ accentColor: theme.palette.primary.main }}
                                     />
                                     <span className="checkmark"></span>
                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.5rem' }}>
                                       <span style={{ color: theme.palette.text.secondary, fontSize: '0.85rem', lineHeight: 1 }}>
-                                        Domaine personnalisé
+                                        Domaine personnalisé {isAdminUser && <span style={{color: theme.palette.primary.main}}>(Admin)</span>}
                                       </span>
                                       <span style={{ fontSize: '0.85rem', lineHeight: 1.2 }}>
-                                        {subscriptionInfo?.custom_domain ? (
+                                        {subscriptionInfo?.custom_domain || isAdminUser ? (
                                           <b>{selectedWebsite?.website_slug || 'Non configuré'}</b>
                                         ) : (
                                           <NavLink to={`/dashboard/website/subscription`} style={{ color: theme.palette.text.primary, marginLeft: 0, fontSize: 12 }}>
@@ -605,8 +624,8 @@ const WebsiteManager = () => {
                                     setSitePublishingStatus(false);
                                     try {
                                       setTimeout(() => setPageGenerationStatus(true), 900);
-                                      // Appel API publication : customDomain = true si la checkbox est cochée ET autorisée
-                                      const customDomain = !!(subscriptionInfo?.custom_domain && publishCustomDomain);
+                                      // Appel API publication : customDomain = true si la checkbox est cochée ET (autorisée OU admin)
+                                      const customDomain = !!((subscriptionInfo?.custom_domain || isAdminUser) && publishCustomDomain);
                                       const res = await generateStaticSite(token, selectedWebsite.id, 'all', customDomain);
                                       setTimeout(() => setSitePublishingStatus(true), 1800);
                                       await new Promise(r => setTimeout(r, 2600));
