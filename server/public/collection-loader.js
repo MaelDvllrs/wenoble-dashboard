@@ -431,9 +431,10 @@
                                 const galleryItems = JSON.parse(galleryData.gallery);
                                 if (galleryItems && galleryItems.length > 0) {
                                     // Ajouter la classe si elle existe
-                                    el.innerHTML = galleryItems.map(img => 
-                                        `<img src="${urlGalleryBucket}${img.src_photo}"${className ? ` class="${className}"` : ''}>`
-                                    ).join("");
+                                    el.innerHTML = galleryItems.map(img => {
+                                        const imgSrc = img.src_photo.startsWith('http') ? img.src_photo : `${urlGalleryBucket}${img.src_photo}`;
+                                        return `<img src="${imgSrc}"${className ? ` class="${className}"` : ''}>`;
+                                    }).join("");
                                 } else {
                                     // Pas d'images dans la galerie
                                     el.style.display = "none";
@@ -456,7 +457,7 @@
                             const galleryItems = JSON.parse(galleryData.gallery);
                             const img = galleryItems[indexPhoto];
                             if (img) {
-                                el.src = `${urlGalleryBucket}${img.src_photo}`;
+                                el.src = img.src_photo.startsWith('http') ? img.src_photo : `${urlGalleryBucket}${img.src_photo}`;
                                 el.alt = img.alt;
                             }
                         }
@@ -467,7 +468,10 @@
                         const galleryData = data.content.gallery.find(gallery => gallery.id_config == key);
                         if (galleryData) {
                             const galleryItems = JSON.parse(galleryData.gallery);
-                            el.innerHTML = galleryItems.map(img => `<div class="slides"><img src="${urlGalleryBucket}${img.src_photo}"></div>`).join("");
+                            el.innerHTML = galleryItems.map(img => {
+                                const imgSrc = img.src_photo.startsWith('http') ? img.src_photo : `${urlGalleryBucket}${img.src_photo}`;
+                                return `<div class="slides"><img src="${imgSrc}"></div>`;
+                            }).join("");
                         }
                     }
 

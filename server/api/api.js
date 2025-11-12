@@ -1286,13 +1286,18 @@ router.get('/sendBlogImage', apiKeyMiddleware, async (req, res) => {
         if (!data || data.length === 0) return res.status(200).json({ message: 'Aucune image trouvée' });
         // Générer les URLs publiques Supabase pour chaque image
         const images = data.map(image => {
-            const { data: publicUrlData } = supabase.storage
-                .from('collection-images')
-                .getPublicUrl(image.src_image);
+            // Si l'image a déjà une URL complète, l'utiliser directement
+            let imageUrl = image.src_image;
+            if (!image.src_image.startsWith('http')) {
+                const { data: publicUrlData } = supabase.storage
+                    .from('collection-images')
+                    .getPublicUrl(image.src_image);
+                imageUrl = publicUrlData?.publicUrl || '';
+            }
             return {
                 id_config: image.id_config,
                 alt_image: image.alt_image,
-                url: publicUrlData?.publicUrl || ''
+                url: imageUrl
             };
         });
         return res.json({ images });
@@ -1459,14 +1464,18 @@ router.get('/sendBlogContent', apiKeyMiddleware, async (req, res) => {
                         .eq('collection_element_id', id_blog_page)
                         .eq('id_config', field.id);
                     const images = (data || []).map(image => {
-                        const { data: publicUrlData } = supabase.storage
-                            .from('collection-images')
-                            .getPublicUrl(image.src_image);
-
+                        // Si l'image a déjà une URL complète, l'utiliser directement
+                        let imageUrl = image.src_image;
+                        if (!image.src_image.startsWith('http')) {
+                            const { data: publicUrlData } = supabase.storage
+                                .from('collection-images')
+                                .getPublicUrl(image.src_image);
+                            imageUrl = publicUrlData?.publicUrl || '';
+                        }
                         return {
                             id_config: image.id_config,
                             alt_image: image.alt_image,
-                            url: publicUrlData?.publicUrl || ''
+                            url: imageUrl
                         };
                         
                     });

@@ -425,6 +425,56 @@ router.post('/collection/:collectionId/elements', authenticateAPIKey, async (req
             }
             break;
 
+          case 'video':
+            // Pour les vidéos, on attend un objet avec { url, name } ou juste une URL string
+            let videoData;
+            if (typeof fieldValue === 'string') {
+              // Si c'est juste une URL, utiliser l'URL comme name aussi
+              videoData = {
+                url: fieldValue,
+                name: fieldValue
+              };
+            } else if (typeof fieldValue === 'object' && fieldValue.url) {
+              // Si c'est un objet avec url, name, etc.
+              videoData = {
+                url: fieldValue.url,
+                name: fieldValue.name || fieldValue.url
+              };
+            } else {
+              console.error(`Format invalide pour le champ vidéo "${fieldName}":`, fieldValue);
+              continue;
+            }
+
+            // Générer un ID unique pour la vidéo
+            const videoId = uuidv4();
+
+            console.log('Insertion champ vidéo avec:', {
+              id: videoId,
+              collection_element_id: elementId,
+              id_config: configId,
+              src_video: videoData.url,
+              name_video: videoData.name
+            });
+
+            const { error: videoError } = await supabase
+              .from('collection_field_video')
+              .insert({
+                id: videoId,
+                collection_element_id: elementId,
+                id_config: configId,
+                src_video: videoData.url,
+                name_video: videoData.name,
+                size: 0
+              });
+
+            if (videoError) {
+              console.error('Erreur insertion champ vidéo:', videoError);
+            } else {
+              console.log('Champ vidéo inséré avec succès');
+              processedFields[fieldName] = { type: 'video', value: videoData };
+            }
+            break;
+
           case 'multiReference':
             // Pour les multiréférences, on attend un tableau d'objets avec { value, label } ou juste des IDs
             let multiRefData = [];
@@ -813,6 +863,56 @@ router.put('/collection/:collectionId/elements/:elementId', authenticateAPIKey, 
               } else {
                 console.log('Champ galerie mis à jour avec succès');
                 processedFields[fieldName] = { type: 'gallery', value: galleryData };
+              }
+              break;
+
+            case 'video':
+              // Pour les vidéos, on attend un objet avec { url, name } ou juste une URL string
+              let videoData;
+              if (typeof fieldValue === 'string') {
+                // Si c'est juste une URL, utiliser l'URL comme name aussi
+                videoData = {
+                  url: fieldValue,
+                  name: fieldValue
+                };
+              } else if (typeof fieldValue === 'object' && fieldValue.url) {
+                // Si c'est un objet avec url, name, etc.
+                videoData = {
+                  url: fieldValue.url,
+                  name: fieldValue.name || fieldValue.url
+                };
+              } else {
+                console.error(`Format invalide pour le champ vidéo "${fieldName}":`, fieldValue);
+                continue;
+              }
+
+              // Générer un ID unique pour la vidéo
+              const videoId = uuidv4();
+
+              console.log('Mise à jour champ vidéo avec:', {
+                id: videoId,
+                collection_element_id: elementId,
+                id_config: configId,
+                src_video: videoData.url,
+                name_video: videoData.name
+              });
+
+              const { error: videoError } = await supabase
+                .from('collection_field_video')
+                .insert({
+                  id: videoId,
+                  collection_element_id: elementId,
+                  id_config: configId,
+                  src_video: videoData.url,
+                  name_video: videoData.name,
+                  size: 0
+                });
+
+              if (videoError) {
+                console.error('Erreur mise à jour champ vidéo:', videoError);
+              } else {
+                console.log('Champ vidéo mis à jour avec succès');
+                processedFields[fieldName] = { type: 'video', value: videoData };
               }
               break;
 

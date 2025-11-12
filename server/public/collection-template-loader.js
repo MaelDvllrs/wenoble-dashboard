@@ -341,8 +341,9 @@
                         imgElement.loading = "lazy";
                         
                         
-                        // Stocker l'URL réelle dans data-src
-                        imgElement.dataset.src = `${urlGalleryBucket}${img.src_photo}`;
+                        // Stocker l'URL réelle dans data-src (vérifier si c'est déjà une URL complète)
+                        const imgSrc = img.src_photo.startsWith('http') ? img.src_photo : `${urlGalleryBucket}${img.src_photo}`;
+                        imgElement.dataset.src = imgSrc;
                         
                         // Mettre une image de remplacement très légère
                         imgElement.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E";
@@ -387,7 +388,7 @@
                     }
                     const img = galleryItems[indexPhoto];
                     if (img) {
-                        el.src = `${urlGalleryBucket}${img.src_photo}`;
+                        el.src = img.src_photo.startsWith('http') ? img.src_photo : `${urlGalleryBucket}${img.src_photo}`;
                         el.alt = img.alt;
                     }
                 }
@@ -412,7 +413,8 @@
                         const slideDiv = document.createElement("div");
                         slideDiv.classList.add("slides");
                         const imgElement = document.createElement("img");
-                        imgElement.src = `${urlGalleryBucket}${img.src_photo}`;
+                        const imgSrc = img.src_photo.startsWith('http') ? img.src_photo : `${urlGalleryBucket}${img.src_photo}`;
+                        imgElement.src = imgSrc;
                         imgElement.alt = img.alt;
                         imgElement.classList.add("slide-image");
                         slideDiv.appendChild(imgElement);
