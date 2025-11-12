@@ -371,14 +371,14 @@ router.post('/collection/:collectionId/elements', authenticateAPIKey, async (req
                 if (typeof item === 'string') {
                   // Si c'est juste une URL, utiliser l'URL comme alt et name aussi
                   return {
-                    url: item,
+                    src_photo: item,
                     alt: item,
                     name: item
                   };
                 } else if (typeof item === 'object' && item.url) {
                   // Si c'est un objet avec url, alt, etc.
                   return {
-                    url: item.url,
+                    src_photo: item.url,
                     alt: item.alt || item.url,
                     name: item.name || item.alt || item.url
                   };
