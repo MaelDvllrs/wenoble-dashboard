@@ -414,7 +414,8 @@
                         
                         const videoData = data.content.video.find(video => video.id_config == key);
                         if (videoData) {
-                            el.innerHTML = `<source src="${urlVideoBucket}${videoData.src_video}">`;
+                            const videoSrc = videoData.src_video.startsWith('http') ? videoData.src_video : `${urlVideoBucket}${videoData.src_video}`;
+                            el.innerHTML = `<source src="${videoSrc}">`;
                         }
                     }
 
