@@ -300,6 +300,7 @@
                 const key = el.getAttribute("wn-video");
                 const videoData = data.content.video.find(img => img.id_config == key);
                 if (videoData) {
+                    console.log("videoData:", videoData);
                     const videoSrc = videoData.src_video.startsWith('http') ? videoData.src_video : `${urlVideoBucket}${videoData.src_video}`;
                     console.log("videoSrc:", videoSrc);
                     el.innerHTML = `<source src="${videoSrc}">`;
