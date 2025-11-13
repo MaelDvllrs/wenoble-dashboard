@@ -22,16 +22,8 @@ export const useAcademy = () => {
             const apiUrl = config.apiUrl;
             const userKey = config.apiAcademyClient;
 
-            const collectionParams = new URLSearchParams({
-                limit: '',
-                order: '',
-                colone: '',
-                joinTable: '',
-                configs: JSON.stringify({})
-            });
-
             try {
-                const { data: blogPages } = await axios.get(`${apiUrl}/api/sendBlog?${collectionParams.toString()}`, {
+                const { data: blogPages } = await axios.get(`${apiUrl}/api/sendBlog`, {
                     headers: {
                         'api_key': userKey,
                         'ids': config.apiAcademyIdBlog,
@@ -61,10 +53,15 @@ export const useAcademy = () => {
 
                 const data = await Promise.all(detailPromises);
                 
-                setAcademies(data);
+                // Filtrer uniquement les éléments publiés (status_text = 'publish')
+                const publishedData = data.filter(academy => 
+                    academy.collection_element_status_text === 'publish'
+                );
+                
+                setAcademies(publishedData);
                 
                 // Extraire les filtres
-                const allCategories = data
+                const allCategories = publishedData
                     .flatMap((academy) => academy.content.multiReference?.map((ref) => ref.label) || []);
                 const uniqueCategories = [...new Set(allCategories)];
                 setAvailableFilters(uniqueCategories);
