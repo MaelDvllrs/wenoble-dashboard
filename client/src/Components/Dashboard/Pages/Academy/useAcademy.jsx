@@ -9,6 +9,7 @@ export const useAcademy = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedFilters, setSelectedFilters] = useState([]);
     const [availableFilters, setAvailableFilters] = useState([]);
+    const [hasFetched, setHasFetched] = useState(false);
 
     const fetchAcademyData = async (userKey) => {
         const apiUrl = config.apiUrl;
@@ -55,6 +56,10 @@ export const useAcademy = () => {
 
     useEffect(() => {
         const userKey = config.apiAcademyClient;
+
+        // Éviter les appels multiples
+        if (hasFetched) return;
+        setHasFetched(true);
 
         fetchAcademyData(userKey)
             .then((data) => {
