@@ -58,10 +58,21 @@ export const useAcademy = () => {
                     academy.collection_element_status_text === 'publish'
                 );
                 
-                setAcademies(publishedData);
+                // Dédupliquer par ID au cas où
+                const uniqueData = publishedData.reduce((acc, current) => {
+                    const exists = acc.find(item => item.id === current.id);
+                    if (!exists) {
+                        acc.push(current);
+                    }
+                    return acc;
+                }, []);
+                
+                console.log('Academy data - Total:', data.length, 'Published:', publishedData.length, 'Unique:', uniqueData.length);
+                
+                setAcademies(uniqueData);
                 
                 // Extraire les filtres
-                const allCategories = publishedData
+                const allCategories = uniqueData
                     .flatMap((academy) => academy.content.multiReference?.map((ref) => ref.label) || []);
                 const uniqueCategories = [...new Set(allCategories)];
                 setAvailableFilters(uniqueCategories);
