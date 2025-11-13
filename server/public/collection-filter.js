@@ -65,7 +65,9 @@ async function handleCollectionFilters() {
   const paginationLimit = parseInt(collection.getAttribute('wn-filter-pagination')) || 0;
   const hasPagination = paginationLimit > 0;
 
-  if (window.location.hostname.includes('webflow.io')) {
+  // Attendre le chargement de la collection uniquement sur Webflow
+  const isWebflow = window.location.hostname.includes('webflow.io');
+  if (isWebflow) {
     await waitForCollectionBox(collection);
   }
 
@@ -85,25 +87,46 @@ async function handleCollectionFilters() {
   const filterButton = document.querySelector('[wn-filter-button]');
   const hasConfirmButton = !!filterButton;
 
-  // Attacher les événements de filtre
+        // Attacher les événements de filtre
   filterForms.forEach((form) => {
     const fields = form.querySelectorAll('[wn-filter-field]');
     fields.forEach((field) => {
       const parent = field.closest('label') || field.parentElement;
       const input = parent.querySelector('input[type="checkbox"], input[type="radio"]');
       const select = parent.querySelector('select');
+      const rangeMin = parent.querySelector('input[type="range"][wn-range-min]');
+      const rangeMax = parent.querySelector('input[type="range"][wn-range-max]');
       
       // Si pas de bouton de confirmation, appliquer les filtres immédiatement
       if (!hasConfirmButton) {
-        if (input) {
+        if (input && input.type !== 'range') {
           input.addEventListener('change', () =>
-            applyFilters(itemsToFilter, filterForms)
+            applyFilters(itemsToFilter, filterForms, false, hasPagination, paginationLimit)
           );
         }
         if (select) {
           select.addEventListener('change', () =>
-            applyFilters(itemsToFilter, filterForms)
+            applyFilters(itemsToFilter, filterForms, false, hasPagination, paginationLimit)
           );
+        }
+        
+        // Gérer les double range sliders
+        if (rangeMin && rangeMax) {
+          rangeMin.addEventListener('input', () => {
+            // S'assurer que min ne dépasse pas max
+            if (parseFloat(rangeMin.value) > parseFloat(rangeMax.value)) {
+              rangeMin.value = rangeMax.value;
+            }
+            applyFilters(itemsToFilter, filterForms, false, hasPagination, paginationLimit);
+          });
+          
+          rangeMax.addEventListener('input', () => {
+            // S'assurer que max ne soit pas inférieur à min
+            if (parseFloat(rangeMax.value) < parseFloat(rangeMin.value)) {
+              rangeMax.value = rangeMin.value;
+            }
+            applyFilters(itemsToFilter, filterForms, false, hasPagination, paginationLimit);
+          });
         }
       }
     });
@@ -113,11 +136,11 @@ async function handleCollectionFilters() {
   if (filterButton) {
     filterButton.addEventListener('click', (e) => {
       e.preventDefault();
-      applyFilters(itemsToFilter, filterForms);
+      applyFilters(itemsToFilter, filterForms, false, hasPagination, paginationLimit);
     });
   } else {
     // Appliquer les filtres au démarrage seulement s'il n'y a PAS de bouton
-    applyFilters(itemsToFilter, filterForms, true);
+    applyFilters(itemsToFilter, filterForms, true, hasPagination, paginationLimit);
   }
 
   // Activer les animations après initialisation
@@ -139,6 +162,24 @@ async function handleCollectionFilters() {
   // Initialiser la pagination si activée
   if (hasPagination) {
     initPagination(paginationLimit);
+    
+    // Attendre que les items soient chargés puis initialiser la pagination
+    setTimeout(() => {
+      // Récupérer tous les items visibles initialement
+      const allItems = Array.from(collection.querySelectorAll('[wn-filter-field]'));
+      const uniqueItems = [];
+      const seen = new Set();
+      
+      allItems.forEach(field => {
+        const el = field.closest('[wn-collection-element]');
+        if (el && !seen.has(el)) {
+          seen.add(el);
+          uniqueItems.push(field);
+        }
+      });
+      
+      updatePagination(uniqueItems, paginationLimit);
+    }, isWebflow ? 300 : 100);
   }
 }
 
@@ -156,7 +197,7 @@ function initPagination(limit) {
   // Délégation d'événements pour les numéros de page
   paginationContainer.addEventListener('click', (e) => {
     const pageNumber = e.target.closest('[wn-pagination-number]');
-    if (pageNumber) {
+    if (pageNumber && pageNumber.style.display !== 'none') {
       const page = parseInt(pageNumber.textContent);
       if (!isNaN(page)) {
         goToPage(page, limit);
@@ -198,8 +239,24 @@ function updatePagination(items, limit) {
   visibleItems = items;
 
   // Réinitialiser à la page 1 si la page actuelle dépasse le nombre de pages
-  if (currentPage > totalPages) {
+  if (currentPage > totalPages && totalPages > 0) {
     currentPage = 1;
+  }
+
+  // Masquer la pagination si une seule page ou aucun élément
+  if (totalPages <= 1) {
+    paginationContainer.style.display = 'none';
+    // Afficher tous les éléments filtrés s'il n'y a qu'une page
+    items.forEach((item) => {
+      const el = item.closest('[wn-collection-element]');
+      if (el) {
+        el.classList.remove('wn-fully-hidden');
+        el.classList.remove('wn-hidden');
+      }
+    });
+    return;
+  } else {
+    paginationContainer.style.display = '';
   }
 
   // Générer les numéros de page
@@ -235,13 +292,6 @@ function updatePagination(items, limit) {
     parent.appendChild(pageElement);
   }
 
-  // Masquer la pagination si une seule page ou aucun élément
-  if (totalPages <= 1) {
-    paginationContainer.style.display = 'none';
-  } else {
-    paginationContainer.style.display = '';
-  }
-
   // Afficher les éléments de la page actuelle
   displayPage(currentPage, limit);
 
@@ -259,6 +309,15 @@ function displayPage(page, limit) {
   const startIndex = (page - 1) * limit;
   const endIndex = startIndex + limit;
 
+  // Masquer d'abord TOUS les éléments de la collection
+  const collection = document.querySelector('[wn-filter="list"]');
+  if (collection) {
+    collection.querySelectorAll('[wn-collection-element]').forEach(el => {
+      el.classList.add('wn-fully-hidden');
+    });
+  }
+
+  // Afficher uniquement les éléments filtrés de la page actuelle
   visibleItems.forEach((item, index) => {
     const el = item.closest('[wn-collection-element]');
     if (!el) return;
@@ -266,8 +325,6 @@ function displayPage(page, limit) {
     if (index >= startIndex && index < endIndex) {
       el.classList.remove('wn-fully-hidden');
       el.classList.remove('wn-hidden');
-    } else {
-      el.classList.add('wn-fully-hidden');
     }
   });
 }
@@ -352,6 +409,8 @@ function applyFilters(items, filterForms, initial = false, hasPagination = false
   setTimeout(() => {
     // Collecter tous les filtres actifs groupés par identifier
     const activeFilters = {};
+    const rangeFilters = {};
+    
     filterForms.forEach((form) => {
       const fields = form.querySelectorAll('[wn-filter-field]');
       fields.forEach((field) => {
@@ -359,9 +418,11 @@ function applyFilters(items, filterForms, initial = false, hasPagination = false
         const parent = field.closest('label') || field.parentElement;
         const input = parent.querySelector('input[type="checkbox"], input[type="radio"]');
         const select = parent.querySelector('select');
+        const rangeMin = parent.querySelector('input[type="range"][wn-range-min]');
+        const rangeMax = parent.querySelector('input[type="range"][wn-range-max]');
 
         // Checkbox/Radio cochés
-        if (input && input.checked) {
+        if (input && input.type !== 'range' && input.checked) {
           const filterValue = field.textContent.trim().toLowerCase();
           if (!activeFilters[identifier]) {
             activeFilters[identifier] = [];
@@ -378,30 +439,51 @@ function applyFilters(items, filterForms, initial = false, hasPagination = false
           }
           activeFilters[identifier].push(filterValue);
         }
+        
+        // Double range sliders
+        if (rangeMin && rangeMax && identifier) {
+          rangeFilters[identifier] = {
+            min: parseFloat(rangeMin.value),
+            max: parseFloat(rangeMax.value)
+          };
+        }
       });
     });
 
-    const hasActiveFilters = Object.keys(activeFilters).length > 0;
+    const hasActiveFilters = Object.keys(activeFilters).length > 0 || Object.keys(rangeFilters).length > 0;
     console.log('Active filters:', activeFilters);
+    console.log('Range filters:', rangeFilters);
 
     // Collecter les éléments visibles après filtrage
     const filteredItems = [];
+    
+    // Créer un Set pour éviter les doublons d'éléments
+    const processedElements = new Set();
+
+    // D'abord, masquer tous les éléments
+    items.forEach((item) => {
+      const el = item.closest('[wn-collection-element]');
+      if (el) {
+        el.classList.add('wn-fully-hidden');
+      }
+    });
 
     // Appliquer les filtres à chaque élément
     items.forEach((item) => {
+      const collectionElement = item.closest('[wn-collection-element]');
+      
+      // Éviter de traiter deux fois le même élément
+      if (!collectionElement || processedElements.has(collectionElement)) {
+        return;
+      }
+      processedElements.add(collectionElement);
+      
       let visible = true;
 
       // Si aucun filtre actif, tout afficher
       if (!hasActiveFilters) {
         visible = true;
       } else {
-        // Récupérer tous les champs de l'élément de collection parent
-        const collectionElement = item.closest('[wn-collection-element]');
-        if (!collectionElement) {
-          visible = false;
-          return;
-        }
-
         // Récupérer tous les champs filtrables de cet élément
         const itemFields = {};
         collectionElement.querySelectorAll('[wn-filter-field]').forEach((field) => {
@@ -412,7 +494,7 @@ function applyFilters(items, filterForms, initial = false, hasPagination = false
 
         console.log('Item fields:', itemFields);
 
-        // Pour chaque catégorie de filtre actif, vérifier si l'élément correspond
+        // Vérifier les filtres classiques (checkbox, radio, select)
         for (const [identifier, filterValues] of Object.entries(activeFilters)) {
           const itemValue = itemFields[identifier];
 
@@ -429,29 +511,48 @@ function applyFilters(items, filterForms, initial = false, hasPagination = false
           
           if (!matches) {
             visible = false;
-            break; // Si un champ ne correspond pas, l'item est masqué
+            break;
+          }
+        }
+        
+        // Vérifier les filtres range
+        if (visible) {
+          for (const [identifier, range] of Object.entries(rangeFilters)) {
+            const itemValue = itemFields[identifier];
+            
+            if (!itemValue) {
+              console.log('Item missing range field:', identifier);
+              visible = false;
+              break;
+            }
+            
+            // Convertir la valeur de l'item en nombre
+            const numValue = parseFloat(itemValue);
+            
+            if (isNaN(numValue)) {
+              console.log('Item value is not a number:', itemValue);
+              visible = false;
+              break;
+            }
+            
+            // Vérifier si la valeur est dans la plage
+            if (numValue < range.min || numValue > range.max) {
+              console.log('Item out of range:', { identifier, itemValue: numValue, range });
+              visible = false;
+              break;
+            }
           }
         }
       }
 
-      const el = item.closest('[wn-collection-element]');
-      if (!el) return;
-
       console.log('Final visibility:', { visible, itemText: item.textContent.trim().substring(0, 30) });
 
       if (visible) {
-        filteredItems.push(item);
-        
-        // Si pas de pagination, afficher directement
-        if (!hasPagination) {
-          el.classList.remove('wn-fully-hidden');
-          if (!initial) {
-            void el.offsetWidth; // force reflow
-          }
-          el.classList.remove('wn-hidden');
+        // Ajouter le premier champ trouvé pour cet élément
+        const firstField = collectionElement.querySelector('[wn-filter-field]');
+        if (firstField) {
+          filteredItems.push(firstField);
         }
-      } else {
-        el.classList.add('wn-fully-hidden');
       }
     });
 
@@ -460,6 +561,18 @@ function applyFilters(items, filterForms, initial = false, hasPagination = false
       console.log('Updating pagination with', filteredItems.length, 'items');
       currentPage = 1; // Réinitialiser à la page 1 après filtrage
       updatePagination(filteredItems, paginationLimit);
+    } else {
+      // Si pas de pagination, afficher directement les éléments filtrés
+      filteredItems.forEach((item) => {
+        const el = item.closest('[wn-collection-element]');
+        if (el) {
+          el.classList.remove('wn-fully-hidden');
+          if (!initial) {
+            void el.offsetWidth; // force reflow
+          }
+          el.classList.remove('wn-hidden');
+        }
+      });
     }
   }, initial ? 0 : 250);
 }
@@ -471,9 +584,15 @@ function clearFilters(items, filterForms, hasPagination = false, paginationLimit
       const parent = field.closest('label') || field.parentElement;
       const input = parent.querySelector('input[type="checkbox"], input[type="radio"]');
       const select = parent.querySelector('select');
+      const rangeMin = parent.querySelector('input[type="range"][wn-range-min]');
+      const rangeMax = parent.querySelector('input[type="range"][wn-range-max]');
       
-      if (input) input.checked = false;
-      if (select) select.selectedIndex = 0; // Réinitialiser au premier élément (généralement le placeholder)
+      if (input && input.type !== 'range') input.checked = false;
+      if (select) select.selectedIndex = 0;
+      
+      // Réinitialiser les range sliders à leurs valeurs min/max
+      if (rangeMin) rangeMin.value = rangeMin.min;
+      if (rangeMax) rangeMax.value = rangeMax.max;
     });
   });
 

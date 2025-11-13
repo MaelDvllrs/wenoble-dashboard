@@ -55,6 +55,20 @@
         return window.location.hostname.includes("webflow.io");
     }
 
+    function slugify(text) {
+        return text
+            .toString()
+            .normalize('NFD') // Décomposer les caractères accentués
+            .replace(/[\u0300-\u036f]/g, '') // Enlever les accents
+            .toLowerCase() // Convertir en minuscules
+            .trim() // Enlever les espaces au début et à la fin
+            .replace(/\s+/g, '-') // Remplacer les espaces par des tirets
+            .replace(/[^\w\-]+/g, '') // Enlever tous les caractères non-alphanumériques sauf les tirets
+            .replace(/\-\-+/g, '-') // Remplacer les tirets multiples par un seul
+            .replace(/^-+/, '') // Enlever les tirets au début
+            .replace(/-+$/, ''); // Enlever les tirets à la fin
+    }
+
     document.querySelectorAll("[wn-collection-wrapper]").forEach(async el => {
             
         if (el.querySelector(".ssr-wn-collection-box")) {
@@ -214,7 +228,9 @@
                 // Ajouter les nouvelles options depuis la collection
                 allBlogs.forEach(blog => {
                     const option = document.createElement('option');
-                    option.value = blog.collection_element_slug || blog.id;
+                    // Utiliser le slug existant ou créer un slug à partir du nom
+                    const slugValue = blog.collection_element_slug || slugify(blog.collection_element_name || `element-${blog.id}`);
+                    option.value = slugValue;
                     option.textContent = blog.collection_element_name || `Élément ${blog.id}`;
                     option.setAttribute('data-wn-generated', 'true');
                     option.setAttribute('data-collection-id', blog.id);
