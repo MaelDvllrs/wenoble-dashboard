@@ -771,14 +771,14 @@ const Dashboard = () => {
                                 </motion.div>
                             </AnimatePresence>
                         </NavLink>
-                        <NavLink key="probleme" to='/dashboard/problem' className={({ isActive }) => (isActive ? 'menuDashboard menuActive' : 'menuDashboard')}>
+                        <a key="probleme" href="https://form.asana.com/?k=JsNZ1O1QUSj9-SQSslLlHg&d=1208509146074291" className='menuDashboard'>
                             <AnimatePresence initial={false}>
                                 <motion.div className={isSidebarOpen ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
                                     <motion.div animate={{marginRight: isSidebarOpen ? "0.5rem" : "0rem"}} className='icon_navigation'><HelpOutlineOutlinedIcon fontSize='small'/></motion.div>
                                     <motion.span className={isSidebarOpen ? "menu_text_open" : "menu_text_close"}>Un problème ?</motion.span>
                                 </motion.div>
                             </AnimatePresence>
-                        </NavLink>
+                        </a>
                                 
                     </div>
                     <div className='menu_footer'>
