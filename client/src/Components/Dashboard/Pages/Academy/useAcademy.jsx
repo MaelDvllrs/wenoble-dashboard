@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import config from "../../../../config";
 
@@ -9,78 +9,76 @@ export const useAcademy = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedFilters, setSelectedFilters] = useState([]);
     const [availableFilters, setAvailableFilters] = useState([]);
-    const [hasFetched, setHasFetched] = useState(false);
+    const hasLoaded = useRef(false);
 
-    const fetchAcademyData = async (userKey) => {
-        const apiUrl = config.apiUrl;
+    useEffect(() => {
+        // Éviter les appels multiples
+        if (hasLoaded.current) {
+            return;
+        }
+        hasLoaded.current = true;
 
-        const collectionParams = new URLSearchParams({
-            limit: '',
-            order: '',
-            colone: '',
-            joinTable: '',
-            configs: JSON.stringify({})
-        });
+        const fetchAcademyData = async () => {
+            const apiUrl = config.apiUrl;
+            const userKey = config.apiAcademyClient;
 
-        try {
-            const { data: blogPages } = await axios.get(`${apiUrl}/api/sendBlog?${collectionParams.toString()}`, {
-                headers: {
-                    'api_key': userKey,
-                    'ids': config.apiAcademyIdBlog,
-                }
+            const collectionParams = new URLSearchParams({
+                limit: '',
+                order: '',
+                colone: '',
+                joinTable: '',
+                configs: JSON.stringify({})
             });
 
-            if (!blogPages.blog) return [];
-
-            const detailPromises = blogPages.blog.map(async (blog) => {
-                const { data: detailData } = await axios.get(`${apiUrl}/api/sendBlogContent`, {
+            try {
+                const { data: blogPages } = await axios.get(`${apiUrl}/api/sendBlog?${collectionParams.toString()}`, {
                     headers: {
                         'api_key': userKey,
-                        'id_blog': blog.collection_id,
-                        'id_blog_page': blog.id,
+                        'ids': config.apiAcademyIdBlog,
                     }
                 });
 
-                return {
-                    ...blog,
-                    content: detailData.content,
-                };
-            });
+                if (!blogPages.blog) {
+                    setAcademies([]);
+                    setLoading(false);
+                    return;
+                }
 
-            return Promise.all(detailPromises);
-        } catch (error) {
-            console.error("Erreur lors de la récupération des données de l'académie :", error);
-            throw error;
-        }
-    };
+                const detailPromises = blogPages.blog.map(async (blog) => {
+                    const { data: detailData } = await axios.get(`${apiUrl}/api/sendBlogContent`, {
+                        headers: {
+                            'api_key': userKey,
+                            'id_blog': blog.collection_id,
+                            'id_blog_page': blog.id,
+                        }
+                    });
 
-    useEffect(() => {
-        const userKey = config.apiAcademyClient;
+                    return {
+                        ...blog,
+                        content: detailData.content,
+                    };
+                });
 
-        // Éviter les appels multiples
-        if (hasFetched) return;
-        setHasFetched(true);
-
-        fetchAcademyData(userKey)
-            .then((data) => {
+                const data = await Promise.all(detailPromises);
+                
                 setAcademies(data);
-                extractFilters(data);
+                
+                // Extraire les filtres
+                const allCategories = data
+                    .flatMap((academy) => academy.content.multiReference?.map((ref) => ref.label) || []);
+                const uniqueCategories = [...new Set(allCategories)];
+                setAvailableFilters(uniqueCategories);
+                
                 setLoading(false);
-            })
-            .catch((err) => {
+            } catch (err) {
                 console.error("Erreur API Academy :", err);
                 setError(err);
                 setLoading(false);
-            });
-    }, []);
+            }
+        };
 
-    const extractFilters = (data) => {
-        const allCategories = data
-            .flatMap((academy) => academy.content.multiReference?.map((ref) => ref.label) || []);
-        
-        const uniqueCategories = [...new Set(allCategories)];
-        setAvailableFilters(uniqueCategories);
-    };
+        fetchAcademyData();
+    }, []); // Tableau de dépendances vide
 
     const handleSearch = (e) => {
         setSearchTerm(e.target.value.toLowerCase());
@@ -100,7 +98,7 @@ export const useAcademy = () => {
     };
 
     const filteredAcademies = academies.filter((academy) => {
-        const title = academy.page_blog_name?.toLowerCase() || "";
+        const title = academy.collection_element_name?.toLowerCase() || "";
 
         const matchesSearch = title.includes(searchTerm);
         const academyCategories = academy.content.multiReference?.map((ref) => ref.label) || [];
@@ -110,10 +108,7 @@ export const useAcademy = () => {
             selectedFilters.some((filter) => academyCategories.includes(filter));
 
         return matchesSearch && matchesFilters;
-    }).map((academy) => ({
-        ...academy,
-        hidden: !(selectedFilters.length === 0 || selectedFilters.some((filter) => academy.content.multiReference?.map((ref) => ref.label).includes(filter)))
-    }));
+    });
 
     const academyStyles = (hidden) => ({
         display: hidden ? 'none' : 'block',
