@@ -466,6 +466,141 @@
     gap: 1rem;
   }
 
+/* Domain Verification Styles */
+.domain-verification-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.domain-check-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-radius: 6px;
+  border: 1px solid;
+}
+
+.domain-check-item.success {
+  background-color: rgba(76, 175, 80, 0.1);
+  border-color: rgba(76, 175, 80, 0.5);
+}
+
+.domain-check-item.error {
+  background-color: rgba(244, 67, 54, 0.1);
+  border-color: rgba(244, 67, 54, 0.5);
+}
+
+.domain-check-item.pending {
+  background-color: rgba(255, 193, 7, 0.1);
+  border-color: rgba(255, 193, 7, 0.5);
+}
+
+.domain-check-content {
+  flex: 1;
+}
+
+.domain-check-title {
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.domain-check-message {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+}
+
+.domain-active-banner {
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  background-color: rgba(76, 175, 80, 0.1);
+  border-radius: 6px;
+  border: 1px solid rgba(76, 175, 80, 0.5);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.domain-active-title {
+  font-weight: 600;
+  color: #4caf50;
+}
+
+.domain-active-subtitle {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+/* DNS Instructions Styles */
+.dns-instructions-container {
+  padding: 1rem;
+  background-color: var(--color-primary-main);
+  border-radius: 8px;
+  border: 1px solid var(--color-primary-third);
+}
+
+.dns-instructions-header {
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+}
+
+.dns-record-item {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background-color: var(--color-primary-secondary);
+  border-radius: 6px;
+  border: 1px solid var(--color-primary-third);
+  font-family: monospace;
+}
+
+.dns-record-item:last-of-type {
+  margin-bottom: 0;
+}
+
+.dns-record-grid {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.dns-record-label {
+  color: var(--color-text-secondary);
+}
+
+.dns-record-value {
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.dns-record-description {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--color-primary-third);
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+}
+
+.dns-propagation-notice {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: rgba(255, 193, 7, 0.1);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  border: 1px solid rgba(255, 193, 7, 0.5);
+}
+
+.dns-propagation-title {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.dns-propagation-text {
+  color: var(--color-text-secondary);
+}
+
 /* Responsive behavior for mobile */
 @media (max-width: 768px) {
   .website_name_element,
@@ -481,9 +616,14 @@
     justify-content: flex-end;
   }
 
+  .dns-record-grid {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
 
-
-
+  .dns-record-label {
+    font-weight: 600;
+  }
 }
 
 

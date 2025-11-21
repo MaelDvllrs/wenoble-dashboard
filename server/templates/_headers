@@ -1,0 +1,13 @@
+# Cloudflare Pages Headers Configuration
+# Documentation: https://developers.cloudflare.com/pages/configuration/headers/
+
+# Bloquer l'indexation des URLs .pages.dev
+# Note: Ce fichier sera copié à la racine lors du build
+/:splat
+  X-Robots-Tag: noindex, nofollow
+
+# Headers de sécurité
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: SAMEORIGIN
+  Referrer-Policy: strict-origin-when-cross-origin

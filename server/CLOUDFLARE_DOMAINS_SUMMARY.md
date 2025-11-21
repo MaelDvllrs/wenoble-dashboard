@@ -1,5 +1,9 @@
 # Système de Gestion des Domaines Personnalisés Cloudflare
 
+> ⚠️ **IMPORTANT**: La redirection des domaines sur Cloudflare se fera séparément et pas sur ce serveur. 
+> Ce fichier est conservé pour référence historique.
+
+<!--
 ## 📋 Résumé des changements
 
 Ce système permet la gestion automatique des domaines personnalisés sur Cloudflare Pages. Lorsqu'un utilisateur souscrit à un plan avec la fonctionnalité `custom_domain`, le domaine est automatiquement configuré pour pointer vers le bon Worker Cloudflare.
@@ -262,3 +266,7 @@ En cas de problème:
 1. Vérifiez les logs du serveur (recherchez `[Cloudflare]` et `[Subscription]`)
 2. Vérifiez le dashboard Cloudflare Pages
 3. Consultez la documentation dans `server/docs/`
+
+-->
+
+**Note**: La gestion des domaines Cloudflare sera implémentée séparément du serveur principal.
