@@ -5,3 +5,7 @@ server/.env
 
 /server/temp
 /server/temp/*
+
+/domain-server/node_modules
+/domain-server/.env
+

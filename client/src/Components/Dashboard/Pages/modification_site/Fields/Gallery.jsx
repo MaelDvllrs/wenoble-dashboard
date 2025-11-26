@@ -20,7 +20,7 @@ const GalleryUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fie
 
     const [active, setActive] = useState(0);
     const [isLoading, setIsLoading] = useState(false); // Loading state
-    const fileTypes = ["JPG", "PNG"];
+    const fileTypes = ["JPG", "JPEG", "PNG", "WEBP", "AVIF", "GIF", "SVG"];
     const urlBucketCollectionGallery = config.urlBucketCollectionGallery;
     const apiUrl = config.apiUrl; 
 

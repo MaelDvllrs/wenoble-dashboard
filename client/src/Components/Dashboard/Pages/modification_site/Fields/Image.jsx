@@ -13,7 +13,7 @@ import { SimpleInputField } from '../../../../../Theme/element';
 const ImageUpload = ({ id_blog_page, type, id_config, onChange, dataValue, theme, imageDirectory }) => {
     const [imagesUploaded, setImagesUploaded] = useState([]);
     const [createBoolImage, setCreateBoolImage] = useState('')
-    const fileTypes = ["JPG", "PNG"];
+    const fileTypes = ["JPG", "JPEG", "PNG", "WEBP", "AVIF", "GIF", "SVG"];
     const apiUrl = config.apiUrl;
 
     const handleImageChange = async (file, idToReplace) => {
@@ -128,7 +128,7 @@ const ImageUpload = ({ id_blog_page, type, id_config, onChange, dataValue, theme
                   </a>
                 </div>
                 <div className='button_contain'>
-                  <input className='input_image_blog' type="file" id={`file-input-${image.id_config}`} onChange={(e) => handleImageChange(e.target.files[0], image.id_config)} accept=".jpeg,.jpg,.png" />
+                  <input className='input_image_blog' type="file" id={`file-input-${image.id_config}`} onChange={(e) => handleImageChange(e.target.files[0], image.id_config)} accept=".jpeg,.jpg,.png,.webp,.avif,.gif,.svg" />
                   <SecondaryButton theme={theme} className="button_image_blog" type="submit" variant="contained"><label className='label_input_image_blog' htmlFor={`file-input-${image.id_config}`} /><AutorenewIcon /> Remplacer</SecondaryButton>
                   <SecondaryButton theme={theme} className="button_image_blog" type="submit" variant="contained" onClick={() => handleDeleteImage(image.id_config)}><DeleteIcon /> Supprimer</SecondaryButton>
                 </div>
@@ -141,7 +141,7 @@ const ImageUpload = ({ id_blog_page, type, id_config, onChange, dataValue, theme
               <span className="logoUploadImage">
                 <ImageIcon />
               </span>
-              Télécharger ou glisser une photo ici (jpeg, png)
+              Télécharger ou glisser une photo ici (jpeg, png, webp, avif, gif, svg)
             </div>
           </FileUploader>
         )}
