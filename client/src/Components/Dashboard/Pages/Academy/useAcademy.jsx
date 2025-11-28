@@ -52,6 +52,8 @@ export const useAcademy = () => {
                 });
 
                 const data = await Promise.all(detailPromises);
+
+                console.log(academy);
                 
                 // Filtrer uniquement les éléments publiés (status_text = 'publish')
                 const publishedData = data.filter(academy => 
