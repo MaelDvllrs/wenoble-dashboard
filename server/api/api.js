@@ -191,7 +191,7 @@ async function handleNoFiltersCase({ supabase, targetCollectionIds, baseColumns,
     let query = supabase
         .from('collection_element')
         .select('*')
-        .eq('collection_element_status', true)
+        .eq('collection_element_status_text', "publish")
         .order(colone, { ascending });
     
     if (targetCollectionIds.length > 0) {
