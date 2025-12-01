@@ -1117,7 +1117,7 @@ router.post('/updateCollectionElement', authenticateToken, async (req, res) => {
     // Read current row to determine previous status
     const { data: existingRows, error: selectError } = await supabase
       .from('collection_element')
-      .select('id, collection_element_status_text, collection_element_status, collection_element_publish_date')
+      .select('id, collection_element_status_text, collection_element_publish_date')
       .eq('id', id)
       .limit(1);
 
@@ -1142,7 +1142,7 @@ router.post('/updateCollectionElement', authenticateToken, async (req, res) => {
     };
 
     const targetText = normalizeToText(status);
-    const prevText = existing ? (existing.collection_element_status_text ? String(existing.collection_element_status_text).toLowerCase() : (existing.collection_element_status === 1 ? 'publish' : (existing.collection_element_status === 0 ? 'draft' : null))) : null;
+    const prevText = existing?.collection_element_status_text ? String(existing.collection_element_status_text).toLowerCase() : null;
 
     // Build update fields: write textual status only (avoid numeric 2 and avoid writing numeric column when possible)
     const updateFields = {
@@ -1153,7 +1153,7 @@ router.post('/updateCollectionElement', authenticateToken, async (req, res) => {
       updated_by: userId
     };
 
-    // Handle publish date and published_by if requested
+    // Handle publish date and published_by
     if (setPublishDate === 1) {
       if (targetText === 'publish') {
         updateFields.collection_element_publish_date = date;
@@ -1162,6 +1162,19 @@ router.post('/updateCollectionElement', authenticateToken, async (req, res) => {
         // clearing publish date when switching away from publish
         updateFields.collection_element_publish_date = null;
         updateFields.published_by = null;
+      }
+    } else {
+      // Si on passe de draft à publish/wait ou de wait à publish sans date de publication existante
+      const isTransitionNeedingPublishDate = (
+        (prevText === 'draft' && (targetText === 'publish' || targetText === 'wait')) ||
+        (prevText === 'wait' && targetText === 'publish')
+      );
+      
+      if (isTransitionNeedingPublishDate && !existing?.collection_element_publish_date) {
+        updateFields.collection_element_publish_date = date;
+        if (targetText === 'publish') {
+          updateFields.published_by = userId;
+        }
       }
     }
 
