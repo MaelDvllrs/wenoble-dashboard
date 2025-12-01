@@ -1164,16 +1164,22 @@ router.post('/updateCollectionElement', authenticateToken, async (req, res) => {
         updateFields.published_by = null;
       }
     } else {
-      // Si on passe de draft à publish/wait ou de wait à publish sans date de publication existante
-      const isTransitionNeedingPublishDate = (
-        (prevText === 'draft' && (targetText === 'publish' || targetText === 'wait')) ||
-        (prevText === 'wait' && targetText === 'publish')
-      );
-      
-      if (isTransitionNeedingPublishDate && !existing?.collection_element_publish_date) {
-        updateFields.collection_element_publish_date = date;
-        if (targetText === 'publish') {
-          updateFields.published_by = userId;
+      // Si on passe à draft, enlever la date de publication
+      if (targetText === 'draft') {
+        updateFields.collection_element_publish_date = null;
+        updateFields.published_by = null;
+      } else {
+        // Si on passe de draft à publish/wait ou de wait à publish sans date de publication existante
+        const isTransitionNeedingPublishDate = (
+          (prevText === 'draft' && (targetText === 'publish' || targetText === 'wait')) ||
+          (prevText === 'wait' && targetText === 'publish')
+        );
+        
+        if (isTransitionNeedingPublishDate && !existing?.collection_element_publish_date) {
+          updateFields.collection_element_publish_date = date;
+          if (targetText === 'publish') {
+            updateFields.published_by = userId;
+          }
         }
       }
     }
