@@ -805,12 +805,12 @@ const EditWebsite = () => {
                         <div style={{
                           padding: '1rem',
                           backgroundColor: domainVerification?.allConfigured 
-                            ? theme.palette.success.light + '20' 
+                            ? 'rgb(16 185 129/.1)' 
                             : theme.palette.info.light + '20',
                           borderRadius: '8px',
                           border: `1px solid ${
                             domainVerification?.allConfigured 
-                              ? theme.palette.success.light
+                              ? 'rgb(16 185 129/.3)'
                               : theme.palette.info.light
                           }`,
                         }}>

@@ -483,8 +483,8 @@
 }
 
 .domain-check-item.success {
-  background-color: rgba(76, 175, 80, 0.1);
-  border-color: rgba(76, 175, 80, 0.5);
+  background-color: rgb(16 185 129/.1);
+  border-color: rgb(16 185 129/.3);
 }
 
 .domain-check-item.error {
@@ -514,9 +514,9 @@
 .domain-active-banner {
   margin-top: 0.5rem;
   padding: 0.75rem;
-  background-color: rgba(76, 175, 80, 0.1);
+  background-color: rgb(16 185 129/.1);
   border-radius: 6px;
-  border: 1px solid rgba(76, 175, 80, 0.5);
+  border: 1px solid rgb(16 185 129/.3);
   display: flex;
   align-items: center;
   gap: 0.5rem;
