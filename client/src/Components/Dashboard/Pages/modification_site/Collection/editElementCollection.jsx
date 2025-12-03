@@ -418,7 +418,7 @@ const EditElementCollection = () => {
                 setDataRetrievalStatus(true);
                 try {
                     setTimeout(() => { setPageGenerationStatus(true); }, 1000);
-                    await generateStaticSite(token, selectedWebsite?.id);
+                    await generateStaticSite(token, selectedWebsite?.id, '', publishCustomDomain);
                     setTimeout(() => { setSitePublishingStatus(true); }, 1000);
                     await new Promise(resolve => setTimeout(resolve, 2000));
                     setDataRetrievalStatus(false);

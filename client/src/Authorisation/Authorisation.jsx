@@ -27,7 +27,6 @@ const fetchAuthorization = async (type, websiteId, setVerify, setAuthorized) => 
         }
 
         if (!websiteId) {
-            console.log('Aucun site web sélectionné pour vérifier les autorisations');
             setVerify(true);
             setAuthorized(false);
             return;
@@ -42,7 +41,6 @@ const fetchAuthorization = async (type, websiteId, setVerify, setAuthorized) => 
         // Toujours marquer la vérification comme terminée après réponse
         setVerify(true);
 
-        console.log(response.data.authorisation)
         setAuthorized(!!response.data.authorisation);
     } catch (error) {
         console.error('Authorization error:', error);
@@ -124,7 +122,6 @@ export const checkAuthorization = async (authType, websiteId) => {
     }
 
     if (!websiteId) {
-        console.log('Aucun site web sélectionné pour vérifier les autorisations');
         return false;
     }
 
