@@ -278,7 +278,7 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
         const data = {
           id_config: id_config,
           type: 'richText',
-          value: newEditorState.getCurrentContent(),
+          value: convertToRaw(newEditorState.getCurrentContent()),
           create: createBoolRichText,
         };
         onChange({ data });
@@ -566,7 +566,7 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
     const data = {
       id_config: id_config,
       type: 'richText',
-      value: newState.getCurrentContent(),
+      value: convertToRaw(newState.getCurrentContent()),
       create: createBoolRichText
     };
     onChange({ data });
@@ -574,18 +574,149 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
 
   const widthPercentValue = getPercentNumberFromValue(imageOptions.tempWidth);
 
-  const handleBoldClick = () => setEditorState(RichUtils.toggleInlineStyle(editorState, 'BOLD'));
-  const handleItalicClick = () => setEditorState(RichUtils.toggleInlineStyle(editorState, 'ITALIC'));
-  const handleH1Click = () => setEditorState(RichUtils.toggleBlockType(editorState, 'header-one'));
-  const handleH2Click = () => setEditorState(RichUtils.toggleBlockType(editorState, 'header-two'));
-  const handleH3Click = () => setEditorState(RichUtils.toggleBlockType(editorState, 'header-three'));
-  const handleH4Click = () => setEditorState(RichUtils.toggleBlockType(editorState, 'header-four'));
-  const handleH5Click = () => setEditorState(RichUtils.toggleBlockType(editorState, 'header-five'));
-  const handleH6Click = () => setEditorState(RichUtils.toggleBlockType(editorState, 'header-six'));
-  const handleULClick = () => setEditorState(RichUtils.toggleBlockType(editorState, 'unordered-list-item'));
-  const handleOLClick = () => setEditorState(RichUtils.toggleBlockType(editorState, 'ordered-list-item'));
-  const handleBlockquoteClick = () => setEditorState(RichUtils.toggleBlockType(editorState, 'blockquote'));
-  const handleCodeBlockClick = () => setEditorState(RichUtils.toggleBlockType(editorState, 'code-block'));
+  const handleBoldClick = () => {
+    const newState = RichUtils.toggleInlineStyle(editorState, 'BOLD');
+    setEditorState(newState);
+    const data = {
+      id_config: id_config,
+      type: 'richText',
+      value: convertToRaw(newState.getCurrentContent()),
+      create: createBoolRichText
+    };
+    onChange({ data });
+  };
+
+  const handleItalicClick = () => {
+    const newState = RichUtils.toggleInlineStyle(editorState, 'ITALIC');
+    setEditorState(newState);
+    const data = {
+      id_config: id_config,
+      type: 'richText',
+      value: convertToRaw(newState.getCurrentContent()),
+      create: createBoolRichText
+    };
+    onChange({ data });
+  };
+
+  const handleH1Click = () => {
+    const newState = RichUtils.toggleBlockType(editorState, 'header-one');
+    setEditorState(newState);
+    const data = {
+      id_config: id_config,
+      type: 'richText',
+      value: convertToRaw(newState.getCurrentContent()),
+      create: createBoolRichText
+    };
+    onChange({ data });
+  };
+
+  const handleH2Click = () => {
+    const newState = RichUtils.toggleBlockType(editorState, 'header-two');
+    setEditorState(newState);
+    const data = {
+      id_config: id_config,
+      type: 'richText',
+      value: convertToRaw(newState.getCurrentContent()),
+      create: createBoolRichText
+    };
+    onChange({ data });
+  };
+
+  const handleH3Click = () => {
+    const newState = RichUtils.toggleBlockType(editorState, 'header-three');
+    setEditorState(newState);
+    const data = {
+      id_config: id_config,
+      type: 'richText',
+      value: convertToRaw(newState.getCurrentContent()),
+      create: createBoolRichText
+    };
+    onChange({ data });
+  };
+
+  const handleH4Click = () => {
+    const newState = RichUtils.toggleBlockType(editorState, 'header-four');
+    setEditorState(newState);
+    const data = {
+      id_config: id_config,
+      type: 'richText',
+      value: convertToRaw(newState.getCurrentContent()),
+      create: createBoolRichText
+    };
+    onChange({ data });
+  };
+
+  const handleH5Click = () => {
+    const newState = RichUtils.toggleBlockType(editorState, 'header-five');
+    setEditorState(newState);
+    const data = {
+      id_config: id_config,
+      type: 'richText',
+      value: convertToRaw(newState.getCurrentContent()),
+      create: createBoolRichText
+    };
+    onChange({ data });
+  };
+
+  const handleH6Click = () => {
+    const newState = RichUtils.toggleBlockType(editorState, 'header-six');
+    setEditorState(newState);
+    const data = {
+      id_config: id_config,
+      type: 'richText',
+      value: convertToRaw(newState.getCurrentContent()),
+      create: createBoolRichText
+    };
+    onChange({ data });
+  };
+
+  const handleULClick = () => {
+    const newState = RichUtils.toggleBlockType(editorState, 'unordered-list-item');
+    setEditorState(newState);
+    const data = {
+      id_config: id_config,
+      type: 'richText',
+      value: convertToRaw(newState.getCurrentContent()),
+      create: createBoolRichText
+    };
+    onChange({ data });
+  };
+
+  const handleOLClick = () => {
+    const newState = RichUtils.toggleBlockType(editorState, 'ordered-list-item');
+    setEditorState(newState);
+    const data = {
+      id_config: id_config,
+      type: 'richText',
+      value: convertToRaw(newState.getCurrentContent()),
+      create: createBoolRichText
+    };
+    onChange({ data });
+  };
+
+  const handleBlockquoteClick = () => {
+    const newState = RichUtils.toggleBlockType(editorState, 'blockquote');
+    setEditorState(newState);
+    const data = {
+      id_config: id_config,
+      type: 'richText',
+      value: convertToRaw(newState.getCurrentContent()),
+      create: createBoolRichText
+    };
+    onChange({ data });
+  };
+
+  const handleCodeBlockClick = () => {
+    const newState = RichUtils.toggleBlockType(editorState, 'code-block');
+    setEditorState(newState);
+    const data = {
+      id_config: id_config,
+      type: 'richText',
+      value: convertToRaw(newState.getCurrentContent()),
+      create: createBoolRichText
+    };
+    onChange({ data });
+  };
 
 
   // ---------- LINK SECTION ---------------
@@ -736,7 +867,7 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
           const data = {
             id_config: id_config,
             type: 'richText',
-            value: editorStateWithImage.getCurrentContent(),
+            value: convertToRaw(editorStateWithImage.getCurrentContent()),
             create: createBoolRichText
           };
           onChange({ data });
