@@ -25,7 +25,6 @@ const CreateWebsite = () => {
 
     // États
     const [websiteName, setWebsiteName] = useState('');
-    const [websiteSlug, setWebsiteSlug] = useState('');
     const [websiteDescription, setWebsiteDescription] = useState('');
     const [selectedWorkspaceId, setSelectedWorkspaceId] = useState('');
     const [visibility, setVisibility] = useState('workspace');
@@ -45,31 +44,9 @@ const CreateWebsite = () => {
         return workspace?.user_role === 'admin';
     };
 
-    // Générer automatiquement l'URL à partir du nom
-    const generateUrl = (name) => {
-        return name
-            .toLowerCase()
-            .replace(/[^\w\s-]/g, '')
-            .replace(/[\s_-]+/g, '-')
-            .replace(/^-+|-+$/g, '');
-    };
-
-    const handleWebsiteNameChange = (e) => {
-        const name = e.target.value;
-        setWebsiteName(name);
-        if (!websiteSlug || websiteSlug === generateUrl(websiteName)) {
-            setWebsiteSlug(generateUrl(name));
-        }
-    };
-
     const handleCreateWebsite = async () => {
         if (!websiteName.trim()) {
             showSnackbar('error', 'Le nom du site web est requis');
-            return;
-        }
-
-        if (!websiteSlug.trim()) {
-            showSnackbar('error', 'L\'URL du site web est requise');
             return;
         }
 
@@ -83,7 +60,6 @@ const CreateWebsite = () => {
         try {
             const response = await Axios.post(`${apiUrl}/createWebsite`, {
                 website_name: websiteName,
-                website_slug: websiteSlug,
                 workspace_id: selectedWorkspaceId,
                 visibility: visibility
             }, {
@@ -154,7 +130,7 @@ const CreateWebsite = () => {
                                     <DefaultButton
                                         variant="contained"
                                         onClick={handleCreateWebsite}
-                                        disabled={loading || !websiteName.trim() || !websiteSlug.trim() || !selectedWorkspaceId || !isAdminOfSelectedWorkspace()}
+                                        disabled={loading || !websiteName.trim() || !selectedWorkspaceId || !isAdminOfSelectedWorkspace()}
                                         startIcon={loading ? <CircularProgress size={12} sx={{ color: 'white' }} /> : undefined}
                                     >
                                         Créer
@@ -168,18 +144,7 @@ const CreateWebsite = () => {
                                 type="text"
                                 className="input_text_blog"
                                 value={websiteName}
-                                onChange={handleWebsiteNameChange}
-                                required
-                            />
-                        </div>
-
-                        <div className="input-container">
-                            <p className="blogField_name collection_edit_name">URL du site *</p>
-                            <input
-                                type="text"
-                                className="input_text_blog"
-                                value={websiteSlug}
-                                onChange={(e) => setWebsiteSlug(e.target.value)}
+                                onChange={(e) => setWebsiteName(e.target.value)}
                                 required
                             />
                         </div>

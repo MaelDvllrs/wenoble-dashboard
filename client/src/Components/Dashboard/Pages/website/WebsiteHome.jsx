@@ -5,7 +5,7 @@ import { useWebsite } from '../../../../Context/WebsiteContext';
 import { CircularProgress } from '@mui/material';
 import { IoGlobeOutline } from 'react-icons/io5';
 import { MdArrowForwardIos, MdOutlineCreate, MdOutlineShoppingCart, MdOutlineBarChart, MdOutlineNewspaper, MdOutlineSettings, MdOutlineCheckCircle, MdOutlineLock, MdOutlineOpenInNew, MdOutlineAdd } from 'react-icons/md';
-import { PiChatCircleDotsBold } from 'react-icons/pi';
+import { PiArrowLineUpRightBold, PiArrowSquareOutLight, PiChatCircleDotsBold, PiGlobe, PiGlobeLight, PiPencilSimple, PiChartBar, PiEnvelopeSimple, PiNewspaper, PiGear } from 'react-icons/pi';
 import { checkAuthorization } from '../../../../Authorisation/Authorisation';
 import { getStatistique } from '../Statistique/apiStatistique';
 import { ResponsiveChartContainer } from '@mui/x-charts/ResponsiveChartContainer';
@@ -288,35 +288,35 @@ const WebsiteHome = () => {
     {
       title: 'Modifications',
       description: 'Éditer le contenu de votre site',
-      icon: MdOutlineCreate,
+      icon: PiPencilSimple,
       path: '/dashboard/website/modification/',
       enabled: true
     },
     {
       title: 'Statistiques',
       description: 'Analyser les performances',
-      icon: MdOutlineBarChart,
+      icon: PiChartBar,
       path: '/dashboard/website/stats',
       enabled: analyticsAuth
     },
     {
       title: 'Contacts',
       description: 'Messages de vos visiteurs',
-      icon: PiChatCircleDotsBold,
+      icon: PiEnvelopeSimple,
       path: '/dashboard/website/contact',
       enabled: true
     },
     {
       title: 'Newsletter',
       description: 'Gérer vos abonnés',
-      icon: MdOutlineNewspaper,
+      icon: PiNewspaper,
       path: '/dashboard/website/newsletter',
       enabled: newsAuth
     },
     ...(selectedWebsite.user_role === 'admin' ? [{
       title: 'Paramètres',
       description: 'Configurer votre site',
-      icon: MdOutlineSettings,
+      icon: PiGear,
       path: `/dashboard/website/settings`,
       enabled: true
     }] : [])
@@ -337,7 +337,7 @@ const WebsiteHome = () => {
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <div className='website-icon'>
-              <IoGlobeOutline style={{ color: theme.palette.text.primary, fontSize: '2.5rem' }} />
+              <PiGlobeLight style={{ color: theme.palette.text.primary, fontSize: '2.5rem' }} />
             </div>
             <div>
               <h1 className='website-home-title'>
@@ -351,8 +351,7 @@ const WebsiteHome = () => {
                     className='website-home-link'
                   >
                     {selectedWebsite.website_slug}
-                    <MdOutlineOpenInNew style={{ fontSize: '1rem' }} />
-                    {/* Plan badge next to slug */}
+                    <PiArrowLineUpRightBold style={{ fontSize: '1rem' }} />
 
                   </a>
                   <span className={`website-selector-plan ${subscriptionInfo?.plan_name ? subscriptionInfo.plan_name.toString().toLowerCase() : 'free'}`} style={{ marginLeft: 8 }}>

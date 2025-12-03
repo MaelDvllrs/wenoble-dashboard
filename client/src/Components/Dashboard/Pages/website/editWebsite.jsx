@@ -47,17 +47,25 @@ const EditWebsite = () => {
   const token = Cookies.get('token');
   const apiUrl = config.apiUrl;
   const { showSnackbar } = useSnackbar();
-  const { websites, selectedWebsite, updateWebsite, deleteWebsite } = useContext(WebsiteContext);
+  const { websites, selectedWebsite, updateWebsite, deleteWebsite, refreshWebsites } = useContext(WebsiteContext);
   const { workspaces } = useContext(WorkspaceContext);
   
   // États pour les données du site
   const [website, setWebsite] = useState(null);
   const [websiteData, setWebsiteData] = useState({
     website_name: '',
-    website_slug: '',
     analytics_id: '',
     visibility: 'workspace'
   });
+  
+  // États pour le domaine personnalisé
+  const [customDomain, setCustomDomain] = useState('');
+  const [hasCustomDomainAuth, setHasCustomDomainAuth] = useState(false);
+  const [currentDomain, setCurrentDomain] = useState('');
+  const [loadingDomain, setLoadingDomain] = useState(false);
+  const [domainVerification, setDomainVerification] = useState(null);
+  const [verifyingDomain, setVerifyingDomain] = useState(false);
+  const [dnsRecords, setDnsRecords] = useState(null);
   
   // États pour les utilisateurs
   const [users, setUsers] = useState([]);
@@ -75,6 +83,7 @@ const EditWebsite = () => {
   const [deleteUserModal, setDeleteUserModal] = useState({ open: false, userId: null });
   const [deleteWebsiteModal, setDeleteWebsiteModal] = useState(false);
   const [editUserModal, setEditUserModal] = useState({ open: false, userId: null, role: '' });
+  const [dnsInstructionsModal, setDnsInstructionsModal] = useState(false);
   
   // États de chargement
   const [loading, setLoading] = useState(false);
@@ -98,16 +107,32 @@ const EditWebsite = () => {
         setWebsite(currentWebsite);
         setWebsiteData({
           website_name: currentWebsite.website_name || '',
-          website_slug: currentWebsite.website_slug || '',
           analytics_id: currentWebsite.analytics_id || '',
           visibility: currentWebsite.visibility || 'workspace'
         });
-        loadWebsiteUsers();
-        loadWorkspaceMembers();
+        setCurrentDomain(currentWebsite.website_slug || '');
         setInitialLoading(false);
       }
     }
   }, [websites, selectedWebsite]);
+
+  // Charger les données après que website soit défini
+  useEffect(() => {
+    if (website?.id) {
+      loadWebsiteUsers();
+      loadWorkspaceMembers();
+      checkCustomDomainAuth();
+      
+      // Vérifier le domaine automatiquement s'il existe
+      if (website.website_slug) {
+        setTimeout(() => {
+          verifyCustomDomain();
+        }, 1000);
+      }
+    }
+  }, [website?.id]);
+
+
 
   // Recharger les membres disponibles quand les utilisateurs changent
   useEffect(() => {
@@ -210,8 +235,8 @@ const EditWebsite = () => {
 
   // Sauvegarder les informations générales
   const handleSaveWebsiteInfo = async () => {
-    if (!websiteData.website_name.trim() || !websiteData.website_slug.trim()) {
-      showSnackbar('Le nom et le slug du site sont requis', 'error');
+    if (!websiteData.website_name.trim()) {
+      showSnackbar('Le nom du site est requis', 'error');
       return;
     }
 
@@ -226,13 +251,128 @@ const EditWebsite = () => {
       
       if (response.data) {
         updateWebsite(response.data.website);
-        showSnackbar('Informations du site mises à jour avec succès', 'success');
+        showSnackbar('success', 'Informations du site mises à jour avec succès' );
       }
     } catch (error) {
       const errorMessage = error.response?.data?.error || 'Erreur lors de la mise à jour';
       showSnackbar(errorMessage, 'error');
     }
     setLoading(false);
+  };
+
+  // Vérifier l'autorisation custom_domain
+  const checkCustomDomainAuth = async () => {
+    if (!website?.id) return false;
+    
+    try {
+      const response = await Axios.get(`${apiUrl}/custom-domain-authorisation/${website.id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const hasAuth = response.data.authorisation || false;
+      setHasCustomDomainAuth(hasAuth);
+      return hasAuth;
+    } catch (error) {
+      console.error('Erreur lors de la vérification de l\'autorisation:', error);
+      setHasCustomDomainAuth(false);
+      return false;
+    }
+  };
+
+  // Vérifier le DNS du domaine personnalisé
+  const verifyCustomDomain = async (silent = false) => {
+    if (!website?.id || !currentDomain) return;
+    
+    if (!silent) setVerifyingDomain(true);
+    
+    try {
+      const response = await Axios.get(`${apiUrl}/verify-custom-domain/${website.id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      setDomainVerification(response.data);
+      
+      return response.data;
+    } catch (error) {
+      console.error('Erreur lors de la vérification du domaine:', error);
+      const errorData = {
+        configured: true,
+        verified: false,
+        status: 'error',
+        message: 'Erreur lors de la vérification du domaine',
+        checks: {
+          rootA: { status: 'error', message: 'Impossible de vérifier' },
+          wwwCNAME: { status: 'error', message: 'Impossible de vérifier' },
+          cloudflare: { status: 'error', message: 'Impossible de vérifier' }
+        }
+      };
+      setDomainVerification(errorData);
+      return errorData;
+    } finally {
+      if (!silent) setVerifyingDomain(false);
+    }
+  };
+
+
+
+  // Configurer le domaine personnalisé
+  const handleConfigureDomain = async () => {
+    if (!customDomain.trim()) {
+      showSnackbar('Veuillez entrer un nom de domaine', 'error');
+      return;
+    }
+
+    // Validation basique du format du domaine
+    const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?\.[a-zA-Z]{2,}$/;
+    if (!domainRegex.test(customDomain)) {
+      showSnackbar('Format de domaine invalide (ex: monsite.com)', 'error');
+      return;
+    }
+
+    // Vérifier l'autorisation avant de configurer
+    const hasAuth = await checkCustomDomainAuth();
+    if (!hasAuth) {
+      showSnackbar('Vous devez souscrire à un plan Premium pour utiliser un domaine personnalisé', 'error');
+      return;
+    }
+
+    setLoadingDomain(true);
+
+    try {
+      const response = await Axios.post(
+        `${apiUrl}/configure-custom-domain/${website.id}`,
+        { customDomain: customDomain },
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
+
+      if (response.data.success) {
+        showSnackbar('Domaine configuré dans Cloudflare Pages !', 'success');
+        setCurrentDomain(response.data.wwwDomain || response.data.domain);
+        setDnsRecords(response.data.dns_records);
+        setCustomDomain('');
+        
+        // Ouvrir la modal avec les instructions DNS
+        setDnsInstructionsModal(true);
+        
+        // Rafraîchir les sites web pour avoir les dernières données
+        await refreshWebsites();
+        
+        // Vérifier le DNS immédiatement
+        setTimeout(() => {
+          verifyCustomDomain();
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('Erreur lors de la configuration du domaine:', error);
+      const errorMessage = error.response?.data?.error || 'Erreur lors de la configuration du domaine';
+      showSnackbar(errorMessage, 'error');
+      
+      // Si c'est une erreur d'upgrade requis
+      if (error.response?.data?.upgradeRequired) {
+        showSnackbar('Veuillez souscrire à un plan Premium pour utiliser un domaine personnalisé', 'info');
+      }
+    } finally {
+      setLoadingDomain(false);
+    }
   };
 
   // Ajouter un utilisateur
@@ -536,17 +676,6 @@ const EditWebsite = () => {
               </div>
 
               <div className="input-container">
-                <p className="blogField_name collection_edit_name">Slug du site *</p>
-                <input
-                  type="text"
-                  className="input_text_blog"
-                  value={websiteData.website_slug}
-                  onChange={(e) => setWebsiteData({ ...websiteData, website_slug: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div className="input-container">
                 <p className="blogField_name collection_edit_name">ID Analytics</p>
                 <input
                   type="text"
@@ -690,6 +819,180 @@ const EditWebsite = () => {
                     </table>
                   </div>
                 </div>
+              )}
+
+              <div className="line_horizontal is_big_margin" style={{backgroundColor: theme.palette.primary.third}}></div>
+
+              {/* Domaine personnalisé */}
+              <div className="input-container">
+                <h4 className='titlePage'>Domaine personnalisé</h4>
+                <p className="blogField_description">
+                  Configurez votre propre nom de domaine pour ce site
+                </p>
+              </div>
+
+              {!hasCustomDomainAuth ? (
+                <div className="input-container">
+                  <div style={{
+                    padding: '1rem',
+                    backgroundColor: theme.palette.info.light + '20',
+                    borderRadius: '8px',
+                    border: `1px solid ${theme.palette.info.light}`,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.5rem'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <strong>Fonctionnalité Premium</strong>
+                    </div>
+                    <p style={{ margin: 0, color: theme.palette.text.secondary }}>
+                      Le domaine personnalisé est disponible avec un abonnement Premium. 
+                      Souscrivez dès maintenant pour utiliser votre propre nom de domaine.
+                    </p>
+                    <div>
+                      <DefaultButton
+                        onClick={() => navigate('/dashboard/website/subscription')}
+                        size="small"
+                      >
+                        Voir les plans
+                      </DefaultButton>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {/* Domaine actuel */}
+                  {currentDomain && (
+                    <>
+                      <div className="input-container">
+                        <p className="blogField_name collection_edit_name">Domaine configuré</p>
+                        <div style={{
+                          padding: '1rem',
+                          backgroundColor: domainVerification?.allConfigured 
+                            ? 'rgb(16 185 129/.1)' 
+                            : theme.palette.info.light + '20',
+                          borderRadius: '8px',
+                          border: `1px solid ${
+                            domainVerification?.allConfigured 
+                              ? 'rgb(16 185 129/.3)'
+                              : theme.palette.info.light
+                          }`,
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent:'space-between', marginBottom: '1rem' }}>
+                            <strong style={{ fontSize: '1.1rem' }}>{currentDomain}</strong>
+                            <DefaultButton
+                              onClick={() => verifyCustomDomain(false)}
+                              disabled={verifyingDomain}
+                              size="small"
+                            >
+                              {verifyingDomain ? <CircularProgress size={12} sx={{ color: 'white', marginRight:'0.5rem' }} /> : ''} 
+                              Vérifier
+                            </DefaultButton>
+                          </div>
+
+                          {domainVerification && (
+                            <div className="domain-verification-container">
+                              {/* Check 1: A Record */}
+                              <div className={`domain-check-item ${
+                                domainVerification.checks?.rootA?.status === 'success' ? 'success' :
+                                domainVerification.checks?.rootA?.status === 'error' ? 'error' : 'pending'
+                              }`}>
+                                <div className="domain-check-content">
+                                  <div className="domain-check-title">
+                                    A Record ({domainVerification.rootDomain || 'root'})
+                                  </div>
+                                  <div className="domain-check-message">
+                                    {domainVerification.checks?.rootA?.message || 'Vérification en attente...'}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Check 2: CNAME Record */}
+                              <div className={`domain-check-item ${
+                                domainVerification.checks?.wwwCNAME?.status === 'success' ? 'success' :
+                                domainVerification.checks?.wwwCNAME?.status === 'error' ? 'error' : 'pending'
+                              }`}>
+                                <div className="domain-check-content">
+                                  <div className="domain-check-title">
+                                    CNAME Record (www)
+                                  </div>
+                                  <div className="domain-check-message">
+                                    {domainVerification.checks?.wwwCNAME?.message || 'Vérification en attente...'}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Message global */}
+                              {domainVerification.allConfigured && (
+                                <div className="domain-active-banner">
+                                  <div>
+                                    <div className="domain-active-title">
+                                      Domaine actif !
+                                    </div>
+                                    <div className="domain-active-subtitle">
+                                      Votre site est accessible sur {currentDomain}
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {!domainVerification && (
+                            <div style={{ fontSize: '0.875rem', color: theme.palette.text.secondary }}>
+                              Cliquez sur "Vérifier" pour tester la configuration DNS
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Bouton pour voir les instructions DNS */}
+                        {dnsRecords && dnsRecords.length > 0 && (
+                          <div style={{ marginTop: '0.75rem' }}>
+                            <SecondaryButton
+                              onClick={() => setDnsInstructionsModal(true)}
+                              size="small"
+                            >
+                              Voir les instructions DNS
+                            </SecondaryButton>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Removed duplicate button */}
+                    </>
+                  )}
+
+                  {/* Configuration d'un nouveau domaine */}
+                  <div className="input-container">
+                    <p className="blogField_name collection_edit_name">
+                      {currentDomain ? 'Changer le domaine' : 'Configurer un domaine'}
+                    </p>
+                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                      <div style={{ flex: 1 }}>
+                        <input
+                          type="text"
+                          className="input_text_blog"
+                          value={customDomain}
+                          onChange={(e) => setCustomDomain(e.target.value.toLowerCase().trim())}
+                          placeholder="monsite.com"
+                          disabled={loadingDomain}
+                        />
+                        <div style={{ fontSize: '0.875rem', color: theme.palette.text.secondary, marginTop: '0.5rem' }}>
+                          Entrez votre nom de domaine sans http:// ou www
+                        </div>
+                      </div>
+                      <DefaultButton
+                        onClick={handleConfigureDomain}
+                        disabled={loadingDomain || !customDomain.trim()}
+                        startIcon={loadingDomain ? <CircularProgress size={12} sx={{ color: 'white' }} /> : undefined}
+                      >
+                        {loadingDomain ? 'Configuration...' : 'Configurer'}
+                      </DefaultButton>
+                    </div>
+                  </div>
+
+
+                </>
               )}
 
               <div className="line_horizontal is_big_margin" style={{backgroundColor: theme.palette.primary.third}}></div>
@@ -881,8 +1184,60 @@ const EditWebsite = () => {
                 Annuler
               </SecondaryButton>
               <RedButton onClick={handleDeleteWebsite} disabled={loading}>
-                {loading ? <CircularProgress size={20} /> : 'Supprimer définitivement'}
+                {loading ? <CircularProgress size={20}/> : 'Supprimer définitivement'}
               </RedButton>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Instructions DNS */}
+      {dnsInstructionsModal && dnsRecords && (
+        <div className="modal_overlay" onClick={() => setDnsInstructionsModal(false)}>
+          <div className="modal_content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+            <h3>Enregistrements DNS à configurer</h3>
+            <div className="dns-instructions-container">
+              <div className="dns-instructions-header">
+                Configurez ces enregistrements chez votre registrar (Hostinger, OVH, etc.) :
+              </div>
+              
+              {dnsRecords.map((record, index) => (
+                <div key={index} className="dns-record-item">
+                  <div className="dns-record-grid">
+                    <div className="dns-record-label">Type :</div>
+                    <div className="dns-record-value">{record.type}</div>
+                    
+                    <div className="dns-record-label">Nom :</div>
+                    <div className="dns-record-value">{record.name}</div>
+                    
+                    <div className="dns-record-label">Valeur :</div>
+                    <div className="dns-record-value">{record.value}</div>
+                    
+                    <div className="dns-record-label">TTL :</div>
+                    <div className="dns-record-value">{record.ttl}</div>
+                  </div>
+                  {record.description && (
+                    <div className="dns-record-description">
+                      💡 {record.description}
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              <div className="dns-propagation-notice">
+                <div className="dns-propagation-title">
+                  ⏱️ Propagation DNS
+                </div>
+                <div className="dns-propagation-text">
+                  Après la configuration, la propagation DNS peut prendre de 15 minutes à 48 heures.
+                  Cliquez sur "Vérifier" pour tester la configuration.
+                </div>
+              </div>
+            </div>
+            <div className="modal_actions">
+              <DefaultButton onClick={() => setDnsInstructionsModal(false)}>
+                Fermer
+              </DefaultButton>
             </div>
           </div>
         </div>

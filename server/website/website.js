@@ -415,15 +415,26 @@ router.post('/createWebsite', authenticateToken, async (req, res) => {
       return res.status(400).send({ error: 'Un site web avec ce slug existe déjà' });
     }
 
+    // Générer un folder_project unique pour Cloudflare Pages
+    // Format: site-{slug}-{timestamp} pour garantir l'unicité
+    const timestamp = Date.now();
+    const sanitizedSlug = website_slug
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '-')
+      .replace(/-+/g, '-')
+      .substring(0, 20); // Limiter la longueur
+    const folder_project = `site-${sanitizedSlug}-${timestamp}`;
+
   // Générer une API key unique qui contient le nom/slug du site
   const apiKey = await generateUniqueApiKey(supabase, website_slug || website_name);
 
-  // Créer le site web
+  // Créer le site web avec le folder_project
     const { data: websiteData, error: websiteError } = await supabase
       .from('websites')
       .insert({
         website_name,
         website_slug,
+        folder_project,
         api_key: apiKey,
         workspace_id: finalWorkspaceId,
         visibility,
@@ -434,6 +445,40 @@ router.post('/createWebsite', authenticateToken, async (req, res) => {
       .single();
       
     if (websiteError) throw websiteError;
+
+    // Créer le projet Cloudflare Pages immédiatement
+    try {
+      const DOMAIN_SERVER_URL = process.env.DOMAIN_SERVER_URL || 'http://localhost:3003';
+      const axios = require('axios');
+      
+      console.log(`[Create Website] Création du projet Cloudflare Pages: ${folder_project}`);
+      
+      const cfResponse = await axios.post(`${DOMAIN_SERVER_URL}/api/cloudflare/create-project`, {
+        project_name: folder_project,
+        website_id: websiteData.id
+      }, {
+        timeout: 30000
+      });
+
+      if (cfResponse.data.success) {
+        console.log(`[Create Website] ✅ Projet Cloudflare Pages créé: ${folder_project}.pages.dev`);
+        
+        // Mettre à jour le website avec cloudflare_configured
+        const supabaseAdmin = supabaseServerAdmin();
+        await supabaseAdmin
+          .from('websites')
+          .update({ 
+            cloudflare_configured: true,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', websiteData.id);
+      } else {
+        console.error('[Create Website] ⚠️ Échec création projet Cloudflare:', cfResponse.data.error);
+      }
+    } catch (cfError) {
+      console.error('[Create Website] ⚠️ Erreur création projet Cloudflare:', cfError.message);
+      // On continue quand même, le projet sera créé au premier déploiement
+    }
 
     // Ajouter l'utilisateur comme admin du site web
     const { error: userWebsiteError } = await supabase

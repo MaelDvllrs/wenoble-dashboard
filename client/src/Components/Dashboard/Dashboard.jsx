@@ -41,7 +41,7 @@ import { getProfileImageUrl } from '../../service/profileImageService';
 // Icons
 import { BsChevronCompactDown } from "react-icons/bs";
 
-import { PiSidebarSimpleLight, PiLockBold, PiUserBold, PiGearSixBold, PiPowerBold, PiChatCircleDotsBold, PiBellBold,  PiPlusBold } from "react-icons/pi";
+import { PiHouse, PiGlobe, PiArticle, PiGraduationCap, PiQuestion, PiCube, PiCaretUpDown, PiBell,  PiSidebarSimpleLight, PiLockBold, PiUser, PiGear, PiPower, PiChatCircleDotsBold,   PiPlusBold } from "react-icons/pi";
 
 import CreateOutlinedIcon from '@mui/icons-material/CreateOutlined';
 import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined';
@@ -461,7 +461,7 @@ const Dashboard = () => {
                         <SkeletonFullSelector />
                     ) : (
                         <>
-                            <WorkspacesIcon fontSize='small' style={{color: theme.palette.text.secondary}}/>
+                            <PiCube fontSize='1.1rem' style={{color: theme.palette.text.secondary}}/>
                             <span className='workspace-selector-text'>
                                 <b>{selectedWorkspace ? selectedWorkspace.workspace_name : 'Aucun workspace'}</b>
                             </span>
@@ -470,7 +470,7 @@ const Dashboard = () => {
                                     {selectedWorkspace.user_role}
                                 </span>
                             )}
-                            <UnfoldMoreIcon fontSize='small' className='icon' style={{color: theme.palette.text.secondary}} />
+                            <PiCaretUpDown  fontSize='1rem' style={{color: theme.palette.text.secondary}} />
                         </>
                     )}
                     </IconButton>
@@ -544,7 +544,7 @@ const Dashboard = () => {
                                                 onClick={handleWorkspaceSettings}
                                                 style={{ color: theme.palette.text.primary }}
                                             >
-                                                <PiGearSixBold className='action_icon' />
+                                                <PiGear className='action_icon' />
                                                 <span>Gérer les workspaces</span>
                                             </div>
                                         )}
@@ -566,7 +566,7 @@ const Dashboard = () => {
             <div className='header_box right'>
                 <IconButton key='menu' style={{ color: theme.palette.text.primary }}  onClick={handleOpenNotif} ref={anchorRef}>
                     <Badge color="error" variant="dot" invisible={!notifRead}>
-                        <PiBellBold className='icon' />
+                        <PiBell fontSize='1.3rem' />
                     </Badge>
                 </IconButton>
                 {/* Menu utilisateur */}
@@ -643,7 +643,7 @@ const Dashboard = () => {
                                                 onClick={() => handleUserMenuAction('account')}
                                                 style={{ color: theme.palette.text.primary }}
                                             >
-                                                <PiUserBold className='action_icon' />
+                                                <PiUser className='action_icon' />
                                                 <span>Mon Compte</span>
                                             </Link>
                                             
@@ -653,7 +653,7 @@ const Dashboard = () => {
                                                 onClick={() => handleUserMenuAction('settings')}
                                                 style={{ color: theme.palette.text.primary }}
                                             >
-                                                <PiGearSixBold className='action_icon' />
+                                                <PiGear className='action_icon' />
                                                 <span>Paramètres</span>
                                             </Link>
                                             
@@ -664,7 +664,7 @@ const Dashboard = () => {
                                                 className='user_action_item logout_action'
                                                 style={{ color: theme.palette.error.main }}
                                             >
-                                                <PiPowerBold className='action_icon' />
+                                                <PiPower className='action_icon' />
                                                 <span>Déconnexion</span>
                                             </button>
                                         </div>
@@ -741,7 +741,7 @@ const Dashboard = () => {
                         <NavLink key="home" to='/dashboard/home' className={({ isActive }) => (isActive ? 'menuDashboard menuActive' : 'menuDashboard')}>
                             <AnimatePresence initial={false}>
                                 <motion.div className={isSidebarOpen ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
-                                    <motion.div animate={{marginRight: isSidebarOpen ? "0.5rem" : "0rem"}} className='icon_navigation'><HomeOutlinedIcon fontSize='small'/></motion.div>
+                                    <motion.div animate={{marginRight: isSidebarOpen ? "0.5rem" : "0rem"}} className='icon_navigation'><PiHouse fontSize='1.2rem'/></motion.div>
                                     <motion.span className={isSidebarOpen ? "menu_text_open" : "menu_text_close"}>Accueil</motion.span>
                                 </motion.div>
                             </AnimatePresence>
@@ -749,7 +749,7 @@ const Dashboard = () => {
                         <NavLink key="websites" to='/dashboard/website' className={({ isActive }) => (isActive ? 'menuDashboard menuActive' : 'menuDashboard')}>
                             <AnimatePresence initial={false}>
                                 <motion.div className={isSidebarOpen ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
-                                    <motion.div animate={{marginRight: isSidebarOpen ? "0.5rem" : "0rem"}} className='icon_navigation'><LanguageIcon fontSize='small'/></motion.div>
+                                    <motion.div animate={{marginRight: isSidebarOpen ? "0.5rem" : "0rem"}} className='icon_navigation'><PiGlobe fontSize='1.2rem'/></motion.div>
                                     <motion.span className={isSidebarOpen ? "menu_text_open" : "menu_text_close"}>Sites Web</motion.span>
                                 </motion.div>
                             </AnimatePresence>
@@ -758,7 +758,7 @@ const Dashboard = () => {
                         <NavLink key="actu" to='/dashboard/actu/' className={({ isActive }) => (isActive ? 'menuDashboard menuActive' : 'menuDashboard')}>
                             <AnimatePresence initial={false}>
                                 <motion.div className={isSidebarOpen ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
-                                    <motion.div animate={{marginRight: isSidebarOpen ? "0.5rem" : "0rem"}} className='icon_navigation'><ArticleOutlinedIcon fontSize='small'/></motion.div>
+                                    <motion.div animate={{marginRight: isSidebarOpen ? "0.5rem" : "0rem"}} className='icon_navigation'><PiArticle fontSize='1.2rem'/></motion.div>
                                     <motion.span className={isSidebarOpen ? "menu_text_open" : "menu_text_close"}>Actualités</motion.span>
                                 </motion.div>
                             </AnimatePresence>
@@ -766,7 +766,7 @@ const Dashboard = () => {
                         <NavLink key="academy" to='/dashboard/academy' className={({ isActive }) => (isActive ? 'menuDashboard menuActive' : 'menuDashboard')}>
                             <AnimatePresence initial={false}>
                                 <motion.div className={isSidebarOpen ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
-                                    <motion.div animate={{marginRight: isSidebarOpen ? "0.5rem" : "0rem"}} className='icon_navigation'><SchoolOutlinedIcon fontSize='small'/></motion.div>
+                                    <motion.div animate={{marginRight: isSidebarOpen ? "0.5rem" : "0rem"}} className='icon_navigation'><PiGraduationCap  fontSize='1.2rem'/></motion.div>
                                     <motion.span className={isSidebarOpen ? "menu_text_open" : "menu_text_close"}>Academy</motion.span>
                                 </motion.div>
                             </AnimatePresence>
@@ -774,7 +774,7 @@ const Dashboard = () => {
                         <a key="probleme" href="https://form.asana.com/?k=JsNZ1O1QUSj9-SQSslLlHg&d=1208509146074291" className='menuDashboard'>
                             <AnimatePresence initial={false}>
                                 <motion.div className={isSidebarOpen ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
-                                    <motion.div animate={{marginRight: isSidebarOpen ? "0.5rem" : "0rem"}} className='icon_navigation'><HelpOutlineOutlinedIcon fontSize='small'/></motion.div>
+                                    <motion.div animate={{marginRight: isSidebarOpen ? "0.5rem" : "0rem"}} className='icon_navigation'><PiQuestion fontSize='1.2rem'/></motion.div>
                                     <motion.span className={isSidebarOpen ? "menu_text_open" : "menu_text_close"}>Un problème ?</motion.span>
                                 </motion.div>
                             </AnimatePresence>
@@ -787,7 +787,7 @@ const Dashboard = () => {
                             onClick={handleOpenSidebarModeMenu} 
                             sx={{ color: theme.palette.text.primary, padding: '0.35rem !important' }}
                         >
-                            <PiSidebarSimpleLight className='icon' style={{color: theme.palette.text.secondary}}/>
+                            <PiSidebarSimpleLight fontSize='1.2rem' style={{color: theme.palette.text.secondary}}/>
                         </IconButton>
                         <ClickAwayListener onClickAway={handleCloseSidebarModeMenu}>
                             <Popper 
