@@ -84,10 +84,10 @@ router.post('/generateSite', authenticateToken, async (req, res) => {
   }
 
   try {
-    // 1. Récupérer le chemin du dossier projet depuis la table websites
+    // 1. Récupérer le chemin du dossier projet et cloudflare_configured depuis la table websites
     const { data: websiteData, error: websiteError } = await supabase
       .from('websites')
-      .select('folder_project')
+      .select('folder_project, cloudflare_configured')
       .eq('id', websiteId)
       .maybeSingle();
     if (websiteError) throw websiteError;
@@ -95,6 +95,7 @@ router.post('/generateSite', authenticateToken, async (req, res) => {
       return res.status(404).send({ error: 'Site web ou chemin projet non trouvé.' });
     }
     const siteDir = websiteData.folder_project;
+    const cloudflareConfigured = websiteData.cloudflare_configured || false;
 
     // 2. Récupérer les collections du site web
     const { data: collections, error: collectionsError } = await supabase
@@ -225,30 +226,75 @@ router.post('/generateSite', authenticateToken, async (req, res) => {
         templateSlugs,
         templateTypes,
         projectName: siteDir,
-        deployToCloudflare: true
+        deployToCloudflare: cloudflareConfigured
       };
       console.log('🚀 Démarrage de la génération du site avec configuration:', siteConfig);
       try {
-        const response = await axios.post(GENERATOR_API_URL, siteConfig);
-        if (response.data.success) {
-          console.log('✅ Génération réussie!');
-          console.log(`📊 ${response.data.pageResults.length} pages standards générées`);
-          console.log(`📊 ${response.data.templateResults.length} pages de templates générées`);
-          return {
-            success: true,
-            message: response.data.message,
-            pageCount: response.data.pageResults.length,
-            templateCount: response.data.templateResults.length,
-            config: siteConfig
-          };
-        } else {
-          console.error('❌ Erreur lors de la génération:', response.data.message);
-          return {
-            success: false,
-            message: response.data.message,
-            config: siteConfig
-          };
-        }
+        const response = await axios.post(GENERATOR_API_URL, siteConfig, {
+          responseType: 'stream'
+        });
+        
+        let generationData = null;
+        
+        // Parser les événements SSE
+        return new Promise((resolve, reject) => {
+          response.data.on('data', (chunk) => {
+            const lines = chunk.toString().split('\n');
+            
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                try {
+                  const data = JSON.parse(line.slice(6));
+                  
+                  // Log des phases de progression
+                  if (data.phase) {
+                    console.log(`[${data.phase}] ${data.message} (${data.progress}%)`);
+                  }
+                  
+                  // Événement final avec le résultat
+                  if (data.type === 'done' && data.result) {
+                    generationData = data.result;
+                  }
+                  
+                  // Événement complete avec les données finales
+                  if (data.phase === 'complete' && data.data) {
+                    generationData = data.data;
+                  }
+                } catch (e) {
+                  // Ignorer les erreurs de parsing
+                }
+              }
+            }
+          });
+          
+          response.data.on('end', () => {
+            if (generationData && generationData.success) {
+              console.log('✅ Génération réussie!');
+              console.log(`📊 ${generationData.pageResults?.length || 0} pages standards générées`);
+              console.log(`📊 ${generationData.templateResults?.length || 0} pages de templates générées`);
+              resolve({
+                success: true,
+                message: generationData.message,
+                pageCount: generationData.pageResults?.length || 0,
+                templateCount: generationData.templateResults?.length || 0,
+                deployment: generationData.deployment || null,
+                config: siteConfig
+              });
+            } else {
+              console.error('❌ Erreur lors de la génération');
+              resolve({
+                success: false,
+                message: generationData?.message || 'Erreur lors de la génération',
+                config: siteConfig
+              });
+            }
+          });
+          
+          response.data.on('error', (error) => {
+            console.error('❌ Erreur stream:', error.message);
+            reject(error);
+          });
+        });
       } catch (error) {
         console.error('❌ Erreur lors de la génération:', error.message);
         return {

@@ -741,7 +741,7 @@ const Dashboard = () => {
                         <NavLink key="home" to='/dashboard/home' className={({ isActive }) => (isActive ? 'menuDashboard menuActive' : 'menuDashboard')}>
                             <AnimatePresence initial={false}>
                                 <motion.div className={isSidebarOpen ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
-                                    <motion.div animate={{marginRight: isSidebarOpen ? "0.5rem" : "0rem"}} className='icon_navigation'><PiHouse fontSize='1.3rem'/></motion.div>
+                                    <motion.div animate={{marginRight: isSidebarOpen ? "0.5rem" : "0rem"}} className='icon_navigation'><PiHouse fontSize='1.2rem'/></motion.div>
                                     <motion.span className={isSidebarOpen ? "menu_text_open" : "menu_text_close"}>Accueil</motion.span>
                                 </motion.div>
                             </AnimatePresence>
@@ -749,7 +749,7 @@ const Dashboard = () => {
                         <NavLink key="websites" to='/dashboard/website' className={({ isActive }) => (isActive ? 'menuDashboard menuActive' : 'menuDashboard')}>
                             <AnimatePresence initial={false}>
                                 <motion.div className={isSidebarOpen ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
-                                    <motion.div animate={{marginRight: isSidebarOpen ? "0.5rem" : "0rem"}} className='icon_navigation'><PiGlobe fontSize='1.3rem'/></motion.div>
+                                    <motion.div animate={{marginRight: isSidebarOpen ? "0.5rem" : "0rem"}} className='icon_navigation'><PiGlobe fontSize='1.2rem'/></motion.div>
                                     <motion.span className={isSidebarOpen ? "menu_text_open" : "menu_text_close"}>Sites Web</motion.span>
                                 </motion.div>
                             </AnimatePresence>
@@ -758,7 +758,7 @@ const Dashboard = () => {
                         <NavLink key="actu" to='/dashboard/actu/' className={({ isActive }) => (isActive ? 'menuDashboard menuActive' : 'menuDashboard')}>
                             <AnimatePresence initial={false}>
                                 <motion.div className={isSidebarOpen ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
-                                    <motion.div animate={{marginRight: isSidebarOpen ? "0.5rem" : "0rem"}} className='icon_navigation'><PiArticle fontSize='1.3rem'/></motion.div>
+                                    <motion.div animate={{marginRight: isSidebarOpen ? "0.5rem" : "0rem"}} className='icon_navigation'><PiArticle fontSize='1.2rem'/></motion.div>
                                     <motion.span className={isSidebarOpen ? "menu_text_open" : "menu_text_close"}>Actualités</motion.span>
                                 </motion.div>
                             </AnimatePresence>
@@ -766,7 +766,7 @@ const Dashboard = () => {
                         <NavLink key="academy" to='/dashboard/academy' className={({ isActive }) => (isActive ? 'menuDashboard menuActive' : 'menuDashboard')}>
                             <AnimatePresence initial={false}>
                                 <motion.div className={isSidebarOpen ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
-                                    <motion.div animate={{marginRight: isSidebarOpen ? "0.5rem" : "0rem"}} className='icon_navigation'><PiGraduationCap  fontSize='1.3rem'/></motion.div>
+                                    <motion.div animate={{marginRight: isSidebarOpen ? "0.5rem" : "0rem"}} className='icon_navigation'><PiGraduationCap  fontSize='1.2rem'/></motion.div>
                                     <motion.span className={isSidebarOpen ? "menu_text_open" : "menu_text_close"}>Academy</motion.span>
                                 </motion.div>
                             </AnimatePresence>
@@ -774,7 +774,7 @@ const Dashboard = () => {
                         <NavLink key="probleme" to='/dashboard/problem' className={({ isActive }) => (isActive ? 'menuDashboard menuActive' : 'menuDashboard')}>
                             <AnimatePresence initial={false}>
                                 <motion.div className={isSidebarOpen ? "link menu_link open_link_menu" : "link menu_link close_link_menu"} style={{color: theme.palette.text.secondary}}>
-                                    <motion.div animate={{marginRight: isSidebarOpen ? "0.5rem" : "0rem"}} className='icon_navigation'><PiQuestion fontSize='1.3rem'/></motion.div>
+                                    <motion.div animate={{marginRight: isSidebarOpen ? "0.5rem" : "0rem"}} className='icon_navigation'><PiQuestion fontSize='1.2rem'/></motion.div>
                                     <motion.span className={isSidebarOpen ? "menu_text_open" : "menu_text_close"}>Un problème ?</motion.span>
                                 </motion.div>
                             </AnimatePresence>
@@ -787,7 +787,7 @@ const Dashboard = () => {
                             onClick={handleOpenSidebarModeMenu} 
                             sx={{ color: theme.palette.text.primary, padding: '0.35rem !important' }}
                         >
-                            <PiSidebarSimpleLight className='icon' style={{color: theme.palette.text.secondary}}/>
+                            <PiSidebarSimpleLight fontSize='1.2rem' style={{color: theme.palette.text.secondary}}/>
                         </IconButton>
                         <ClickAwayListener onClickAway={handleCloseSidebarModeMenu}>
                             <Popper 

@@ -25,7 +25,7 @@ import CreateOutlinedIcon from '@mui/icons-material/CreateOutlined';
 import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined';
 import EqualizerOutlinedIcon from '@mui/icons-material/EqualizerOutlined';
 import NewspaperOutlinedIcon from '@mui/icons-material/NewspaperOutlined';
-import { PiChatCircleDotsBold, PiPlusBold, PiGearSixBold } from 'react-icons/pi';
+import { PiChatCircleDotsBold, PiPlusBold, PiGearSixBold, PiSquaresFour,  PiPencilSimple, PiChartBar, PiEnvelopeSimple, PiNewspaper, PiCreditCard, PiReceipt, PiGear, PiCaretUpDownLight, PiGlobe, PiArrowLineUpRightLight, PiArrowLineUpRight, PiArrowLineUpRightBold } from 'react-icons/pi';
 import LanguageIcon from '@mui/icons-material/Language';
 import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore';
 import MailIcon from '@mui/icons-material/Mail';
@@ -262,7 +262,7 @@ const WebsiteManager = () => {
                 <div style={{ color: theme.palette.text.secondary }}>Chargement...</div>
               ) : (
                 <>
-                  <LanguageIcon fontSize='small' style={{color: theme.palette.text.secondary}}/>
+                  <PiGlobe fontSize='1.2rem' style={{color: theme.palette.text.secondary}}/>
                   <div className='website-info-button'>
                     <span className='website-selector-text'>
                       <b>{selectedWebsite ? selectedWebsite.website_name : 'Aucun site sélectionné'}</b>
@@ -272,7 +272,7 @@ const WebsiteManager = () => {
                         {subscriptionInfo?.plan_name || 'Free'}
                       </span>
                     )}
-                    <UnfoldMoreIcon fontSize='small' className='icon' style={{color: theme.palette.text.secondary}} />
+                    <PiCaretUpDownLight fontSize='1rem' style={{color: theme.palette.text.secondary}} />
                   </div>
                 </>
               )}
@@ -378,7 +378,7 @@ const WebsiteManager = () => {
                 end
                 className={({ isActive }) => `account-sidebar-link${isActive ? ' account-sidebar-link-active' : ''}`}
               >
-                <DashboardOutlinedIcon fontSize='small'/>
+                <PiSquaresFour fontSize='1.2rem'/>
                 Vue d'ensemble
               </NavLink>
               
@@ -388,7 +388,7 @@ const WebsiteManager = () => {
                 to={'/dashboard/website/modification/'}
                 className={({ isActive }) => `account-sidebar-link${isActive ? ' account-sidebar-link-active' : ''}`}
               >
-                <CreateOutlinedIcon fontSize='small'/>
+                <PiPencilSimple  fontSize='1.2rem'/>
                 Modifications
               </NavLink>
               
@@ -396,7 +396,7 @@ const WebsiteManager = () => {
                 to={analyticsAuth ? "/dashboard/website/stats" : '#'}
                 className={({ isActive }) => `account-sidebar-link${isActive && analyticsAuth ? ' account-sidebar-link-active' : ''}${!analyticsAuth ? ' disabled' : ''}`}
               >
-                <EqualizerOutlinedIcon fontSize='small'/>
+                <PiChartBar fontSize='1.2rem'/>
                 Statistiques
                 {!analyticsAuth && <span style={{ marginLeft: 'auto', fontSize: '0.75rem' }}><LockIcon fontSize='tiny'/></span>}
               </NavLink>
@@ -405,7 +405,7 @@ const WebsiteManager = () => {
                 to="/dashboard/website/contact"
                 className={({ isActive }) => `account-sidebar-link${isActive ? ' account-sidebar-link-active' : ''}`}
               >
-                <MailIcon fontSize='small'/>
+                <PiEnvelopeSimple fontSize='1.2rem'/>
                 Contacts
               </NavLink>
               
@@ -413,7 +413,7 @@ const WebsiteManager = () => {
                 to={newsAuth ? '/dashboard/website/newsletter' : '#'}
                 className={({ isActive }) => `account-sidebar-link${isActive && newsAuth ? ' account-sidebar-link-active' : ''}${!newsAuth ? ' disabled' : ''}`}
               >
-                <NewspaperOutlinedIcon fontSize='small'/>
+                <PiNewspaper fontSize='1.2rem'/>
                 Newsletter
                 {!newsAuth && <span style={{ marginLeft: 'auto', fontSize: '0.75rem' }}><LockIcon fontSize='tiny'/></span>}
               </NavLink>
@@ -424,7 +424,7 @@ const WebsiteManager = () => {
                 to={`/dashboard/website/subscription`}
                 className={({ isActive }) => `account-sidebar-link${isActive ? ' account-sidebar-link-active' : ''}`}
               >
-                <CardMembershipIcon fontSize='small'/>
+                <PiCreditCard fontSize='1.2rem'/>
                 Abonnement
               </NavLink>
               
@@ -432,7 +432,7 @@ const WebsiteManager = () => {
                 to={`/dashboard/website/billing`}
                 className={({ isActive }) => `account-sidebar-link${isActive ? ' account-sidebar-link-active' : ''}`}
               >
-                <ReceiptIcon fontSize='small'/>
+                <PiReceipt fontSize='1.2rem'/>
                 Facturation
               </NavLink>
               
@@ -441,7 +441,7 @@ const WebsiteManager = () => {
                   to={`/dashboard/website/settings`}
                   className={({ isActive }) => `account-sidebar-link${isActive ? ' account-sidebar-link-active' : ''}`}
                 >
-                  <SettingsIcon fontSize='small'/>
+                  <PiGear fontSize='1.2rem'/>
                   Paramètres
                 </NavLink>
               )}
@@ -484,7 +484,7 @@ const WebsiteManager = () => {
                         }
                       }}
                     >
-                      <OpenInNewIcon fontSize='small'/>
+                      <PiArrowLineUpRightBold fontSize='1rem'/>
                     </button>
 
                     {/* Ref pour ancrer la popup */}
@@ -542,7 +542,7 @@ const WebsiteManager = () => {
                                       }
                                     }}
                                   >
-                                    <OpenInNewIcon fontSize='tiny'/>
+                                    <PiArrowLineUpRightBold fontSize='1rem'/>
                                   </button>
                                 </div>
                                 <div className='line-sidebar'></div>
@@ -581,7 +581,7 @@ const WebsiteManager = () => {
                                       }
                                     }}
                                   >
-                                    <OpenInNewIcon fontSize='tiny'/>
+                                    <PiArrowLineUpRightBold fontSize='1rem'/>
                                   </button>
                                 </div>
                               </Box>

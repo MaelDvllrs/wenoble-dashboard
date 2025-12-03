@@ -7,6 +7,7 @@ import { HiSearch } from "react-icons/hi";
 import { MdArrowForwardIos } from "react-icons/md"
 
 import "./statistiqueHome.css";
+import { PiChartBar, PiMagnifyingGlass } from "react-icons/pi";
 
 const StatistiqueHome = () => {
   
@@ -24,7 +25,7 @@ const StatistiqueHome = () => {
             >
                 <div className="modification_title_box" style={{color: theme.palette.text.primary}}>
                   <div className="modification_title">
-                    <BsFillBarChartFill  className="icon_modifiaction_title"/>
+                    <PiChartBar className="icon_modifiaction_title"/>
                     <b>Analytics</b>
                   </div>
                   <div className="button_modificationHome"><MdArrowForwardIos /></div>
@@ -36,7 +37,7 @@ const StatistiqueHome = () => {
             <NavLink to={'/dashboard/website/stats/search-console'} className="modification_box" style={{backgroundColor : theme.palette.primary.secondary, boxShadow: theme.palette.shadow.main}}>
                 <div className="modification_title_box" style={{color: theme.palette.text.primary}}>
                   <div className="modification_title">
-                    <HiSearch className="icon_modifiaction_title" />
+                    <PiMagnifyingGlass className="icon_modifiaction_title" />
                     <b>Search Console</b>
                   </div>
                   <div className="button_modificationHome"><MdArrowForwardIos /></div>

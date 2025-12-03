@@ -23,6 +23,7 @@ async function getWebsiteByDomain(domain) {
         website_slug,
         folder_project,
         workspace_id,
+        cloudflare_configured,
         website_subscriptions!inner (
           status,
           subscription_plans!inner (
@@ -32,7 +33,7 @@ async function getWebsiteByDomain(domain) {
         )
       `)
       .eq('website_slug', domain)
-      .eq('website_subscriptions.status', 'active')
+      .eq('cloudflare_configured', true)
       .maybeSingle();
 
     if (error) {
