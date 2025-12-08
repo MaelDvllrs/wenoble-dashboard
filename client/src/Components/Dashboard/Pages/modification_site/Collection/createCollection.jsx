@@ -10,7 +10,6 @@ import {
     InputLabel, 
     Switch,
     FormControlLabel,
-    IconButton,
     Snackbar,
     CircularProgress,
     Dialog,
@@ -45,7 +44,8 @@ import { useSnackbar } from '../../../../../Theme/snackbar';
 import { useWebsite } from '../../../../../Context/WebsiteContext';
 import './collection.css';
 import '../Fields/Field.css';
-import { SecondaryButton, DefaultButton, MultiReferenceSelect, DefaultSwitch } from '../../../../../Theme/element';
+import { SecondaryButton, DefaultButton, MultiReferenceSelect, DefaultSwitch, SmallIconButton } from '../../../../../Theme/element';
+import { PiEye, PiTextT, PiPencilSimple, PiTrash, PiArticleNyTimes, PiTreeStructure } from 'react-icons/pi';
 
 const CreateCollection = () => {
     const theme = useTheme();
@@ -351,14 +351,12 @@ const CreateCollection = () => {
             <div className="header_modification header_page_modification">
                 <h3 className="titlePage">Nouvelle collection</h3>
                 <div className="actions-section">
-                    <SecondaryButton    
-                        variant="outlined"
-                        startIcon={<VisibilityIcon style={{fontSize:"1.1rem"}} />}
+                    <SmallIconButton
                         onClick={() => setOpenPreview(true)}
-                        sx={{ color: theme.palette.primary.main, borderColor: theme.palette.primary.main }}
+                        title="Aperçu"
                     >
-                        Aperçu
-                    </SecondaryButton>
+                        <PiEye fontSize="1.3rem" />
+                    </SmallIconButton>
 
                     <SecondaryButton
                         variant="outlined"
@@ -428,7 +426,7 @@ const CreateCollection = () => {
                         <div className="configured-field-item">
                             <div className="field-item-info-wrapper">
                                 <span className="field-item-type">
-                                    <TextFieldsIcon fontSize='large'/>
+                                    <PiTextT fontSize='large'/>
                                 </span>
                                 <div className="field-item-header">
                                     <div className="field-item-info">
@@ -447,7 +445,7 @@ const CreateCollection = () => {
                         <div className="configured-field-item">
                             <div className="field-item-info-wrapper">
                                 <span className="field-item-type">
-                                    <TextFieldsIcon fontSize='large'/>
+                                    <PiTextT fontSize='large'/>
                                 </span>
                                 <div className="field-item-header">
                                     <div className="field-item-info">
@@ -474,12 +472,12 @@ const CreateCollection = () => {
                                         <div className="field-item-info-wrapper inline-edit-wrapper" style={{ marginBottom: '1rem' }}>
                                             <div className='field-item-edit'>
                                                 <span className="field-item-type">
-                                                    {fieldTypes.find(t => t.value === selectedFieldType)?.value === 'text' && <TextFieldsIcon fontSize='large'/>}
-                                                    {fieldTypes.find(t => t.value === selectedFieldType)?.value === 'richText' && <NotesIcon fontSize='large'/>}
-                                                    {fieldTypes.find(t => t.value === selectedFieldType)?.value === 'image' && <ImageIcon fontSize='large'/>}
-                                                    {fieldTypes.find(t => t.value === selectedFieldType)?.value === 'gallery' && <CollectionsIcon fontSize='large'/>}
-                                                    {fieldTypes.find(t => t.value === selectedFieldType)?.value === 'video' && <VideocamIcon fontSize='large'/>}
-                                                    {fieldTypes.find(t => t.value === selectedFieldType)?.value === 'multiReference' && <AccountTreeIcon fontSize='large'/>}
+                                                    {fieldTypes.find(t => t.value === selectedFieldType)?.value === 'text' && <PiTextT fontSize='large'/>}
+                                                    {fieldTypes.find(t => t.value === selectedFieldType)?.value === 'richText' && <PiArticleNyTimes fontSize='large'/>}
+                                                    {fieldTypes.find(t => t.value === selectedFieldType)?.value === 'image' && <ImageIcon fontSize='small'/>}
+                                                    {fieldTypes.find(t => t.value === selectedFieldType)?.value === 'gallery' && <CollectionsIcon fontSize='small'/>}
+                                                    {fieldTypes.find(t => t.value === selectedFieldType)?.value === 'video' && <VideocamIcon fontSize='small'/>}
+                                                    {fieldTypes.find(t => t.value === selectedFieldType)?.value === 'multiReference' && <PiTreeStructure  fontSize='large'/>}
                                                 </span>
                                                 <div className="field-item-header">
                                                     <div className="field-item-info">
@@ -503,6 +501,15 @@ const CreateCollection = () => {
                                                 )}
                                             </div>
                                             <div className="config-form-actions">
+                                                <SmallIconButton
+                                                    variant="outlined"
+                                                    onClick={() => {
+                                                        removeConfigField(editingFieldIndex);
+                                                        cancelFieldCreation();
+                                                    }}
+                                                >
+                                                    <PiTrash fontSize="1.2rem"/>
+                                                </SmallIconButton>
                                                 <SecondaryButton
                                                     variant="outlined"
                                                     onClick={cancelFieldCreation}
@@ -583,15 +590,15 @@ const CreateCollection = () => {
                                     </div>
                                 ) : (
                                     /* Affichage normal du champ */
-                                    <div className="configured-field-item">
+                                    <div className="configured-field-item" onClick={() => editConfigField(index)} style={{ cursor: 'pointer' }}>
                                         <div className="field-item-info-wrapper">
                                             <span className="field-item-type">
-                                                {fieldTypes.find(t => t.value === field.tab_field)?.value === 'text' && <TextFieldsIcon fontSize='large'/>}
-                                                {fieldTypes.find(t => t.value === field.tab_field)?.value === 'richText' && <NotesIcon fontSize='large'/>}
-                                                {fieldTypes.find(t => t.value === field.tab_field)?.value === 'image' && <ImageIcon fontSize='large'/>}
-                                                {fieldTypes.find(t => t.value === field.tab_field)?.value === 'gallery' && <CollectionsIcon fontSize='large'/>}
-                                                {fieldTypes.find(t => t.value === field.tab_field)?.value === 'video' && <VideocamIcon fontSize='large'/>}
-                                                {fieldTypes.find(t => t.value === field.tab_field)?.value === 'multiReference' && <AccountTreeIcon  fontSize='large'/>}
+                                                {fieldTypes.find(t => t.value === field.tab_field)?.value === 'text' && <PiTextT fontSize='large'/>}
+                                                {fieldTypes.find(t => t.value === field.tab_field)?.value === 'richText' && <PiArticleNyTimes fontSize='large'/>}
+                                                {fieldTypes.find(t => t.value === field.tab_field)?.value === 'image' && <ImageIcon fontSize='small'/>}
+                                                {fieldTypes.find(t => t.value === field.tab_field)?.value === 'gallery' && <CollectionsIcon fontSize='small'/>}
+                                                {fieldTypes.find(t => t.value === field.tab_field)?.value === 'video' && <VideocamIcon fontSize='small'/>}
+                                                {fieldTypes.find(t => t.value === field.tab_field)?.value === 'multiReference' && <PiTreeStructure  fontSize='large'/>}
                                             </span>
                                             <div className="field-item-header">
                                                 <div className="field-item-info">
@@ -616,19 +623,8 @@ const CreateCollection = () => {
                                             )}
                                         </div>
 
-                                        <div className="field-item-actions">
-                                            <SecondaryButton
-                                                onClick={() => editConfigField(index)}
-                                                startIcon={<EditIcon style={{ fontSize: '1rem' }}/>}
-                                            >
-                                                Modifier
-                                            </SecondaryButton>
-                                            <SecondaryButton
-                                                onClick={() => removeConfigField(index)}
-                                                startIcon={<DeleteIcon style={{ fontSize: '1rem' }}/>}
-                                            >
-                                                Supprimer
-                                            </SecondaryButton>
+                                        <div className="field-item-actions field-hover-action">
+                                            <PiPencilSimple fontSize="1.2rem" />
                                         </div>
                                     </div>
                                 )}
@@ -660,12 +656,12 @@ const CreateCollection = () => {
                                         onClick={() => selectFieldType(type.value)}
                                     >
                                         <div className="field-type-icon">
-                                            {type.value === 'text' && <TextFieldsIcon fontSize='huge'/>}
-                                            {type.value === 'richText' && <NotesIcon fontSize='huge'/>}
+                                            {type.value === 'text' && <PiTextT fontSize='huge'/>}
+                                            {type.value === 'richText' && <PiArticleNyTimes fontSize='huge'/>}
                                             {type.value === 'image' && <ImageIcon fontSize='huge'/>}
                                             {type.value === 'gallery' && <CollectionsIcon fontSize='huge'/>}
                                             {type.value === 'video' && <VideocamIcon fontSize='huge'/>}
-                                            {type.value === 'multiReference' && <AccountTreeIcon fontSize='huge'/>}
+                                            {type.value === 'multiReference' && <PiTreeStructure fontSize='huge'/>}
                                         </div>
                                         <p className="field-type-label">{type.label}</p>
                                     </div>

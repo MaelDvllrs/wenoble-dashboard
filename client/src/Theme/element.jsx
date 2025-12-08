@@ -332,7 +332,7 @@ export const SecondaryButton = styled(Button)(({ theme }) => ({
         backgroundColor: "transparent",
         color: theme.palette.text.primary,
         fontSize: '0.9rem',
-        padding: '0.15rem 0.5rem 0.15rem 0.5rem',
+        padding: '0.05rem 0.5rem 0.05rem 0.5rem',
         boxShadow: theme.palette.shadow.main,
         textTransform: 'none',
         minWidth: '0',
@@ -1171,6 +1171,25 @@ export function PopupSide({ open, onClose, title = '', width = 420, maxWidth = 4
     </Drawer>
   );
 }
+
+// SmallIconButton - Small icon button with hover effect for actions
+export const SmallIconButton = styled('button')(({ theme }) => ({
+  backgroundColor: 'transparent',
+  border: 'none',
+  cursor: 'pointer',
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  width: '1.8rem',
+  height: '1.8rem',
+  color: theme.palette.text.secondary,
+  borderRadius: '4px',
+  transition: 'background-color 0.2s, color 0.2s',
+  '&:hover': {
+    backgroundColor: theme.palette.primary.third,
+    color: theme.palette.text.primary,
+  },
+}));
 
 
 
