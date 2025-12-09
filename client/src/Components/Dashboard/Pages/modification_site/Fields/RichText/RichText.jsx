@@ -216,7 +216,12 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
       setHasFocus(true);
     };
     const handleClick = () => setHasInteracted(true);
-    const handleBlur = () => {
+    const handleBlur = (e) => {
+      // Ne pas masquer le tooltip si on clique sur le add-on tooltip
+      const isClickingAddon = addonTooltipRef.current?.contains(e.relatedTarget);
+      if (isClickingAddon) {
+        return;
+      }
       console.log('perd le focus')
       setHasFocus(false);
       setShowAddonTooltip(false);

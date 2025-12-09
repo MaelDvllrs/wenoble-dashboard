@@ -3,10 +3,13 @@ import AddIcon from '@mui/icons-material/Add';
 import ImageIcon from '@mui/icons-material/Image';
 import CodeIcon from '@mui/icons-material/Code';
 
-const AddonTooltip = forwardRef(({ position, onAddImage, onAddAttribute, theme, onImage, onEmbed }, ref) => {
+const AddonTooltip = forwardRef(({ position, onAddImage, onAddAttribute, theme, onImage, onEmbed, onToggle, onClose }, ref) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const handleToggle = () => setIsOpen(!isOpen);
+  const handleToggle = () => {
+    setIsOpen(!isOpen);
+    onToggle?.();
+  };
 
   const handleClose = (event) => {
     if (
@@ -15,6 +18,7 @@ const AddonTooltip = forwardRef(({ position, onAddImage, onAddAttribute, theme, 
       !event.target.closest('.addon-tooltip-select')
     ) {
       setIsOpen(false);
+      onClose?.();
     }
   };
 
@@ -55,6 +59,7 @@ const AddonTooltip = forwardRef(({ position, onAddImage, onAddAttribute, theme, 
             onClick={() => {
               onImage();
               setIsOpen(false);
+              onClose?.();
             }}
             style={{ color: theme.palette.text.primary }}
           >
@@ -66,6 +71,7 @@ const AddonTooltip = forwardRef(({ position, onAddImage, onAddAttribute, theme, 
             onClick={() => {
               onEmbed();
               setIsOpen(false);
+              onClose?.();
             }}
             style={{ color: theme.palette.text.primary }}
           >
