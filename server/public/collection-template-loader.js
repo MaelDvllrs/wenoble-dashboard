@@ -1,5 +1,5 @@
 (async function () {
-    const apiUrl = "http://localhost:3002";
+    const apiUrl = "https://api-wenoble.wenoble.fr/";
     const urlVideoBucket = "https://xgwszpuiiacukrvvtrze.supabase.co/storage/v1/object/public/collection-video//" // Remplacez par l'URL de votre API
     const urlGalleryBucket = "https://xgwszpuiiacukrvvtrze.supabase.co/storage/v1/object/public/collection-gallery//"; // Remplacez par l'URL de votre API
     const scriptTag = document.currentScript;
