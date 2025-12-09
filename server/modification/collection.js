@@ -2205,6 +2205,16 @@ router.get('/checkFieldUsage', authenticateToken, async (req, res) => {
         elementsWithField = multiRefData || [];
         break;
 
+      case 'switch':
+        tableName = 'collection_field_switch';
+        const { data: switchData, error: switchError } = await supabase
+          .from('collection_field_switch')
+          .select('collection_element_id')
+          .eq('id_config', fieldId);
+        if (switchError) throw switchError;
+        elementsWithField = switchData || [];
+        break;
+
       default:
         return res.status(400).json({ 
           error: `Type de champ non supporté: ${fieldType}` 
