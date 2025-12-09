@@ -215,7 +215,21 @@ const CreateElementCollection = () => {
             const infoRichText = [];
             blogData.richText.forEach(richText => {
                 const contentRichText = richText.value;
-                const richTextJS = convertToRaw(contentRichText);
+                // Vérifier si contentRichText est déjà un objet brut ou un ContentState
+                let richTextJS;
+                if (contentRichText && typeof contentRichText === 'object' && contentRichText.getCurrentContent) {
+                    // C'est un EditorState Draft.js
+                    richTextJS = convertToRaw(contentRichText.getCurrentContent());
+                } else if (contentRichText && typeof contentRichText === 'object' && contentRichText.getBlockMap) {
+                    // C'est un ContentState Draft.js
+                    richTextJS = convertToRaw(contentRichText);
+                } else if (contentRichText && typeof contentRichText === 'object') {
+                    // C'est déjà un objet brut
+                    richTextJS = contentRichText;
+                } else {
+                    // Valeur par défaut vide
+                    richTextJS = { blocks: [], entityMap: {} };
+                }
                 const richTextJSON = JSON.stringify(richTextJS);
                 infoRichText.push({richText : richTextJSON, id_config: richText.id_config});
             });
