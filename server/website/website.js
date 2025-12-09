@@ -367,7 +367,7 @@ router.post('/createWebsite', authenticateToken, async (req, res) => {
     const token = req.headers['authorization']?.split(' ')[1];
     const supabase = supabaseServer(token);
 
-    if (!website_name || !website_slug) {
+    if (!website_name) {
       return res.status(400).send({ error: 'Le nom et le slug du site web sont requis' });
     }
 

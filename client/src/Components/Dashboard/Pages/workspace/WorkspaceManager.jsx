@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, NavLink } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import GroupOutlinedIcon from '@mui/icons-material/GroupOutlined';
 import Cookies from 'js-cookie';
@@ -168,16 +168,16 @@ const WorkspaceManager = () => {
 
     if (loading) {
         return (
-            <div className="outlet">
+            <div className="outlet-box">
                 <div className="title_section">
-                    <div className="breadcrumb">
-                        <span 
-                            className="breadcrumb-item" 
-                            onClick={() => navigate('/dashboard')}
-                            style={{ cursor: 'pointer', color: theme.palette.text.secondary }}
+                    <div className="breadCrumbs">
+                        <NavLink 
+                            className={'breadCrumbsLink'}
+                            to="/dashboard/home"
+                            style={{ textDecoration: 'none', color: 'inherit' }}
                         >
                             Dashboard
-                        </span>
+                        </NavLink>
                         <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
                         <span className="breadcrumb-item-active" style={{ color: theme.palette.text.primary }}>
                             Workspaces
@@ -198,17 +198,17 @@ const WorkspaceManager = () => {
     }
 
     return (
-        <div className="outlet">
+        <div className="outlet-box">
             {/* Section titre avec breadcrumb */}
             <div className="title_section">
-                <div className="breadcrumb">
-                    <span 
-                        className="breadcrumb-item" 
-                        onClick={() => navigate('/dashboard')}
-                        style={{ cursor: 'pointer', color: theme.palette.text.secondary }}
+                <div className="breadCrumbs">
+                    <NavLink 
+                        className={'breadCrumbsLink'}
+                        to="/dashboard/home"
+                        style={{ textDecoration: 'none', color: 'inherit' }}
                     >
                         Dashboard
-                    </span>
+                    </NavLink>
                     <span className="breadcrumb-separator" style={{ color: theme.palette.text.secondary }}> / </span>
                     <span className="breadcrumb-item-active" style={{ color: theme.palette.text.primary }}>
                         Workspaces
