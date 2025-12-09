@@ -486,6 +486,44 @@ export const updateGalleryBlog = async (id, gallery, token) => {
 };
 
 
+export const updateSwitchBlog = async (id, switchField, token) => {
+    try {
+        let switchCreate = false;
+
+        if (switchField.create) {
+            switchCreate = true;
+        }
+
+
+        const data = {
+            id_blog_page: id,
+            id_config: switchField.id_config,
+            type: switchField.type,
+            value: switchField.value
+        };
+
+        if (switchCreate) {
+            await Axios.post(`${apiUrl}/updateSwitchCollection`, data, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+        } else {
+            await Axios.post(`${apiUrl}/createSwitchCollection`, data, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Message d\'erreur du serveur:', error);
+        throw error;
+    }
+};
+
+
 export const generateStaticSite = async (token, websiteId, status = 'publish', publishCustomDomain) => {
     try {
         const response = await Axios.post(`${apiUrl}/generateSite`, { websiteId, status, publishCustomDomain }, {

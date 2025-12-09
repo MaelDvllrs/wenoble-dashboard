@@ -46,7 +46,7 @@ import { useWebsite } from '../../../../../Context/WebsiteContext';
 import './collection.css';
 import '../Fields/Field.css';
 import { SecondaryButton, DefaultButton, IconButton, MultiReferenceSelect, DefaultSwitch, CopyButton, CopyField, PopupSide, SelectField, SmallIconButton } from '../../../../../Theme/element';
-import { PiEye, PiTextT, PiPencilSimple, PiTrash, PiArticleNyTimes, PiTreeStructure, PiPlugs } from 'react-icons/pi';
+import { PiEye, PiTextT, PiPencilSimple, PiTrash, PiArticleNyTimes, PiTreeStructure, PiPlugs, PiToggleRight } from 'react-icons/pi';
 
 const EditCollection = () => {
     const theme = useTheme();
@@ -182,7 +182,8 @@ const EditCollection = () => {
         { value: 'image', label: 'Image' },
         { value: 'gallery', label: 'Galerie' },
         { value: 'video', label: 'Vidéo' },
-        { value: 'multiReference', label: 'Multi-référence' }
+        { value: 'multiReference', label: 'Multi-référence' },
+        { value: 'switch', label: 'Switch' }
     ];
 
     // Générer automatiquement le slug à partir du nom
@@ -489,17 +490,18 @@ const EditCollection = () => {
 
     // Options disponibles selon le type de page
     const getFilterFieldOptions = () => {
-        // Pour mode normal : champs de la collection actuelle (seulement text et multiReference)
+        // Pour mode normal : champs de la collection actuelle (text, multiReference, switch)
         return [
-            { value: 'collection_element_name', label: 'Titre' },
-            { value: 'collection_element_slug', label: 'Slug' },
-            { value: 'created_at', label: 'Date de création' },
-            { value: 'collection_element_publish_date', label: 'Date de publication' },
+            { value: 'collection_element_name', label: 'Titre', type: 'text' },
+            { value: 'collection_element_slug', label: 'Slug', type: 'text' },
+            { value: 'created_at', label: 'Date de création', type: 'text' },
+            { value: 'collection_element_publish_date', label: 'Date de publication', type: 'text' },
             ...configFields.filter(field => 
-                ['text', 'multiReference'].includes(field.tab_field)
+                ['text', 'multiReference', 'switch'].includes(field.tab_field)
             ).map(field => ({
                 value: field.id,
-                label: `${field.name_field} (${field.tab_field})`
+                label: `${field.name_field} (${field.tab_field})`,
+                type: field.tab_field
             }))
         ];
     };
@@ -960,44 +962,78 @@ const EditCollection = () => {
                                             ))}
                                         </SelectField>
                                     
-                                        <p className="blogField_name collection_edit_name">Opérateur</p>
+                                    <p className="blogField_name collection_edit_name">Opérateur</p>
+                                    <SelectField
+                                        className="input_text_blog"
+                                        value={filter.operator || 'equals'}
+                                        onChange={(e) => updateFilter(filter.id, { operator: e.target.value })}
+                                        style={{marginBottom: "1rem"}}
+                                    >
+                                        {(() => {
+                                            const selectedField = getFilterFieldOptions().find(opt => opt.value === filter.field);
+                                            const fieldType = selectedField?.type;
+                                            
+                                            if (fieldType === 'switch') {
+                                                return [
+                                                    <MenuItem key="equals" value="equals">Égal à</MenuItem>,
+                                                    <MenuItem key="notEquals" value="notEquals">Pas égal à</MenuItem>
+                                                ];
+                                            }
+                                            
+                                            return [
+                                                <MenuItem key="equals" value="equals">Égal à</MenuItem>,
+                                                <MenuItem key="notEquals" value="notEquals">Pas égal à</MenuItem>,
+                                                <MenuItem key="contains" value="contains">Contient</MenuItem>,
+                                                <MenuItem key="starts" value="starts">Commence par</MenuItem>,
+                                                <MenuItem key="ends" value="ends">Finit par</MenuItem>
+                                            ];
+                                        })()}
+                                    </SelectField>                                {/* Deuxième champ selon le mode */}
+                                    <p className="blogField_name collection_edit_name">
+                                        {isTemplateMode ? 'Champ de la collection template' : 'Valeur'}
+                                    </p>
+                                    {isTemplateMode ? (
+                                        // Mode Template: Champs de la collection template sélectionnée globalement
                                         <SelectField
+                                            key={`template-field-${selectedTemplateCollection}`} // Force la re-création du component
                                             className="input_text_blog"
-                                            value={filter.operator}
-                                            onChange={(e) => updateFilter(filter.id, { operator: e.target.value })}
-                                            style={{marginBottom: "1rem"}}
+                                            value={filter.value}
+                                            onChange={(e) => updateFilter(filter.id, { value: e.target.value })}
+                                            displayEmpty
+                                            disabled={!selectedTemplateCollection}
                                         >
-                                            <MenuItem value="equals">Égal à</MenuItem>
-                                            <MenuItem value="contains">Contient</MenuItem>
-                                            <MenuItem value="starts">Commence par</MenuItem>
-                                            <MenuItem value="ends">Finit par</MenuItem>
-                                        </SelectField>
-                                    
-                                    {/* Deuxième champ selon le mode */}
-                                        <p className="blogField_name collection_edit_name">
-                                            {isTemplateMode ? 'Champ de la collection template' : 'Valeur'}
-                                        </p>
-                                        {isTemplateMode ? (
-                                            // Mode Template: Champs de la collection template sélectionnée globalement
-                                            <SelectField
-                                                key={`template-field-${selectedTemplateCollection}`} // Force la re-création du component
-                                                className="input_text_blog"
-                                                value={filter.value}
-                                                onChange={(e) => updateFilter(filter.id, { value: e.target.value })}
-                                                displayEmpty
-                                                disabled={!selectedTemplateCollection}
-                                            >
-                                                <MenuItem value="">
-                                                    {selectedTemplateCollection ? 'Sélectionner un champ...' : 'Choisir d\'abord une collection template'}
+                                            <MenuItem value="">
+                                                {selectedTemplateCollection ? 'Sélectionner un champ...' : 'Choisir d\'abord une collection template'}
+                                            </MenuItem>
+                                            {selectedTemplateCollection && templateCollectionFields.map(option => (
+                                                <MenuItem key={option.value} value={option.value}>
+                                                    {option.label}
                                                 </MenuItem>
-                                                {selectedTemplateCollection && templateCollectionFields.map(option => (
-                                                    <MenuItem key={option.value} value={option.value}>
-                                                        {option.label}
-                                                    </MenuItem>
-                                                ))}
-                                            </SelectField>
-                                        ) : (
-                                            // Mode Normal: Texte libre
+                                            ))}
+                                        </SelectField>
+                                    ) : (() => {
+                                        // Mode Normal: Adapter selon le type de champ
+                                        const selectedField = getFilterFieldOptions().find(opt => opt.value === filter.field);
+                                        const fieldType = selectedField?.type;
+                                        
+                                        if (fieldType === 'switch') {
+                                            // Pour switch: Select avec true/false
+                                            return (
+                                                <SelectField
+                                                    className="input_text_blog"
+                                                    value={filter.value}
+                                                    onChange={(e) => updateFilter(filter.id, { value: e.target.value })}
+                                                    displayEmpty
+                                                >
+                                                    <MenuItem value="">Sélectionner une valeur...</MenuItem>
+                                                    <MenuItem value="true">Vrai (activé)</MenuItem>
+                                                    <MenuItem value="false">Faux (désactivé)</MenuItem>
+                                                </SelectField>
+                                            );
+                                        }
+                                        
+                                        // Pour text et autres: Texte libre
+                                        return (
                                             <input
                                                 className="input_text_blog"
                                                 type="text"
@@ -1005,9 +1041,8 @@ const EditCollection = () => {
                                                 value={filter.value}
                                                 onChange={(e) => updateFilter(filter.id, { value: e.target.value })}
                                             />
-                                        )}
-                                    
-                                    
+                                        );
+                                    })()}                                    
                                 </div>
                                 <button
                                         type="button"
@@ -1346,6 +1381,7 @@ const EditCollection = () => {
                                                     {fieldTypes.find(t => t.value === selectedFieldType)?.value === 'gallery' && <CollectionsIcon fontSize='small'/>}
                                                     {fieldTypes.find(t => t.value === selectedFieldType)?.value === 'video' && <VideocamIcon fontSize='small'/>}
                                                     {fieldTypes.find(t => t.value === selectedFieldType)?.value === 'multiReference' && <PiTreeStructure fontSize='large'/>}
+                                                    {fieldTypes.find(t => t.value === selectedFieldType)?.value === 'switch' && <PiToggleRight fontSize='large'/>}
                                                 </span>
                                                 <div className="field-item-header">
                                                     <div className="field-item-info">
@@ -1469,6 +1505,7 @@ const EditCollection = () => {
                                                 {fieldTypes.find(t => t.value === field.tab_field)?.value === 'gallery' && <CollectionsIcon fontSize='small'/>}
                                                 {fieldTypes.find(t => t.value === field.tab_field)?.value === 'video' && <VideocamIcon fontSize='small'/>}
                                                 {fieldTypes.find(t => t.value === field.tab_field)?.value === 'multiReference' && <PiTreeStructure fontSize='large'/>}
+                                                {fieldTypes.find(t => t.value === field.tab_field)?.value === 'switch' && <PiToggleRight fontSize='large'/>}
                                             </span>
                                             <div className="field-item-header">
                                                 <div className="field-item-info">
@@ -1542,6 +1579,7 @@ const EditCollection = () => {
                                             {type.value === 'gallery' && <CollectionsIcon fontSize='huge'/>}
                                             {type.value === 'video' && <VideocamIcon fontSize='huge'/>}
                                             {type.value === 'multiReference' && <PiTreeStructure fontSize='huge'/>}
+                                            {type.value === 'switch' && <PiToggleRight fontSize='huge'/>}
                                         </div>
                                         <p className="field-type-label">{type.label}</p>
                                     </div>
@@ -1841,6 +1879,16 @@ const EditCollection = () => {
                                                 }}
                                             >
                                             </select>
+                                        </div>
+                                    )}
+                                    
+                                    {/* Champ Switch */}
+                                    {field.tab_field === 'switch' && (
+                                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                                            <DefaultSwitch
+                                                checked={false}
+                                                disabled
+                                            />
                                         </div>
                                     )}
                                 </div>

@@ -26,7 +26,7 @@ import config from "../../../../../config";
 import { useSnackbar } from '../../../../../Theme/snackbar';
 import Field from "../Fields/fields";
 import { DefaultButton, RedButton, SecondaryButton, Popup } from '../../../../../Theme/element';
-import { updateImageBlog, updateBlogPage, updateTextBlog, updateRichTextBlog, updateVideoBlog, updateMultiReferenceBlog, updateGalleryBlog, generateStaticSite } from './apiCollection';
+import { updateImageBlog, updateBlogPage, updateTextBlog, updateRichTextBlog, updateVideoBlog, updateMultiReferenceBlog, updateGalleryBlog, updateSwitchBlog, generateStaticSite } from './apiCollection';
 import { deleteBlogPage } from './collectionDeleteUtils';
 import { convertToRaw, ContentState, convertFromRaw } from 'draft-js';
 import Cookies from 'js-cookie';
@@ -110,7 +110,8 @@ const EditElementCollection = () => {
         richText: [],
         video: [],
         multiReference: [],
-        gallery: []
+        gallery: [],
+        switch: []
 
     });
 
@@ -121,7 +122,8 @@ const EditElementCollection = () => {
         richText: [],
         video: [],
         multiReference: [],
-        gallery: []
+        gallery: [],
+        switch: []
 
     });
 
@@ -369,6 +371,24 @@ const EditElementCollection = () => {
                 }
             }
 
+            //ENREGISTRER LES SWITCH
+            if(blogData.switch.length > 0){
+                try {
+                    await Promise.all(blogData.switch.map(async (switchField) => {
+                        await updateSwitchBlog(idCollectionElement, switchField, token);
+                    }));
+                } catch (error) {
+                    showSnackbar('error', '[EDIT-COLL-008] Erreur lors de la sauvegarde des switch');
+                    setIsPublishing(false);
+                    setIsSaving(false);
+                    setIsUnpublishing(false);
+                    setIsSavingDraft(false);
+                    setSavingPage(false);
+                    console.error(error);
+                    return;
+                }
+            }
+
 
             // Supprimer les éléments supprimés
             if (deletedItems.length > 0) {
@@ -510,6 +530,7 @@ const EditElementCollection = () => {
 
           } else {
             let itemModified = false; // Flag pour vérifier si un item a été modifié
+
       
             for (let i = 0; i < newData[type].length; i++) {
                 if (newData[type][i].id_config === data.data.id_config) {
@@ -651,6 +672,11 @@ const EditElementCollection = () => {
                 setBlogDataConfig(prevData => ({
                     ...prevData,
                     gallery: [...prevData.gallery, {id_config: blogItem.id}]
+                }));
+            } else if (blogItem.tab_field === 'switch') {
+                setBlogDataConfig(prevData => ({
+                    ...prevData,
+                    switch: [...prevData.switch, {id_config: blogItem.id}]
                 }));
             }
 
@@ -794,6 +820,28 @@ const EditElementCollection = () => {
                 } catch (error) {
                     showSnackbar('error', '[EDIT-COLL-016] Erreur lors de la récupération des données');
                     console.error('Erreur lors de la récupération du texte :', error);
+                }
+            }
+
+            for (const switchField of blogDataConfig.switch) {
+                try{
+                    const response = await Axios.get(`${apiUrl}/getSwitchCollection`, {
+                        params: {
+                            IdBlogPage: idCollectionElement,
+                            IdConfig: switchField.id_config
+                        },
+                        headers: {
+                          'Authorization': `Bearer ${token}`,
+                          'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (response.data.length > 0) {
+                        allData.push(response.data[0]); 
+                    }
+                } catch (error) {
+                    showSnackbar('error', '[EDIT-COLL-017] Erreur lors de la récupération des données switch');
+                    console.error('Erreur lors de la récupération du switch :', error);
                 }
             }
 

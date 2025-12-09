@@ -1529,12 +1529,87 @@ router.post('/updateMultiReferenceCollection', authenticateToken, async (req, re
   }
 });
 
+// Créer un switch pour une page de collection
+router.post('/createSwitchCollection', authenticateToken, async (req, res) => {
+  try {
+    const token = req.headers['authorization']?.split(' ')[1];
+    const supabase = supabaseServer(token);
+
+    const { id_blog_page, id_config, value } = req.body;
+
+    const { error } = await supabase
+      .from('collection_field_switch')
+      .insert([{
+        collection_element_id: id_blog_page,
+        id_config,
+        value: Boolean(value)
+      }]);
+
+    if (error) throw error;
+    res.status(200).send({ success: true, message: 'Switch créé avec succès' });
+  } catch (error) {
+    console.error('Erreur lors de la création du switch:', error);
+    res.status(500).send({ error: error.message });
+  }
+});
+
+// Récupérer un switch d'une page de collection
+router.get('/getSwitchCollection', authenticateToken, async (req, res) => {
+  try {
+    const sentIdBlogPage = req.query.IdBlogPage;
+    const sentIdConfig = req.query.IdConfig;
+
+    const token = req.headers['authorization']?.split(' ')[1];
+    const supabase = supabaseServer(token);
+
+    const { data, error } = await supabase
+      .from('collection_field_switch')
+      .select('id_config, value')
+      .eq('collection_element_id', sentIdBlogPage)
+      .eq('id_config', sentIdConfig);
+
+    if (error) throw error;
+
+
+    const switch_blog = data && data.length > 0
+      ? data.map(result => ({ ...result, create: true }))
+      : [];
+
+
+    res.status(200).json(switch_blog);
+  } catch (error) {
+    console.error('Erreur lors de la récupération du switch:', error);
+    res.status(500).send({ error: error.message });
+  }
+});
+
+// Mettre à jour un switch d'une page de collection
+router.post('/updateSwitchCollection', authenticateToken, async (req, res) => {
+  try {
+    const token = req.headers['authorization']?.split(' ')[1];
+    const supabase = supabaseServer(token);
+
+    const { id_blog_page, id_config, value } = req.body;
+
+    const { error } = await supabase
+      .from('collection_field_switch')
+      .update({ value: Boolean(value) })
+      .eq('collection_element_id', id_blog_page)
+      .eq('id_config', id_config);
+
+    if (error) throw error;
+    res.status(200).send({ success: true, message: 'Switch modifié avec succès' });
+  } catch (error) {
+    console.error('Erreur lors de la modification du switch:', error);
+    res.status(500).send({ error: error.message });
+  }
+});
+
 
 
 
 
 router.delete('/deleteCollectionData', authenticateToken, async (req, res) => {
-  console.log('Requête de suppression reçue:', req.body);
   const id_blog_page = req.body.id_blog_page;
   const dataArray = req.body.data;
 
@@ -1585,6 +1660,12 @@ router.delete('/deleteCollectionData', authenticateToken, async (req, res) => {
           .delete()
           .eq('collection_element_id', id_blog_page)
           .eq('id_config', id_config);
+      } else if (type === 'switch') {
+        await supabase
+          .from('collection_field_switch')
+          .delete()
+          .eq('collection_element_id', id_blog_page)
+          .eq('id_config', id_config);
       }
     }
     res.status(200).send({ message: 'Données supprimées avec succès' });
@@ -1597,7 +1678,6 @@ router.delete('/deleteCollectionData', authenticateToken, async (req, res) => {
 
 
 router.delete('/deleteCollectionElement', authenticateToken, async (req, res) => {
-  console.log('Requête de suppression de l\'élément de collection reçue:', req.query);
   try {
 
     const token = req.headers['authorization']?.split(' ')[1];
@@ -1717,6 +1797,13 @@ router.delete('/deleteCollectionElement', authenticateToken, async (req, res) =>
           .eq('collection_element_id', idBlogPage)
           .eq('id_config', id_config);
         if (delError && delError.code !== 'PGRST116') throw delError;
+      } else if (type === 'switch') {
+        const { error: delError } = await supabase
+          .from('collection_field_switch')
+          .delete()
+          .eq('collection_element_id', idBlogPage)
+          .eq('id_config', id_config);
+        if (delError && delError.code !== 'PGRST116') throw delError;
       }
     }
     // Supprimer la page elle-même (après avoir supprimé tous les enfants)
@@ -1726,7 +1813,6 @@ router.delete('/deleteCollectionElement', authenticateToken, async (req, res) =>
       .eq('id', idBlogPage);
     if (deleteError && deleteError.code !== 'PGRST116') throw deleteError;
 
-    console.log('Suppression réussie de la page de collection avec ID:', idBlogPage);
     res.status(200).send({ message: 'Page supprimée avec succès' });
   } catch (error) {
     console.error('Erreur lors de la suppression de la page:', error);

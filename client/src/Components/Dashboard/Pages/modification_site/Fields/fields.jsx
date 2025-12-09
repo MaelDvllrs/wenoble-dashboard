@@ -6,6 +6,7 @@ import GalleryUpload from './Gallery';
 import TextUpload from './Text';
 import VideoUpload from './Video';
 import MultiReferenceUpload from './MultiReference';
+import SwitchUpload from './Switch';
 
 const Field = (props) => {
   const theme = useTheme();
@@ -28,6 +29,8 @@ const Field = (props) => {
             return <VideoUpload {...props} theme={theme} />;
           case 'multiReference':
             return <MultiReferenceUpload {...props} theme={theme} />;
+          case 'switch':
+            return <SwitchUpload {...props} theme={theme} />;
           default:
             return null;
         }

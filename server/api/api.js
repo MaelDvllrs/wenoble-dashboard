@@ -348,6 +348,9 @@ async function getFilteredElementIdsByText({ supabase, targetCollectionIds, text
             case 'equals':
                 textQuery = textQuery.eq('text', filterValue);
                 break;
+            case 'notEquals':
+                textQuery = textQuery.neq('text', filterValue);
+                break;
             case 'contains':
                 textQuery = textQuery.ilike('text', `%${filterValue}%`);
                 break;
@@ -650,6 +653,11 @@ async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, 
                                    elementSlug === filterValueLower ||
                                    refLabel === filterValueLower;
                             break;
+                        case 'notEquals':
+                            matches = elementName !== filterValueLower &&
+                                   elementSlug !== filterValueLower &&
+                                   refLabel !== filterValueLower;
+                            break;
                         case 'contains':
                             matches = elementName.includes(filterValueLower) ||
                                    elementSlug.includes(filterValueLower) ||
@@ -710,6 +718,11 @@ async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, 
                                    elementSlug === filterValueLower ||
                                    refLabel === filterValueLower;
                             break;
+                        case 'notEquals':
+                            matches = elementName !== filterValueLower &&
+                                   elementSlug !== filterValueLower &&
+                                   refLabel !== filterValueLower;
+                            break;
                         case 'contains':
                             matches = elementName.includes(filterValueLower) ||
                                    elementSlug.includes(filterValueLower) ||
@@ -749,6 +762,114 @@ async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, 
         if (elementIds.size === 0) {
             matchingIds.forEach(id => elementIds.add(id));
         } else {
+            const intersection = new Set();
+            matchingIds.forEach(id => {
+                if (elementIds.has(id)) intersection.add(id);
+            });
+            elementIds = intersection;
+        }
+    }
+    
+    return elementIds.size > 0 ? Array.from(elementIds) : [];
+}
+
+// Helper: récupère les collection_element_id filtrés via les champs switch
+async function getFilteredElementIdsBySwitch({ supabase, targetCollectionIds, switchFilters, isTemplateMode = false, templateCollectionId = null, templateElementId = null }) {
+    if (Object.keys(switchFilters).length === 0) return null;
+    
+    let elementIds = new Set();
+    
+    for (const [configId, filterConfig] of Object.entries(switchFilters)) {
+        console.log('Traitement du filtre switch pour configId:', configId, 'filterConfig:', filterConfig, 'Mode template:', isTemplateMode);
+        
+        // 1. Extraire l'opérateur et la valeur depuis le token
+        let operator = 'equals';
+        let tokenValue = null;
+        
+        if (typeof filterConfig === 'object' && filterConfig.operator) {
+            operator = filterConfig.operator;
+            tokenValue = filterConfig.value;
+        } else {
+            tokenValue = filterConfig;
+        }
+        
+        console.log('Valeur du token switch:', tokenValue, 'Opérateur:', operator);
+        
+        // 2. Récupérer la valeur finale à filtrer
+        let filterValue = null;
+        
+        if (isTemplateMode && templateCollectionId && templateElementId) {
+            // Mode template: récupérer la valeur du champ switch de l'élément template
+            console.log('Mode template: récupération de la valeur du champ switch', configId, 'depuis l\'élément template', templateElementId);
+            
+            const { data: templateSwitch, error: templateSwitchErr } = await supabase
+                .from('collection_field_switch')
+                .select('value')
+                .eq('id_config', configId)
+                .eq('collection_element_id', templateElementId)
+                .maybeSingle();
+                
+            if (templateSwitchErr) {
+                console.log('Erreur lors de la récupération du champ switch template:', templateSwitchErr);
+                continue;
+            }
+            
+            if (templateSwitch === null || templateSwitch.value === undefined) {
+                console.log('Élément template n\'a pas de valeur pour le champ switch', configId, '- pas de filtrage pour ce champ');
+                continue;
+            }
+            
+            filterValue = templateSwitch.value;
+            console.log('Valeur switch extraite du template:', filterValue);
+        } else {
+            // Mode normal: utiliser la valeur du token
+            filterValue = tokenValue;
+            console.log('Valeur switch directe du token:', filterValue);
+        }
+        
+        if (filterValue === null || filterValue === undefined) {
+            console.log('Aucune valeur switch à filtrer trouvée');
+            continue;
+        }
+        
+        // Convertir la valeur en booléen
+        const boolValue = filterValue === true || filterValue === 'true' || filterValue === 1 || filterValue === '1';
+        console.log('Valeur switch convertie en booléen:', boolValue);
+        
+        // 3. Récupérer les collection_element_id qui matchent cette valeur selon l'opérateur
+        let switchQuery = supabase
+            .from('collection_field_switch')
+            .select('collection_element_id')
+            .eq('id_config', configId);
+            
+        // Appliquer les filtres selon l'opérateur
+        switch (operator) {
+            case 'equals':
+                switchQuery = switchQuery.eq('value', boolValue);
+                break;
+            case 'notEquals':
+                switchQuery = switchQuery.neq('value', boolValue);
+                break;
+            default:
+                switchQuery = switchQuery.eq('value', boolValue);
+        }
+        
+        const { data: switchResults, error: switchErr } = await switchQuery;
+        if (switchErr || !switchResults) {
+            console.log('Erreur ou pas de résultats switch:', switchErr);
+            continue;
+        }
+        
+        console.log('Résultats switch trouvés:', switchResults.length);
+        
+        let matchingIds = switchResults.map(r => r.collection_element_id);
+        console.log('IDs switch correspondants:', matchingIds);
+        
+        if (elementIds.size === 0) {
+            // Premier filtre : ajouter tous les IDs
+            matchingIds.forEach(id => elementIds.add(id));
+        } else {
+            // Filtres suivants : intersection (ET logique)
             const intersection = new Set();
             matchingIds.forEach(id => {
                 if (elementIds.has(id)) intersection.add(id);
@@ -959,10 +1080,11 @@ async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, b
         return data || [];
     }
     
-    // Séparer les filtres par type : base columns, text, multiReference
+    // Séparer les filtres par type : base columns, text, multiReference, switch
     const baseFilters = {};
     const textFilters = {};
     const multiRefFilters = {};
+    const switchFilters = {};
     
     // Récupérer les configs pour identifier les types de champs dynamiques
     let allConfigs = [];
@@ -1013,6 +1135,8 @@ async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, b
                 textFilters[fieldId] = { operator, value };
             } else if (fieldType === 'multiReference') {
                 multiRefFilters[fieldId] = { operator, value };
+            } else if (fieldType === 'switch') {
+                switchFilters[fieldId] = { operator, value };
             } else {
                 // En mode template, même si le type n'est pas trouvé, 
                 // on peut avoir des valeurs spéciales comme 'collection_element_name'
@@ -1040,7 +1164,7 @@ async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, b
         }
     }
     
-    console.log('Filtres classifiés:', { baseFilters, textFilters, multiRefFilters });
+    console.log('Filtres classifiés:', { baseFilters, textFilters, multiRefFilters, switchFilters });
     
     // Récupérer les IDs filtrés par les champs text
     const textFilteredIds = await getFilteredElementIdsByText({ 
@@ -1062,16 +1186,41 @@ async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, b
         templateElementId
     });
     
+    // 🔷 Filtrage des éléments via les champs switch
+    const switchFilteredIds = await getFilteredElementIdsBySwitch({ 
+        supabase, 
+        targetCollectionIds: templateCollectionId ? [templateCollectionId] : targetCollectionIds, 
+        switchFilters,
+        isTemplateMode: !!templateCollectionId,
+        templateCollectionId,
+        templateElementId
+    });
+    
     // Calculer l'intersection des IDs si plusieurs types de filtres dynamiques
     let dynamicFilteredIds = null;
-    if (textFilteredIds !== null && multiRefFilteredIds !== null) {
+    if (textFilteredIds !== null && multiRefFilteredIds !== null && switchFilteredIds !== null) {
+        // Intersection des trois ensembles
+        const textSet = new Set(textFilteredIds);
+        const multiRefSet = new Set(multiRefFilteredIds);
+        dynamicFilteredIds = switchFilteredIds.filter(id => textSet.has(id) && multiRefSet.has(id));
+    } else if (textFilteredIds !== null && multiRefFilteredIds !== null) {
         // Intersection des deux ensembles
         const textSet = new Set(textFilteredIds);
         dynamicFilteredIds = multiRefFilteredIds.filter(id => textSet.has(id));
+    } else if (textFilteredIds !== null && switchFilteredIds !== null) {
+        // Intersection text et switch
+        const textSet = new Set(textFilteredIds);
+        dynamicFilteredIds = switchFilteredIds.filter(id => textSet.has(id));
+    } else if (multiRefFilteredIds !== null && switchFilteredIds !== null) {
+        // Intersection multiRef et switch
+        const multiRefSet = new Set(multiRefFilteredIds);
+        dynamicFilteredIds = switchFilteredIds.filter(id => multiRefSet.has(id));
     } else if (textFilteredIds !== null) {
         dynamicFilteredIds = textFilteredIds;
     } else if (multiRefFilteredIds !== null) {
         dynamicFilteredIds = multiRefFilteredIds;
+    } else if (switchFilteredIds !== null) {
+        dynamicFilteredIds = switchFilteredIds;
     }
     
     // Construire la requête finale sur collection_element

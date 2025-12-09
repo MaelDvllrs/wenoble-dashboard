@@ -45,7 +45,7 @@ import { useWebsite } from '../../../../../Context/WebsiteContext';
 import './collection.css';
 import '../Fields/Field.css';
 import { SecondaryButton, DefaultButton, MultiReferenceSelect, DefaultSwitch, SmallIconButton } from '../../../../../Theme/element';
-import { PiEye, PiTextT, PiPencilSimple, PiTrash, PiArticleNyTimes, PiTreeStructure } from 'react-icons/pi';
+import { PiEye, PiTextT, PiPencilSimple, PiTrash, PiArticleNyTimes, PiTreeStructure, PiToggleRight } from 'react-icons/pi';
 
 const CreateCollection = () => {
     const theme = useTheme();
@@ -85,7 +85,8 @@ const CreateCollection = () => {
         { value: 'image', label: 'Image' },
         { value: 'gallery', label: 'Galerie' },
         { value: 'video', label: 'Vidéo' },
-        { value: 'multiReference', label: 'Multi-référence' }
+        { value: 'multiReference', label: 'Multi-référence' },
+        { value: 'switch', label: 'Switch' }
     ];
 
     // Générer automatiquement le slug à partir du nom
@@ -478,6 +479,7 @@ const CreateCollection = () => {
                                                     {fieldTypes.find(t => t.value === selectedFieldType)?.value === 'gallery' && <CollectionsIcon fontSize='small'/>}
                                                     {fieldTypes.find(t => t.value === selectedFieldType)?.value === 'video' && <VideocamIcon fontSize='small'/>}
                                                     {fieldTypes.find(t => t.value === selectedFieldType)?.value === 'multiReference' && <PiTreeStructure  fontSize='large'/>}
+                                                    {fieldTypes.find(t => t.value === selectedFieldType)?.value === 'switch' && <PiToggleRight fontSize='large'/>}
                                                 </span>
                                                 <div className="field-item-header">
                                                     <div className="field-item-info">
@@ -599,6 +601,7 @@ const CreateCollection = () => {
                                                 {fieldTypes.find(t => t.value === field.tab_field)?.value === 'gallery' && <CollectionsIcon fontSize='small'/>}
                                                 {fieldTypes.find(t => t.value === field.tab_field)?.value === 'video' && <VideocamIcon fontSize='small'/>}
                                                 {fieldTypes.find(t => t.value === field.tab_field)?.value === 'multiReference' && <PiTreeStructure  fontSize='large'/>}
+                                                {fieldTypes.find(t => t.value === field.tab_field)?.value === 'switch' && <PiToggleRight fontSize='large'/>}
                                             </span>
                                             <div className="field-item-header">
                                                 <div className="field-item-info">
@@ -662,6 +665,7 @@ const CreateCollection = () => {
                                             {type.value === 'gallery' && <CollectionsIcon fontSize='huge'/>}
                                             {type.value === 'video' && <VideocamIcon fontSize='huge'/>}
                                             {type.value === 'multiReference' && <PiTreeStructure fontSize='huge'/>}
+                                            {type.value === 'switch' && <PiToggleRight fontSize='huge'/>}
                                         </div>
                                         <p className="field-type-label">{type.label}</p>
                                     </div>
@@ -960,6 +964,16 @@ const CreateCollection = () => {
                                                 }}
                                             >
                                             </select>
+                                        </div>
+                                    )}
+                                    
+                                    {/* Champ Switch */}
+                                    {field.tab_field === 'switch' && (
+                                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                                            <DefaultSwitch
+                                                checked={false}
+                                                disabled
+                                            />
                                         </div>
                                     )}
                                 </div>
