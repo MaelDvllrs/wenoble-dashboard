@@ -1,10 +1,13 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
+import { flushSync } from 'react-dom';
 import { Editor, EditorState, RichUtils, CompositeDecorator, convertFromRaw, AtomicBlockUtils, convertToRaw, getVisibleSelectionRect, Modifier } from 'draft-js';
 import 'draft-js/dist/Draft.css';
 import ButtonTooltip from './ButtonTooltip';
 import LinkTooltip from './LinkTooltip';
 import AddonTooltip from './AddonTooltip';
 import Image from './ImageBlock';
+import EmbedModal from './EmbedModal';
+import EmbedBlock from './EmbedBlock';
 import {compressImage} from '../../../../../../utils/imageUtils'; 
 import { SecondaryButton } from '../../../../../../Theme/element';
 
@@ -57,6 +60,19 @@ function findImageEntities(contentBlock, callback, contentState) {
   );
 }
 
+function findEmbedEntities(contentBlock, callback, contentState) {
+  contentBlock.findEntityRanges(
+    (character) => {
+      const entityKey = character.getEntity();
+      return (
+        entityKey !== null &&
+        contentState.getEntity(entityKey).getType() === 'EMBED'
+      );
+    },
+    callback
+  );
+}
+
 const blockDecorator = new CompositeDecorator([
   {
     strategy: findLinkEntities,
@@ -65,6 +81,10 @@ const blockDecorator = new CompositeDecorator([
   {
     strategy: findImageEntities,
     component: Image,
+  },
+  {
+    strategy: findEmbedEntities,
+    component: EmbedBlock,
   },
 ]);
 
@@ -130,11 +150,15 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
   const [buttonTooltipPosition, setButtonTooltipPosition] = useState(null);
   const [addonTooltipPosition, setAddonTooltipPosition] = useState(null);
   const [showAddonTooltip, setShowAddonTooltip] = useState(false);
+  const [embedModalOpen, setEmbedModalOpen] = useState(false);
+  const [editingEmbedKey, setEditingEmbedKey] = useState(null);
+  const [editingEmbedCode, setEditingEmbedCode] = useState('');
   const [urlValue, setUrlValue] = useState('');
   const [linkEditMode, setLinkEditMode] = useState(false);
   const [activeStyles, setActiveStyles] = useState([]);
   const [activeBlockType, setActiveBlockType] = useState(null);
   const [hasInteracted, setHasInteracted] = useState(false);
+  const [hasFocus, setHasFocus] = useState(false);
   const [imageOptions, setImageOptions] = useState(() => createImageOptionsInitialState());
 
   const linkSelectionRef = useRef(null);
@@ -187,13 +211,24 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
   useEffect(() => {
     const editorRoot = editorContainerRef.current;
     if (!editorRoot) return;
-    const handleFocus = () => setHasInteracted(true);
+    const handleFocus = () => {
+      setHasInteracted(true);
+      setHasFocus(true);
+    };
     const handleClick = () => setHasInteracted(true);
+    const handleBlur = () => {
+      console.log('perd le focus')
+      setHasFocus(false);
+      setShowAddonTooltip(false);
+      setAddonTooltipPosition(null);
+    };
     editorRoot.addEventListener('focus', handleFocus, true);
     editorRoot.addEventListener('mousedown', handleClick, true);
+    editorRoot.addEventListener('blur', handleBlur, true);
     return () => {
       editorRoot.removeEventListener('focus', handleFocus, true);
       editorRoot.removeEventListener('mousedown', handleClick, true);
+      editorRoot.removeEventListener('blur', handleBlur, true);
     };
   }, []);
   const calculateImageOptionsPosition = useCallback((anchorElement, containerElement) => {
@@ -408,10 +443,10 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
   }, [imageOptions.isOpen, handleCloseImageOptions]);
 
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const selection = editorState.getSelection();
     const contentState = editorState.getCurrentContent();
-    if (!hasInteracted) {
+    if (!hasInteracted || !hasFocus) {
       setShowAddonTooltip(false);
       setAddonTooltipPosition(null);
       return;
@@ -420,42 +455,45 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
       const blockKey = selection.getStartKey();
       const block = contentState.getBlockForKey(blockKey);
       if (block.getText().trim() === '') {
-        const editorRoot = editorContainerRef.current;
-        const rect = editorRoot?.getBoundingClientRect();
-        const blockElement = editorRoot?.querySelector(`[data-offset-key^="${blockKey}-"]`);
-        if (!blockElement) {
-          setShowAddonTooltip(false);
-          setAddonTooltipPosition(null);
-          return;
-        }
-        const blockRect = blockElement.getBoundingClientRect();
-        const selectionRect = {
-          top: blockRect.top + 42,
-          bottom: blockRect.bottom,
-          left: blockRect.left + 10,
-          right: blockRect.right,
-          width: 0,
-          height: blockRect.height,
-        };
-        if (selectionRect && rect) {
-          const tooltipWidth = 40;
-          const margin = 40;
-          let left = selectionRect.left - rect.left;
-          let top = selectionRect.top - rect.top - margin;
-          if (left + tooltipWidth > rect.width) {
-            left = rect.width - tooltipWidth;
+        // Petit délai pour éviter le flash lors du changement de ligne
+        const timeoutId = setTimeout(() => {
+          const editorRoot = editorContainerRef.current;
+          const rect = editorRoot?.getBoundingClientRect();
+          const blockElement = editorRoot?.querySelector(`[data-offset-key^="${blockKey}-"]`);
+          if (!blockElement) {
+            setShowAddonTooltip(false);
+            setAddonTooltipPosition(null);
+            return;
           }
-          if (left < 0) left = 0;
-          const position = { left, top };
-          setAddonTooltipPosition(position);
-          setShowAddonTooltip(true);
-          return;
-        }
+          const blockRect = blockElement.getBoundingClientRect();
+          const selectionRect = {
+            top: blockRect.top + 42,
+            bottom: blockRect.bottom,
+            left: blockRect.left + 10,
+            right: blockRect.right,
+            width: 0,
+            height: blockRect.height,
+          };
+          if (selectionRect && rect) {
+            const tooltipWidth = 40;
+            const margin = 40;
+            let left = selectionRect.left - rect.left;
+            let top = selectionRect.top - rect.top - margin;
+            if (left + tooltipWidth > rect.width) {
+              left = rect.width - tooltipWidth;
+            }
+            if (left < 0) left = 0;
+            const position = { left, top };
+            setAddonTooltipPosition(position);
+            setShowAddonTooltip(true);
+          }
+        },);
+        return () => clearTimeout(timeoutId);
       }
     }
     setShowAddonTooltip(false);
     setAddonTooltipPosition(null);
-  }, [editorState, hasInteracted]);
+  }, [editorState, hasInteracted, hasFocus]);
 
 
 
@@ -470,10 +508,12 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
       const isInsideImageOptions = imageOptionsRef.current?.contains(e.target);
       const isImageOptionsButton = e.target.closest('.richtext-image-options-btn');
       if (!isInsideEditor && !isInsideAnyTooltip && !isInsideImageOptions && !isImageOptionsButton) {
-        setShowLinkTooltip(false);
-        setShowAddonTooltip(false);
-        setButtonTooltipPosition(null);
-        setLinkTooltipPosition(null);
+        flushSync(() => {
+          setShowLinkTooltip(false);
+          setShowAddonTooltip(false);
+          setButtonTooltipPosition(null);
+          setLinkTooltipPosition(null);
+        });
       }
     };
     document.addEventListener('mousedown', handleClickOutside, true);
@@ -482,6 +522,7 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
     };
   }, []);
 
+  console.log(showAddonTooltip)
 
   
 
@@ -818,6 +859,44 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
     fileInputRef.current.click();
   };
 
+  // ---------- EMBED SECTION ---------------
+
+  const handleEmbedClick = () => {
+    setEditingEmbedKey(null);
+    setEditingEmbedCode('');
+    setEmbedModalOpen(true);
+  };
+
+  const handleEditEmbed = (entityKey, html) => {
+    setEditingEmbedKey(entityKey);
+    setEditingEmbedCode(html);
+    setEmbedModalOpen(true);
+  };
+
+  const handleEmbedInsert = (embedData) => {
+    const contentState = editorState.getCurrentContent();
+    
+    if (editingEmbedKey) {
+      // Mode édition : remplacer l'entité existante
+      contentState.replaceEntityData(editingEmbedKey, embedData);
+      const newEditorState = EditorState.push(editorState, contentState, 'change-block-data');
+      setEditorState(EditorState.forceSelection(newEditorState, newEditorState.getSelection()));
+    } else {
+      // Mode création : insérer une nouvelle entité
+      const contentStateWithEntity = contentState.createEntity('EMBED', 'IMMUTABLE', embedData);
+      const entityKey = contentStateWithEntity.getLastCreatedEntityKey();
+      const newEditorState = EditorState.set(editorState, { currentContent: contentStateWithEntity });
+      const finalEditorState = AtomicBlockUtils.insertAtomicBlock(newEditorState, entityKey, ' ');
+      setEditorState(finalEditorState);
+    }
+    
+    setEmbedModalOpen(false);
+    setEditingEmbedKey(null);
+    setEditingEmbedCode('');
+  };
+
+  // ---------- FILE CHANGE ---------------
+
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
     if (file) {
@@ -903,6 +982,25 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
     onChange({ data: updatedData });
   };
 
+  const handleRemoveEmbed = (blockKey) => {
+    const contentState = editorState.getCurrentContent();
+    const blockMap = contentState.getBlockMap().delete(blockKey);
+    const newContentState = contentState.merge({
+      blockMap,
+      selectionAfter: contentState.getSelectionAfter(),
+    });
+    const newEditorState = EditorState.push(editorState, newContentState, 'remove-range');
+    setEditorState(newEditorState);
+    const updatedContent = convertToRaw(newContentState);
+    const updatedData = {
+      id_config: id_config,
+      type: 'richText',
+      value: updatedContent,
+      create: createBoolRichText
+    };
+    onChange({ data: updatedData });
+  };
+
   const handleReturn = (e) => {
     const contentState = editorState.getCurrentContent();
     const selectionState = editorState.getSelection();
@@ -914,6 +1012,33 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
       setEditorState(newEditorState);
       return 'handled';
     }
+    return 'not-handled';
+  };
+
+  const handleKeyCommand = (command, editorState) => {
+    if (command === 'backspace' || command === 'delete') {
+      const selection = editorState.getSelection();
+      const contentState = editorState.getCurrentContent();
+      const startKey = selection.getStartKey();
+      const startOffset = selection.getStartOffset();
+      const block = contentState.getBlockForKey(startKey);
+      
+      // Si on est au début d'un bloc et qu'on appuie sur Backspace
+      if (command === 'backspace' && startOffset === 0 && block.getType() !== 'atomic') {
+        const blockBefore = contentState.getBlockBefore(startKey);
+        if (blockBefore && blockBefore.getType() === 'atomic') {
+          const entityKey = blockBefore.getEntityAt(0);
+          if (entityKey) {
+            const entity = contentState.getEntity(entityKey);
+            if (entity.getType() === 'EMBED') {
+              handleRemoveEmbed(blockBefore.getKey());
+              return 'handled';
+            }
+          }
+        }
+      }
+    }
+    
     return 'not-handled';
   };
 
@@ -929,6 +1054,16 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
             props: {
               onRemoveImage: handleRemoveImage,
               onOpenOptions: handleOpenImageOptions,
+            },
+          };
+        }
+        if (entity && entity.getType() === 'EMBED') {
+          return {
+            component: EmbedBlock,
+            editable: false,
+            props: {
+              onEditEmbed: handleEditEmbed,
+              onRemoveEmbed: handleRemoveEmbed,
             },
           };
         }
@@ -988,6 +1123,7 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
         editorState={editorState}
         onChange={handleEditorChange}
         handleReturn={handleReturn}
+        handleKeyCommand={handleKeyCommand}
         blockRendererFn={blockRendererFn}
         blockStyleFn={blockStyleFn}
         className="editor"
@@ -1041,6 +1177,7 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
           onAddImage={handleImageClick}
           theme={theme}
           onImage={handleImageClick}
+          onEmbed={handleEmbedClick}
         />
       )}
       {imageOptions.isOpen && imageOptions.position && (
@@ -1105,6 +1242,16 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
           </form>
         </div>
       )}
+      <EmbedModal 
+        open={embedModalOpen}
+        onClose={() => {
+          setEmbedModalOpen(false);
+          setEditingEmbedKey(null);
+          setEditingEmbedCode('');
+        }}
+        onInsert={handleEmbedInsert}
+        initialCode={editingEmbedCode}
+      />
     </div>
   );
 };

@@ -1,8 +1,9 @@
 import React, { useState, useEffect, forwardRef } from 'react';
 import AddIcon from '@mui/icons-material/Add';
 import ImageIcon from '@mui/icons-material/Image';
+import CodeIcon from '@mui/icons-material/Code';
 
-const AddonTooltip = forwardRef(({ position, onAddImage, onAddAttribute, theme, onImage }, ref) => {
+const AddonTooltip = forwardRef(({ position, onAddImage, onAddAttribute, theme, onImage, onEmbed }, ref) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const handleToggle = () => setIsOpen(!isOpen);
@@ -22,7 +23,14 @@ const AddonTooltip = forwardRef(({ position, onAddImage, onAddAttribute, theme, 
     return () => {
       document.removeEventListener('mousedown', handleClose);
     };
-  }, [ref]);
+  }, []);
+
+  // Fermer le menu quand le tooltip disparaît
+  useEffect(() => {
+    if (!position) {
+      setIsOpen(false);
+    }
+  }, [position]);
 
   return (
     <div
@@ -52,6 +60,17 @@ const AddonTooltip = forwardRef(({ position, onAddImage, onAddAttribute, theme, 
           >
             <ImageIcon fontSize="small" />
             <p>Image</p>
+          </button>
+          <button
+            className="addon-tooltip-option"
+            onClick={() => {
+              onEmbed();
+              setIsOpen(false);
+            }}
+            style={{ color: theme.palette.text.primary }}
+          >
+            <CodeIcon fontSize="small" />
+            <p>Code embed</p>
           </button>
         </div>
       )}
