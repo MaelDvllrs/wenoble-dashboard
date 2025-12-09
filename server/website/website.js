@@ -361,7 +361,7 @@ router.get('/debugUserWebsites', authenticateToken, async (req, res) => {
 // Créer un nouveau site web
 router.post('/createWebsite', authenticateToken, async (req, res) => {
   try {
-    const { website_name, website_slug, workspace_id, visibility = 'workspace' } = req.body;
+    const { website_name, workspace_id, visibility = 'workspace' } = req.body;
 
     const userId = req.user.idUser;
     const token = req.headers['authorization']?.split(' ')[1];
@@ -402,38 +402,27 @@ router.post('/createWebsite', authenticateToken, async (req, res) => {
       }
     }
 
-    // Vérifier que le slug n'existe pas déjà
-    const { data: existing, error: checkError } = await supabase
-      .from('websites')
-      .select('id')
-      .eq('website_slug', website_slug)
-      .maybeSingle();
 
-    if (checkError) throw checkError;
-
-    if (existing) {
-      return res.status(400).send({ error: 'Un site web avec ce slug existe déjà' });
-    }
 
     // Générer un folder_project unique pour Cloudflare Pages
     // Format: site-{slug}-{timestamp} pour garantir l'unicité
     const timestamp = Date.now();
-    const sanitizedSlug = website_slug
+    const sanitizedSlug = website_name
       .toLowerCase()
       .replace(/[^a-z0-9]/g, '-')
       .replace(/-+/g, '-')
       .substring(0, 20); // Limiter la longueur
     const folder_project = `site-${sanitizedSlug}-${timestamp}`;
 
+
   // Générer une API key unique qui contient le nom/slug du site
-  const apiKey = await generateUniqueApiKey(supabase, website_slug || website_name);
+  const apiKey = await generateUniqueApiKey(supabase, sanitizedSlug);
 
   // Créer le site web avec le folder_project
     const { data: websiteData, error: websiteError } = await supabase
       .from('websites')
       .insert({
         website_name,
-        website_slug,
         folder_project,
         api_key: apiKey,
         workspace_id: finalWorkspaceId,
