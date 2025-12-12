@@ -1403,6 +1403,19 @@ router.get('/sendBlogRichText', apiKeyMiddleware, async (req, res) => {
                         };
                     }
                     return undefined;
+                },
+                blockRenderers: {
+                    atomic: (block) => {
+                        const entityKey = block.getEntityAt(0);
+                        if (entityKey) {
+                            const entity = contentState.getEntity(entityKey);
+                            if (entity.getType() === 'EMBED') {
+                                const data = entity.getData();
+                                return data.html || '';
+                            }
+                        }
+                        return undefined;
+                    }
                 }
             });
             return { id_config: result.id_config, text_html: html };
@@ -1607,6 +1620,19 @@ router.get('/sendBlogContent', apiKeyMiddleware, async (req, res) => {
                                     };
                                 }
                                 return undefined;
+                            },
+                            blockRenderers: {
+                                atomic: (block) => {
+                                    const entityKey = block.getEntityAt(0);
+                                    if (entityKey) {
+                                        const entity = contentState.getEntity(entityKey);
+                                        if (entity.getType() === 'EMBED') {
+                                            const data = entity.getData();
+                                            return data.html || '';
+                                        }
+                                    }
+                                    return undefined;
+                                }
                             }
                         });
                         return { id_config: result.id_config, text_html: html };
@@ -1859,6 +1885,19 @@ router.get('/sendPageRichText', apiKeyMiddleware, async (req, res) => {
                         };
                     }
                     return undefined;
+                },
+                blockRenderers: {
+                    atomic: (block) => {
+                        const entityKey = block.getEntityAt(0);
+                        if (entityKey) {
+                            const entity = contentState.getEntity(entityKey);
+                            if (entity.getType() === 'EMBED') {
+                                const data = entity.getData();
+                                return data.html || '';
+                            }
+                        }
+                        return undefined;
+                    }
                 }
             });
             return { id_config: result.id_config, text_html: html };
