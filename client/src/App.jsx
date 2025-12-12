@@ -74,6 +74,7 @@ import WebsiteList from './Components/Dashboard/Pages/website/WebsiteList';
 import WebsiteManager from './Components/Dashboard/Pages/website/WebsiteManager';
 import WebsiteHome from './Components/Dashboard/Pages/website/WebsiteHome';
 import WorkspaceManager from './Components/Dashboard/Pages/workspace/WorkspaceManager';
+import StaticEditor from './Components/Dashboard/Pages/modification_site/static/StaticEditor'
 
 // Admin components
 import Admin from './Components/Admin/Admin';
@@ -161,6 +162,7 @@ function App() {
                                         <Route path="modification/page/" element={<AuthorisedRoutePage><Page /></AuthorisedRoutePage>}>
                                             <Route path=":idPage" element={<EditPage />} />
                                         </Route>
+                                        <Route path='modification/static' element={<StaticEditor></StaticEditor>}/>
                                         <Route path="modification/collection/" element={<AuthorisedRouteBlog><Collection /></AuthorisedRouteBlog>}>
                                             <Route path="createCollection" element={<CreateCollection />} />
                                             <Route path=":idCollection/editCollection" element={<EditCollection />} />

@@ -41,6 +41,8 @@ const signUpNewsletterRouter = require('./newsletter/signUpNewsletter');
 const externalAPIRouter = require('./external/externalAPI');
 // API Tokens
 const apiTokensRouter = require('./api/apiTokens');
+// Scraping
+const scrapingRouter = require('./scrapping/scraping');
 //
 const { notificationRouter, notificationServer } = require('./users/notification');
 
@@ -188,6 +190,43 @@ app.use('/media/page', express.static(path.join(__dirname, 'images', 'page_image
 app.use('/media/blogGallery', express.static(path.join(__dirname, 'images', 'blog_gallery')));
 app.use('/media/blog/richText', express.static(path.join(__dirname, 'images', 'richtext_blog_images')));
 app.use('/media/profile', express.static(path.join(__dirname, 'images', 'profile_image')));
+
+// Static sites pour le scraping - avec gestion des URLs sans extension
+app.use('/static-sites/:siteId', async (req, res, next) => {
+  const { siteId } = req.params;
+  const requestPath = req.path.replace(/^\//, '');
+  const sitePath = path.join(__dirname, 'scrapping', 'sites', siteId);
+  
+  // Si la requête se termine déjà par une extension connue, laisser passer
+  if (requestPath.match(/\.(html|css|js|jpg|jpeg|png|gif|svg|webp|woff|woff2|ttf|eot|otf|ico)$/i)) {
+    return next();
+  }
+
+  // Essayer différentes variantes pour les URLs sans extension
+  const fs = require('fs-extra');
+  const possiblePaths = [
+    path.join(sitePath, requestPath + '.html'),
+    path.join(sitePath, requestPath, 'index.html'),
+    path.join(sitePath, requestPath === '' ? 'index.html' : requestPath),
+  ];
+
+  for (const filePath of possiblePaths) {
+    try {
+      if (await fs.pathExists(filePath)) {
+        const stats = await fs.stat(filePath);
+        if (stats.isFile()) {
+          return res.sendFile(filePath);
+        }
+      }
+    } catch (error) {
+      // Continue to next path
+    }
+  }
+
+  next();
+});
+
+app.use('/static-sites', express.static(path.join(__dirname, 'scrapping', 'sites')));
 //
 //
 app.use(videoRouter);
@@ -219,6 +258,8 @@ app.use(newsletterRouter);
 app.use(generationStaticRouter);
 // API Tokens management
 app.use(apiTokensRouter);
+// Scraping routes
+app.use('/scraping', scrapingRouter);
 
 
 

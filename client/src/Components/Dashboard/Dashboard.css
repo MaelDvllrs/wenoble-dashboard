@@ -43,6 +43,7 @@
     margin-right: auto;
     margin-left: 0;
     width: 18rem;
+    z-index: 20;
 }
 
 .sidebar-secondary-title-box{
