@@ -1,5 +1,9 @@
 /client/src/config.js
+/client/node_modules
 /server/images/*
+/server/node_modules
+/server/node_modules
+/server/scrapping/sites
 /server/.env
 server/.env
 
