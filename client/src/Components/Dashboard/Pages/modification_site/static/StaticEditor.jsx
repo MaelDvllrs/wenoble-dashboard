@@ -6,6 +6,7 @@ import './StaticEditor.css';
 import { useWebsite } from '../../../../../Context/WebsiteContext';
 import { DefaultButton, SecondaryButton } from '../../../../../Theme/element';
 import { motion, useMotionValue, useMotionValueEvent } from 'framer-motion';
+import OverlaySystem from './OverlaySystem';
 
 
 const StaticEditor = ({ onSave }) => {
@@ -17,6 +18,9 @@ const StaticEditor = ({ onSave }) => {
   const [selectedElement, setSelectedElement] = useState(null);
   const selectedElementRef = useRef(null); // Pour accéder à selectedElement dans les event listeners
   const [editedText, setEditedText] = useState('');
+  const [hoveredElement, setHoveredElement] = useState(null);
+  const [overlayBoxes, setOverlayBoxes] = useState({ hovered: null, selected: null });
+  const overlayRef = useRef(null);
   const [siteUrl, setSiteUrl] = useState(null);
   const [editModeHtml, setEditModeHtml] = useState(null);
   const [isScraped, setIsScraped] = useState(false);
@@ -201,8 +205,8 @@ const StaticEditor = ({ onSave }) => {
     // Désactiver tous les scripts inline (non importés)
     const inlineScripts = iframeDocument.querySelectorAll('script:not([src])');
     inlineScripts.forEach(script => {
-      script.type = 'text/plain'; // Désactiver le script inline
-      script.setAttribute('data-original-type', 'text/javascript'); // Sauvegarder le type original
+      script.type = 'text/plain';
+      script.setAttribute('data-original-type', 'text/javascript');
     });
 
     // Désactiver les scripts qui appellent api-wenoble.wenoble.fr
@@ -216,130 +220,34 @@ const StaticEditor = ({ onSave }) => {
       }
     });
 
-    // Ajouter des styles pour le mode édition
+    // Ajouter des styles minimalistes pour le mode édition
     const style = iframeDocument.createElement('style');
     style.textContent = `
-      /* Désactiver les animations au hover pour faciliter la sélection */
-      .editable-element {
-        transition: none !important;
-      }
-
-      /* Style pour les éléments éditables au hover */
-      .editable-element:hover {
-        outline: 1px solid #2ec96d !important;
-        outline-offset: 2px !important;
-        cursor: pointer !important;
-      }
-
-      /* Style pour l'élément sélectionné */
-      .editable-element.selected {
-        outline: 2px solid #2ec96d !important;
-        outline-offset: 2px !important;
-        background-color: rgba(46, 201, 109, 0.1) !important;
-      }
-
-      /* Style pour l'élément en édition */
-      .editable-element[contenteditable="true"] {
-        outline: 3px solid #2ec96d !important;
-        outline-offset: 2px !important;
-        background-color: rgba(46, 201, 109, 0.15) !important;
-        cursor: text !important;
-      }
-
       /* Désactiver le pointer-events sur tous les liens */
       a {
         pointer-events: none !important;
       }
 
-      /* Réactiver pour les éléments éditables */
-      .editable-element {
-        pointer-events: auto !important;
+      /* Style pour l'élément en édition */
+      [contenteditable="true"] {
+        outline: 2px solid #2ec96d !important;
+        outline-offset: 1px !important;
       }
     `;
     iframeDocument.head.appendChild(style);
-
-    // Rendre les éléments texte et image éditables
-    const textElements = iframeDocument.querySelectorAll('p, h1, h2, h3, h4, h5, h6, span, a, li, td, th, div[class*="text"], div[class*="heading"]');
-    const imageElements = iframeDocument.querySelectorAll('img');
-
-    textElements.forEach(el => {
-      // Ne pas ajouter si l'élément est vide ou contient seulement des espaces
-      if (el.textContent.trim()) {
-        el.classList.add('editable-element');
-        el.addEventListener('click', (e) => handleElementClick(e, el, 'text'));
-        
-        // Double-clic pour activer l'édition directe
-        el.addEventListener('dblclick', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          el.contentEditable = 'true';
-          el.focus();
-          
-          // Sélectionner tout le texte
-          const range = iframeDocument.createRange();
-          range.selectNodeContents(el);
-          const selection = iframeDocument.getSelection();
-          selection.removeAllRanges();
-          selection.addRange(range);
-        });
-        
-        // Désactiver contentEditable sur blur
-        el.addEventListener('blur', () => {
-          el.contentEditable = 'false';
-          // Mettre à jour le texte dans la sidebar si l'élément est sélectionné
-          if (selectedElement && selectedElement.element === el) {
-            setEditedText(el.textContent);
-          }
-        });
-      }
-    });
-
-    imageElements.forEach(el => {
-      el.classList.add('editable-element');
-      el.addEventListener('click', (e) => handleElementClick(e, el, 'image'));
-    });
-
-    // Désélectionner quand on clique en dehors des éléments éditables
-    iframeDocument.addEventListener('click', (e) => {
-      // Vérifier si le clic est sur un élément éditable ou un de ses enfants
-      let target = e.target;
-      let isEditableOrChild = false;
-      
-      while (target && target !== iframeDocument.body) {
-        if (target.classList && target.classList.contains('editable-element')) {
-          isEditableOrChild = true;
-          break;
-        }
-        target = target.parentElement;
-      }
-      
-      if (!isEditableOrChild && selectedElementRef.current) {
-        selectedElementRef.current.element.classList.remove('selected');
-        selectedElementRef.current = null;
-        setSelectedElement(null);
-        setEditedText('');
-      }
-    }, true);
   };
 
-  const handleElementClick = (e, element, type) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const iframe = iframeRef.current;
-    const iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
-
-    // Retirer la sélection précédente
-    if (selectedElementRef.current) {
-      selectedElementRef.current.element.classList.remove('selected');
+  const handleElementSelect = (element, type) => {
+    if (!element) {
+      setSelectedElement(null);
+      selectedElementRef.current = null;
+      setEditedText('');
+      return;
     }
 
-    // Sélectionner le nouvel élément
-    element.classList.add('selected');
-    
     // Mettre à jour le texte éditable
     if (type === 'text') {
-      setEditedText(element.textContent);
+      setEditedText(element.textContent || '');
     } else {
       setEditedText('');
     }
@@ -347,6 +255,10 @@ const StaticEditor = ({ onSave }) => {
     const newSelection = { element, type };
     setSelectedElement(newSelection);
     selectedElementRef.current = newSelection;
+  };
+
+  const handleElementHover = (element) => {
+    setHoveredElement(element);
   };
 
   const handleTextChange = (newText) => {
@@ -527,6 +439,12 @@ const StaticEditor = ({ onSave }) => {
                   title="Site Preview"
                   sandbox="allow-same-origin allow-scripts"
                   style={{ pointerEvents: isDragging ? 'none' : 'auto' }}
+                />
+                <OverlaySystem
+                  iframeRef={iframeRef}
+                  selectedElement={selectedElement}
+                  onElementHover={handleElementHover}
+                  onElementSelect={handleElementSelect}
                 />
                 <motion.div 
                   drag="x"
