@@ -96,7 +96,7 @@ router.all('*', async (req, res) => {
 
     // Redirection automatique du domaine racine vers www
     // Ex: testwenoble.fr → www.testwenoble.fr
-    if (!host.startsWith('www.') && !host.includes('.pages.dev') && !host.includes('ngrok')) {
+    if (!host.startsWith('www.') && !host.includes('.pages.dev') && !host.includes('ngrok') && !host.startsWith('api-') && !host.startsWith('api.')) {
       const wwwHost = `www.${host}`;
       const redirectURL = `${protocol}://${wwwHost}${path}`;
       console.log(`[Redirect] 🔄 Redirection root → www: ${host} → ${wwwHost}`);
