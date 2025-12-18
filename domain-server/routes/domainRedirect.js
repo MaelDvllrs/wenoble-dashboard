@@ -83,28 +83,57 @@ router.all('*', async (req, res) => {
     const host = req.get('host') || req.hostname;
     const path = req.originalUrl;
     
+    // Ne pas rediriger les domaines API (ex: api-wenoble.wenoble.fr)
+    if (host.startsWith('api-') || host.startsWith('api.')) {
+      console.log(`[Redirect] ⏭️ Domaine API détecté, pas de redirection: ${host}`);
+      return res.status(404).json({
+        error: 'Domaine API',
+        host: host,
+        message: 'Ce domaine API doit être géré par Apache, pas par le système de redirection'
+      });
+    }
+    
+    // Détecter le protocole original (HTTPS si derrière Apache ou Cloudflare)
+    const protocol = req.get('x-forwarded-proto') || 
+                     req.get('cf-visitor')?.includes('https') ? 'https' : req.protocol || 
+                     'https';
+    
+    console.log(`\n========================================`);
+    console.log(`[Redirect] 🎯 ROUTE EXÉCUTÉE`);
     console.log(`[Redirect] Requête reçue - Host: ${host}, Path: ${path}, Method: ${req.method}`);
+    console.log(`[Redirect] Protocole détecté: ${protocol}`);
+    console.log(`[Redirect] Headers:`, JSON.stringify(req.headers, null, 2));
 
     // Redirection automatique du domaine racine vers www
     // Ex: testwenoble.fr → www.testwenoble.fr
     if (!host.startsWith('www.') && !host.includes('.pages.dev') && !host.includes('ngrok')) {
       const wwwHost = `www.${host}`;
-      const redirectURL = `${req.protocol}://${wwwHost}${path}`;
+      const redirectURL = `${protocol}://${wwwHost}${path}`;
       console.log(`[Redirect] 🔄 Redirection root → www: ${host} → ${wwwHost}`);
       return res.redirect(301, redirectURL);
     }
 
     // Récupérer les informations du site web
+    console.log(`[Redirect] 🔍 Recherche du domaine dans la BD: ${host}`);
     const website = await getWebsiteByDomain(host);
 
     if (!website) {
-      console.log(`[Redirect] ❌ Domaine non trouvé: ${host}`);
+      console.log(`[Redirect] ❌ Domaine non trouvé dans la BD: ${host}`);
+      console.log(`[Redirect] 💡 Vérifiez que le domaine existe dans la table 'websites' avec website_slug = '${host}' et cloudflare_configured = true`);
+      console.log(`========================================\n`);
       return res.status(404).json({
         error: 'Domaine non configuré',
         domain: host,
         message: 'Ce domaine n\'est pas enregistré dans le système'
       });
     }
+    
+    console.log(`[Redirect] ✅ Domaine trouvé:`, {
+      id: website.id,
+      name: website.website_name,
+      slug: website.website_slug,
+      folder: website.folder_project
+    });
 
     // Vérifier si le custom domain est autorisé
     if (!hasCustomDomainFeature(website)) {
@@ -122,10 +151,11 @@ router.all('*', async (req, res) => {
     const fullTargetURL = `${targetURL}${path}`;
 
     console.log(`[Redirect] ✅ Redirection: ${host}${path} → ${fullTargetURL}`);
+    console.log(`========================================\n`);
 
     // Pour les requêtes GET, faire une redirection HTTP
     if (req.method === 'GET') {
-      console.log(`[Redirect] Redirection GET vers: ${fullTargetURL}`);
+      console.log(`[Redirect] 🔀 Redirection GET vers: ${fullTargetURL}`);
       return res.redirect(302, fullTargetURL);
     }
 
