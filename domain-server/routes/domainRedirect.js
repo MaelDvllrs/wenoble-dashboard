@@ -94,10 +94,17 @@ router.all('*', async (req, res) => {
     console.log(`[Redirect] Protocole détecté: ${protocol}`);
     console.log(`[Redirect] Headers:`, JSON.stringify(req.headers, null, 2));
 
-    // Ne pas rediriger les domaines API (ex: api-wenoble.wenoble.fr)
+    // Ne pas gérer les domaines API - ils doivent avoir leur propre VirtualHost Apache
     if (host.startsWith('api-') || host.startsWith('api.')) {
-      console.log(`[Redirect] ⏭️ Domaine API détecté, on laisse Apache gérer: ${host}`);
-      return next(); // Passe au prochain middleware (Apache handle)
+      console.log(`[Redirect] ⏭️ Domaine API détecté: ${host}`);
+      console.log(`[Redirect] ⚠️ Ce domaine ne devrait PAS être proxié vers Node.js`);
+      console.log(`[Redirect] 💡 Créez un VirtualHost Apache spécifique pour ${host} qui ne fait PAS de ProxyPass`);
+      console.log(`========================================\n`);
+      return res.status(503).json({
+        error: 'Configuration incorrecte',
+        domain: host,
+        message: 'Ce domaine API doit être configuré directement dans Apache, pas via le système de redirection Node.js'
+      });
     }
 
     // Redirection automatique du domaine racine vers www
