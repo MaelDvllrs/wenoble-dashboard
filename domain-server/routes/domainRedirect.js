@@ -83,16 +83,6 @@ router.all('*', async (req, res) => {
     const host = req.get('host') || req.hostname;
     const path = req.originalUrl;
     
-    // Ne pas rediriger les domaines API (ex: api-wenoble.wenoble.fr)
-    if (host.startsWith('api-') || host.startsWith('api.')) {
-      console.log(`[Redirect] ⏭️ Domaine API détecté, pas de redirection: ${host}`);
-      return res.status(404).json({
-        error: 'Domaine API',
-        host: host,
-        message: 'Ce domaine API doit être géré par Apache, pas par le système de redirection'
-      });
-    }
-    
     // Détecter le protocole original (HTTPS si derrière Apache ou Cloudflare)
     const protocol = req.get('x-forwarded-proto') || 
                      req.get('cf-visitor')?.includes('https') ? 'https' : req.protocol || 
@@ -103,6 +93,12 @@ router.all('*', async (req, res) => {
     console.log(`[Redirect] Requête reçue - Host: ${host}, Path: ${path}, Method: ${req.method}`);
     console.log(`[Redirect] Protocole détecté: ${protocol}`);
     console.log(`[Redirect] Headers:`, JSON.stringify(req.headers, null, 2));
+
+    // Ne pas rediriger les domaines API (ex: api-wenoble.wenoble.fr)
+    if (host.startsWith('api-') || host.startsWith('api.')) {
+      console.log(`[Redirect] ⏭️ Domaine API détecté, on laisse Apache gérer: ${host}`);
+      return next(); // Passe au prochain middleware (Apache handle)
+    }
 
     // Redirection automatique du domaine racine vers www
     // Ex: testwenoble.fr → www.testwenoble.fr
