@@ -5,6 +5,7 @@ const OverlaySystem = ({ iframeRef, selectedElement, onElementHover, onElementSe
   const overlayRef = useRef(null);
   const [hoveredBox, setHoveredBox] = useState(null);
   const [selectedBox, setSelectedBox] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   // Fonction pour obtenir le type d'élément
   const getElementType = (el) => {
@@ -180,6 +181,7 @@ const OverlaySystem = ({ iframeRef, selectedElement, onElementHover, onElementSe
         e.stopPropagation();
         element.contentEditable = 'true';
         element.focus();
+        setIsEditing(true);
         
         // Sélectionner tout le texte
         const range = iframeDoc.createRange();
@@ -191,6 +193,7 @@ const OverlaySystem = ({ iframeRef, selectedElement, onElementHover, onElementSe
         // Désactiver contentEditable sur blur
         const handleBlur = () => {
           element.contentEditable = 'false';
+          setIsEditing(false);
           element.removeEventListener('blur', handleBlur);
         };
         element.addEventListener('blur', handleBlur);
@@ -223,7 +226,7 @@ const OverlaySystem = ({ iframeRef, selectedElement, onElementHover, onElementSe
       }}
     >
       {/* Cadre hover */}
-      {hoveredBox && !selectedBox && (
+      {hoveredBox && (
         <>
           <div
             style={{
@@ -232,8 +235,7 @@ const OverlaySystem = ({ iframeRef, selectedElement, onElementHover, onElementSe
               top: `${hoveredBox.top}px`,
               width: `${hoveredBox.width}px`,
               height: `${hoveredBox.height}px`,
-              border: '1px solid #2ec96d',
-              pointerEvents: 'none',
+              border: isEditing ? '1px solid transparent' : '1px solid #2ec96d',
               boxSizing: 'border-box'
             }}
           />
@@ -241,15 +243,14 @@ const OverlaySystem = ({ iframeRef, selectedElement, onElementHover, onElementSe
             style={{
               position: 'absolute',
               left: `${hoveredBox.left}px`,
-              top: `${hoveredBox.top - 18}px`,
+              top: `${hoveredBox.top - 13}px`,
               background: 'transparent',
-              color: '#2ec96d',
+              color: isEditing ? 'transparent' : '#2ec96d',
               fontSize: '10px',
               fontWeight: 600,
               padding: '2px 6px',
               borderTopLeftRadius: '3px',
               borderTopRightRadius: '3px',
-              pointerEvents: 'none',
               textTransform: 'uppercase',
               fontFamily: 'system-ui, -apple-system, sans-serif',
               letterSpacing: '0.5px',
@@ -272,8 +273,7 @@ const OverlaySystem = ({ iframeRef, selectedElement, onElementHover, onElementSe
               top: `${selectedBox.top}px`,
               width: `${selectedBox.width}px`,
               height: `${selectedBox.height}px`,
-              border: '2px solid #2ec96d',
-              pointerEvents: 'none',
+              border: isEditing ? '1px solid transparent' : '1px solid #2ec96d',
               boxSizing: 'border-box'
             }}
           />
@@ -281,15 +281,14 @@ const OverlaySystem = ({ iframeRef, selectedElement, onElementHover, onElementSe
             style={{
               position: 'absolute',
               left: `${selectedBox.left}px`,
-              top: `${selectedBox.top - 20}px`,
-              background: '#2ec96d',
-              color: 'white',
+              top: `${selectedBox.top - 13}px`,
+              background: isEditing ? 'transparent' : '#2ec96d',
+              color: isEditing ? 'transparent' : 'white',
               fontSize: '10px',
               fontWeight: 600,
               padding: '2px 6px',
               borderTopLeftRadius: '3px',
               borderTopRightRadius: '3px',
-              pointerEvents: 'none',
               textTransform: 'uppercase',
               fontFamily: 'system-ui, -apple-system, sans-serif',
               letterSpacing: '0.5px',

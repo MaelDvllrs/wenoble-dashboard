@@ -408,4 +408,36 @@ router.get('/edit-mode/:websiteId/*', async (req, res) => {
   }
 });
 
+// Endpoint pour récupérer la liste des pages HTML d'un site
+router.get('/pages/:websiteId', async (req, res) => {
+  try {
+    const { websiteId } = req.params;
+    
+    const siteId = `site_${websiteId}`;
+    const sitePath = path.join(__dirname, 'sites', siteId);
+
+    // Vérifier que le site existe
+    if (!await fs.pathExists(sitePath)) {
+      return res.status(404).json({ 
+        error: 'Site non trouvé' 
+      });
+    }
+
+    // Lire tous les fichiers HTML du dossier
+    const files = await fs.readdir(sitePath);
+    const htmlFiles = files.filter(file => file.endsWith('.html'));
+
+    res.json({
+      success: true,
+      pages: htmlFiles.length > 0 ? htmlFiles : ['index.html']
+    });
+
+  } catch (error) {
+    console.error('Erreur lors de la récupération des pages:', error);
+    res.status(500).json({ 
+      error: 'Erreur lors de la récupération des pages' 
+    });
+  }
+});
+
 module.exports = router;

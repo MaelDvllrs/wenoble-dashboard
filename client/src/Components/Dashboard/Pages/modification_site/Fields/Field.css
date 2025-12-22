@@ -509,6 +509,11 @@
     outline: none;
 }
 
+.input_text_blog.is-small{
+    padding: 0.2rem 0.3rem;
+    font-size: 0.8rem;
+}
+
 /* .input-count marker removed: styles provided via .number-input-vertical context */
 
 /* Amélioration UX pour le champ de copie cliquable */
