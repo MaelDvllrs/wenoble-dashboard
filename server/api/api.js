@@ -25,7 +25,7 @@ const BASE_COLLECTION_COLUMNS = new Set([
     'collection_id',
     'collection_element_name',
     'collection_element_slug',
-    'collection_element_status',
+    'collection_element_status_text',
     'collection_element_publish_date',
     'created_at',
     'updated_at'
@@ -257,7 +257,7 @@ async function getFilteredElementIdsByText({ supabase, targetCollectionIds, text
                     .from('collection_element')
                     .select('collection_element_name')
                     .eq('id', templateElementId)
-                    .eq('collection_element_status', true)
+                    .eq('collection_element_status_text', "publish")
                     .maybeSingle();
                     
                 if (templateErr || !templateElement) {
@@ -275,7 +275,7 @@ async function getFilteredElementIdsByText({ supabase, targetCollectionIds, text
                     .from('collection_element')
                     .select('collection_element_slug')
                     .eq('id', templateElementId)
-                    .eq('collection_element_status', true)
+                    .eq('collection_element_status_text', "publish")
                     .maybeSingle();
                     
                 if (templateErr || !templateElement) {
@@ -294,7 +294,7 @@ async function getFilteredElementIdsByText({ supabase, targetCollectionIds, text
                     .from('collection_element')
                     .select(fieldName)
                     .eq('id', templateElementId)
-                    .eq('collection_element_status', true)
+                    .eq('collection_element_status_text', "publish")
                     .maybeSingle();
                     
                 if (templateErr || !templateElement) {
@@ -433,7 +433,7 @@ async function getFilteredElementIdsByMultiRef({ supabase, targetCollectionIds, 
                     .from('collection_element')
                     .select('collection_element_name')
                     .eq('id', templateElementId)
-                    .eq('collection_element_status', true)
+                    .eq('collection_element_status_text', "publish")
                     .maybeSingle();
                     
                 if (templateErr || !templateElement) {
@@ -1066,7 +1066,7 @@ async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, b
         let query = supabase
             .from('collection_element')
             .select('*')
-            .eq('collection_element_status', true);
+            .eq('collection_element_status_text', "publish")
         
         if (colone && baseColumns.has(colone)) {
             query = query.order(colone, { ascending });
@@ -1234,7 +1234,7 @@ async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, b
     let query = supabase
         .from('collection_element')
         .select('*')
-        .eq('collection_element_status', true);
+        .eq('collection_element_status_text', "publish")
     
     if (targetCollectionIds.length > 0) {
         if (targetCollectionIds.length === 1) {
