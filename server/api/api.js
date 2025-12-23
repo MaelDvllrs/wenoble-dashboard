@@ -1294,6 +1294,14 @@ async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, b
         } else if (limit && finalResults.length > limit) {
             finalResults = finalResults.slice(0, limit);
         }
+    } else if (!baseColumns.has(colone)) {
+        // Si pas de tri dynamique mais la colonne n'est pas dans baseColumns,
+        // appliquer quand même l'offset et la limite en mémoire
+        if (offset && offset > 0) {
+            finalResults = finalResults.slice(offset, offset + (limit || finalResults.length));
+        } else if (limit && finalResults.length > limit) {
+            finalResults = finalResults.slice(0, limit);
+        }
     }
     
     return finalResults;

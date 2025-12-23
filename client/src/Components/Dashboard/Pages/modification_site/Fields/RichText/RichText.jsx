@@ -10,6 +10,9 @@ import EmbedModal from './EmbedModal';
 import EmbedBlock from './EmbedBlock';
 import {compressImage} from '../../../../../../utils/imageUtils'; 
 import { SecondaryButton } from '../../../../../../Theme/element';
+import Axios from 'axios';
+import config from '../../../../../../config';
+import Cookies from 'js-cookie';
 
 // Composant Link pour les liens
 const Link = (props) => {
@@ -968,23 +971,87 @@ const RichTextUpload = ({ id_blog_page, type, id_config, onChange, slugValue, fi
 
 
 
-  const handleRemoveImage = (blockKey) => {
+  const handleRemoveImage = async (blockKey) => {
     const contentState = editorState.getCurrentContent();
+    const block = contentState.getBlockForKey(blockKey);
+    
+    // Récupérer l'entityKey avant de supprimer le bloc
+    const entityKey = block.getEntityAt(0);
+    let imageUrl = null;
+    
+    if (entityKey) {
+      try {
+        const entity = contentState.getEntity(entityKey);
+        if (entity && entity.getType() === 'IMAGE') {
+          const data = entity.getData();
+          imageUrl = data?.src;
+        }
+      } catch (error) {
+        console.error('Erreur lors de la récupération de l\'entité image:', error);
+      }
+    }
+    
+    // Supprimer le bloc de l'image
     const blockMap = contentState.getBlockMap().delete(blockKey);
     const newContentState = contentState.merge({
       blockMap,
       selectionAfter: contentState.getSelectionAfter(),
     });
-    const newEditorState = EditorState.push(editorState, newContentState, 'remove-range');
+    
+    // Nettoyer l'entityMap : supprimer les entités qui ne sont plus référencées par aucun bloc
+    const rawContent = convertToRaw(newContentState);
+    const usedEntityKeys = new Set();
+    
+    // Parcourir tous les blocs pour trouver les entités encore utilisées
+    rawContent.blocks.forEach(block => {
+      block.entityRanges?.forEach(range => {
+        usedEntityKeys.add(range.key.toString());
+      });
+    });
+    
+    // Filtrer l'entityMap pour ne garder que les entités utilisées
+    const cleanedEntityMap = {};
+    Object.keys(rawContent.entityMap).forEach(key => {
+      if (usedEntityKeys.has(key)) {
+        cleanedEntityMap[key] = rawContent.entityMap[key];
+      }
+    });
+    
+    rawContent.entityMap = cleanedEntityMap;
+    
+    // Mettre à jour l'état de l'éditeur avec le contenu nettoyé
+    const cleanedContentState = convertFromRaw(rawContent);
+    const newEditorState = EditorState.push(editorState, cleanedContentState, 'remove-range');
     setEditorState(newEditorState);
-    const updatedContent = convertToRaw(newContentState);
-    const updatedData = {
-      id_config: id_config,
-      type: 'richText',
-      value: updatedContent,
-      create: createBoolRichText
-    };
-    onChange({ data: updatedData });
+    
+    // Supprimer l'image du bucket Supabase via l'API
+    if (imageUrl && imageUrl.includes('supabase.co/storage/v1/object/public/collection-richtext-images/')) {
+      try {
+        const apiUrl = config.apiUrl;
+        const token = Cookies.get('token');
+        
+        const response = await Axios.delete(`${apiUrl}/deleteRichTextImage`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          data: {
+            imageUrl: imageUrl
+          }
+        });
+        
+        if (response.data.success) {
+          console.log('Image supprimée du bucket avec succès:', response.data.fileName);
+        } else {
+          console.error('Erreur lors de la suppression de l\'image:', response.data.message);
+        }
+      } catch (error) {
+        console.error('Erreur lors de la suppression de l\'image:', error);
+      }
+    }
+    
+    // Ne pas appeler onChange ici - la sauvegarde se fera lors de l'enregistrement global
+    // dans editElementCollection.jsx
   };
 
   const handleRemoveEmbed = (blockKey) => {

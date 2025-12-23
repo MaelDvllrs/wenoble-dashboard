@@ -624,6 +624,11 @@ export const MultiReferenceSelect = ({
                     backgroundColor: theme?.palette?.background?.default || '#ffffff',
                     border: `1px solid ${theme?.palette?.primary?.third || '#e0e0e0'}`,
                     borderRadius: '0.5rem',
+                    zIndex: 9999,
+                }),
+                menuPortal: (provided) => ({
+                    ...provided,
+                    zIndex: 9999,
                 }),
                 placeholder: (provided) => ({
                     ...provided,

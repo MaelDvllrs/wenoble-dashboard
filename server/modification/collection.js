@@ -759,11 +759,47 @@ router.post('/createRichTextCollection', async (req, res) => {
     const fileSizeInKB = Math.round(Buffer.byteLength(imageBuffer) / 1024);
     return { url: data.publicUrl, size: fileSizeInKB };
   };
+  // Fonction pour nettoyer l'entityMap
+  const cleanEntityMap = (content) => {
+    const blocks = content.blocks || [];
+    const entityMap = content.entityMap || {};
+    const usedEntityKeys = new Set();
+    
+    // Pour les images, on ne garde que celles dans des blocs de type 'atomic'
+    blocks.forEach(block => {
+      if (block.entityRanges && Array.isArray(block.entityRanges)) {
+        block.entityRanges.forEach(range => {
+          if (range.key !== undefined && range.key !== null) {
+            const entity = entityMap[String(range.key)];
+            // Si c'est une image, on vérifie que le bloc est de type 'atomic'
+            if (entity && entity.type === 'IMAGE') {
+              if (block.type === 'atomic') {
+                usedEntityKeys.add(String(range.key));
+              }
+            } else {
+              // Pour les autres types d'entités, on les garde
+              usedEntityKeys.add(String(range.key));
+            }
+          }
+        });
+      }
+    });
+    
+    const cleanedEntityMap = {};
+    Object.keys(entityMap).forEach(key => {
+      if (usedEntityKeys.has(key)) {
+        cleanedEntityMap[key] = entityMap[key];
+      }
+    });
+    return { ...content, entityMap: cleanedEntityMap };
+  };
   try {
     for (const item of richtext) {
       const id_config = item.id_config;
       let richTextJSON = item.richText;
-      const content = JSON.parse(richTextJSON);
+      let content = JSON.parse(richTextJSON);
+      // Nettoyer l'entityMap pour supprimer les entités non référencées
+      content = cleanEntityMap(content);
       const entityMap = content.entityMap;
       const imageKeys = Object.keys(entityMap).filter(
         (key) => entityMap[key].type === 'IMAGE' && entityMap[key].data.src.startsWith('data:image/')
@@ -811,6 +847,61 @@ router.post('/createRichTextCollection', async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).send({ error: error.message });
+  }
+});
+
+// Route pour supprimer une image du bucket Supabase
+router.delete('/deleteRichTextImage', authenticateToken, async (req, res) => {
+  const token = req.headers['authorization']?.split(' ')[1];
+  const supabase = supabaseServer(token);
+  const { imageUrl } = req.body;
+
+  try {
+    if (!imageUrl || !imageUrl.includes('supabase.co/storage/v1/object/public/collection-richtext-images/')) {
+      console.error('URL d\'image invalide:', imageUrl);
+      return res.status(400).json({ 
+        success: false, 
+        message: 'URL d\'image invalide' 
+      });
+    }
+
+    // Extraire le nom du fichier de l'URL
+    const urlParts = imageUrl.split('/collection-richtext-images/');
+    if (urlParts.length !== 2) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Format d\'URL invalide' 
+      });
+    }
+
+    const fileName = urlParts[1];
+
+    // Supprimer du bucket
+    const { error: deleteError } = await supabase.storage
+      .from('collection-richtext-images')
+      .remove([fileName]);
+
+    if (deleteError) {
+      console.error('Erreur lors de la suppression de l\'image du bucket:', deleteError);
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Erreur lors de la suppression de l\'image',
+        error: deleteError.message 
+      });
+    }
+
+    res.status(200).json({ 
+      success: true, 
+      message: 'Image supprimée avec succès',
+      fileName 
+    });
+  } catch (error) {
+    console.error('Erreur lors de la suppression de l\'image:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Erreur serveur',
+      error: error.message 
+    });
   }
 });
 
@@ -1269,12 +1360,55 @@ router.post('/updateRichTextCollection', authenticateToken, async (req, res) => 
     return { url: data.publicUrl, size: fileSizeInKB };
   };
 
+  // Fonction pour nettoyer l'entityMap en supprimant les entités non référencées
+  const cleanEntityMap = (content) => {
+    const blocks = content.blocks || [];
+    const entityMap = content.entityMap || {};
+    
+    // Collecter tous les entityKeys utilisés dans les blocks
+    const usedEntityKeys = new Set();
+    
+    // Pour les images, on ne garde que celles dans des blocs de type 'atomic'
+    blocks.forEach(block => {
+      if (block.entityRanges && Array.isArray(block.entityRanges)) {
+        block.entityRanges.forEach(range => {
+          if (range.key !== undefined && range.key !== null) {
+            const entity = entityMap[String(range.key)];
+            // Si c'est une image, on vérifie que le bloc est de type 'atomic'
+            if (entity && entity.type === 'IMAGE') {
+              if (block.type === 'atomic') {
+                usedEntityKeys.add(String(range.key));
+              }
+            } else {
+              // Pour les autres types d'entités, on les garde
+              usedEntityKeys.add(String(range.key));
+            }
+          }
+        });
+      }
+    });
+    
+    // Filtrer l'entityMap pour ne garder que les entités utilisées
+    const cleanedEntityMap = {};
+    Object.keys(entityMap).forEach(key => {
+      if (usedEntityKeys.has(key)) {
+        cleanedEntityMap[key] = entityMap[key];
+      }
+    });
+    
+    return { ...content, entityMap: cleanedEntityMap };
+  };
+
   try {
     for (const item of richtext) {
       const id_config = item.id_config;
       let richTextJSON = item.richText;
 
-      const content = JSON.parse(richTextJSON);
+      let content = JSON.parse(richTextJSON);
+      
+      // Nettoyer l'entityMap pour supprimer les entités non référencées
+      content = cleanEntityMap(content);
+      
       const entityMap = content.entityMap;
 
       const imageKeys = Object.keys(entityMap).filter(
