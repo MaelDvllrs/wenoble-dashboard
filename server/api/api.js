@@ -1090,13 +1090,23 @@ async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, b
     
     if (filterArray.length === 0) {
         // Pas de filtres, récupérer tous les éléments
+        const hasDynamicSorts = sorts && Object.keys(sorts).length > 0;
+        
         let query = supabase
             .from('collection_element')
             .select('*')
             .eq('collection_element_status_text', "publish")
         
-        if (colone && baseColumns.has(colone)) {
+        // Appliquer le tri au niveau DB si c'est une colonne de base et pas de sorts dynamiques
+        if (!hasDynamicSorts && colone && colone !== 'undefined' && baseColumns.has(colone)) {
             query = query.order(colone, { ascending });
+        } else if (hasDynamicSorts) {
+            // Avec sorts dynamiques, appliquer le premier tri s'il est sur une colonne de base
+            const firstSortKey = Object.keys(sorts)[0];
+            if (baseColumns.has(firstSortKey)) {
+                const firstSortOrder = sorts[firstSortKey]?.order || 'asc';
+                query = query.order(firstSortKey, { ascending: firstSortOrder === 'asc' });
+            }
         }
         
         if (targetCollectionIds.length > 0) {
@@ -1107,11 +1117,44 @@ async function applyFiltersAtDbLevel({ supabase, targetCollectionIds, filters, b
             }
         }
         
-        if (limit && colone && baseColumns.has(colone)) query = query.limit(limit);
+        // Appliquer limit au niveau DB seulement si tri sur colonne de base et pas de sorts dynamiques
+        if (!hasDynamicSorts && limit && colone && colone !== 'undefined' && baseColumns.has(colone)) {
+            query = query.limit(limit);
+        } else if (hasDynamicSorts) {
+            // Avec sorts dynamiques sur colonne de base, on peut appliquer la limite au niveau DB
+            const firstSortKey = Object.keys(sorts)[0];
+            if (baseColumns.has(firstSortKey) && limit) {
+                query = query.limit(limit);
+            }
+        }
         
         const { data, error } = await query;
         if (error) throw error;
-        return data || [];
+        
+        let finalResults = data || [];
+        
+        // Appliquer le tri dynamique si nécessaire (pour les colonnes non-base)
+        if (hasDynamicSorts) {
+            const firstSortKey = Object.keys(sorts)[0];
+            // Si le tri est sur une colonne de base, il a déjà été appliqué au niveau DB
+            if (!baseColumns.has(firstSortKey)) {
+                finalResults = await applySortsToElements({
+                    supabase,
+                    targetCollectionIds,
+                    elements: finalResults,
+                    sorts
+                });
+                
+                // Appliquer l'offset et la limite après le tri dynamique
+                if (offset && offset > 0) {
+                    finalResults = finalResults.slice(offset, offset + (limit || finalResults.length));
+                } else if (limit && finalResults.length > limit) {
+                    finalResults = finalResults.slice(0, limit);
+                }
+            }
+        }
+        
+        return finalResults;
     }
     
     // Séparer les filtres par type : base columns, text, multiReference, switch
