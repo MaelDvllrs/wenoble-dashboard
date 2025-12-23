@@ -193,12 +193,15 @@ async function handleNoFiltersCase({ supabase, targetCollectionIds, baseColumns,
         .select('*')
         .eq('collection_element_status_text', "publish");
     
-    // Appliquer le tri seulement si colone est défini et valide
-    if (colone && colone !== 'undefined' && colone.trim() !== '') {
+    // Vérifier si la colonne de tri est une colonne de base valide
+    const isBaseColumn = colone && baseColumns.has(colone);
+    
+    // Appliquer le tri au niveau DB seulement si c'est une colonne de base
+    if (isBaseColumn) {
         query = query.order(colone, { ascending });
     } else {
-        // Tri par défaut
-        query = query.order('collection_element_publish_date', { ascending });
+        // Tri par défaut pour récupérer les données
+        query = query.order('collection_element_publish_date', { ascending: false });
     }
     
     if (targetCollectionIds.length > 0) {
@@ -209,8 +212,11 @@ async function handleNoFiltersCase({ supabase, targetCollectionIds, baseColumns,
         }
     }
     
-    if (offset && offset > 0) query = query.range(offset, offset + (limit || 1000) - 1);
-    else if (limit) query = query.limit(limit);
+    // Appliquer offset/limit au niveau DB seulement si tri sur colonne de base
+    if (isBaseColumn) {
+        if (offset && offset > 0) query = query.range(offset, offset + (limit || 1000) - 1);
+        else if (limit) query = query.limit(limit);
+    }
     
     const { data, error } = await query;
     if (error) throw error;
@@ -219,7 +225,28 @@ async function handleNoFiltersCase({ supabase, targetCollectionIds, baseColumns,
         return res.status(200).json({ message: 'Aucun blog trouvé' });
     }
     
-    return res.json({ blog: data });
+    let finalData = data;
+    
+    // Si la colonne de tri n'est pas une colonne de base, trier en mémoire
+    if (!isBaseColumn && colone && colone !== 'undefined' && colone.trim() !== '') {
+        // Trier par la colonne demandée (si elle existe dans les données)
+        finalData = [...data].sort((a, b) => {
+            const aVal = a[colone] || '';
+            const bVal = b[colone] || '';
+            if (aVal < bVal) return ascending ? -1 : 1;
+            if (aVal > bVal) return ascending ? 1 : -1;
+            return 0;
+        });
+        
+        // Appliquer offset et limite en mémoire
+        if (offset && offset > 0) {
+            finalData = finalData.slice(offset, offset + (limit || finalData.length));
+        } else if (limit && finalData.length > limit) {
+            finalData = finalData.slice(0, limit);
+        }
+    }
+    
+    return res.json({ blog: finalData });
 }
 
 // Helper: récupère les collection_element_id filtrés via les champs text
