@@ -7,9 +7,10 @@ import { useWebsite } from '../../../../../Context/WebsiteContext';
 import { DefaultButton, SecondaryButton, SmallIconButton, SimpleSearchField } from '../../../../../Theme/element';
 import { motion, useMotionValue, useMotionValueEvent } from 'framer-motion';
 import OverlaySystem from './OverlaySystem';
-import { PiArrowSquareIn, PiEye, PiPencilSimple, PiDesktop, PiDeviceTablet, PiDeviceMobile, PiFile, PiCaretUpDownLight, PiPencilSimpleLight, PiTextAlignLeft, PiTextAlignCenter, PiTextAlignRight, PiTextAlignJustify, PiTextUnderline, PiTextStrikethrough } from "react-icons/pi";
-import { Popper, Grow, ClickAwayListener, IconButton } from '@mui/material';
+import { PiArrowSquareIn, PiEye, PiPencilSimple, PiDesktop, PiDeviceTablet, PiDeviceMobile, PiFile, PiCaretUpDownLight, PiPencilSimpleLight, PiTextAlignLeft, PiTextAlignCenter, PiTextAlignRight, PiTextAlignJustify, PiTextUnderline, PiTextStrikethrough, PiCursorClick, PiCursorClickThin, PiLinkSimple, PiEnvelope, PiPhone } from "react-icons/pi";
+import { Popper, Grow, ClickAwayListener, IconButton, CircularProgress } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
+import OpenInNewOutlinedIcon from '@mui/icons-material/OpenInNewOutlined';
 
 
 const StaticEditor = ({ onSave }) => {
@@ -55,6 +56,32 @@ const StaticEditor = ({ onSave }) => {
   const [textAlign, setTextAlign] = useState('left');
   const [textDecoration, setTextDecoration] = useState('none');
   
+  // États pour les liens
+  const [linkType, setLinkType] = useState('external'); // 'external' ou 'internal'
+  const [linkUrl, setLinkUrl] = useState('');
+  
+  // États pour la sidebar des paramètres de page
+  const [isPageSettingsOpen, setIsPageSettingsOpen] = useState(false);
+  const [pageSlug, setPageSlug] = useState('');
+  const [pageTitle, setPageTitle] = useState('');
+  const [metaDescription, setMetaDescription] = useState('');
+  const [ogTitle, setOgTitle] = useState('');
+  const [ogDescription, setOgDescription] = useState('');
+  const [ogImage, setOgImage] = useState('');
+  const [metaImage, setMetaImage] = useState('');
+  const [schemas, setSchemas] = useState([]);
+  
+  // États pour stocker les valeurs initiales et détecter les modifications
+  const [initialPageSettings, setInitialPageSettings] = useState({});
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showUnsavedChangesPopup, setShowUnsavedChangesPopup] = useState(false);
+  
+  // États pour tracker les éditions d'éléments
+  const [elementEdits, setElementEdits] = useState([]); // Stocke les éditions en cours
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoadingEdits, setIsLoadingEdits] = useState(false); // Chargement des éditions
+  const debounceTimerRef = useRef(null); // Timer pour le debounce des éditions de texte
+  
   // Mettre à jour l'affichage de la largeur de manière throttled
   useMotionValueEvent(width, "change", (latest) => {
     const now = Date.now();
@@ -71,60 +98,62 @@ const StaticEditor = ({ onSave }) => {
     if (selectedWebsite?.id) {
       checkScrapingStatusHandler();
     }
+    
+    // Nettoyer le debounce timer lors du unmount
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
   }, [selectedWebsite?.id]);
 
-  // Écouter les clics sur l'iframe pour fermer le menu des pages
+  // Détecter les modifications dans les paramètres de page
   useEffect(() => {
-    if (!openPageMenu || !iframeRef.current) {
-      console.log('useEffect iframe click: menu closed or iframe not ready', { openPageMenu, hasIframe: !!iframeRef.current });
+    // Attendre que initialPageSettings soit défini
+    if (Object.keys(initialPageSettings).length === 0) return;
+    
+    const hasChanges = 
+      pageTitle !== initialPageSettings.pageTitle ||
+      metaDescription !== initialPageSettings.metaDescription ||
+      ogTitle !== initialPageSettings.ogTitle ||
+      ogDescription !== initialPageSettings.ogDescription ||
+      ogImage !== initialPageSettings.ogImage ||
+      metaImage !== initialPageSettings.metaImage;
+    
+    
+    setHasUnsavedChanges(hasChanges);
+  }, [pageTitle, metaDescription, ogTitle, ogDescription, ogImage, metaImage, initialPageSettings]);
+
+  // Écouter les clics sur l'iframe pour fermer le menu des pages et la sidebar settings
+  useEffect(() => {
+    if ((!openPageMenu && !isPageSettingsOpen) || !iframeRef.current) {
       return;
     }
 
     const handleIframeClick = () => {
-      console.log('Click detected inside iframe, closing menu');
-      setOpenPageMenu(false);
-      setPageSearch('');
+      if (openPageMenu) {
+        setOpenPageMenu(false);
+        setPageSearch('');
+      }
+      // Ne pas fermer la sidebar si la popup est déjà ouverte
+      if (isPageSettingsOpen && !showUnsavedChangesPopup) {
+        handleClosePageSettings();
+      }
     };
 
     const iframe = iframeRef.current;
     const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
     
     if (iframeDoc) {
-      console.log('Adding click listener to iframe document');
       iframeDoc.addEventListener('click', handleIframeClick, true);
       return () => {
-        console.log('Removing click listener from iframe document');
         iframeDoc.removeEventListener('click', handleIframeClick, true);
       };
-    } else {
-      console.log('Could not access iframe document');
     }
-  }, [openPageMenu, isIframeReady]);
+  }, [openPageMenu, isPageSettingsOpen, isIframeReady, showUnsavedChangesPopup]);
 
   // Écouter les messages de console de l'iframe
-  useEffect(() => {
-    const handleMessage = (event) => {
-      if (event.data && event.data.type === 'console') {
-        const { level, args } = event.data;
-        const prefix = '[IFRAME] ';
-        
-        switch(level) {
-          case 'log':
-            console.log(prefix, ...args);
-            break;
-          case 'error':
-            console.error(prefix, ...args);
-            break;
-          case 'warn':
-            console.warn(prefix, ...args);
-            break;
-        }
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, []);
+  
 
   const checkScrapingStatusHandler = async () => {
     try {
@@ -215,11 +244,125 @@ const StaticEditor = ({ onSave }) => {
       try {
         const iframeDocument = iframeRef.current.contentDocument || iframeRef.current.contentWindow.document;
         enableEditMode(iframeDocument);
+        
+        // Charger et appliquer les éditions existantes
+        loadAndApplyEdits();
       } catch (error) {
         console.error('Erreur d\'accès à l\'iframe:', error);
       }
     }
-  }, [editModeHtml, isEditMode, isIframeReady]);
+  }, [editModeHtml, isEditMode, isIframeReady, currentPage]);
+
+  // Charger et appliquer les éditions existantes depuis la BDD
+  const loadAndApplyEdits = async () => {
+    if (!selectedWebsite?.id || !currentPage || !iframeRef.current) return;
+
+    try {
+      setIsLoadingEdits(true);
+      
+      const response = await fetch(
+        `${config.apiUrl}/websites/${selectedWebsite.id}/edits?page=${encodeURIComponent(currentPage)}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
+
+      if (!response.ok) {
+        console.error('Erreur lors du chargement des éditions:', response.status);
+        return;
+      }
+
+      const result = await response.json();
+      
+      if (result.success && result.data && result.data.length > 0) {
+        const iframe = iframeRef.current;
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+        
+        if (!iframeDoc) return;
+
+        console.log(`Application de ${result.data.length} édition(s) existante(s)`);
+
+        // Appliquer chaque édition à l'iframe
+        result.data.forEach(edit => {
+          try {
+            const element = iframeDoc.querySelector(edit.elementPath);
+            
+            if (element) {
+              if (edit.editType === 'text') {
+                // Parser le JSON pour récupérer textContent et style
+                try {
+                  const editData = JSON.parse(edit.value);
+                  
+                  // Appliquer le textContent
+                  if (editData.textContent !== undefined) {
+                    element.textContent = editData.textContent;
+                  }
+                  
+                  // Appliquer les styles inline sans toucher aux classes
+                  if (editData.style) {
+                    element.setAttribute('style', editData.style);
+                  }
+                } catch (parseError) {
+                  // Si ce n'est pas du JSON, c'est peut-être un ancien format (outerHTML)
+                  console.warn('Format d\'\u00e9dition non JSON, utilisation comme innerHTML:', parseError);
+                  element.innerHTML = edit.value;
+                }
+              } else if (edit.editType === 'image') {
+                // Pour les images, mettre à jour le src
+                element.src = edit.value;
+              } else if (edit.editType === 'link') {
+                // Pour les liens, mettre à jour le href
+                element.setAttribute('href', edit.value);
+              }
+            } else {
+              console.warn(`Élément non trouvé: ${edit.elementPath}`);
+            }
+          } catch (err) {
+            console.error(`Erreur lors de l'application de l'édition:`, err);
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des éditions:', error);
+    } finally {
+      // Attendre un court instant pour que le DOM se mette à jour
+      setTimeout(() => {
+        setIsLoadingEdits(false);
+      }, 100);
+    }
+  };
+
+  // Surveiller les modifications directes dans l'iframe (contenteditable)
+  useEffect(() => {
+    if (!isEditMode || !isIframeReady || !iframeRef.current || !selectedElement) return;
+
+    const iframe = iframeRef.current;
+    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (!iframeDoc) return;
+
+    const handleInput = (e) => {
+      if (e.target === selectedElement.element) {
+        // Mettre à jour le state et tracker l'édition
+        const newText = e.target.textContent;
+        setEditedText(newText);
+        
+        const editValue = JSON.stringify({
+          textContent: newText,
+          style: e.target.getAttribute('style') || ''
+        });
+        updateElementEdit(e.target, 'text', editValue);
+      }
+    };
+
+    // Ajouter le listener sur le document de l'iframe
+    iframeDoc.addEventListener('input', handleInput, true);
+
+    return () => {
+      iframeDoc.removeEventListener('input', handleInput, true);
+    };
+  }, [isEditMode, isIframeReady, selectedElement]);
 
   const disableAnimations = (iframeDocument) => {
     // Désactiver les scripts qui appellent api-wenoble.wenoble.fr
@@ -295,11 +438,55 @@ const StaticEditor = ({ onSave }) => {
     iframeDocument.head.appendChild(style);
   };
 
+  // Générer un chemin stable pour identifier un élément
+  const getElementPath = (element) => {
+    if (!element || !element.parentNode) return '';
+    
+    const path = [];
+    let current = element;
+    
+    while (current && current.nodeType === Node.ELEMENT_NODE && current.tagName !== 'HTML') {
+      let selector = current.tagName.toLowerCase();
+      
+      // Ajouter un ID si présent
+      if (current.id) {
+        selector += `#${current.id}`;
+        path.unshift(selector);
+        break; // Un ID est suffisamment unique
+      }
+      
+      // Ajouter des classes importantes (max 2)
+      if (current.className && typeof current.className === 'string') {
+        const classes = current.className.split(' ').filter(c => c.trim()).slice(0, 2);
+        if (classes.length > 0) {
+          selector += '.' + classes.join('.');
+        }
+      }
+      
+      // Ajouter l'index parmi les siblings du même type
+      if (current.parentNode) {
+        const siblings = Array.from(current.parentNode.children).filter(
+          sibling => sibling.tagName === current.tagName
+        );
+        if (siblings.length > 1) {
+          const index = siblings.indexOf(current) + 1;
+          selector += `:nth-of-type(${index})`;
+        }
+      }
+      
+      path.unshift(selector);
+      current = current.parentNode;
+    }
+    
+    return path.join(' > ');
+  };
+
   const handleElementSelect = (element, type) => {
     if (!element) {
       setSelectedElement(null);
       selectedElementRef.current = null;
       setEditedText('');
+      setLinkUrl('');
       return;
     }
 
@@ -316,8 +503,49 @@ const StaticEditor = ({ onSave }) => {
       setTextDecoration(computedStyle.textDecoration.includes('underline') ? 'underline' : 
                         computedStyle.textDecoration.includes('line-through') ? 'line-through' : 
                         computedStyle.textDecoration.includes('overline') ? 'overline' : 'none');
+      
+      // Si l'élément est un lien, charger ses propriétés
+      if (element.tagName.toLowerCase() === 'a') {
+        let href = element.getAttribute('href') || '';
+        
+        // Déterminer le type de lien
+        if (href.startsWith('mailto:')) {
+          setLinkType('mail');
+          setLinkUrl(href.replace('mailto:', ''));
+        } else if (href.startsWith('tel:')) {
+          setLinkType('tel');
+          setLinkUrl(href.replace('tel:', ''));
+        } else {
+          // Si c'est un lien interne de type /static-sites/site-id/page, extraire uniquement la page
+          const staticSiteMatch = href.match(/^\/static-sites\/[^\/]+\/(.+)$/);
+          if (staticSiteMatch) {
+            const pageName = staticSiteMatch[1];
+            // Convertir le nom de page en URL propre
+            // Si c'est index.html ou juste index, mettre /
+            // Sinon, garder tel quel avec un / devant
+            if (pageName === 'index.html' || pageName === 'index') {
+              href = '/';
+            } else {
+              // Enlever l'extension .html si présente
+              href = '/' + pageName.replace('.html', '');
+            }
+          }
+          
+          setLinkUrl(href);
+          
+          // Déterminer si c'est un lien interne ou externe
+          if (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('//')) {
+            setLinkType('external');
+          } else {
+            setLinkType('internal');
+          }
+        }
+      } else {
+        setLinkUrl('');
+      }
     } else {
       setEditedText('');
+      setLinkUrl('');
     }
     
     const newSelection = { element, type };
@@ -329,12 +557,57 @@ const StaticEditor = ({ onSave }) => {
     setHoveredElement(element);
   };
 
+  // Fonction utilitaire pour mettre à jour les éditions
+  const updateElementEdit = (element, type, value, immediate = false) => {
+    const elementPath = getElementPath(element);
+    
+    const applyEdit = () => {
+      const existingEditIndex = elementEdits.findIndex(
+        edit => edit.elementPath === elementPath
+      );
+      
+      const newEdit = {
+        elementPath,
+        type,
+        value
+      };
+      
+      if (existingEditIndex >= 0) {
+        const updatedEdits = [...elementEdits];
+        updatedEdits[existingEditIndex] = newEdit;
+        setElementEdits(updatedEdits);
+      } else {
+        setElementEdits(prev => [...prev, newEdit]);
+      }
+    };
+    
+    // Pour les éditions de texte, utiliser debounce sauf si immediate
+    if (type === 'text' && !immediate) {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+      debounceTimerRef.current = setTimeout(() => {
+        applyEdit();
+      }, 500); // Attendre 500ms après la dernière frappe
+    } else {
+      // Pour les images et styles, appliquer immédiatement
+      applyEdit();
+    }
+  };
+
   const handleTextChange = (newText) => {
     setEditedText(newText);
     
     // Mettre à jour le texte dans l'iframe en temps réel
     if (selectedElement && selectedElement.type === 'text') {
       selectedElement.element.textContent = newText;
+      
+      // Tracker l'édition : stocker textContent + attribut style
+      const editValue = JSON.stringify({
+        textContent: newText,
+        style: selectedElement.element.getAttribute('style') || ''
+      });
+      updateElementEdit(selectedElement.element, 'text', editValue);
     }
   };
 
@@ -351,7 +624,6 @@ const StaticEditor = ({ onSave }) => {
       selectedElement.element.style.textAlign = textAlign;
       selectedElement.element.style.textDecoration = textDecoration;
       
-      alert('Modifications appliquées !');
     }
   };
 
@@ -380,6 +652,56 @@ const StaticEditor = ({ onSave }) => {
         selectedElement.element.style.textDecoration = value;
         break;
     }
+    
+    // Tracker l'édition : stocker textContent + attribut style
+    const editValue = JSON.stringify({
+      textContent: selectedElement.element.textContent,
+      style: selectedElement.element.getAttribute('style') || ''
+    });
+    updateElementEdit(selectedElement.element, 'text', editValue);
+  };
+
+  const handleLinkChange = (newUrl) => {
+    if (!selectedElement || selectedElement.element.tagName.toLowerCase() !== 'a') return;
+    
+    setLinkUrl(newUrl);
+    
+    // Ajouter le préfixe selon le type
+    let fullUrl = newUrl;
+    if (linkType === 'mail' && newUrl && !newUrl.startsWith('mailto:')) {
+      fullUrl = 'mailto:' + newUrl;
+    } else if (linkType === 'tel' && newUrl && !newUrl.startsWith('tel:')) {
+      fullUrl = 'tel:' + newUrl;
+    }
+    
+    selectedElement.element.setAttribute('href', fullUrl);
+    
+    // Tracker l'édition de lien
+    updateElementEdit(selectedElement.element, 'link', fullUrl, true);
+  };
+
+  const handleLinkTypeChange = (type) => {
+    setLinkType(type);
+    
+    // Si on passe en mode interne et qu'il n'y a pas d'URL ou que c'est une URL externe,
+    // réinitialiser avec la première page
+    if (type === 'internal' && (!linkUrl || linkUrl.startsWith('http') || linkUrl.includes('@') || linkUrl.match(/^\+?[0-9]/))) {
+      const firstPage = pages[0] || 'index.html';
+      const newUrl = firstPage === 'index.html' ? '/' : '/' + firstPage.replace('.html', '');
+      handleLinkChange(newUrl);
+    }
+    // Si on passe en mode externe et que c'est une URL interne, réinitialiser
+    else if (type === 'external' && linkUrl && !linkUrl.startsWith('http')) {
+      handleLinkChange('https://');
+    }
+    // Si on passe en mode mail
+    else if (type === 'mail') {
+      handleLinkChange(linkUrl.includes('@') ? linkUrl : 'exemple@email.com');
+    }
+    // Si on passe en mode tel
+    else if (type === 'tel') {
+      handleLinkChange(linkUrl.match(/^\+?[0-9]/) ? linkUrl : '+33612345678');
+    }
   };
 
   const toggleEditMode = async () => {
@@ -393,7 +715,6 @@ const StaticEditor = ({ onSave }) => {
     
     // Si on passe en mode édition, recharger le HTML depuis le serveur
     if (newEditMode && selectedWebsite?.id) {
-      console.log("rechargement")
       await loadEditModeHtml();
     }
     
@@ -401,8 +722,205 @@ const StaticEditor = ({ onSave }) => {
   };
 
   const handleIframeLoad = () => {
-    console.log('Iframe loaded, setting ready to true');
     setIsIframeReady(true);
+    extractPageMetaTags();
+  };
+
+  const extractPageMetaTags = () => {
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+
+    try {
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (!iframeDoc) return;
+
+      // Extraire le title
+      const titleTag = iframeDoc.querySelector('title');
+      const extractedTitle = titleTag ? titleTag.textContent || '' : '';
+      setPageTitle(extractedTitle);
+
+      // Extraire meta description
+      const metaDesc = iframeDoc.querySelector('meta[name="description"]');
+      const extractedMetaDesc = metaDesc ? metaDesc.getAttribute('content') || '' : '';
+      setMetaDescription(extractedMetaDesc);
+
+      // Extraire meta image
+      const metaImg = iframeDoc.querySelector('meta[name="image"]');
+      const extractedMetaImg = metaImg ? metaImg.getAttribute('content') || '' : '';
+      setMetaImage(extractedMetaImg);
+
+      // Extraire OG title
+      const ogTitleTag = iframeDoc.querySelector('meta[property="og:title"]');
+      const extractedOgTitle = ogTitleTag ? ogTitleTag.getAttribute('content') || '' : '';
+      setOgTitle(extractedOgTitle);
+
+      // Extraire OG description
+      const ogDescTag = iframeDoc.querySelector('meta[property="og:description"]');
+      const extractedOgDesc = ogDescTag ? ogDescTag.getAttribute('content') || '' : '';
+      setOgDescription(extractedOgDesc);
+
+      // Extraire OG image
+      const ogImgTag = iframeDoc.querySelector('meta[property="og:image"]');
+      const extractedOgImg = ogImgTag ? ogImgTag.getAttribute('content') || '' : '';
+      setOgImage(extractedOgImg);
+
+      // Extraire le slug depuis currentPage
+      setPageSlug(currentPage);
+
+      // Extraire les schemas JSON-LD (schema.org)
+      const schemaScripts = iframeDoc.querySelectorAll('script[type="application/ld+json"]');
+      const extractedSchemas = [];
+      schemaScripts.forEach((script) => {
+        try {
+          const schemaData = JSON.parse(script.textContent);
+          extractedSchemas.push(schemaData);
+        } catch (e) {
+          console.error('Erreur lors du parsing du schema JSON-LD:', e);
+        }
+      });
+      setSchemas(extractedSchemas);
+
+      // Sauvegarder les valeurs initiales pour détecter les modifications
+      const initialSettings = {
+        pageTitle: extractedTitle,
+        metaDescription: extractedMetaDesc,
+        ogTitle: extractedOgTitle,
+        ogDescription: extractedOgDesc,
+        ogImage: extractedOgImg,
+        metaImage: extractedMetaImg
+      };
+      setInitialPageSettings(initialSettings);
+      setHasUnsavedChanges(false);
+
+    } catch (error) {
+      console.error('Erreur lors de l\'extraction des meta tags:', error);
+    }
+  };
+
+  const handleSavePageSettings = () => {
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+
+    try {
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (!iframeDoc) return;
+
+      // Mettre à jour le title
+      let titleTag = iframeDoc.querySelector('title');
+      if (titleTag) {
+        titleTag.textContent = pageTitle;
+      } else if (pageTitle) {
+        titleTag = iframeDoc.createElement('title');
+        titleTag.textContent = pageTitle;
+        iframeDoc.head.appendChild(titleTag);
+      }
+
+      // Mettre à jour meta description
+      let metaDesc = iframeDoc.querySelector('meta[name="description"]');
+      if (metaDesc) {
+        metaDesc.setAttribute('content', metaDescription);
+      } else if (metaDescription) {
+        metaDesc = iframeDoc.createElement('meta');
+        metaDesc.setAttribute('name', 'description');
+        metaDesc.setAttribute('content', metaDescription);
+        iframeDoc.head.appendChild(metaDesc);
+      }
+
+      // Mettre à jour meta image
+      let metaImg = iframeDoc.querySelector('meta[name="image"]');
+      if (metaImg) {
+        metaImg.setAttribute('content', metaImage);
+      } else if (metaImage) {
+        metaImg = iframeDoc.createElement('meta');
+        metaImg.setAttribute('name', 'image');
+        metaImg.setAttribute('content', metaImage);
+        iframeDoc.head.appendChild(metaImg);
+      }
+
+      // Mettre à jour OG title
+      let ogTitleTag = iframeDoc.querySelector('meta[property="og:title"]');
+      if (ogTitleTag) {
+        ogTitleTag.setAttribute('content', ogTitle);
+      } else if (ogTitle) {
+        ogTitleTag = iframeDoc.createElement('meta');
+        ogTitleTag.setAttribute('property', 'og:title');
+        ogTitleTag.setAttribute('content', ogTitle);
+        iframeDoc.head.appendChild(ogTitleTag);
+      }
+
+      // Mettre à jour OG description
+      let ogDescTag = iframeDoc.querySelector('meta[property="og:description"]');
+      if (ogDescTag) {
+        ogDescTag.setAttribute('content', ogDescription);
+      } else if (ogDescription) {
+        ogDescTag = iframeDoc.createElement('meta');
+        ogDescTag.setAttribute('property', 'og:description');
+        ogDescTag.setAttribute('content', ogDescription);
+        iframeDoc.head.appendChild(ogDescTag);
+      }
+
+      // Mettre à jour OG image
+      let ogImgTag = iframeDoc.querySelector('meta[property="og:image"]');
+      if (ogImgTag) {
+        ogImgTag.setAttribute('content', ogImage);
+      } else if (ogImage) {
+        ogImgTag = iframeDoc.createElement('meta');
+        ogImgTag.setAttribute('property', 'og:image');
+        ogImgTag.setAttribute('content', ogImage);
+        iframeDoc.head.appendChild(ogImgTag);
+      }
+
+      
+      // Réinitialiser le flag de modifications
+      setHasUnsavedChanges(false);
+      setInitialPageSettings({
+        pageTitle,
+        metaDescription,
+        ogTitle,
+        ogDescription,
+        ogImage,
+        metaImage
+      });
+      
+      // Sauvegarder les modifications via l'API
+      handleSave();
+      
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde des paramètres:', error);
+    }
+  };
+
+  const handleClosePageSettings = () => {
+    if (hasUnsavedChanges) {
+      setShowUnsavedChangesPopup(true);
+      return;
+    }
+    // Réinitialiser les valeurs aux valeurs initiales même si pas de changements détectés
+    setPageTitle(initialPageSettings.pageTitle || '');
+    setMetaDescription(initialPageSettings.metaDescription || '');
+    setOgTitle(initialPageSettings.ogTitle || '');
+    setOgDescription(initialPageSettings.ogDescription || '');
+    setOgImage(initialPageSettings.ogImage || '');
+    setMetaImage(initialPageSettings.metaImage || '');
+    setIsPageSettingsOpen(false);
+    setHasUnsavedChanges(false);
+  };
+
+  const handleConfirmCloseWithoutSaving = () => {
+    setShowUnsavedChangesPopup(false);
+    setIsPageSettingsOpen(false);
+    setHasUnsavedChanges(false);
+    // Réinitialiser les valeurs aux valeurs initiales
+    setPageTitle(initialPageSettings.pageTitle || '');
+    setMetaDescription(initialPageSettings.metaDescription || '');
+    setOgTitle(initialPageSettings.ogTitle || '');
+    setOgDescription(initialPageSettings.ogDescription || '');
+    setOgImage(initialPageSettings.ogImage || '');
+    setMetaImage(initialPageSettings.metaImage || '');
+  };
+
+  const handleCancelClose = () => {
+    setShowUnsavedChangesPopup(false);
   };
 
   const getPageDisplayName = (pageName) => {
@@ -467,12 +985,13 @@ const StaticEditor = ({ onSave }) => {
     } else {
       setSiteUrl(`${config.apiUrl}/scraping/scraped/${selectedWebsite.id}/${pageName}`);
     }
+    
+    // Les meta tags seront extraits dans handleIframeLoad après le chargement
   };
 
   const debugIframe = () => {
     const iframe = iframeRef.current;
     if (!iframe) {
-      console.log('Iframe non disponible');
       return;
     }
 
@@ -480,16 +999,12 @@ const StaticEditor = ({ onSave }) => {
       const iframeDoc = iframe.contentDocument;
       const iframeWin = iframe.contentWindow;
       
-      console.log('=== DEBUG IFRAME ===');
-      console.log('Document:', iframeDoc ? 'OK' : 'Non accessible');
-      console.log('Window:', iframeWin ? 'OK' : 'Non accessible');
+
       
       if (iframeDoc) {
         const baseTag = iframeDoc.querySelector('base');
-        console.log('Balise base:', baseTag ? baseTag.href : 'Absente');
         
         const scripts = iframeDoc.querySelectorAll('script');
-        console.log('Nombre de scripts:', scripts.length);
         
         let inlineScripts = 0;
         let externalScripts = 0;
@@ -504,7 +1019,6 @@ const StaticEditor = ({ onSave }) => {
         
         
         if (iframeWin) {
-          console.log('window.Webflow:', iframeWin.Webflow ? 'Présent' : 'Absent');
           if (iframeWin.Webflow && iframeWin.Webflow.require) {
             try {
               const ix2 = iframeWin.Webflow.require('ix2');
@@ -514,7 +1028,6 @@ const StaticEditor = ({ onSave }) => {
         }
         
         const fonts = iframeDoc.querySelectorAll('link[rel="preconnect"], link[href*="fonts"]');
-        console.log('Liens de fonts:', fonts.length);
       }
     } catch(e) {
       console.error('Erreur debug iframe:', e);
@@ -523,24 +1036,74 @@ const StaticEditor = ({ onSave }) => {
 
   const handleSave = async () => {
     const iframe = iframeRef.current;
-    if (!iframe) return;
+    if (!iframe || elementEdits.length === 0) {
+      return;
+    }
 
     try {
-      const iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
-      const htmlContent = iframeDocument.documentElement.outerHTML;
+      setIsSaving(true);
       
-      // Sauvegarder via l'API
-      const data = await saveSiteModifications(selectedWebsite.id, htmlContent, token);
+      // Filtrer pour ne garder que la dernière édition de chaque élément
+      // Utiliser un Map pour automatiquement écraser les doublons
+      const uniqueEditsMap = new Map();
+      elementEdits.forEach(edit => {
+        uniqueEditsMap.set(edit.elementPath, edit);
+      });
+      
+      // Convertir le Map en array
+      const uniqueEdits = Array.from(uniqueEditsMap.values());
+      
+      console.log(`Envoi de ${uniqueEdits.length} édition(s) unique(s) sur ${elementEdits.length} total`);
+      
+      // Envoyer les éditions à l'API
+      const response = await fetch(`${config.apiUrl}/websites/${selectedWebsite.id}/edits/bulk`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          edits: uniqueEdits.map(edit => ({
+            pagePath: currentPage,
+            elementPath: edit.elementPath,
+            editType: edit.type,
+            value: edit.value
+          }))
+        })
+      });
+
+      // Vérifier si la réponse est OK
+      if (!response.ok) {
+        const contentType = response.headers.get('content-type');
+        let errorMessage = `Erreur ${response.status}: ${response.statusText}`;
+        
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } else {
+          // Si ce n'est pas du JSON, lire le texte
+          const errorText = await response.text();
+          console.error('Réponse non-JSON:', errorText);
+        }
+        
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
 
       if (data.success) {
-        alert('Modifications sauvegardées avec succès !');
+        // Vider les éditions en cours après sauvegarde
+        setElementEdits([]);
         if (onSave) {
-          onSave(htmlContent);
+          onSave(data);
         }
+      } else {
+        throw new Error(data.error || 'Erreur lors de la sauvegarde');
       }
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
-      alert('Erreur lors de la sauvegarde');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -575,7 +1138,15 @@ const StaticEditor = ({ onSave }) => {
             <PiArrowSquareIn/> 
           </SmallIconButton>
           
-          
+          {isEditMode && (
+            <SmallIconButton
+              className={isPageSettingsOpen ? 'active' : ''}
+              onClick={() => setIsPageSettingsOpen(!isPageSettingsOpen)}
+              title="Paramètres de la page"
+            >
+              <PiFile />
+            </SmallIconButton>
+          )}
         </div>
         <div className='static-edito-action-wrapper is-center'>
           <div className='static-editor-size-wrapper'>
@@ -723,8 +1294,9 @@ const StaticEditor = ({ onSave }) => {
               
               <DefaultButton
                 onClick={handleSave}
+                disabled={isSaving || elementEdits.length === 0}
               >
-                Enregistrer
+                {isSaving ? 'Sauvegarde...' : `Enregistrer`}
               </DefaultButton>
             </>
           )}
@@ -732,20 +1304,217 @@ const StaticEditor = ({ onSave }) => {
       </div>
       
       <div className="static-editor-content" onClick={() => {
-        console.log('Click on editor content, menu open:', openPageMenu);
         if (openPageMenu) {
-          console.log('Closing page menu');
           setOpenPageMenu(false);
           setPageSearch('');
+        }
+        // Ne pas fermer la sidebar si la popup est déjà ouverte
+        if (isPageSettingsOpen && !showUnsavedChangesPopup) {
+          handleClosePageSettings();
         }
       }}>
         {isEditMode && editModeHtml ? (
           <>
+            {/* Sidebar des paramètres de page */}
+            {isPageSettingsOpen && (
+              <ClickAwayListener onClickAway={() => {
+                // Ne pas fermer si la popup est ouverte
+                if (!showUnsavedChangesPopup) {
+                  handleClosePageSettings();
+                }
+              }}>
+                <div className="static-editor-sidebar is-left" onClick={(e) => e.stopPropagation()}>
+                  <div className="sidebar-section">
+                    <div className="sidebar-header">
+                      <p style={{fontWeight: '600'}}>Paramètres de la page</p>
+                      <DefaultButton
+                        onClick={handleSavePageSettings}
+                      >
+                        Enregistrer
+                      </DefaultButton>
+                    </div>
+                  
+                  <div className='sidebar-editor-box'>
+                    <h4>URL</h4>
+                    <div>
+                      <p className="sidebar-label">Slug de la page</p>
+                      <p className="sidebar-value">{pageSlug || 'index.html'}</p>
+                    </div>
+                  </div>
+
+                  <div className='sidebar-line'></div>
+
+                  <div className='sidebar-editor-box'>
+                    <h4>SEO</h4>
+                    <div>
+                      <p className="sidebar-label">Title tag</p>
+                      <input
+                        className="input_text_blog is-small"
+                        type="text"
+                        value={pageTitle}
+                        onChange={(e) => setPageTitle(e.target.value)}
+                        placeholder="Titre de la page"
+                      />
+                    </div>
+                    <div style={{ marginTop: '1rem' }}>
+                      <p className="sidebar-label">Meta description</p>
+                      <textarea
+                        className="input_text_blog"
+                        value={metaDescription}
+                        onChange={(e) => setMetaDescription(e.target.value)}
+                        placeholder="Description pour les moteurs de recherche"
+                        rows={3}
+                      />
+                    </div>
+                    <div style={{ marginTop: '1rem' }}>
+                      <p className="sidebar-label">Meta image</p>
+                      <input
+                        className="input_text_blog is-small"
+                        type="text"
+                        value={metaImage}
+                        onChange={(e) => setMetaImage(e.target.value)}
+                        placeholder="URL de l'image"
+                      />
+                    </div>
+                    
+                    {/* Google Preview */}
+                    <div style={{ marginTop: '1.5rem' }}>
+                      <p className="sidebar-label" style={{ marginBottom: '0.5rem' }}>Aperçu Google</p>
+                      <div className="google-preview">
+                        <div className="google-preview-title">
+                          {pageTitle || 'Titre de la page'}
+                        </div>
+                        <div className="google-preview-url">
+                          {selectedWebsite?.domainName ? 
+                            `${selectedWebsite.domainName}${pageSlug && pageSlug !== 'index.html' ? '/' + pageSlug.replace('.html', '') : ''}` 
+                            : 'votre-site.com'
+                          }
+                        </div>
+                        <div className="google-preview-description">
+                          {metaDescription || 'La description de votre page apparaîtra ici. Elle aide les utilisateurs à comprendre le contenu de votre page.'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className='sidebar-line'></div>
+
+                  <div className='sidebar-editor-box'>
+                    <h4>Open Graph</h4>
+                    <div>
+                      <p className="sidebar-label">OG Title</p>
+                      <input
+                        className="input_text_blog is-small"
+                        type="text"
+                        value={ogTitle}
+                        onChange={(e) => setOgTitle(e.target.value)}
+                        placeholder="Titre pour les réseaux sociaux"
+                      />
+                    </div>
+                    <div style={{ marginTop: '1rem' }}>
+                      <p className="sidebar-label">OG Description</p>
+                      <textarea
+                        className="input_text_blog"
+                        value={ogDescription}
+                        onChange={(e) => setOgDescription(e.target.value)}
+                        placeholder="Description pour les réseaux sociaux"
+                        rows={3}
+                      />
+                    </div>
+                    <div style={{ marginTop: '1rem' }}>
+                      <p className="sidebar-label">OG Image</p>
+                      <input
+                        className="input_text_blog is-small"
+                        type="text"
+                        value={ogImage}
+                        onChange={(e) => setOgImage(e.target.value)}
+                        placeholder="URL de l'image"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className='sidebar-line'></div>
+                  
+                  <div className='sidebar-editor-box'>
+                    <h4>Schema.org (JSON-LD)</h4>
+                    {schemas.length > 0 ? (
+                      <>
+                        <p className="sidebar-label" style={{ marginBottom: '0.5rem' }}>
+                          {schemas.length} schema{schemas.length > 1 ? 's' : ''} détecté{schemas.length > 1 ? 's' : ''}
+                        </p>
+                        {schemas.map((schema, index) => (
+                          <div key={index} className="schema-preview">
+                            <div className="schema-type">
+                              {Array.isArray(schema['@type']) 
+                                ? schema['@type'].join(', ') 
+                                : schema['@type'] || 'Non spécifié'}
+                            </div>
+                            {schema.name && (
+                              <div className="schema-name">{schema.name}</div>
+                            )}
+                            <details className="schema-details" open>
+                              <summary>Voir/Modifier le JSON</summary>
+                              <textarea
+                                className="schema-json-editor"
+                                value={JSON.stringify(schema, null, 2)}
+                                readOnly
+                                rows={10}
+                              />
+                            </details>
+                          </div>
+                        ))}
+                      </>
+                    ) : (
+                      <>
+                        <p className="sidebar-label" style={{ marginBottom: '0.5rem' }}>
+                          Aucun schema détecté
+                        </p>
+                        <div className="schema-preview">
+                          <p className="sidebar-label" style={{ marginBottom: '0.5rem', fontSize: '0.8rem' }}>
+                            Ajoutez un schema JSON-LD :
+                          </p>
+                          <textarea
+                            className="schema-json-editor"
+                            placeholder={`{\n  "@context": "https://schema.org",\n  "@type": "Organization",\n  "name": "Votre entreprise",\n  "url": "https://votre-site.com"\n}`}
+                            rows={10}
+                          />
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+                </div>
+              </ClickAwayListener>
+            )}
+
             <div className="canvas-viewport" ref={viewportRef}>
               <motion.div 
                 className="iframe-container"
                 style={{ width, height: '100%', position: 'relative' }}
               >
+                {/* Loader pendant le chargement */}
+                {(isLoadingEdits || !isIframeReady) && (
+                  <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: theme.palette.primary.main,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1000,
+                    flexDirection: 'column',
+                    gap: '1rem'
+                  }}>
+                    <CircularProgress style={{ color: theme.palette.text.primary }} />
+                    <p style={{ color: theme.palette.text.secondary }}>
+                      {!isIframeReady ? 'Chargement de la page...' : 'Application des modifications...'}
+                    </p>
+                  </div>
+                )}
+                
                 <iframe
                   key={`iframe-edit-${iframeKey}`}
                   ref={iframeRef}
@@ -753,10 +1522,14 @@ const StaticEditor = ({ onSave }) => {
                   className="static-editor-iframe"
                   title="Site Preview"
                   sandbox="allow-same-origin allow-scripts"
-                  style={{ pointerEvents: isDragging ? 'none' : 'auto' }}
+                  style={{ 
+                    pointerEvents: isDragging ? 'none' : 'auto',
+                    opacity: (isLoadingEdits || !isIframeReady) ? 0 : 1,
+                    transition: 'opacity 0.3s ease-in-out'
+                  }}
                   onLoad={handleIframeLoad}
                 />
-                {isIframeReady && (
+                {isIframeReady && !isLoadingEdits && (
                   <OverlaySystem
                     key={`overlay-${iframeKey}`}
                     iframeRef={iframeRef}
@@ -801,6 +1574,7 @@ const StaticEditor = ({ onSave }) => {
                   </h3>                  
                   {selectedElement.type === 'text' && (
                     <div className='sidebar-editor-box'>
+                      <h4>Contenu</h4>
                       <div>
                         <p className="sidebar-label">Texte</p>
                         <textarea
@@ -811,6 +1585,10 @@ const StaticEditor = ({ onSave }) => {
                           rows={6}
                         />
                       </div>
+
+                      <div className='sidebar-line'></div>
+
+                      <h4>Style</h4>
 
                       {/* Style Controls */}
                       <div className="style-controls">
@@ -933,51 +1711,295 @@ const StaticEditor = ({ onSave }) => {
                         </div>
                       </div>
                       
-                      <DefaultButton
-                        className="sidebar-button"
-                        onClick={handleApplyChanges}
-                      >
-                        Appliquer les modifications
-                      </DefaultButton>
+                      {/* Section Lien - seulement pour les balises <a> */}
+                      {selectedElement.element.tagName.toLowerCase() === 'a' && (
+                        <>
+                          <div className='sidebar-line'></div>
+                          
+                          <h4>Lien</h4>
+                          
+                          <div className="style-controls">
+                            <div className="style-control-group">
+                              <p className="sidebar-label">Type de lien</p>
+                              <div className="button-group">
+                                <button
+                                  className={`style-toggle-button ${linkType === 'internal' ? 'active' : ''}`}
+                                  onClick={() => handleLinkTypeChange('internal')}
+                                  title="Page interne"
+                                >
+                                  <PiFile  />
+                                </button>
+                                <button
+                                  className={`style-toggle-button ${linkType === 'external' ? 'active' : ''}`}
+                                  onClick={() => handleLinkTypeChange('external')}
+                                  title="Lien externe"
+                                >
+                                  <PiLinkSimple/>
+                                </button>
+                                <button
+                                  className={`style-toggle-button ${linkType === 'mail' ? 'active' : ''}`}
+                                  onClick={() => handleLinkTypeChange('mail')}
+                                  title="Adresse email"
+                                >
+                                  <PiEnvelope/>
+                                </button>
+                                <button
+                                  className={`style-toggle-button ${linkType === 'tel' ? 'active' : ''}`}
+                                  onClick={() => handleLinkTypeChange('tel')}
+                                  title="Numéro de téléphone"
+                                >
+                                  <PiPhone/>
+                                </button>
+                              </div>
+                            </div>
+                            
+                            {linkType === 'external' ? (
+                              <div className="style-control-group">
+                                <p className="sidebar-label">URL externe</p>
+                                <input
+                                  className="input_text_blog is-small"
+                                  type="text"
+                                  value={linkUrl}
+                                  onChange={(e) => handleLinkChange(e.target.value)}
+                                  placeholder="https://example.com"
+                                />
+                              </div>
+                            ) : linkType === 'mail' ? (
+                              <div className="style-control-group">
+                                <p className="sidebar-label">Adresse email</p>
+                                <input
+                                  className="input_text_blog is-small"
+                                  type="email"
+                                  value={linkUrl}
+                                  onChange={(e) => handleLinkChange(e.target.value)}
+                                  placeholder="exemple@email.com"
+                                />
+                              </div>
+                            ) : linkType === 'tel' ? (
+                              <div className="style-control-group">
+                                <p className="sidebar-label">Numéro de téléphone</p>
+                                <input
+                                  className="input_text_blog is-small"
+                                  type="tel"
+                                  value={linkUrl}
+                                  onChange={(e) => handleLinkChange(e.target.value)}
+                                  placeholder="+33612345678"
+                                />
+                              </div>
+                            ) : (
+                              <div className="style-control-group">
+                                <p className="sidebar-label">Page de destination</p>
+                                <select 
+                                  className="input_text_blog is-small"
+                                  value={linkUrl}
+                                  onChange={(e) => handleLinkChange(e.target.value)}
+                                >
+                                  {/* Option pour le lien actuel s'il ne correspond à aucune page */}
+                                  {linkUrl && !pages.some(page => {
+                                    const pageUrl = page === 'index.html' ? '/' : '/' + page.replace('.html', '');
+                                    return pageUrl === linkUrl;
+                                  }) && (
+                                    <option value={linkUrl}>
+                                      {linkUrl} (lien actuel)
+                                    </option>
+                                  )}
+                                  {pages.map((page) => {
+                                    const pageUrl = page === 'index.html' ? '/' : '/' + page.replace('.html', '');
+                                    const displayName = getPageDisplayName(page);
+                                    return (
+                                      <option key={page} value={pageUrl}>
+                                        {displayName}
+                                      </option>
+                                    );
+                                  })}
+                                </select>
+                              </div>
+                            )}
+                          </div>
+                        </>
+                      )}
                     </div>
                   )}
                   
                   {selectedElement.type === 'image' && (
-                    <>
-                      <div>
-                        <label className="sidebar-label">URL de l'image</label>
-                        <input
-                          className="sidebar-input"
-                          type="text"
-                          placeholder="https://..."
+                    <div className='sidebar-editor-box'>
+                      <h4>Image</h4>
+                      <div className="sidebar-image-container" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+                        <img 
+                          className='Image_uploaded' 
+                          src={selectedElement.element.src} 
+                          alt={selectedElement.element.alt || ''} 
+                          style={{ 
+                            width: '100%', 
+                            borderRadius: '0.5rem',
+                            marginBottom: '1rem'
+                          }}
                         />
+                        <div className='sidebar-image-info-container' style={{ width: '100%' }}>
+                          <div>
+                            <p className='sidebar-label'>Texte alternatif (alt)</p>
+                            <input
+                              className="input_text_blog is-small"
+                              type="text"
+                              value={selectedElement.element.alt || ''}
+                              onChange={(e) => {
+                                selectedElement.element.alt = e.target.value;
+                                setSelectedElement({...selectedElement});
+                                
+                                // Tracker l'édition d'alt avec la fonction utilitaire
+                                updateElementEdit(selectedElement.element, 'image', selectedElement.element.outerHTML);
+                              }}
+                              placeholder="Description de l'image"
+                            />
+                          </div>
+                          
+                          <div className='flex_contain flex_image' style={{ marginTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <p style={{ color: 'var(--color-text-secondary)', margin: 0 }}>
+                              {selectedElement.element.naturalWidth && selectedElement.element.naturalHeight 
+                                ? `${selectedElement.element.naturalWidth} × ${selectedElement.element.naturalHeight}` 
+                                : 'Chargement...'}
+                            </p>
+                            <a 
+                              href={selectedElement.element.src} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              style={{ 
+                                color: 'var(--color-text-primary)',
+                                display: 'flex',
+                                alignItems: 'center'
+                              }}
+                            >
+                              <OpenInNewOutlinedIcon style={{ color: 'var(--color-text-secondary)' }} fontSize='small' />
+                            </a>
+                          </div>
+                          
+                          <div className='button_contain' style={{ marginTop: '1rem' }}>
+                            <input 
+                              className='input_image_blog' 
+                              type="file" 
+                              id="image-file-input" 
+                              accept=".jpeg,.jpg,.png,.webp,.avif,.gif,.svg"
+                              style={{ display: 'none' }}
+                              onChange={(e) => {
+                                const file = e.target.files[0];
+                                if (file) {
+                                  const reader = new FileReader();
+                                  reader.onload = (event) => {
+                                    const newImageSrc = event.target.result;
+                                    selectedElement.element.src = newImageSrc;
+                                    
+                                    // Tracker l'édition d'image avec la fonction utilitaire
+                                    updateElementEdit(selectedElement.element, 'image', newImageSrc);
+                                    
+                                    // Forcer le rechargement de l'image pour obtenir les nouvelles dimensions
+                                    const img = new Image();
+                                    img.onload = () => {
+                                      selectedElement.element.naturalWidth = img.naturalWidth;
+                                      selectedElement.element.naturalHeight = img.naturalHeight;
+                                      setSelectedElement({...selectedElement});
+                                    };
+                                    img.src = newImageSrc;
+                                  };
+                                  reader.readAsDataURL(file);
+                                }
+                                // Réinitialiser l'input pour permettre de sélectionner le même fichier à nouveau
+                                e.target.value = '';
+                              }}
+                            />
+                            <SecondaryButton 
+                              className="button_image_blog" 
+                              type="button"
+                              onClick={() => document.getElementById('image-file-input').click()}
+                            >
+                              Remplacer
+                            </SecondaryButton>
+                          </div>
+                        </div>
                       </div>
-                      <button className="sidebar-button">
-                        Modifier l'image
-                      </button>
-                    </>
+                    </div>
                   )}
                 </div>
               ) : (
                 <div className="sidebar-empty">
-                  <PiPencilSimpleLight fontSize={"3rem"}/>
+                  <PiCursorClickThin  fontSize={"3rem"}/>
                   <p>Cliquez sur un élément de la page pour le modifier</p>
                 </div>
               )}
             </div>
           </>
         ) : (
-          <iframe
-            key={`iframe-preview-${iframeKey}`}
-            ref={iframeRef}
-            src={siteUrl}
-            className="static-editor-iframe"
-            title="Site Preview"
-            sandbox="allow-same-origin allow-scripts"
-            onLoad={handleIframeLoad}
-          />
+          <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+            {/* Loader pendant le chargement */}
+            {(isLoadingEdits || !isIframeReady) && (
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: theme.palette.primary.main,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 1000,
+                flexDirection: 'column',
+                gap: '1rem'
+              }}>
+                <CircularProgress style={{ color: theme.palette.text.primary }} />
+                <p style={{ color: theme.palette.text.secondary }}>
+                  {!isIframeReady ? 'Chargement de la page...' : 'Application des modifications...'}
+                </p>
+              </div>
+            )}
+            
+            <iframe
+              key={`iframe-preview-${iframeKey}`}
+              ref={iframeRef}
+              src={siteUrl}
+              className="static-editor-iframe"
+              title="Site Preview"
+              sandbox="allow-same-origin allow-scripts"
+              style={{ 
+                opacity: (isLoadingEdits || !isIframeReady) ? 0 : 1,
+                transition: 'opacity 0.3s ease-in-out'
+              }}
+              onLoad={handleIframeLoad}
+            />
+          </div>
         )}
       </div>
+
+      {/* Popup de confirmation pour les modifications non sauvegardées */}
+      {showUnsavedChangesPopup && (
+        <div className="unsaved-changes-overlay" onClick={(e) => {
+          // Fermer la popup si on clique sur l'overlay
+          if (e.target === e.currentTarget) {
+            handleCancelClose();
+          }
+        }}>
+          <div className="unsaved-changes-popup" onClick={(e) => e.stopPropagation()}>
+            <h3>Modifications non sauvegardées</h3>
+            <p>Vous avez des modifications non sauvegardées. Voulez-vous vraiment fermer sans enregistrer ?</p>
+            <div className="unsaved-changes-actions">
+              <SecondaryButton onClick={(e) => {
+                e.stopPropagation();
+                handleCancelClose();
+              }}>
+                Annuler
+              </SecondaryButton>
+              <DefaultButton 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleConfirmCloseWithoutSaving();
+                }}
+                style={{ backgroundColor: 'var(--color-error)', borderColor: 'var(--color-error)' }}
+              >
+                Fermer sans enregistrer
+              </DefaultButton>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

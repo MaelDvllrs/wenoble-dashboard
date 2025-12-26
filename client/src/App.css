@@ -152,6 +152,7 @@ button{
     display: flex;
     justify-content: center;
     width: calc(100% - 18rem);
+    z-index: 19;
 }
 
 .outlet-box{

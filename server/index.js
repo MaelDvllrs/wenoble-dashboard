@@ -43,6 +43,8 @@ const externalAPIRouter = require('./external/externalAPI');
 const apiTokensRouter = require('./api/apiTokens');
 // Scraping
 const scrapingRouter = require('./scrapping/scraping');
+// Static site edits
+const staticEditRouter = require('./static/editRoutes');
 //
 const { notificationRouter, notificationServer } = require('./users/notification');
 
@@ -165,6 +167,7 @@ app.use('/external-api', externalAPIRouter);
 
 //
 app.use('/api', apiRouter);
+app.use(staticEditRouter); // Static site edits API (sans préfixe /api)
 app.use(express.static('public'));
 app.get('/blog-template-loader.js', (req, res) => {
  res.sendFile(path.join(__dirname, 'public', 'blog-loader.js'));

@@ -183,12 +183,18 @@ const OverlaySystem = ({ iframeRef, selectedElement, onElementHover, onElementSe
         element.focus();
         setIsEditing(true);
         
-        // Sélectionner tout le texte
+        // Placer le curseur à la fin du texte (sans sélectionner)
         const range = iframeDoc.createRange();
-        range.selectNodeContents(element);
         const selection = iframeDoc.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(range);
+        
+        // Trouver le dernier nœud texte
+        const lastTextNode = getLastTextNode(element);
+        if (lastTextNode) {
+          range.setStart(lastTextNode, lastTextNode.length);
+          range.collapse(true);
+          selection.removeAllRanges();
+          selection.addRange(range);
+        }
 
         // Désactiver contentEditable sur blur
         const handleBlur = () => {
@@ -198,6 +204,19 @@ const OverlaySystem = ({ iframeRef, selectedElement, onElementHover, onElementSe
         };
         element.addEventListener('blur', handleBlur);
       }
+    };
+    
+    // Fonction helper pour trouver le dernier nœud texte
+    const getLastTextNode = (node) => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        return node;
+      }
+      const children = node.childNodes;
+      for (let i = children.length - 1; i >= 0; i--) {
+        const textNode = getLastTextNode(children[i]);
+        if (textNode) return textNode;
+      }
+      return null;
     };
 
     iframeDoc.addEventListener('mousemove', handleMouseMove);
@@ -221,7 +240,7 @@ const OverlaySystem = ({ iframeRef, selectedElement, onElementHover, onElementSe
         width: '100%',
         height: '100%',
         pointerEvents: 'none',
-        zIndex: 1000,
+        zIndex: 50,
         overflow: 'hidden'
       }}
     >
