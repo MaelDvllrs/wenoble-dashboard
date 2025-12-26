@@ -5,7 +5,7 @@ const fs = require('fs');
 const cors = require('cors')
 const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
-const { supabaseServer } = require('../supabase');
+const { supabaseServer, supabaseServerAdmin } = require('../supabase');
 const { authenticateToken } = require('../middleware/authToken');
 const { checkUserWebsiteAccess } = require('../website/website');
 
@@ -123,12 +123,16 @@ router.get('/getConfigPage',authenticateToken, async (req, res) => {
       return res.status(403).json({ error: 'Accès non autorisé à cette page' });
     }
 
+    // Récupérer la config
     const { data, error } = await supabase
       .from('page_config')
       .select('*')
       .eq('id_page', pageId)
       .order('id_config', { ascending: true });
     if (error) throw error;
+    
+    console.log('Config data retrieved:', data);
+    
     const pageCrypt = jwt.sign({ page: data }, secretKey);
     res.send(pageCrypt);
   } catch (error) {
@@ -169,12 +173,18 @@ router.get('/getImagePage',authenticateToken, async (req, res) => {
       return res.status(403).json({ error: 'Accès non autorisé à cette page' });
     }
 
-    const { data, error } = await supabase
+    // Utiliser le client admin pour les tables d'éléments uniquement
+    const supabaseAdmin = supabaseServerAdmin();
+
+    const { data, error } = await supabaseAdmin
       .from('page_photo')
       .select('id_config, src_image, name_image, alt_image, size')
       .eq('id_page', sentIdPage)
       .eq('id_config', sentIdConfig);
     if (error) throw error;
+    
+    console.log('Fetched image data for page', sentIdPage, 'config', sentIdConfig, ':', data);
+    
     const imagesData = (data || []).map(image => ({
       id_config: image.id_config,
       name: image.name_image || 'default_name',
@@ -200,6 +210,8 @@ router.get('/getPageTexte',authenticateToken, async (req, res) => {
   const idConfig = req.query.IdConfig;
   const userId = req.user.idUser;
 
+  console.log('Fetching text for page ID:', pageId, '(type:', typeof pageId, ') and config ID:', idConfig, '(type:', typeof idConfig, ')');
+
   if (!pageId) {
     return res.status(400).send("L'id de la page est manquant.");
   }
@@ -223,14 +235,28 @@ router.get('/getPageTexte',authenticateToken, async (req, res) => {
       return res.status(403).json({ error: 'Accès non autorisé à cette page' });
     }
 
-    const { data, error } = await supabase
+    // Utiliser le client admin pour les tables d'éléments uniquement
+    const supabaseAdmin = supabaseServerAdmin();
+
+    // Vérifier d'abord toutes les entrées pour cette page
+    const { data: allPageText, error: allError } = await supabaseAdmin
+      .from('page_text')
+      .select('*')
+      .eq('id_page', pageId);
+    
+    console.log('All text entries for page:', allPageText);
+
+    const { data, error } = await supabaseAdmin
       .from('page_text')
       .select('text, id_text, id_config')
       .eq('id_page', pageId)
       .eq('id_config', idConfig);
     if (error) throw error;
+
+    console.log('Fetched text data for id_config', idConfig, ':', data);
     res.status(200).json(data);
   } catch (error) {
+    console.error('Erreur lors de la récupération du texte :', error);
     res.status(500).send({ error: error.message });
   }
 });
@@ -269,12 +295,17 @@ router.get('/getPageRichText',authenticateToken, async (req, res) => {
       return res.status(403).json({ error: 'Accès non autorisé à cette page' });
     }
 
-    const { data, error } = await supabase
+    // Utiliser le client admin pour les tables d'éléments uniquement
+    const supabaseAdmin = supabaseServerAdmin();
+
+    const { data, error } = await supabaseAdmin
       .from('page_richtext')
       .select('text_json, id_richtext, id_config')
       .eq('id_page', pageId)
       .eq('id_config', idConfig);
     if (error) throw error;
+    
+    console.log('Fetched richtext data for page', pageId, 'config', idConfig, ':', data);
     res.send(data);
   } catch (error) {
     console.error('Erreur lors de la récupération du richtext :', error);
@@ -386,15 +417,27 @@ router.post('/updateTextPage',authenticateToken, async (req, res) => {
     if (!hasAccess) {
       return res.status(403).json({ error: 'Accès non autorisé à cette page' });
     }
-
-    const updatePromises = text.map(item =>
-      supabase
+    
+    // Utiliser le client admin pour les tables d'éléments uniquement
+    const supabaseAdmin = supabaseServerAdmin();
+    
+    console.log('updating text for page id:', id_page)
+    console.log('items to update:', text)
+    
+    // Mettre à jour chaque texte individuellement
+    for (const item of text) {
+      const { error: updateError } = await supabaseAdmin
         .from('page_text')
         .update({ text: item.value })
         .eq('id_config', item.id_config)
-        .eq('id_page', id_page)
-    );
-    await Promise.all(updatePromises);
+        .eq('id_page', id_page);
+      
+      if (updateError) {
+        console.error('Erreur lors de la mise à jour du texte:', updateError);
+        throw updateError;
+      }
+    }
+    
     console.log('text mis a jour')
     res.status(200).send('Textes mis à jour avec succès');
   } catch (err) {
@@ -439,14 +482,23 @@ router.post('/updateRichTextPage',authenticateToken, async (req, res) => {
       return res.status(403).json({ error: 'Accès non autorisé à cette page' });
     }
 
-    const updatePromises = richtext.map(item =>
-      supabase
+    // Utiliser le client admin pour les tables d'éléments uniquement
+    const supabaseAdmin = supabaseServerAdmin();
+
+    // Mettre à jour chaque richtext individuellement
+    for (const item of richtext) {
+      const { error: updateError } = await supabaseAdmin
         .from('page_richtext')
         .update({ text_json: item.richText })
         .eq('id_config', item.id_config)
-        .eq('id_page', id_page)
-    );
-    await Promise.all(updatePromises);
+        .eq('id_page', id_page);
+      
+      if (updateError) {
+        console.error('Erreur lors de la mise à jour du richtext:', updateError);
+        throw updateError;
+      }
+    }
+    
     res.status(200).send('Textes mis à jour avec succès');
   } catch (err) {
     console.error('Erreur lors de la mise à jour du richtext de la page :', err);
@@ -513,8 +565,11 @@ router.post('/updateImagesPage',authenticateToken, uploadUpdateImage.single('ima
       return res.status(403).json({ error: 'Accès non autorisé à cette page' });
     }
 
+    // Utiliser le client admin pour les tables d'éléments uniquement
+    const supabaseAdmin = supabaseServerAdmin();
+
     // Récupérer l'ancienne image (si existe)
-    const { data: oldData, error: oldError } = await supabase
+    const { data: oldData, error: oldError } = await supabaseAdmin
       .from('page_photo')
       .select('src_image')
       .eq('id_page', id_page)
@@ -522,18 +577,18 @@ router.post('/updateImagesPage',authenticateToken, uploadUpdateImage.single('ima
       .single();
     if (oldError && oldError.code !== 'PGRST116') throw oldError;
     if (oldData && oldData.src_image) {
-      await supabase.storage.from('page-image').remove([oldData.src_image]);
+      await supabaseAdmin.storage.from('page-image').remove([oldData.src_image]);
     }
     // Upload nouvelle image
     const fileBuffer = fs.readFileSync(filePath);
-    const { error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabaseAdmin.storage
       .from('page-image')
       .upload(src_image, fileBuffer, {
         contentType: req.file.mimetype
       });
     if (uploadError) throw uploadError;
     // Update metadata
-    const { error: updateError } = await supabase
+    const { error: updateError } = await supabaseAdmin
       .from('page_photo')
       .update({ src_image, name_image: name, alt_image: alt, size })
       .eq('id_page', id_page)
@@ -584,7 +639,10 @@ router.post('/updateAltPage' ,authenticateToken, async (req, res) => {
       return res.status(403).json({ error: 'Accès non autorisé à cette page' });
     }
 
-    const { error } = await supabase
+    // Utiliser le client admin pour les tables d'éléments uniquement
+    const supabaseAdmin = supabaseServerAdmin();
+
+    const { error } = await supabaseAdmin
       .from('page_photo')
       .update({ alt_image: alt })
       .eq('id_page', id_page)
@@ -630,12 +688,15 @@ router.delete('/deletePageData',authenticateToken, async (req, res) => {
       return res.status(403).json({ error: 'Accès non autorisé à cette page' });
     }
 
+    // Utiliser le client admin pour les tables d'éléments uniquement
+    const supabaseAdmin = supabaseServerAdmin();
+
     for (const element of data) {
       const id_config = element.id_config;
       const type = element.type;
       if (type === 'images') {
         // Récupérer l'image à supprimer
-        const { data: imgData, error: imgError } = await supabase
+        const { data: imgData, error: imgError } = await supabaseAdmin
           .from('page_photo')
           .select('src_image')
           .eq('id_page', id_page)
@@ -643,10 +704,10 @@ router.delete('/deletePageData',authenticateToken, async (req, res) => {
           .single();
         if (imgError && imgError.code !== 'PGRST116') throw imgError;
         if (imgData && imgData.src_image) {
-          await supabase.storage.from('page-image').remove([imgData.src_image]);
+          await supabaseAdmin.storage.from('page-image').remove([imgData.src_image]);
         }
         // Mettre à jour la ligne pour supprimer les infos image
-        const { error: updateError } = await supabase
+        const { error: updateError } = await supabaseAdmin
           .from('page_photo')
           .update({ src_image: null, name_image: null, alt_image: null, size: null })
           .eq('id_page', id_page)
@@ -654,7 +715,7 @@ router.delete('/deletePageData',authenticateToken, async (req, res) => {
         if (updateError) throw updateError;
       } else if (type === 'video') {
         // Supprimer la vidéo (suppression de la ligne)
-        const { error: delError } = await supabase
+        const { error: delError } = await supabaseAdmin
           .from('page_video')
           .delete()
           .eq('id_page', id_page)
@@ -682,7 +743,7 @@ router.post('/createPage', authenticateToken, async (req, res) => {
 
   try {
     // Vérifier l'accès de l'utilisateur au site web
-    const hasAccess = await checkUserWebsiteAccess(supabase, userId, pageData.website_id);
+    const hasAccess = await checkUserWebsiteAccess(supabase, userId, website_id);
     if (!hasAccess) {
       return res.status(403).json({ error: 'Accès non autorisé à ce site web' });
     }
@@ -700,7 +761,7 @@ router.post('/createPage', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'Ce slug existe déjà pour ce site web' });
     }
 
-    // Créer la page principale
+    // Créer la page principale avec le client utilisateur
     const { data: pageData, error: pageError } = await supabase
       .from('page')
       .insert({
@@ -722,14 +783,60 @@ router.post('/createPage', authenticateToken, async (req, res) => {
         name_field: field.name_field,
         description_field: field.description_field || '',
         tab_field: field.tab_field,
+        type: field.type || 'text',
         multiline_text: field.multiline_text || false
       }));
 
+      // Utiliser le client utilisateur pour page_config
       const { error: configError } = await supabase
         .from('page_config')
         .insert(configInserts);
 
       if (configError) throw configError;
+
+      // Utiliser le client admin uniquement pour les tables d'éléments
+      const supabaseAdmin = supabaseServerAdmin();
+
+      // Créer les entrées initiales pour les textes, photos et richtexts
+      for (const field of config_fields) {
+        const id_config = config_fields.indexOf(field) + 1;
+        
+        // Créer une entrée vide dans page_text pour chaque config
+        const { error: textError } = await supabaseAdmin
+          .from('page_text')
+          .insert({
+            id_page: pageData.id,
+            id_config: id_config,
+            text: ''
+          });
+        
+        if (textError) console.error('Erreur création page_text:', textError);
+
+        // Créer une entrée vide dans page_richtext pour chaque config
+        const { error: richTextError } = await supabaseAdmin
+          .from('page_richtext')
+          .insert({
+            id_page: pageData.id,
+            id_config: id_config,
+            text_json: null
+          });
+        
+        if (richTextError) console.error('Erreur création page_richtext:', richTextError);
+
+        // Créer une entrée vide dans page_photo pour chaque config
+        const { error: photoError } = await supabaseAdmin
+          .from('page_photo')
+          .insert({
+            id_page: pageData.id,
+            id_config: id_config,
+            src_image: null,
+            name_image: null,
+            alt_image: null,
+            size: null
+          });
+        
+        if (photoError) console.error('Erreur création page_photo:', photoError);
+      }
     }
 
     res.status(201).json({ 

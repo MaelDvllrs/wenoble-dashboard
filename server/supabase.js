@@ -6,6 +6,15 @@ function supabaseServerAdmin() {
   return createClient(
     process.env.SUPABASE_URL,
     process.env.SUPABASE_SERVICE_KEY, // Clé SERVICE pour les opérations administratives
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      },
+      db: {
+        schema: 'public'
+      }
+    }
   );
 }
 

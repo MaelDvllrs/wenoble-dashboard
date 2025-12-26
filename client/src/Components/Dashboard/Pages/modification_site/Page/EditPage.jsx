@@ -25,7 +25,7 @@ const EditPage = () => {
     const [DecodeConfigPage, setDecodeConfigPage] = useState([]);
     const [InfoPage, setInfoPage] = useState([]);
     const [DecodePage, setDecodePage] = useState([]);
-    const [InfoItemspage, setInfoItemspage] = useState([]);
+    const [InfoItemspage, setInfoItemspage] = useState({ data: [] });
     const [deletedItems, setDeletedItems] = useState([]);
     const navigate = useNavigate();
     const [pageDataConfig, setPageDataConfig] = useState({
@@ -71,24 +71,25 @@ const EditPage = () => {
 
 
     useEffect(() => {
-        DecodeConfigPage.page && DecodeConfigPage.page.map((pageItem) => {
-            if (pageItem.type === 'image') {
-                setPageDataConfig(prevData => ({
-                    ...prevData,
-                    images: [...prevData.images, {id_config: pageItem.id_config}]
-                }));
-            } else if (pageItem.type === 'text') {
-                setPageDataConfig(prevData => ({
-                    ...prevData,
-                    text: [...prevData.text, {id_config: pageItem.id_config}]
-                }));
-            } else if (pageItem.type === 'richText') {
-                setPageDataConfig(prevData => ({
-                    ...prevData,
-                    richText: [...prevData.richText, {id_config: pageItem.id_config}]
-                }));
-            }
-        });
+        if (DecodeConfigPage.page && DecodeConfigPage.page.length > 0) {
+            const newConfig = {
+                text: [],
+                images: [],
+                richText: []
+            };
+            
+            DecodeConfigPage.page.forEach((pageItem) => {
+                if (pageItem.type === 'image') {
+                    newConfig.images.push({id_config: pageItem.id_config});
+                } else if (pageItem.type === 'text') {
+                    newConfig.text.push({id_config: pageItem.id_config});
+                } else if (pageItem.type === 'richText') {
+                    newConfig.richText.push({id_config: pageItem.id_config});
+                }
+            });
+            
+            setPageDataConfig(newConfig);
+        }
     }, [DecodeConfigPage]);
 
 
@@ -309,10 +310,12 @@ const EditPage = () => {
 
                     <div className="Page_creation_field_contain">
                         {DecodeConfigPage.page && DecodeConfigPage.page.map((pageItem) => {
-                            const correspondingData = InfoItemspage.data.find(data => data.id_config === pageItem.id_config);
+                            const correspondingData = InfoItemspage.data && InfoItemspage.data.length > 0 
+                                ? InfoItemspage.data.find(data => data.id_config === pageItem.id_config) 
+                                : null;
                             return (
                                 <div key={pageItem.id_config} className="pageField_contain">
-                                    <p style={{color: theme.palette.text.secondary}}>{pageItem.name}</p>
+                                    <p style={{color: theme.palette.text.secondary}}>{pageItem.name_field}</p>
                                     <Field 
                                         id_page={idPage}
                                         type={pageItem.type} 
