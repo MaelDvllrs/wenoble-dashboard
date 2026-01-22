@@ -303,6 +303,14 @@ function goToPage(page, limit) {
   currentPage = page;
   displayPage(page, limit);
   updatePaginationUI();
+  
+  // Scroll vers le haut du wrapper de collection
+  const collection = document.querySelector('[wn-filter="list"]');
+  if (collection) {
+    setTimeout(() => {
+      collection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  }
 }
 
 function displayPage(page, limit) {
