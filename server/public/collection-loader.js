@@ -669,17 +669,6 @@
                             prevEl.removeAttribute('aria-disabled');
                             prevEl.classList.remove('disabled');
                         }
-                        // Ajouter le scroll vers le haut au clic
-                        prevEl.addEventListener('click', (e) => {
-                            if (currentPage > 1) {
-                                const collectionWrapper = el;
-                                if (collectionWrapper) {
-                                    setTimeout(() => {
-                                        collectionWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                    }, 100);
-                                }
-                            }
-                        });
                     }
                     if (nextEl) {
                         const nextPage = Math.min(totalPagesCalc, (typeof currentPage !== 'undefined' ? currentPage : 1) + 1);
@@ -696,17 +685,6 @@
                             nextEl.removeAttribute('aria-disabled');
                             nextEl.classList.remove('disabled');
                         }
-                        // Ajouter le scroll vers le haut au clic
-                        nextEl.addEventListener('click', (e) => {
-                            if (currentPage < totalPagesCalc) {
-                                const collectionWrapper = el;
-                                if (collectionWrapper) {
-                                    setTimeout(() => {
-                                        collectionWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                    }, 100);
-                                }
-                            }
-                        });
                     }
 
                     // Numbered links template
