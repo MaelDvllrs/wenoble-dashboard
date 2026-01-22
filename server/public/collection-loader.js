@@ -699,17 +699,6 @@
                             clone.setAttribute('href', buildHref(i));
                             clone.textContent = String(i);
                             if (i === currentPage) clone.classList.add('active');
-                            
-                            // Ajouter le scroll vers le haut au clic pour les numéros de page
-                            clone.addEventListener('click', (e) => {
-                                const collectionWrapper = el;
-                                if (collectionWrapper) {
-                                    setTimeout(() => {
-                                        collectionWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                    }, 100);
-                                }
-                            });
-                            
                             numberTpl.parentNode.appendChild(clone);
                         }
                         // Hide the template
