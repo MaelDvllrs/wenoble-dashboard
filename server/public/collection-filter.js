@@ -304,11 +304,14 @@ function goToPage(page, limit) {
   displayPage(page, limit);
   updatePaginationUI();
   
-  // Scroll vers le haut du wrapper de collection
+  // Scroll vers le haut du wrapper de collection avec marge de 10rem
   const collection = document.querySelector('[wn-filter="list"]');
   if (collection) {
     setTimeout(() => {
-      collection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const rect = collection.getBoundingClientRect();
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const targetPosition = rect.top + scrollTop - 160; // 10rem = 160px
+      window.scrollTo({ top: targetPosition, behavior: 'smooth' });
     }, 100);
   }
 }
