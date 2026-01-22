@@ -269,6 +269,13 @@
                 if (currentPage > totalPages) currentPage = totalPages;
                 const start = (currentPage - 1) * perPage;
                 allBlogs = allBlogs.slice(start, start + perPage);
+                
+                // Scroll automatique vers le wrapper si on est sur une page > 1
+                if (currentPage > 1) {
+                    setTimeout(() => {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 300);
+                }
             }
 
             // Traitement séquentiel pour préserver l'ordre
