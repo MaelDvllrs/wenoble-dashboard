@@ -326,10 +326,17 @@ function goToPage(page, limit) {
   const collection = document.querySelector('[wn-filter="list"]');
   if (collection) {
     setTimeout(() => {
-      const rect = collection.getBoundingClientRect();
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-      const targetPosition = rect.top + scrollTop - 160; // 10rem = 160px
-      scrollToPosition(targetPosition);
+      // Calculer la position absolue depuis le haut du document
+      let absoluteTop = 0;
+      let element = collection;
+      
+      while (element) {
+        absoluteTop += element.offsetTop;
+        element = element.offsetParent;
+      }
+      
+      const targetPosition = absoluteTop - 160; // 10rem = 160px
+      scrollToPosition(Math.max(0, targetPosition));
     }, 100);
   }
 }
