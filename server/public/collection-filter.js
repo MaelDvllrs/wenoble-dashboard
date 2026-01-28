@@ -325,7 +325,11 @@ function goToPage(page, limit) {
   // Scroll vers le haut du wrapper de collection avec marge de 10rem
   const collection = document.querySelector('[wn-filter="list"]');
   if (collection) {
+    // Attendre que le DOM soit mis à jour et que le navigateur recalcule les positions
     setTimeout(() => {
+      // Forcer un reflow pour s'assurer que les dimensions sont à jour
+      void collection.offsetHeight;
+      
       // Calculer la position absolue depuis le haut du document
       let absoluteTop = 0;
       let element = collection;
@@ -337,7 +341,7 @@ function goToPage(page, limit) {
       
       const targetPosition = absoluteTop - 160; // 10rem = 160px
       scrollToPosition(Math.max(0, targetPosition));
-    }, 100);
+    }, 300);
   }
 }
 
