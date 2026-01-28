@@ -187,6 +187,24 @@ async function handleCollectionFilters() {
 let currentPage = 1;
 let visibleItems = [];
 
+function getLenisInstance() {
+  return window.lenis || window.__lenis || window.lenisInstance || null;
+}
+
+function scrollToPosition(targetPosition) {
+  const lenis = getLenisInstance();
+
+  if (lenis && typeof lenis.scrollTo === 'function') {
+    lenis.scrollTo(targetPosition, {
+      duration: 1,
+      easing: (t) => 1 - Math.pow(1 - t, 3),
+    });
+    return;
+  }
+
+  window.scrollTo({ top: targetPosition, behavior: 'smooth' });
+}
+
 function initPagination(limit) {
   const paginationContainer = document.querySelector('[wn-collection-pagination]');
   if (!paginationContainer) {
@@ -311,7 +329,7 @@ function goToPage(page, limit) {
       const rect = collection.getBoundingClientRect();
       const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
       const targetPosition = rect.top + scrollTop - 160; // 10rem = 160px
-      window.scrollTo({ top: targetPosition, behavior: 'smooth' });
+      scrollToPosition(targetPosition);
     }, 100);
   }
 }
