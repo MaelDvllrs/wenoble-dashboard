@@ -260,13 +260,23 @@
             let currentPage = 1;
             let perPage = itemsPerPage || limit || 10;
             let totalPages = 1;
+            
+            // Appliquer l'offset côté client (même sans pagination)
+            const startOffset = parseInt(offset, 10) || 0;
+            if (startOffset > 0) {
+                allBlogs = allBlogs.slice(startOffset);
+            }
+            
             if (pagination) {
                 const url = new URL(window.location.href);
                 const pageParam = parseInt(url.searchParams.get('page') || '1', 10);
                 currentPage = isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
                 perPage = parseInt(perPage, 10) || 10;
+                
+                // Calculer la pagination sur les blogs après offset
                 totalPages = Math.max(1, Math.ceil(allBlogs.length / perPage));
                 if (currentPage > totalPages) currentPage = totalPages;
+                
                 const start = (currentPage - 1) * perPage;
                 allBlogs = allBlogs.slice(start, start + perPage);
                 
@@ -276,6 +286,9 @@
                         el.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }, 300);
                 }
+            } else if (typeof limit !== 'undefined' && limit !== null && limit > 0) {
+                // Si pas de pagination mais une limite est définie, l'appliquer
+                allBlogs = allBlogs.slice(0, parseInt(limit, 10));
             }
 
             // Traitement séquentiel pour préserver l'ordre
