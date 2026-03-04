@@ -1402,12 +1402,25 @@ router.get('/sendBlogSlug', apiKeyMiddleware, async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('collection')
-            .select('collection_slug')
+            .select('collection_slug, website_id')
             .eq('id', id_blog)
             .maybeSingle();
         if (error) throw error;
         if (!data) return res.status(403).json({ message: 'Aucun blog trouvé' });
-        return res.json({ slug: data.collection_slug });
+
+        let domain = null;
+        if (data.website_id) {
+            const { data: website, error: websiteError } = await supabase
+                .from('websites')
+                .select('website_slug')
+                .eq('id', data.website_id)
+                .maybeSingle();
+            if (!websiteError && website) {
+                domain = website.website_slug;
+            }
+        }
+
+        return res.json({ slug: data.collection_slug, domain });
     } catch (err) {
         console.error('Erreur lors de la récupération du slug du blog :', err);
         res.status(500).send({ error: err.message });

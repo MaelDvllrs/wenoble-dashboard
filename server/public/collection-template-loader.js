@@ -213,7 +213,13 @@
         const canonicalLink = document.querySelector("link[rel='canonical']") || document.createElement('link');
         canonicalLink.setAttribute('rel', 'canonical');
         if (collection_slug && collection_slug.slug) {
-            canonicalLink.setAttribute('href', `${collection_slug.slug}${slug}`);
+            const isWebflowDomain = collection_slug.domain && collection_slug.domain.includes('webflow.io');
+            if (collection_slug.domain && !isWebflowDomain) {
+                const domainBase = collection_slug.domain.startsWith('http') ? collection_slug.domain : `https://${collection_slug.domain}`;
+                canonicalLink.setAttribute('href', `${domainBase}/${collection_slug.slug}/${slug}`);
+            } else {
+                canonicalLink.setAttribute('href', `${window.location.origin}/${collection_slug.slug}/${slug}`);
+            }
         }
         document.head.appendChild(canonicalLink);
         
