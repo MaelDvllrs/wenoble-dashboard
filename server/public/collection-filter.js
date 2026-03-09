@@ -524,30 +524,33 @@ function applyFilters(items, filterForms, initial = false, hasPagination = false
       if (!hasActiveFilters) {
         visible = true;
       } else {
-        // Récupérer tous les champs filtrables de cet élément
+        // Récupérer tous les champs filtrables de cet élément (support de plusieurs valeurs par identifier)
         const itemFields = {};
         collectionElement.querySelectorAll('[wn-filter-field]').forEach((field) => {
           const fieldName = field.getAttribute('wn-filter-field');
           const fieldValue = field.textContent.trim().toLowerCase();
-          itemFields[fieldName] = fieldValue;
+          if (!itemFields[fieldName]) {
+            itemFields[fieldName] = [];
+          }
+          itemFields[fieldName].push(fieldValue);
         });
 
         console.log('Item fields:', itemFields);
 
         // Vérifier les filtres classiques (checkbox, radio, select)
         for (const [identifier, filterValues] of Object.entries(activeFilters)) {
-          const itemValue = itemFields[identifier];
+          const itemValues = itemFields[identifier];
 
           // Si l'élément n'a pas ce champ, il ne correspond pas
-          if (!itemValue) {
+          if (!itemValues || itemValues.length === 0) {
             console.log('Item missing field:', identifier);
             visible = false;
             break;
           }
 
-          // Vérifier si la valeur correspond à AU MOINS UN filtre actif de cette catégorie
-          const matches = filterValues.includes(itemValue);
-          console.log('Checking item:', { identifier, itemValue, filterValues, matches });
+          // Vérifier si AU MOINS UNE valeur de l'item correspond à AU MOINS UN filtre actif de cette catégorie
+          const matches = itemValues.some(val => filterValues.includes(val));
+          console.log('Checking item:', { identifier, itemValues, filterValues, matches });
           
           if (!matches) {
             visible = false;
@@ -558,26 +561,22 @@ function applyFilters(items, filterForms, initial = false, hasPagination = false
         // Vérifier les filtres range
         if (visible) {
           for (const [identifier, range] of Object.entries(rangeFilters)) {
-            const itemValue = itemFields[identifier];
+            const itemValues = itemFields[identifier];
             
-            if (!itemValue) {
+            if (!itemValues || itemValues.length === 0) {
               console.log('Item missing range field:', identifier);
               visible = false;
               break;
             }
             
-            // Convertir la valeur de l'item en nombre
-            const numValue = parseFloat(itemValue);
+            // Vérifier si AU MOINS UNE valeur est dans la plage
+            const matchesRange = itemValues.some(val => {
+              const numValue = parseFloat(val);
+              return !isNaN(numValue) && numValue >= range.min && numValue <= range.max;
+            });
             
-            if (isNaN(numValue)) {
-              console.log('Item value is not a number:', itemValue);
-              visible = false;
-              break;
-            }
-            
-            // Vérifier si la valeur est dans la plage
-            if (numValue < range.min || numValue > range.max) {
-              console.log('Item out of range:', { identifier, itemValue: numValue, range });
+            if (!matchesRange) {
+              console.log('Item out of range:', { identifier, itemValues, range });
               visible = false;
               break;
             }
