@@ -255,7 +255,7 @@
                     options = { year: 'numeric', month: 'long', day: 'numeric' }; // Format par défaut
                 }
 
-                el.textContent = date.toLocaleDateString(undefined, options);
+                el.textContent = date.toLocaleDateString('fr-FR', options);
             }
 
             if (el.hasAttribute("wn-image")) {
